@@ -947,9 +947,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<SmiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -1023,25 +1020,119 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
-         SmiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new SmiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         SmiStream sp = this;
+         double tmp = 0.0;
+         double num = 0.0;
+         double den = 0.0;
+         double halfDen = 0.0;
+         double smiValue = 0.0;
+         double cur_outSMI = sp.cur_outSMI;
+         double cur_outSMISignal = sp.cur_outSMISignal;
+         double emaFastDen = sp.emaFastDen;
+         double emaFastNum = sp.emaFastNum;
+         double emaSlowDen = sp.emaSlowDen;
+         double emaSlowNum = sp.emaSlowNum;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         double prevSignal = sp.prevSignal;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.smiStepImpl(scratch, inHigh, inLow, inClose);
-         return new Value(scratch.cur_outSMI, scratch.cur_outSMISignal);
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         pkSlot2 = today & sp.xMask;
+         pkVal2 = inClose;
+         /* Set the lowest low */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Set the highest high */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         den = highest - lowest;
+         num = (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - (highest + lowest) * 0.5;
+         emaSlowNum = Math.fma(num - emaSlowNum, sp.kSlow, emaSlowNum);
+         emaSlowDen = Math.fma(den - emaSlowDen, sp.kSlow, emaSlowDen);
+         emaFastNum = Math.fma(emaSlowNum - emaFastNum, sp.kFast, emaFastNum);
+         emaFastDen = Math.fma(emaSlowDen - emaFastDen, sp.kFast, emaFastDen);
+         /* The denominator is an EMA of an EMA of the high-low range: every term
+          * is non-negative and every weight is positive, so it carries no
+          * cancellation residue and is zero only when every range that reached it
+          * was exactly zero -- 0/0, since a window of H == L bars makes num zero
+          * too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+          * convention. Test it exactly: the range carries the quote unit, so the
+          * fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+          * instrument quoted below it (issue #253). Issue #107's machine-flat
+          * window is caught by the exact test as well, since the residue an
+          * EMA leaves there is zero, not sub-epsilon.
+          */
+         halfDen = 0.5 * emaFastDen;
+         if( halfDen > 0.0 ) {
+            smiValue = 100.0 * emaFastNum / halfDen;
+         } else {
+            smiValue = 0.0;
+         }
+         prevSignal = Math.fma(smiValue - prevSignal, sp.kSignal, prevSignal);
+         cur_outSMI = smiValue;
+         cur_outSMISignal = prevSignal;
+         trailingIdx = trailingIdx + 1;
+         today = today + 1;
+         return new Value(cur_outSMI, cur_outSMISignal);
       }
 
       /**

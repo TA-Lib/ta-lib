@@ -412,9 +412,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlpiercingStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -467,25 +464,59 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLPIERCING peek: BadParam", RetCode.BadParam);
-         CdlpiercingStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlpiercingStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlpiercingStream sp = this;
+         int totIdx = 0;
+         double[] BodyLongPeriodTotal = sp.BodyLongPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* 2nd: white */
+             Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             inOpen < lag1_inLow &&                                  /* open below prior low */
+             inClose < lag1_inOpen &&                                /* close within prior body */
+             inClose > Math.fma(Math.abs(lag1_inClose - lag1_inOpen), 0.5, lag1_inClose) ) /* above midpoint */
+         {
+            cur_outInteger = 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlpiercingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx) != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] : pkVal0) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+         }
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**

@@ -60,12 +60,13 @@ fn test_java_sma_ring_stream_section() {
     // be some other handle's sub-stream.
     assert!(s.contains("void copyFrom( SmaStream other ) {"));
     assert!(s.contains("System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );"));
-    // One array and no sub-stream: peek keeps the plain copy, because the
-    // scratch lookup would cost more than the allocation it saves.
+    // Peek copies nothing: it runs a frame against this handle, storing what
+    // the step would commit in locals instead.
     assert!(!s.contains("PEEK_SCRATCH"));
-    assert!(s.contains("SmaStream scratch = new SmaStream(this);"));
-    // Java's peek copies the handle; no backend carries a mirror or a routing
-    // flag any more, so these hold everywhere rather than marking a difference.
+    assert!(!s.contains("SmaStream scratch = new SmaStream(this);"));
+    assert!(s.contains("SmaStream sp = this;"));
+    // No backend carries a mirror or a routing flag any more, so these hold
+    // everywhere rather than marking a difference.
     assert!(!s.contains("Mirror"), "no peek mirrors in the Java tier");
     assert!(!s.contains("peekMode"), "no peekMode in the Java tier");
     // Lifecycle surface.
@@ -167,11 +168,11 @@ fn test_java_mama_value_class_protocol() {
 #[test]
 fn test_java_cdl_candle_snapshot() {
     let s = java_stream_section("cdl3blackcrows");
-    // A candle handle owns a ring per price per averaged setting, so peek runs
-    // on the reused per-thread scratch rather than allocating a peer (#201).
-    assert!(s.contains("private static final ThreadLocal<Cdl3blackcrowsStream> PEEK_SCRATCH = new ThreadLocal<>();"));
-    assert!(s.contains("Cdl3blackcrowsStream scratch = PEEK_SCRATCH.get();"));
-    assert!(s.contains("scratch.copyFrom(this);"));
+    // A candle handle owns a ring per price per averaged setting — the shape
+    // that used to need the per-thread scratch (#201). The frame reads those
+    // rings in place, so there is no scratch to hold.
+    assert!(!s.contains("PEEK_SCRATCH"));
+    assert!(s.contains("Cdl3blackcrowsStream sp = this;"));
     // Candle settings snapshot: primitive fields captured at open...
     assert!(s.contains("int cs_ShadowVeryShort_rangeType;"));
     assert!(s.contains("sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;"));

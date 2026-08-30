@@ -742,17 +742,38 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACD peek: BadParam", RetCode.BadParam);
-         MacdStream scratch = new MacdStream(this);
-         core.macdStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
+         MacdStream sp = this;
+         double macdValue = 0.0;
+         double tempReal = 0.0;
+         double cur_outMACD = sp.cur_outMACD;
+         double cur_outMACDHist = sp.cur_outMACDHist;
+         double cur_outMACDSignal = sp.cur_outMACDSignal;
+         double prevFast = sp.prevFast;
+         double prevSignal = sp.prevSignal;
+         double prevSlow = sp.prevSlow;
+         tempReal = inReal;
+         prevFast = Math.fma(tempReal - prevFast, sp.fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, sp.slowK, prevSlow);
+         macdValue = prevFast - prevSlow;
+         if( sp.optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, sp.signalK, prevSignal);
+         }
+         cur_outMACD = macdValue;
+         cur_outMACDSignal = prevSignal;
+         cur_outMACDHist = macdValue - prevSignal;
+         return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 
       /**

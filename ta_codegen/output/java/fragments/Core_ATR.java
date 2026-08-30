@@ -570,17 +570,46 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ATR peek: BadParam", RetCode.BadParam);
-         AtrStream scratch = new AtrStream(this);
-         core.atrStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         AtrStream sp = this;
+         double val2 = 0.0;
+         double val3 = 0.0;
+         double greatest = 0.0;
+         double tempCY = 0.0;
+         double tempLT = 0.0;
+         double tempHT = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double lag1_inClose = sp.lag1_inClose;
+         double prevATR = sp.prevATR;
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow;
+         tempHT = inHigh;
+         tempCY = lag1_inClose;
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= sp.optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= sp.optInTimePeriod;
+         cur_outReal = prevATR;
+         lag1_inClose = inClose;
+         return cur_outReal;
       }
 
       /**

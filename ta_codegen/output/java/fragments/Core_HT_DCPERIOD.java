@@ -993,9 +993,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HtDcperiodStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -1045,25 +1042,216 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_DCPERIOD peek: BadParam", RetCode.BadParam);
-         HtDcperiodStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new HtDcperiodStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         HtDcperiodStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double adjustedPrevPeriod = 0.0;
+         double smoothedValue = 0.0;
+         double hilbertTempReal = 0.0;
+         double detrender = 0.0;
+         double Q1 = 0.0;
+         double jI = 0.0;
+         double jQ = 0.0;
+         double Q2 = 0.0;
+         double I2 = 0.0;
+         double todayValue = 0.0;
+         double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+         double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+         double I1ForOddPrev2 = sp.I1ForOddPrev2;
+         double I1ForOddPrev3 = sp.I1ForOddPrev3;
+         double Im = sp.Im;
+         double[] Q1_Even = sp.Q1_Even.clone();
+         double[] Q1_Odd = sp.Q1_Odd.clone();
+         double Re = sp.Re;
+         double cur_outReal = sp.cur_outReal;
+         double[] detrender_Even = sp.detrender_Even.clone();
+         double[] detrender_Odd = sp.detrender_Odd.clone();
+         int hilbertIdx = sp.hilbertIdx;
+         double[] jI_Even = sp.jI_Even.clone();
+         double[] jI_Odd = sp.jI_Odd.clone();
+         double[] jQ_Even = sp.jQ_Even.clone();
+         double[] jQ_Odd = sp.jQ_Odd.clone();
+         double period = sp.period;
+         double periodWMASub = sp.periodWMASub;
+         double periodWMASum = sp.periodWMASum;
+         double prevI2 = sp.prevI2;
+         double prevQ2 = sp.prevQ2;
+         double prev_Q1_Even = sp.prev_Q1_Even;
+         double prev_Q1_Odd = sp.prev_Q1_Odd;
+         double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+         double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+         double prev_detrender_Even = sp.prev_detrender_Even;
+         double prev_detrender_Odd = sp.prev_detrender_Odd;
+         double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+         double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+         double prev_jI_Even = sp.prev_jI_Even;
+         double prev_jI_Odd = sp.prev_jI_Odd;
+         double prev_jI_input_Even = sp.prev_jI_input_Even;
+         double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+         double prev_jQ_Even = sp.prev_jQ_Even;
+         double prev_jQ_Odd = sp.prev_jQ_Odd;
+         double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+         double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+         double smoothPeriod = sp.smoothPeriod;
+         int streamParity = sp.streamParity;
+         double trailingWMAValue = sp.trailingWMAValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingWMAIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
          }
-         core.htDcperiodStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         todayValue = inReal;
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         if( streamParity == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = sp.b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = sp.b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = sp.b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = sp.b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = sp.b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "even" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+         }
+         /* Adjust the period for next price bar */
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
+         cur_outReal = smoothPeriod;
+         /* Ooof... let's do the next price bar now! */
+         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+            ringPos_trailingWMAIdx = 0;
+         }
+         streamParity = 1 - streamParity;
+         return cur_outReal;
       }
 
       /**

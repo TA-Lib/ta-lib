@@ -440,17 +440,36 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
-         QstickStream scratch = new QstickStream(this);
-         core.qstickStepImpl(scratch, inOpen, inClose);
-         return scratch.cur_outReal;
+         QstickStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double periodTotal = sp.periodTotal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = (double)(inClose - inOpen);
+         }
+         periodTotal += (double)(inClose - inOpen);
+         tempReal = periodTotal;
+         periodTotal -= (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_derived[ringPos_trailingIdx] : pkVal0;
+         cur_outReal = tempReal / (double)sp.optInTimePeriod;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**

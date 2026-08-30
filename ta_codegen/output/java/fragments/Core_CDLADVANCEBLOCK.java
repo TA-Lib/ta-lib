@@ -709,9 +709,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdladvanceblockStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -764,25 +761,132 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLADVANCEBLOCK peek: BadParam", RetCode.BadParam);
-         CdladvanceblockStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdladvanceblockStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdladvanceblockStream sp = this;
+         int totIdx = 0;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double[] FarPeriodTotal = sp.FarPeriodTotal.clone();
+         double[] NearPeriodTotal = sp.NearPeriodTotal.clone();
+         double[] ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal.clone();
+         double[] ShadowShortPeriodTotal = sp.ShadowShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_FarTrailingIdx = sp.ringPos_FarTrailingIdx;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int ringPos_ShadowShortTrailingIdx = sp.ringPos_ShadowShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int pkSlot4 = -1;
+         double pkVal4 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int Far_rangeType = sp.cs_Far_rangeType;
+         int Far_avgPeriod = sp.cs_Far_avgPeriod;
+         double Far_factor = sp.cs_Far_factor;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         int ShadowShort_rangeType = sp.cs_ShadowShort_rangeType;
+         int ShadowShort_avgPeriod = sp.cs_ShadowShort_avgPeriod;
+         double ShadowShort_factor = sp.cs_ShadowShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_FarTrailingIdx;
+         pkVal1 = ((Far_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Far_rangeType == 1) ? (inHigh - inLow) : ((Far_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot2 = ringPos_NearTrailingIdx;
+         pkVal2 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot3 = ringPos_ShadowLongTrailingIdx;
+         pkVal3 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot4 = ringPos_ShadowShortTrailingIdx;
+         pkVal4 = ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && /* 1st white */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd white */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&           /* 3rd white */
+             inClose > lag1_inClose &&
+             lag1_inClose > lag2_inClose &&                      /* consecutive higher closes */
+             lag1_inOpen > lag2_inOpen &&                        /* 2nd opens within/near 1st real body */
+             lag1_inOpen <= lag2_inClose + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             inOpen > lag1_inOpen &&                             /* 3rd opens within/near 2nd real body */
+             inOpen <= lag1_inClose + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[1] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long real body */
+             (lag2_inHigh - ((lag2_inClose >= lag2_inOpen) ? lag2_inClose : lag2_inOpen)) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowShortPeriodTotal[2] / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (Math.abs(lag1_inClose - lag1_inOpen) < Math.abs(lag2_inClose - lag2_inOpen) - ((Far_factor * (((Far_avgPeriod != 0) ? (FarPeriodTotal[2] / Far_avgPeriod) : ((Far_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Far_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Far_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Far_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose - inOpen) < Math.abs(lag1_inClose - lag1_inOpen) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[1] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || Math.abs(inClose - inOpen) < Math.abs(lag1_inClose - lag1_inOpen) - ((Far_factor * (((Far_avgPeriod != 0) ? (FarPeriodTotal[1] / Far_avgPeriod) : ((Far_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Far_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Far_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Far_rangeType == 2) ? 2.0 : 1.0)))) || Math.abs(inClose - inOpen) < Math.abs(lag1_inClose - lag1_inOpen) && Math.abs(lag1_inClose - lag1_inOpen) < Math.abs(lag2_inClose - lag2_inOpen) && ((inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowShortPeriodTotal[0] / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) || (lag1_inHigh - ((lag1_inClose >= lag1_inOpen) ? lag1_inClose : lag1_inOpen)) > ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowShortPeriodTotal[1] / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0))))) || Math.abs(inClose - inOpen) < Math.abs(lag1_inClose - lag1_inOpen) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal[0] / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0))))) ) /* 1st: short upper shadow ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance 3 far smaller than 2 advance blocked with the 3rd ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
+         {
+            cur_outInteger = 0 - 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdladvanceblockStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+            ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (((((ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx >= sp.ringCap_ShadowShortTrailingIdx) ? ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx - sp.ringCap_ShadowShortTrailingIdx : ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx) != pkSlot4) ? sp.ring_ShadowShortTrailingIdx_derived[(ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx >= sp.ringCap_ShadowShortTrailingIdx) ? ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx - sp.ringCap_ShadowShortTrailingIdx : ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx] : pkVal4) - (((ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.ringLag_ShadowShortTrailingIdx - totIdx) % sp.ringCap_ShadowShortTrailingIdx != pkSlot4) ? sp.ring_ShadowShortTrailingIdx_derived[(ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.ringLag_ShadowShortTrailingIdx - totIdx) % sp.ringCap_ShadowShortTrailingIdx] : pkVal4));
+         }
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (((((ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx >= sp.ringCap_ShadowLongTrailingIdx) ? ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx - sp.ringCap_ShadowLongTrailingIdx : ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx) != pkSlot3) ? sp.ring_ShadowLongTrailingIdx_derived[(ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx >= sp.ringCap_ShadowLongTrailingIdx) ? ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx - sp.ringCap_ShadowLongTrailingIdx : ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx] : pkVal3) - (((ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - totIdx) % sp.ringCap_ShadowLongTrailingIdx != pkSlot3) ? sp.ring_ShadowLongTrailingIdx_derived[(ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - totIdx) % sp.ringCap_ShadowLongTrailingIdx] : pkVal3));
+         }
+         for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+            FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (((((ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx) != pkSlot1) ? sp.ring_FarTrailingIdx_derived[(ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx] : pkVal1) - (((ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx != pkSlot1) ? sp.ring_FarTrailingIdx_derived[(ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx] : pkVal1));
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx) != pkSlot2) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] : pkVal2) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx != pkSlot2) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx] : pkVal2));
+         }
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_FarTrailingIdx = ringPos_FarTrailingIdx + 1;
+         if( ringPos_FarTrailingIdx >= sp.ringCap_FarTrailingIdx ) {
+            ringPos_FarTrailingIdx = 0;
+         }
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         ringPos_ShadowShortTrailingIdx = ringPos_ShadowShortTrailingIdx + 1;
+         if( ringPos_ShadowShortTrailingIdx >= sp.ringCap_ShadowShortTrailingIdx ) {
+            ringPos_ShadowShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**

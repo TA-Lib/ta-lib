@@ -649,17 +649,36 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
-         T3Stream scratch = new T3Stream(this);
-         core.t3StepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         T3Stream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         double e1 = sp.e1;
+         double e2 = sp.e2;
+         double e3 = sp.e3;
+         double e4 = sp.e4;
+         double e5 = sp.e5;
+         double e6 = sp.e6;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         e1 = Math.fma(sp.one_minus_k, e1, sp.k * inReal);
+         e2 = Math.fma(sp.one_minus_k, e2, sp.k * e1);
+         e3 = Math.fma(sp.one_minus_k, e3, sp.k * e2);
+         e4 = Math.fma(sp.one_minus_k, e4, sp.k * e3);
+         e5 = Math.fma(sp.one_minus_k, e5, sp.k * e4);
+         e6 = Math.fma(sp.one_minus_k, e6, sp.k * e5);
+         cur_outReal = Math.fma(sp.c4, e3, Math.fma(sp.c3, e4, Math.fma(sp.c1, e6, sp.c2 * e5)));
+         return cur_outReal;
       }
 
       /**

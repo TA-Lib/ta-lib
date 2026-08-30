@@ -647,9 +647,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AcStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -700,25 +697,82 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AC peek: BadParam", RetCode.BadParam);
-         AcStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AcStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AcStream sp = this;
+         double medianPrice = 0.0;
+         double osc = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int oscBuffer_Idx = sp.oscBuffer_Idx;
+         int ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
+         int ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
+         double sumFast = sp.sumFast;
+         double sumSignal = sp.sumSignal;
+         double sumSlow = sp.sumSlow;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( sp.ringCap_trailingFastIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = (inHigh + inLow) / 2.0;
          }
-         core.acStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         if( sp.ringCap_trailingSlowIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = (inHigh + inLow) / 2.0;
+         }
+         medianPrice = (inHigh + inLow) / 2.0;
+         sumFast += medianPrice;
+         sumSlow += medianPrice;
+         /* Snapshot the oscillator before either total drops its trailing bar,
+          * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+          */
+         osc = sumFast / (double)sp.optInFastPeriod - sumSlow / (double)sp.optInSlowPeriod;
+         sumFast -= (ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] : pkVal0;
+         sumSlow -= (ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] : pkVal1;
+         /* Today's oscillator enters the signal window at its own slot, and the
+          * bar leaving that window is read only after the ring has advanced onto
+          * it -- writing first is what makes the slot the loop is about to
+          * overwrite the newest value rather than the oldest one.
+          */
+         pkSlot2 = oscBuffer_Idx;
+         pkVal2 = osc;
+         sumSignal += osc;
+         tempReal = osc - sumSignal / (double)sp.optInSignalPeriod;
+         oscBuffer_Idx = oscBuffer_Idx + 1;
+         if( oscBuffer_Idx > sp.maxIdx_oscBuffer ) {
+            oscBuffer_Idx = 0;
+         }
+         sumSignal -= (oscBuffer_Idx != pkSlot2) ? sp.cb_oscBuffer[oscBuffer_Idx] : pkVal2;
+         /* Every input read for this bar is done above, so the store is safe
+          * when the caller aliases outReal over inHigh or inLow. Unlike ao.c
+          * there is slack here -- the signal window puts both trailing indices
+          * at least optInSignalPeriod-1 bars ahead of outIdx, so no reachable
+          * parameter makes them collide -- but the order is kept anyway, so
+          * that admitting a signal period of 1 would not silently reintroduce
+          * the collision ao.c has to guard against.
+          */
+         cur_outReal = tempReal;
+         ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
+         if( ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
+            ringPos_trailingFastIdx = 0;
+         }
+         ringPos_trailingSlowIdx = ringPos_trailingSlowIdx + 1;
+         if( ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
+            ringPos_trailingSlowIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**

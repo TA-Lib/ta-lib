@@ -533,9 +533,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AccbandsStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -612,25 +609,77 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
-         AccbandsStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AccbandsStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AccbandsStream sp = this;
+         double tempUpper = 0.0;
+         double tempMiddle = 0.0;
+         double tempLower = 0.0;
+         double tempReal = 0.0;
+         double cur_outRealLowerBand = sp.cur_outRealLowerBand;
+         double cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
+         double cur_outRealUpperBand = sp.cur_outRealUpperBand;
+         double periodTotalLower = sp.periodTotalLower;
+         double periodTotalMiddle = sp.periodTotalMiddle;
+         double periodTotalUpper = sp.periodTotalUpper;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inHigh;
+            pkSlot1 = 0;
+            pkVal1 = inLow;
+            pkSlot2 = 0;
+            pkVal2 = inClose;
          }
-         core.accbandsStepImpl(scratch, inHigh, inLow, inClose);
-         return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+         /* Add the incoming bar to each running sum. */
+         tempReal = inHigh + inLow;
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh) + Math.abs(inLow))) ) {
+            tempReal = 4 * (inHigh - inLow) / tempReal;
+            periodTotalUpper += inHigh * (1 + tempReal);
+            periodTotalLower += inLow * (1 - tempReal);
+         } else {
+            periodTotalUpper += inHigh;
+            periodTotalLower += inLow;
+         }
+         periodTotalMiddle += inClose;
+         /* Record the current window sums. */
+         tempUpper = periodTotalUpper;
+         tempMiddle = periodTotalMiddle;
+         tempLower = periodTotalLower;
+         /* Remove the trailing bar from each running sum. */
+         tempReal = ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) + ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) + Math.abs((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1))) ) {
+            tempReal = 4 * (((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) - ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1)) / tempReal;
+            periodTotalUpper -= ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) * (1 + tempReal);
+            periodTotalLower -= ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1) * (1 - tempReal);
+         } else {
+            periodTotalUpper -= (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0;
+            periodTotalLower -= (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1;
+         }
+         periodTotalMiddle -= (ringPos_trailingIdx != pkSlot2) ? sp.ring_trailingIdx_inClose[ringPos_trailingIdx] : pkVal2;
+         /* Write the three bands. */
+         cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
+         cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
+         cur_outRealLowerBand = tempLower / (double)sp.optInTimePeriod;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
       /**

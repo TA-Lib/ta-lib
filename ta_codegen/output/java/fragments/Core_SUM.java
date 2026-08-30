@@ -386,17 +386,36 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SUM peek: BadParam", RetCode.BadParam);
-         SumStream scratch = new SumStream(this);
-         core.sumStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         SumStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double periodTotal = sp.periodTotal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         periodTotal += inReal;
+         tempReal = periodTotal;
+         periodTotal -= (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         cur_outReal = tempReal;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**

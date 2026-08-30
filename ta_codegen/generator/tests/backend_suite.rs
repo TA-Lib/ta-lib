@@ -9511,10 +9511,9 @@ fn c_stream_every_tier_leads_with_the_range_head() {
 ///
 /// Both directions per backend, and on every call site the backend has, so a
 /// half-applied rename (a definition the callers no longer name, or a Peek left
-/// on the old word) fails rather than passing on the half that moved. Rust names
-/// the transition once where the others name it twice: its `peek` clones the
-/// handle and runs `update` on the copy, and C's peek frame is inline in `Peek`
-/// rather than a function, so C's two are `Update` and `UpdateAndFill`.
+/// on the old word) fails rather than passing on the half that moved. C names
+/// two call sites (`Update` and `UpdateAndFill`); Rust and Java name one each,
+/// because their `peek` runs a frame inline rather than the step on a copy.
 #[test]
 fn the_transition_tier_is_step_impl_in_every_backend() {
     // SMA's own `stream` flag, not one forced on here: a test that sets the flag
@@ -9553,7 +9552,7 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
             "java",
             &java,
             "void smaStepImpl( SmaStream sp,",
-            &["core.smaStepImpl(this,", "core.smaStepImpl(scratch,"],
+            &["core.smaStepImpl(this,"],
             "StreamStep",
         ),
         (

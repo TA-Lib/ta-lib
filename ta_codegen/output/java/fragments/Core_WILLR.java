@@ -632,9 +632,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<WillrStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -686,25 +683,93 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
-         WillrStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new WillrStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         WillrStream sp = this;
+         double tmp = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double diff = sp.diff;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.willrStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         pkSlot2 = today & sp.xMask;
+         pkVal2 = inClose;
+         /* Set the lowest low */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / (0 - 100.0);
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / (0 - 100.0);
+         }
+         /* Set the highest high */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / (0 - 100.0);
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / (0 - 100.0);
+         }
+         if( diff != 0.0 ) {
+            cur_outReal = (highest - (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2)) / diff;
+         } else {
+            cur_outReal = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**

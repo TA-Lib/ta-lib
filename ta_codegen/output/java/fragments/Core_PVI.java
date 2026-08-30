@@ -380,17 +380,52 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("PVI peek: BadParam", RetCode.BadParam);
-         PviStream scratch = new PviStream(this);
-         core.pviStepImpl(scratch, inClose, inVolume);
-         return scratch.cur_outReal;
+         PviStream sp = this;
+         double tempClose = 0.0;
+         double tempVolume = 0.0;
+         double tempPVI = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevClose = sp.prevClose;
+         double prevPVI = sp.prevPVI;
+         double prevVolume = sp.prevVolume;
+         tempClose = inClose;
+         tempVolume = inVolume;
+         /* prevClose != 0 guards the percentage-change division: a zero previous
+          * close is a degenerate input that would otherwise emit NaN/Inf; carry
+          * the index forward unchanged instead. Never triggers on real prices.
+          */
+         if( tempVolume > prevVolume && prevClose != 0.0 ) {
+            /* The index is a running product, so it has no upper bound: enough
+             * compounding gains push it past the largest double. Keep the last
+             * representable value instead of writing +/-Inf, which no caller can
+             * chart and which poisons every arithmetic downstream of it. Real
+             * price series never come close.
+             *
+             * Written as a compound assignment on the copy, exactly as the update
+             * was before the guard: spelling it `a + r*a` would match the FMA
+             * fusion detector and silently re-round every bar, not just the
+             * overflowing one.
+             */
+            tempPVI = prevPVI;
+            tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+            if( (Double.isFinite(tempPVI)) ) {
+               prevPVI = tempPVI;
+            }
+         }
+         cur_outReal = prevPVI;
+         prevClose = tempClose;
+         prevVolume = tempVolume;
+         return cur_outReal;
       }
 
       /**

@@ -524,17 +524,34 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("EFI peek: BadParam", RetCode.BadParam);
-         EfiStream scratch = new EfiStream(this);
-         core.efiStepImpl(scratch, inClose, inVolume);
-         return scratch.cur_outReal;
+         EfiStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            double force = 0.0;
+            double prevClose = sp.prevClose;
+            force = (inClose - prevClose) * inVolume;
+            prevClose = inClose;
+            cur_outReal = force;
+         } else {
+            double force = 0.0;
+            double prevClose = sp.prevClose;
+            double prevMA = sp.prevMA;
+            force = (inClose - prevClose) * inVolume;
+            prevClose = inClose;
+            prevMA = Math.fma(force - prevMA, sp.optInK_1, prevMA);
+            cur_outReal = prevMA;
+         }
+         return cur_outReal;
       }
 
       /**

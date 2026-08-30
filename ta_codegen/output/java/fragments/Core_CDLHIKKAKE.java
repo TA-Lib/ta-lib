@@ -476,17 +476,51 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
-         CdlhikkakeStream scratch = new CdlhikkakeStream(this);
-         core.cdlhikkakeStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlhikkakeStream sp = this;
+         int cd = sp.cd;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         int patternResult = sp.patternResult;
+         double savedHigh = sp.savedHigh;
+         double savedLow = sp.savedLow;
+         if( lag1_inHigh < lag2_inHigh &&
+             lag1_inLow > lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh < lag1_inHigh && inLow < lag1_inLow || inHigh > lag1_inHigh && inLow > lag1_inLow) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh < lag1_inHigh) ? 1 : 0 - 1);
+            savedHigh = lag1_inHigh;
+            savedLow = lag1_inLow;
+            cd = 4;
+            cur_outInteger = patternResult;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose > savedHigh || patternResult < 0 && inClose < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            cur_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            cd = 0;
+         } else {
+            cur_outInteger = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
+         }
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         return cur_outInteger;
       }
 
       /**

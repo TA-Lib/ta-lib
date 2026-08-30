@@ -511,9 +511,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlseparatinglinesStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -566,25 +563,86 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSEPARATINGLINES peek: BadParam", RetCode.BadParam);
-         CdlseparatinglinesStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlseparatinglinesStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlseparatinglinesStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlseparatinglinesStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         pkSlot1 = ringPos_EqualTrailingIdx;
+         pkVal1 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* opposite candles */
+             inOpen <= lag1_inOpen + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* same open */
+             inOpen >= lag1_inOpen - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* belt hold: long body */
+             (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0))))) ) /* with no lower shadow if bullish with no upper shadow if bearish */
+         {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot2) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal2);
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot1) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal1);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**

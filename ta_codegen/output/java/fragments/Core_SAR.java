@@ -724,17 +724,140 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAR peek: BadParam", RetCode.BadParam);
-         SarStream scratch = new SarStream(this);
-         core.sarStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         SarStream sp = this;
+         double prevHigh = 0.0;
+         double prevLow = 0.0;
+         double af = sp.af;
+         double cur_outReal = sp.cur_outReal;
+         double ep = sp.ep;
+         int isLong = sp.isLong;
+         double newHigh = sp.newHigh;
+         double newLow = sp.newLow;
+         double sar = sp.sar;
+         prevLow = newLow;
+         prevHigh = newHigh;
+         newLow = inLow;
+         newHigh = inHigh;
+         if( isLong == 1 ) {
+            /* Switch to short if the low penetrates the SAR value. */
+            if( newLow <= sar ) {
+               /* Switch and Overide the SAR with the ep */
+               isLong = 0;
+               sar = ep;
+               /* Make sure the overide SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+               /* Output the overide SAR */
+               cur_outReal = sar;
+               /* Adjust af and ep */
+               af = sp.optInAcceleration;
+               ep = newLow;
+               /* Calculate the new SAR */
+               sar = Math.fma(af, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+            } else {
+               /* No switch */
+               /* Output the SAR (was calculated in the previous iteration) */
+               cur_outReal = sar;
+               /* Adjust af and ep. */
+               if( newHigh > ep ) {
+                  ep = newHigh;
+                  af += sp.optInAcceleration;
+                  if( af > sp.optInMaximum ) {
+                     af = sp.optInMaximum;
+                  }
+               }
+               /* Calculate the new SAR */
+               sar = Math.fma(af, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar > prevLow ) {
+                  sar = prevLow;
+               }
+               if( sar > newLow ) {
+                  sar = newLow;
+               }
+            }
+         /* Switch to long if the high penetrates the SAR value. */
+         } else if( newHigh >= sar ) {
+            /* Switch and Overide the SAR with the ep */
+            isLong = 1;
+            sar = ep;
+            /* Make sure the overide SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+            /* Output the overide SAR */
+            cur_outReal = sar;
+            /* Adjust af and ep */
+            af = sp.optInAcceleration;
+            ep = newHigh;
+            /* Calculate the new SAR */
+            sar = Math.fma(af, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+         } else {
+            /* No switch */
+            /* Output the SAR (was calculated in the previous iteration) */
+            cur_outReal = sar;
+            /* Adjust af and ep. */
+            if( newLow < ep ) {
+               ep = newLow;
+               af += sp.optInAcceleration;
+               if( af > sp.optInMaximum ) {
+                  af = sp.optInMaximum;
+               }
+            }
+            /* Calculate the new SAR */
+            sar = Math.fma(af, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh ) {
+               sar = prevHigh;
+            }
+            if( sar < newHigh ) {
+               sar = newHigh;
+            }
+         }
+         return cur_outReal;
       }
 
       /**

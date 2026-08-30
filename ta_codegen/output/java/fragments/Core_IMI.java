@@ -352,9 +352,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<ImiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -405,25 +402,53 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("IMI peek: BadParam", RetCode.BadParam);
-         ImiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new ImiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         ImiStream sp = this;
+         double upsum = 0.0;
+         double downsum = 0.0;
+         int i = 0;
+         double close = 0.0;
+         double open = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int winPos_i = sp.winPos_i;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         pkSlot0 = winPos_i;
+         pkVal0 = inOpen;
+         pkSlot1 = winPos_i;
+         pkVal1 = inClose;
+         upsum = 0.0;
+         downsum = 0.0;
+         for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
+            close = (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inClose[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal1;
+            open = (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inOpen[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0;
+            if( close > open ) {
+               upsum += close - open;
+            } else {
+               downsum += open - close;
+            }
+            /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+             * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+             * oscillator, so no up/down bias returns its neutral center, 50.0.
+             */
+            cur_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
          }
-         core.imiStepImpl(scratch, inOpen, inClose);
-         return scratch.cur_outReal;
+         winPos_i = winPos_i + 1;
+         if( winPos_i >= sp.winCap_i ) {
+            winPos_i = 0;
+         }
+         return cur_outReal;
       }
 
       /**

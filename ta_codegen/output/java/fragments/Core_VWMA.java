@@ -456,9 +456,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<VwmaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -509,25 +506,59 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWMA peek: BadParam", RetCode.BadParam);
-         VwmaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new VwmaStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         VwmaStream sp = this;
+         double tempPV = 0.0;
+         double tempV = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         double sumPV = sp.sumPV;
+         double sumV = sp.sumV;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
          }
-         core.vwmaStepImpl(scratch, inReal, inVolume);
-         return scratch.cur_outReal;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+            pkSlot1 = 0;
+            pkVal1 = inVolume;
+         }
+         tempReal = inReal * inVolume;
+         sumPV += tempReal;
+         sumV += inVolume;
+         /* Snapshot both sums before removing the trailing bar, mirroring the
+          * add-new / snapshot / subtract-old order of TA_SMA. That order is what
+          * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+          */
+         tempPV = sumPV;
+         tempV = sumV;
+         /* Read the trailing values before writing the output, since the caller
+          * may pass the same buffer for an input and the output.
+          */
+         tempReal = ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0) * ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] : pkVal1);
+         sumPV -= tempReal;
+         sumV -= (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] : pkVal1;
+         cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**

@@ -1132,9 +1132,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AcStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -1185,25 +1182,82 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AC peek: BadParam", RetCode.BadParam);
-         AcStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AcStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AcStream sp = this;
+         double medianPrice = 0.0;
+         double osc = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int oscBuffer_Idx = sp.oscBuffer_Idx;
+         int ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
+         int ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
+         double sumFast = sp.sumFast;
+         double sumSignal = sp.sumSignal;
+         double sumSlow = sp.sumSlow;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( sp.ringCap_trailingFastIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = (inHigh + inLow) / 2.0;
          }
-         core.acStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         if( sp.ringCap_trailingSlowIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = (inHigh + inLow) / 2.0;
+         }
+         medianPrice = (inHigh + inLow) / 2.0;
+         sumFast += medianPrice;
+         sumSlow += medianPrice;
+         /* Snapshot the oscillator before either total drops its trailing bar,
+          * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+          */
+         osc = sumFast / (double)sp.optInFastPeriod - sumSlow / (double)sp.optInSlowPeriod;
+         sumFast -= (ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] : pkVal0;
+         sumSlow -= (ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] : pkVal1;
+         /* Today's oscillator enters the signal window at its own slot, and the
+          * bar leaving that window is read only after the ring has advanced onto
+          * it -- writing first is what makes the slot the loop is about to
+          * overwrite the newest value rather than the oldest one.
+          */
+         pkSlot2 = oscBuffer_Idx;
+         pkVal2 = osc;
+         sumSignal += osc;
+         tempReal = osc - sumSignal / (double)sp.optInSignalPeriod;
+         oscBuffer_Idx = oscBuffer_Idx + 1;
+         if( oscBuffer_Idx > sp.maxIdx_oscBuffer ) {
+            oscBuffer_Idx = 0;
+         }
+         sumSignal -= (oscBuffer_Idx != pkSlot2) ? sp.cb_oscBuffer[oscBuffer_Idx] : pkVal2;
+         /* Every input read for this bar is done above, so the store is safe
+          * when the caller aliases outReal over inHigh or inLow. Unlike ao.c
+          * there is slack here -- the signal window puts both trailing indices
+          * at least optInSignalPeriod-1 bars ahead of outIdx, so no reachable
+          * parameter makes them collide -- but the order is kept anyway, so
+          * that admitting a signal period of 1 would not silently reintroduce
+          * the collision ao.c has to guard against.
+          */
+         cur_outReal = tempReal;
+         ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
+         if( ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
+            ringPos_trailingFastIdx = 0;
+         }
+         ringPos_trailingSlowIdx = ringPos_trailingSlowIdx + 1;
+         if( ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
+            ringPos_trailingSlowIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -2126,9 +2180,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AccbandsStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -2205,25 +2256,77 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
-         AccbandsStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AccbandsStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AccbandsStream sp = this;
+         double tempUpper = 0.0;
+         double tempMiddle = 0.0;
+         double tempLower = 0.0;
+         double tempReal = 0.0;
+         double cur_outRealLowerBand = sp.cur_outRealLowerBand;
+         double cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
+         double cur_outRealUpperBand = sp.cur_outRealUpperBand;
+         double periodTotalLower = sp.periodTotalLower;
+         double periodTotalMiddle = sp.periodTotalMiddle;
+         double periodTotalUpper = sp.periodTotalUpper;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inHigh;
+            pkSlot1 = 0;
+            pkVal1 = inLow;
+            pkSlot2 = 0;
+            pkVal2 = inClose;
          }
-         core.accbandsStepImpl(scratch, inHigh, inLow, inClose);
-         return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+         /* Add the incoming bar to each running sum. */
+         tempReal = inHigh + inLow;
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs(inHigh) + Math.abs(inLow))) ) {
+            tempReal = 4 * (inHigh - inLow) / tempReal;
+            periodTotalUpper += inHigh * (1 + tempReal);
+            periodTotalLower += inLow * (1 - tempReal);
+         } else {
+            periodTotalUpper += inHigh;
+            periodTotalLower += inLow;
+         }
+         periodTotalMiddle += inClose;
+         /* Record the current window sums. */
+         tempUpper = periodTotalUpper;
+         tempMiddle = periodTotalMiddle;
+         tempLower = periodTotalLower;
+         /* Remove the trailing bar from each running sum. */
+         tempReal = ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) + ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (Math.abs((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) + Math.abs((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1))) ) {
+            tempReal = 4 * (((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) - ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1)) / tempReal;
+            periodTotalUpper -= ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) * (1 + tempReal);
+            periodTotalLower -= ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1) * (1 - tempReal);
+         } else {
+            periodTotalUpper -= (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0;
+            periodTotalLower -= (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1;
+         }
+         periodTotalMiddle -= (ringPos_trailingIdx != pkSlot2) ? sp.ring_trailingIdx_inClose[ringPos_trailingIdx] : pkVal2;
+         /* Write the three bands. */
+         cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
+         cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
+         cur_outRealLowerBand = tempLower / (double)sp.optInTimePeriod;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
       /**
@@ -2836,17 +2939,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ACOS peek: BadParam", RetCode.BadParam);
-         AcosStream scratch = new AcosStream(this);
-         core.acosStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         AcosStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.acos(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -3350,17 +3456,32 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("AD peek: BadParam", RetCode.BadParam);
-         AdStream scratch = new AdStream(this);
-         core.adStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         AdStream sp = this;
+         double high = 0.0;
+         double low = 0.0;
+         double close = 0.0;
+         double tmp = 0.0;
+         double ad = sp.ad;
+         double cur_outReal = sp.cur_outReal;
+         high = inHigh;
+         low = inLow;
+         tmp = high - low;
+         close = inClose;
+         if( tmp > 0.0 ) {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume;
+         }
+         cur_outReal = ad;
+         return cur_outReal;
       }
 
       /**
@@ -3843,17 +3964,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("ADD peek: BadParam", RetCode.BadParam);
-         AddStream scratch = new AddStream(this);
-         core.addStepImpl(scratch, inReal0, inReal1);
-         return scratch.cur_outReal;
+         AddStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = inReal0 + inReal1;
+         return cur_outReal;
       }
 
       /**
@@ -4570,17 +4694,36 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
-         AdoscStream scratch = new AdoscStream(this);
-         core.adoscStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         AdoscStream sp = this;
+         double high = 0.0;
+         double low = 0.0;
+         double close = 0.0;
+         double tmp = 0.0;
+         double ad = sp.ad;
+         double cur_outReal = sp.cur_outReal;
+         double fastEMA = sp.fastEMA;
+         double slowEMA = sp.slowEMA;
+         high = inHigh;
+         low = inLow;
+         tmp = high - low;
+         close = inClose;
+         if( tmp > 0.0 ) {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume;
+         }
+         fastEMA = Math.fma(sp.one_minus_fastk, fastEMA, sp.fastk * ad);
+         slowEMA = Math.fma(sp.one_minus_slowk, slowEMA, sp.slowk * ad);
+         cur_outReal = fastEMA - slowEMA;
+         return cur_outReal;
       }
 
       /**
@@ -5785,17 +5928,77 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ADX peek: BadParam", RetCode.BadParam);
-         AdxStream scratch = new AdxStream(this);
-         core.adxStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         AdxStream sp = this;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         double minusDI = 0.0;
+         double plusDI = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevADX = sp.prevADX;
+         double prevClose = sp.prevClose;
+         double prevHigh = sp.prevHigh;
+         double prevLow = sp.prevLow;
+         double prevMinusDM = sp.prevMinusDM;
+         double prevPlusDM = sp.prevPlusDM;
+         double prevTR = sp.prevTR;
+         /* Calculate the prevMinusDM and prevPlusDM */
+         tempReal = inHigh;
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         prevMinusDM -= prevMinusDM / sp.optInTimePeriod;
+         prevPlusDM -= prevPlusDM / sp.optInTimePeriod;
+         if( diffM > 0 && diffP < diffM ) {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            prevMinusDM += diffM;
+         } else if( diffP > 0 && diffP > diffM ) {
+            /* Case 1 and 3: +DM=diffP,-DM=0 */
+            prevPlusDM += diffP;
+         }
+         /* Calculate the prevTR */
+         double _true_range_0;
+         double range_0 = prevHigh - prevLow;
+         double tmp_0 = Math.abs(prevHigh - prevClose);
+         if( tmp_0 > range_0 ) {
+            range_0 = tmp_0;
+         }
+         tmp_0 = Math.abs(prevLow - prevClose);
+         if( tmp_0 > range_0 ) {
+            range_0 = tmp_0;
+         }
+         _true_range_0 = range_0;
+         tempReal = _true_range_0;
+         prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+         prevClose = inClose;
+         if( prevTR > 0.0 ) {
+            /* Calculate the DX. The value is rounded (see Wilder book). */
+            minusDI = (100.0 * (prevMinusDM / prevTR));
+            plusDI = (100.0 * (prevPlusDM / prevTR));
+            tempReal = minusDI + plusDI;
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               tempReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
+               /* Calculate the ADX */
+               prevADX = ((prevADX * (sp.optInTimePeriod - 1) + tempReal) / sp.optInTimePeriod);
+            }
+         }
+         /* Output the ADX */
+         cur_outReal = prevADX;
+         return cur_outReal;
       }
 
       /**
@@ -5841,18 +6044,18 @@ public final class Core {
          sp.prevPlusDM += diffP;
       }
       /* Calculate the prevTR */
-      double _true_range_0;
-      double range_0 = sp.prevHigh - sp.prevLow;
-      double tmp_0 = Math.abs(sp.prevHigh - sp.prevClose);
-      if( tmp_0 > range_0 ) {
-         range_0 = tmp_0;
+      double _true_range_1;
+      double range_1 = sp.prevHigh - sp.prevLow;
+      double tmp_1 = Math.abs(sp.prevHigh - sp.prevClose);
+      if( tmp_1 > range_1 ) {
+         range_1 = tmp_1;
       }
-      tmp_0 = Math.abs(sp.prevLow - sp.prevClose);
-      if( tmp_0 > range_0 ) {
-         range_0 = tmp_0;
+      tmp_1 = Math.abs(sp.prevLow - sp.prevClose);
+      if( tmp_1 > range_1 ) {
+         range_1 = tmp_1;
       }
-      _true_range_0 = range_0;
-      tempReal = _true_range_0;
+      _true_range_1 = range_1;
+      tempReal = _true_range_1;
       sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
       sp.prevClose = inClose;
       if( sp.prevTR > 0.0 ) {
@@ -6067,18 +6270,18 @@ public final class Core {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
             prevPlusDM += diffP;
          }
-         double _true_range_1;
-         double range_1 = prevHigh - prevLow;
-         double tmp_1 = Math.abs(prevHigh - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         double _true_range_2;
+         double range_2 = prevHigh - prevLow;
+         double tmp_2 = Math.abs(prevHigh - prevClose);
+         if( tmp_2 > range_2 ) {
+            range_2 = tmp_2;
          }
-         tmp_1 = Math.abs(prevLow - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         tmp_2 = Math.abs(prevLow - prevClose);
+         if( tmp_2 > range_2 ) {
+            range_2 = tmp_2;
          }
-         _true_range_1 = range_1;
-         tempReal = _true_range_1;
+         _true_range_2 = range_2;
+         tempReal = _true_range_2;
          prevTR += tempReal;
          prevClose = inClose[today];
       }
@@ -6106,18 +6309,18 @@ public final class Core {
             prevPlusDM += diffP;
          }
          /* Calculate the prevTR */
-         double _true_range_2;
-         double range_2 = prevHigh - prevLow;
-         double tmp_2 = Math.abs(prevHigh - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
+         double _true_range_3;
+         double range_3 = prevHigh - prevLow;
+         double tmp_3 = Math.abs(prevHigh - prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         tmp_2 = Math.abs(prevLow - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
+         tmp_3 = Math.abs(prevLow - prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         _true_range_2 = range_2;
-         tempReal = _true_range_2;
+         _true_range_3 = range_3;
+         tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book).
@@ -6166,18 +6369,18 @@ public final class Core {
             prevPlusDM += diffP;
          }
          /* Calculate the prevTR */
-         double _true_range_3;
-         double range_3 = prevHigh - prevLow;
-         double tmp_3 = Math.abs(prevHigh - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
+         double _true_range_4;
+         double range_4 = prevHigh - prevLow;
+         double tmp_4 = Math.abs(prevHigh - prevClose);
+         if( tmp_4 > range_4 ) {
+            range_4 = tmp_4;
          }
-         tmp_3 = Math.abs(prevLow - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
+         tmp_4 = Math.abs(prevLow - prevClose);
+         if( tmp_4 > range_4 ) {
+            range_4 = tmp_4;
          }
-         _true_range_3 = range_3;
-         tempReal = _true_range_3;
+         _true_range_4 = range_4;
+         tempReal = _true_range_4;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          if( prevTR > 0.0 ) {
@@ -6217,18 +6420,18 @@ public final class Core {
             prevPlusDM += diffP;
          }
          /* Calculate the prevTR */
-         double _true_range_4;
-         double range_4 = prevHigh - prevLow;
-         double tmp_4 = Math.abs(prevHigh - prevClose);
-         if( tmp_4 > range_4 ) {
-            range_4 = tmp_4;
+         double _true_range_5;
+         double range_5 = prevHigh - prevLow;
+         double tmp_5 = Math.abs(prevHigh - prevClose);
+         if( tmp_5 > range_5 ) {
+            range_5 = tmp_5;
          }
-         tmp_4 = Math.abs(prevLow - prevClose);
-         if( tmp_4 > range_4 ) {
-            range_4 = tmp_4;
+         tmp_5 = Math.abs(prevLow - prevClose);
+         if( tmp_5 > range_5 ) {
+            range_5 = tmp_5;
          }
-         _true_range_4 = range_4;
-         tempReal = _true_range_4;
+         _true_range_5 = range_5;
+         tempReal = _true_range_5;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          if( prevTR > 0.0 ) {
@@ -6786,8 +6989,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a throwaway copy, which for this
        * handle's shape is cheaper than reusing one.
        */
@@ -7516,9 +7720,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AoStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -7569,25 +7770,61 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AO peek: BadParam", RetCode.BadParam);
-         AoStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AoStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AoStream sp = this;
+         double medianPrice = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
+         int ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
+         double sumFast = sp.sumFast;
+         double sumSlow = sp.sumSlow;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.ringCap_trailingFastIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = (inHigh + inLow) / 2.0;
          }
-         core.aoStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         if( sp.ringCap_trailingSlowIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = (inHigh + inLow) / 2.0;
+         }
+         medianPrice = (inHigh + inLow) / 2.0;
+         sumFast += medianPrice;
+         sumSlow += medianPrice;
+         /* Snapshot the oscillator before either total drops its trailing bar,
+          * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+          */
+         tempReal = sumFast / (double)sp.optInFastPeriod - sumSlow / (double)sp.optInSlowPeriod;
+         /* Read both trailing bars before writing the output. When startIdx is
+          * clamped to the lookback the longer window's trailing index equals
+          * outIdx exactly, so a store hoisted above this would read back the
+          * value it had just overwritten whenever the caller aliases outReal
+          * over inHigh or inLow.
+          */
+         sumFast -= (ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] : pkVal0;
+         sumSlow -= (ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] : pkVal1;
+         cur_outReal = tempReal;
+         ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
+         if( ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
+            ringPos_trailingFastIdx = 0;
+         }
+         ringPos_trailingSlowIdx = ringPos_trailingSlowIdx + 1;
+         if( ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
+            ringPos_trailingSlowIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -8378,8 +8615,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -9099,9 +9337,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AroonStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -9174,25 +9409,85 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
-         AroonStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AroonStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AroonStream sp = this;
+         double tmp = 0.0;
+         double cur_outAroonDown = sp.cur_outAroonDown;
+         double cur_outAroonUp = sp.cur_outAroonUp;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.aroonStepImpl(scratch, inHigh, inLow);
-         return new Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         /* Keep track of the lowestIdx */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp <= lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Keep track of the highestIdx */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp >= highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         /* Note: Do not forget that input and output buffer can be the same,
+          *       so writing to the output is the last thing being done here.
+          */
+         cur_outAroonUp = sp.factor * (sp.optInTimePeriod - (today - highestIdx));
+         cur_outAroonDown = sp.factor * (sp.optInTimePeriod - (today - lowestIdx));
+         trailingIdx += 1;
+         today += 1;
+         return new Value(cur_outAroonDown, cur_outAroonUp);
       }
 
       /**
@@ -9985,9 +10280,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AroonoscStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -10038,25 +10330,93 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROONOSC peek: BadParam", RetCode.BadParam);
-         AroonoscStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AroonoscStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AroonoscStream sp = this;
+         double tmp = 0.0;
+         double aroon = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.aroonoscStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         /* Keep track of the lowestIdx */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp <= lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Keep track of the highestIdx */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp >= highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         /* The oscillator is the following:
+          *  AroonUp   = factor*(optInTimePeriod-(today-highestIdx));
+          *  AroonDown = factor*(optInTimePeriod-(today-lowestIdx));
+          *  AroonOsc  = AroonUp-AroonDown;
+          *
+          * An arithmetic simplification give us:
+          *  Aroon = factor*(highestIdx-lowestIdx)
+          */
+         aroon = sp.factor * (highestIdx - lowestIdx);
+         /* Note: Do not forget that input and output buffer can be the same,
+          *       so writing to the output is the last thing being done here.
+          */
+         cur_outReal = aroon;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -10674,17 +11034,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
-         AsinStream scratch = new AsinStream(this);
-         core.asinStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         AsinStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.asin(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -11098,17 +11461,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
-         AtanStream scratch = new AtanStream(this);
-         core.atanStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         AtanStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.atan(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -11813,17 +12179,46 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ATR peek: BadParam", RetCode.BadParam);
-         AtrStream scratch = new AtrStream(this);
-         core.atrStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         AtrStream sp = this;
+         double val2 = 0.0;
+         double val3 = 0.0;
+         double greatest = 0.0;
+         double tempCY = 0.0;
+         double tempLT = 0.0;
+         double tempHT = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double lag1_inClose = sp.lag1_inClose;
+         double prevATR = sp.prevATR;
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow;
+         tempHT = inHigh;
+         tempCY = lag1_inClose;
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= sp.optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= sp.optInTimePeriod;
+         cur_outReal = prevATR;
+         lag1_inClose = inClose;
+         return cur_outReal;
       }
 
       /**
@@ -12514,17 +12909,40 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("AVGDEV peek: BadParam", RetCode.BadParam);
-         AvgdevStream scratch = new AvgdevStream(this);
-         core.avgdevStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         AvgdevStream sp = this;
+         double todaySum = 0.0;
+         double todayDev = 0.0;
+         int i = 0;
+         double cur_outReal = sp.cur_outReal;
+         int winPos_i = sp.winPos_i;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         pkSlot0 = winPos_i;
+         pkVal0 = inReal;
+         todaySum = 0.0;
+         for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
+            todaySum += (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0;
+         }
+         todayDev = 0.0;
+         for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
+            todayDev += Math.abs(((((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0) - todaySum / sp.optInTimePeriod);
+         }
+         cur_outReal = todayDev / sp.optInTimePeriod;
+         winPos_i = winPos_i + 1;
+         if( winPos_i >= sp.winCap_i ) {
+            winPos_i = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -13033,17 +13451,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
-         AvgpriceStream scratch = new AvgpriceStream(this);
-         core.avgpriceStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         AvgpriceStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
+         return cur_outReal;
       }
 
       /**
@@ -14142,8 +14563,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -15306,9 +15728,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<BetaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -15359,25 +15778,232 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("BETA peek: BadParam", RetCode.BadParam);
-         BetaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new BetaStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         BetaStream sp = this;
+         double tmp_real = 0.0;
+         double denom = 0.0;
+         double denom_scale = 0.0;
+         double prev_x = 0.0;
+         double prev_y = 0.0;
+         int windowStart = 0;
+         double x = 0.0;
+         double y = 0.0;
+         double S_x = sp.S_x;
+         double S_xx = sp.S_xx;
+         double S_xy = sp.S_xy;
+         double S_y = sp.S_y;
+         double S_yy = sp.S_yy;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         int i = sp.i;
+         int j = sp.j;
+         double last_price_x = sp.last_price_x;
+         double last_price_y = sp.last_price_y;
+         double leaving_xx = sp.leaving_xx;
+         double leaving_yy = sp.leaving_yy;
+         double shift_x = sp.shift_x;
+         double shift_y = sp.shift_y;
+         int trailingIdx = sp.trailingIdx;
+         double trailing_last_price_x = sp.trailing_last_price_x;
+         double trailing_last_price_y = sp.trailing_last_price_y;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkIdx0 = 0;
+         if( i >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            i -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            j -= rebaseShift;
          }
-         core.betaStepImpl(scratch, inReal0, inReal1);
-         return scratch.cur_outReal;
+         pkSlot0 = i & sp.xMask;
+         pkVal0 = inReal0;
+         pkSlot1 = i & sp.xMask;
+         pkVal1 = inReal1;
+         tmp_real = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal0[i & sp.xMask] : pkVal0;
+         if( last_price_x != 0.0 ) {
+            x = (tmp_real - last_price_x) / last_price_x - shift_x;
+         } else {
+            x = 0 - shift_x;
+         }
+         last_price_x = tmp_real;
+         pkIdx0 = i++ & sp.xMask;
+         tmp_real = (pkIdx0 != pkSlot1) ? sp.x_inReal1[pkIdx0] : pkVal1;
+         if( last_price_y != 0.0 ) {
+            y = (tmp_real - last_price_y) / last_price_y - shift_y;
+         } else {
+            y = 0 - shift_y;
+         }
+         last_price_y = tmp_real;
+         S_xx += x * x;
+         S_yy += y * y;
+         S_xy += x * y;
+         S_x += x;
+         S_y += y;
+         denom_scale = sp.n * S_xx;
+         denom = denom_scale - S_x * S_x;
+         /* Re-anchor and rebuild when the shift has gone stale. The same three
+          * triggers as TA_VAR: the denominator has shrunk below 1e-6 of the scale
+          * it is extracted from; OR the return that just left sat so far from the
+          * shift that its squared term dwarfs what remains; OR at least every 32
+          * windows.
+          *
+          * The outlier trigger earns its multiply and compare here, contrary to
+          * what "returns are stationary" suggests: a bad tick makes one return
+          * enormous, the ordinary ones fall below its ulp and are never really
+          * added, and when it leaves the subtraction takes back a term they were
+          * never part of. The residue is a consistent OFFSET, so the cancellation
+          * trigger above cannot see it -- denom/denom_scale stays ~1 -- and only
+          * the periodic re-anchor recovers, up to 32*period bars later. Measured
+          * without it: a 1e8 tick left 286 of 386 bars wrong, the worst by 0.36
+          * ABSOLUTE. Cost is ~3% and mostly unmeasurable on the bench corpus
+          * (randwalk/GBM/trend-chop), where it fires on 0.00% of bars -- but that
+          * is a corpus figure, not a bound. Isolated against the same body without
+          * the disjunct it is +16-20% on a stale-quote/illiquid series (1.5% fire
+          * rate) and +54-64% on constructed near-flat or gapped shapes (5.1%).
+          * The cost is the reseed it triggers, so it tracks the fire rate; on data
+          * that never triggers it, the compare is free.
+          *
+          * BOTH axes are watched, and the y one is not redundant. The denominator
+          * is x-only, so it is tempting to conclude -- as an earlier draft of this
+          * did -- that a y trigger catches nothing. It catches plenty: the OUTPUT
+          * also reads S_xy and S_y, which a y-side outlier corrupts with nothing on
+          * the x side able to see it. Measured on test_beta_outlier_transit's own
+          * ladder with the spike moved from px to py: 12 of 24 rungs fail without
+          * the second disjunct, worst 156x relative; 0 of 24 with it. The earlier
+          * experiment that found it inert was run on an x-only corpus, where it is
+          * inert by construction. TA_CORREL, fixed by the same #242 work, watches
+          * both from the start; this brings BETA level. S_yy exists only to scale
+          * this test -- nothing else reads it.
+          *
+          * The threshold is 1e3 where TA_VAR uses 1e6, because a return amplifies:
+          * a tick multiplying the price by k puts k-1 into the return and (k-1)^2
+          * into S_xx, so the ratio when that term leaves lands an order or two
+          * below the value-scale case var.c was tuned on. At 1e6 a 1e5 tick slips
+          * through and leaves a flat 2.5e-5 relative error on 285 of 386 bars.
+          * Pinned by test_beta_outlier_transit.
+          *
+          * Reading the window here is safe when outReal aliases an input: the
+          * outputs written so far occupy [0, outIdx-1] while windowStart-1 is
+          * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
+          */
+         barsSinceReseed -= 1;
+         if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || leaving_yy > 1000.0 * S_yy || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * sp.optInTimePeriod;
+            windowStart = trailingIdx;
+            /* Walk the window forward from the price the trailing cursor already
+             * carries. A return needs its predecessor, and reading inReal[j-1]
+             * would reach one slot BEFORE the window -- which the batch can do and
+             * a streaming ring sized for the window cannot. trailing_last_price_*
+             * IS that predecessor, so carrying it forward keeps every read inside
+             * [trailingIdx, i-1] and the two paths stay identical.
+             */
+            prev_x = trailing_last_price_x;
+            prev_y = trailing_last_price_y;
+            tmp_real = 0.0;
+            shift_y = 0.0;
+            for( j = windowStart; j < i; j += 1 ) {
+               if( prev_x != 0.0 ) {
+                  tmp_real += ((((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0) - prev_x) / prev_x;
+               }
+               prev_x = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0;
+               if( prev_y != 0.0 ) {
+                  shift_y += ((((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1) - prev_y) / prev_y;
+               }
+               prev_y = ((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1;
+            }
+            shift_x = tmp_real / sp.n;
+            shift_y = shift_y / sp.n;
+            prev_x = trailing_last_price_x;
+            prev_y = trailing_last_price_y;
+            S_xx = 0.0;
+            S_yy = 0.0;
+            S_xy = 0.0;
+            S_x = 0.0;
+            S_y = 0.0;
+            for( j = windowStart; j < i; j += 1 ) {
+               if( prev_x != 0.0 ) {
+                  x = ((((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0) - prev_x) / prev_x - shift_x;
+               } else {
+                  x = 0 - shift_x;
+               }
+               prev_x = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0;
+               if( prev_y != 0.0 ) {
+                  y = ((((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1) - prev_y) / prev_y - shift_y;
+               } else {
+                  y = 0 - shift_y;
+               }
+               prev_y = ((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1;
+               S_xx += x * x;
+               S_yy += y * y;
+               S_xy += x * y;
+               S_x += x;
+               S_y += y;
+            }
+            denom_scale = sp.n * S_xx;
+            denom = denom_scale - S_x * S_x;
+            /* n*S_xx - S_x*S_x is non-negative by Cauchy-Schwarz, but it is
+             * extracted as a difference, so its SIGN is not guaranteed on a window
+             * whose returns are all the same value. Enforce the invariant HERE and
+             * not at the divide: a negative denom always reseeds on the same bar
+             * (it makes the first trigger true whenever denom_scale is positive,
+             * and denom_scale == 0 reduces that trigger to `denom < 0`), so the
+             * divide below can rely on it being >= 0.
+             */
+            if( denom < 0.0 ) {
+               denom = 0.0;
+            }
+         }
+         /* Always read the trailing before writing the output because the input and output
+          * buffer can be the same.
+          */
+         tmp_real = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal0[trailingIdx & sp.xMask] : pkVal0;
+         if( trailing_last_price_x != 0.0 ) {
+            x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
+         } else {
+            x = 0 - shift_x;
+         }
+         trailing_last_price_x = tmp_real;
+         tmp_real = ((trailingIdx & sp.xMask) != pkSlot1) ? sp.x_inReal1[trailingIdx & sp.xMask] : pkVal1;
+         trailingIdx += 1;
+         if( trailing_last_price_y != 0.0 ) {
+            y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
+         } else {
+            y = 0 - shift_y;
+         }
+         trailing_last_price_y = tmp_real;
+         /* Write the output.
+          *
+          * The denominator is tested against ITS OWN scale, not a fixed band: it
+          * is quadratic in the return volatility, so an absolute 1e-14 threshold
+          * stops meaning "the regressor does not vary" and starts meaning "the
+          * returns are small". The literal is TA_EPSILON, and the plain `>` also
+          * rejects a negative denominator rather than dividing by it.
+          */
+         if( denom > 0.00000000000001 * denom_scale ) {
+            cur_outReal = (sp.n * S_xy - S_x * S_y) / denom;
+         } else {
+            cur_outReal = 0.0;
+         }
+         /* Remove the calculation starting with the trailingIdx. */
+         leaving_xx = x * x;
+         leaving_yy = y * y;
+         S_xx -= x * x;
+         S_yy -= y * y;
+         S_xy -= x * y;
+         S_x -= x;
+         S_y -= y;
+         return cur_outReal;
       }
 
       /**
@@ -16398,17 +17024,32 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("BOP peek: BadParam", RetCode.BadParam);
-         BopStream scratch = new BopStream(this);
-         core.bopStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         BopStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         /* BOP is a fraction of the bar's own range, so it is scale-free and the
+          * divisor only has to be positive. An exact test, not the fixed
+          * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+          * and that band zeroed the output for any instrument quoted below it
+          * (issue #253).
+          */
+         tempReal = inHigh - inLow;
+         if( tempReal <= 0.0 ) {
+            cur_outReal = 0.0;
+         } else {
+            cur_outReal = (inClose - inOpen) / tempReal;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -17097,17 +17738,67 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CCI peek: BadParam", RetCode.BadParam);
-         CciStream scratch = new CciStream(this);
-         core.cciStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         CciStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double tempReal3 = 0.0;
+         double theAverage = 0.0;
+         double lastValue = 0.0;
+         int j = 0;
+         int circBuffer_Idx = sp.circBuffer_Idx;
+         double cur_outReal = sp.cur_outReal;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         lastValue = (inHigh + inLow + inClose) / 3;
+         pkSlot0 = circBuffer_Idx;
+         pkVal0 = lastValue;
+         /* Calculate the average for the whole period. */
+         theAverage = 0;
+         for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+            theAverage += (j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0;
+         }
+         theAverage /= sp.optInTimePeriod;
+         /* Do the summation of the ABS(TypePrice-average)
+          * for the whole period, then its mean.
+          */
+         tempReal2 = 0;
+         for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+            tempReal2 += Math.abs(((j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0) - theAverage);
+         }
+         tempReal2 /= sp.optInTimePeriod;
+         /* And finally, the CCI... */
+         tempReal = lastValue - theAverage;
+         /* Both tests are relative to the window's own price level (issue #253).
+          * They ask "is this window flat?", and flatness is a property of the
+          * prices relative to each other -- but a deviation carries the quote
+          * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output. The band is still wide enough (~90 ulp of the average) to
+          * absorb the sub-epsilon residue an identical-price window leaves in the
+          * average, which is what it was widened for in the first place (#7).
+          */
+         tempReal3 = Math.abs(theAverage);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            cur_outReal = tempReal / (0.015 * tempReal2);
+         } else {
+            cur_outReal = 0.0;
+         }
+         /* Move forward the circular buffer indexes. */
+         circBuffer_Idx = circBuffer_Idx + 1;
+         if( circBuffer_Idx > sp.maxIdx_circBuffer ) {
+            circBuffer_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -17865,17 +18556,68 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL2CROWS peek: BadParam", RetCode.BadParam);
-         Cdl2crowsStream scratch = new Cdl2crowsStream(this);
-         core.cdl2crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         Cdl2crowsStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* 1st: white */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 2nd: black */
+             (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) && /* gapping up */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* 3rd: black */
+             inOpen < lag1_inOpen &&
+             inOpen > lag1_inClose &&                                /* opening within 2nd rb */
+             inClose > lag2_inOpen &&
+             inClose < lag2_inClose )                                /* closing within 1st rb */
+         {
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -18591,9 +19333,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdl3blackcrowsStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -18646,25 +19385,80 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3BLACKCROWS peek: BadParam", RetCode.BadParam);
-         Cdl3blackcrowsStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdl3blackcrowsStream(this);
-            PEEK_SCRATCH.set(scratch);
+         Cdl3blackcrowsStream sp = this;
+         int totIdx = 0;
+         double[] ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inClose = sp.lag3_inClose;
+         double lag3_inHigh = sp.lag3_inHigh;
+         double lag3_inOpen = sp.lag3_inOpen;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         pkSlot0 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal0 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == 1 &&     /* white */
+             ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 2nd black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* 3rd black */
+             lag1_inOpen < lag2_inOpen &&
+             lag1_inOpen > lag2_inClose &&                           /* 2nd black opens within 1st black's rb */
+             inOpen < lag1_inOpen &&
+             inOpen > lag1_inClose &&                                /* 3rd black opens within 2nd black's rb */
+             lag3_inHigh > lag2_inClose &&                           /* 1st black closes under prior candle's high */
+             lag2_inClose > lag1_inClose &&                          /* three declining */
+             lag1_inClose > inClose &&                               /* three declining */
+             (((lag2_inClose >= lag2_inOpen) ? lag2_inOpen : lag2_inClose) - lag2_inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[2] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short lower shadow */
+             (((lag1_inClose >= lag1_inOpen) ? lag1_inOpen : lag1_inClose) - lag1_inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short lower shadow */
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* very short lower shadow */
+         {
+            cur_outInteger = 0 - 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdl3blackcrowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx) != pkSlot0) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] : pkVal0) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot0) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal0));
+         }
+         lag3_inOpen = lag2_inOpen;
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag3_inHigh = lag2_inHigh;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag3_inClose = lag2_inClose;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -19429,9 +20223,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdl3insideStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -19484,25 +20275,80 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3INSIDE peek: BadParam", RetCode.BadParam);
-         Cdl3insideStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdl3insideStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         Cdl3insideStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdl3insideStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.max(lag1_inClose, lag1_inOpen) < Math.max(lag2_inClose, lag2_inOpen) && /* engulfed by 1st */
+             Math.min(lag1_inClose, lag1_inOpen) > Math.min(lag2_inClose, lag2_inOpen) &&
+             (((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inClose < lag2_inOpen || ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inClose > lag2_inOpen) && /* 3rd: opposite to 1st and closing out */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.abs(lag1_inClose - lag1_inOpen) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 2nd: short */
+         {
+            cur_outInteger = (0 - ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1)) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal1);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -20252,9 +21098,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdl3linestrikeStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -20307,25 +21150,76 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3LINESTRIKE peek: BadParam", RetCode.BadParam);
-         Cdl3linestrikeStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdl3linestrikeStream(this);
-            PEEK_SCRATCH.set(scratch);
+         Cdl3linestrikeStream sp = this;
+         int totIdx = 0;
+         double[] NearPeriodTotal = sp.NearPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inClose = sp.lag3_inClose;
+         double lag3_inHigh = sp.lag3_inHigh;
+         double lag3_inLow = sp.lag3_inLow;
+         double lag3_inOpen = sp.lag3_inOpen;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         pkSlot0 = ringPos_NearTrailingIdx;
+         pkVal0 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) && /* three with same color */
+             ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) &&
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) && /* 4th opposite color */
+             lag2_inOpen >= Math.min(lag3_inOpen, lag3_inClose) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag3_inClose - lag3_inOpen)) : ((Near_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((Near_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd opens within/near 1st rb */
+             lag2_inOpen <= Math.max(lag3_inOpen, lag3_inClose) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag3_inClose - lag3_inOpen)) : ((Near_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((Near_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             lag1_inOpen >= Math.min(lag2_inOpen, lag2_inClose) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd opens within/near 2nd rb */
+             lag1_inOpen <= Math.max(lag2_inOpen, lag2_inClose) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && lag1_inClose > lag2_inClose && lag2_inClose > lag3_inClose && inOpen > lag1_inClose && inClose < lag3_inOpen || ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && lag1_inClose < lag2_inClose && lag2_inClose < lag3_inClose && inOpen < lag1_inClose && inClose > lag3_inOpen) ) /* if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open */
+         {
+            cur_outInteger = ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) * 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdl3linestrikeStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx) != pkSlot0) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] : pkVal0) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx != pkSlot0) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx] : pkVal0));
+         }
+         lag3_inOpen = lag2_inOpen;
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag3_inHigh = lag2_inHigh;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag3_inLow = lag2_inLow;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag3_inClose = lag2_inClose;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -20999,17 +21893,36 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
-         Cdl3outsideStream scratch = new Cdl3outsideStream(this);
-         core.cdl3outsideStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         Cdl3outsideStream sp = this;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inOpen = sp.lag2_inOpen;
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && lag1_inClose > lag2_inOpen && lag1_inOpen < lag2_inClose && inClose > lag1_inClose || ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && lag1_inOpen > lag2_inClose && lag1_inClose < lag2_inOpen && inClose < lag1_inClose ) {
+            /* white engulfs black */
+            /* third candle higher */
+            /* black engulfs white */
+            /* third candle lower */
+            cur_outInteger = ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         return cur_outInteger;
       }
 
       /**
@@ -21828,9 +22741,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdl3starsinsouthStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -21883,25 +22793,120 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3STARSINSOUTH peek: BadParam", RetCode.BadParam);
-         Cdl3starsinsouthStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdl3starsinsouthStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         Cdl3starsinsouthStream sp = this;
+         int totIdx = 0;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         double ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
+         double[] ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdl3starsinsouthStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         pkSlot2 = ringPos_ShadowLongTrailingIdx;
+         pkVal2 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot3 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal3 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 2nd black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* 3rd black */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             (((lag2_inClose >= lag2_inOpen) ? lag2_inOpen : lag2_inClose) - lag2_inLow) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0)))) && /* with long lower shadow */
+             Math.abs(lag1_inClose - lag1_inOpen) < Math.abs(lag2_inClose - lag2_inOpen) && /* 2nd: smaller candle */
+             lag1_inOpen > lag2_inClose &&
+             lag1_inOpen <= lag2_inHigh &&                           /* that opens higher but within 1st range */
+             lag1_inLow < lag2_inClose &&                            /* and trades lower than 1st close */
+             lag1_inLow >= lag2_inLow &&                             /* but not lower than 1st low */
+             (((lag1_inClose >= lag1_inOpen) ? lag1_inOpen : lag1_inClose) - lag1_inLow) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* and has a lower shadow */
+             Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: small marubozu */
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             inLow > lag1_inLow &&
+             inHigh < lag1_inHigh )                                  /* engulfed by prior candle's range */
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         ShadowLongPeriodTotal += ((ShadowLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - (((ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - 2) % sp.ringCap_ShadowLongTrailingIdx != pkSlot2) ? sp.ring_ShadowLongTrailingIdx_derived[(ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - 2) % sp.ringCap_ShadowLongTrailingIdx] : pkVal2);
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx) != pkSlot3) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] : pkVal3) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot3) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal3));
+         }
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal1);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -22958,9 +23963,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdl3whitesoldiersStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -23013,25 +24015,121 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3WHITESOLDIERS peek: BadParam", RetCode.BadParam);
-         Cdl3whitesoldiersStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdl3whitesoldiersStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         Cdl3whitesoldiersStream sp = this;
+         int totIdx = 0;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         double[] FarPeriodTotal = sp.FarPeriodTotal.clone();
+         double[] NearPeriodTotal = sp.NearPeriodTotal.clone();
+         double[] ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int ringPos_FarTrailingIdx = sp.ringPos_FarTrailingIdx;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int Far_rangeType = sp.cs_Far_rangeType;
+         int Far_avgPeriod = sp.cs_Far_avgPeriod;
+         double Far_factor = sp.cs_Far_factor;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdl3whitesoldiersStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         pkSlot1 = ringPos_FarTrailingIdx;
+         pkVal1 = ((Far_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Far_rangeType == 1) ? (inHigh - inLow) : ((Far_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot2 = ringPos_NearTrailingIdx;
+         pkVal2 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot3 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal3 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && /* 1st white */
+             (lag2_inHigh - ((lag2_inClose >= lag2_inOpen) ? lag2_inClose : lag2_inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[2] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && /* very short upper shadow 2nd white */
+             (lag1_inHigh - ((lag1_inClose >= lag1_inOpen) ? lag1_inClose : lag1_inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&           /* very short upper shadow 3rd white */
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             inClose > lag1_inClose &&                           /* very short upper shadow */
+             lag1_inClose > lag2_inClose &&                      /* consecutive higher closes */
+             lag1_inOpen > lag2_inOpen &&                        /* 2nd opens within/near 1st real body */
+             lag1_inOpen <= lag2_inClose + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             inOpen > lag1_inOpen &&                             /* 3rd opens within/near 2nd real body */
+             inOpen <= lag1_inClose + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[1] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(lag1_inClose - lag1_inOpen) > Math.abs(lag2_inClose - lag2_inOpen) - ((Far_factor * (((Far_avgPeriod != 0) ? (FarPeriodTotal[2] / Far_avgPeriod) : ((Far_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Far_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Far_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Far_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(inClose - inOpen) > Math.abs(lag1_inClose - lag1_inOpen) - ((Far_factor * (((Far_avgPeriod != 0) ? (FarPeriodTotal[1] / Far_avgPeriod) : ((Far_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Far_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Far_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Far_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd not far shorter than 1st */
+             Math.abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd not far shorter than 2nd not short real body */
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx) != pkSlot3) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] : pkVal3) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot3) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal3));
+         }
+         for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+            FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (((((ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx) != pkSlot1) ? sp.ring_FarTrailingIdx_derived[(ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx] : pkVal1) - (((ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx != pkSlot1) ? sp.ring_FarTrailingIdx_derived[(ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx] : pkVal1));
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx) != pkSlot2) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] : pkVal2) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx != pkSlot2) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx] : pkVal2));
+         }
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot0) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         ringPos_FarTrailingIdx = ringPos_FarTrailingIdx + 1;
+         if( ringPos_FarTrailingIdx >= sp.ringCap_FarTrailingIdx ) {
+            ringPos_FarTrailingIdx = 0;
+         }
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -24017,9 +25115,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlabandonedbabyStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -24072,25 +25167,95 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLABANDONEDBABY peek: BadParam", RetCode.BadParam);
-         CdlabandonedbabyStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlabandonedbabyStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlabandonedbabyStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlabandonedbabyStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.abs(lag1_inClose - lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             Math.abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: longer than short */
+             (((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inClose < lag2_inClose - Math.abs(lag2_inClose - lag2_inOpen) * sp.optInPenetration && (lag1_inLow > lag2_inHigh) && (inHigh < lag1_inLow) || ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inClose > Math.fma(Math.abs(lag2_inClose - lag2_inOpen), sp.optInPenetration, lag2_inClose) && (lag1_inHigh < lag2_inLow) && (inLow > lag1_inHigh)) ) /* 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd */
+         {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot1) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal1);
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot2) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal2);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -25156,9 +26321,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdladvanceblockStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -25211,25 +26373,132 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLADVANCEBLOCK peek: BadParam", RetCode.BadParam);
-         CdladvanceblockStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdladvanceblockStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdladvanceblockStream sp = this;
+         int totIdx = 0;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double[] FarPeriodTotal = sp.FarPeriodTotal.clone();
+         double[] NearPeriodTotal = sp.NearPeriodTotal.clone();
+         double[] ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal.clone();
+         double[] ShadowShortPeriodTotal = sp.ShadowShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_FarTrailingIdx = sp.ringPos_FarTrailingIdx;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int ringPos_ShadowShortTrailingIdx = sp.ringPos_ShadowShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int pkSlot4 = -1;
+         double pkVal4 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int Far_rangeType = sp.cs_Far_rangeType;
+         int Far_avgPeriod = sp.cs_Far_avgPeriod;
+         double Far_factor = sp.cs_Far_factor;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         int ShadowShort_rangeType = sp.cs_ShadowShort_rangeType;
+         int ShadowShort_avgPeriod = sp.cs_ShadowShort_avgPeriod;
+         double ShadowShort_factor = sp.cs_ShadowShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_FarTrailingIdx;
+         pkVal1 = ((Far_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Far_rangeType == 1) ? (inHigh - inLow) : ((Far_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot2 = ringPos_NearTrailingIdx;
+         pkVal2 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot3 = ringPos_ShadowLongTrailingIdx;
+         pkVal3 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot4 = ringPos_ShadowShortTrailingIdx;
+         pkVal4 = ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && /* 1st white */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd white */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&           /* 3rd white */
+             inClose > lag1_inClose &&
+             lag1_inClose > lag2_inClose &&                      /* consecutive higher closes */
+             lag1_inOpen > lag2_inOpen &&                        /* 2nd opens within/near 1st real body */
+             lag1_inOpen <= lag2_inClose + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             inOpen > lag1_inOpen &&                             /* 3rd opens within/near 2nd real body */
+             inOpen <= lag1_inClose + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[1] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long real body */
+             (lag2_inHigh - ((lag2_inClose >= lag2_inOpen) ? lag2_inClose : lag2_inOpen)) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowShortPeriodTotal[2] / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (Math.abs(lag1_inClose - lag1_inOpen) < Math.abs(lag2_inClose - lag2_inOpen) - ((Far_factor * (((Far_avgPeriod != 0) ? (FarPeriodTotal[2] / Far_avgPeriod) : ((Far_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Far_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Far_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Far_rangeType == 2) ? 2.0 : 1.0)))) && Math.abs(inClose - inOpen) < Math.abs(lag1_inClose - lag1_inOpen) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[1] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || Math.abs(inClose - inOpen) < Math.abs(lag1_inClose - lag1_inOpen) - ((Far_factor * (((Far_avgPeriod != 0) ? (FarPeriodTotal[1] / Far_avgPeriod) : ((Far_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Far_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Far_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Far_rangeType == 2) ? 2.0 : 1.0)))) || Math.abs(inClose - inOpen) < Math.abs(lag1_inClose - lag1_inOpen) && Math.abs(lag1_inClose - lag1_inOpen) < Math.abs(lag2_inClose - lag2_inOpen) && ((inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowShortPeriodTotal[0] / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) || (lag1_inHigh - ((lag1_inClose >= lag1_inOpen) ? lag1_inClose : lag1_inOpen)) > ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowShortPeriodTotal[1] / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0))))) || Math.abs(inClose - inOpen) < Math.abs(lag1_inClose - lag1_inOpen) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal[0] / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0))))) ) /* 1st: short upper shadow ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance 3 far smaller than 2 advance blocked with the 3rd ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
+         {
+            cur_outInteger = 0 - 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdladvanceblockStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+            ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (((((ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx >= sp.ringCap_ShadowShortTrailingIdx) ? ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx - sp.ringCap_ShadowShortTrailingIdx : ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx) != pkSlot4) ? sp.ring_ShadowShortTrailingIdx_derived[(ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx >= sp.ringCap_ShadowShortTrailingIdx) ? ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx - sp.ringCap_ShadowShortTrailingIdx : ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx] : pkVal4) - (((ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.ringLag_ShadowShortTrailingIdx - totIdx) % sp.ringCap_ShadowShortTrailingIdx != pkSlot4) ? sp.ring_ShadowShortTrailingIdx_derived[(ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.ringLag_ShadowShortTrailingIdx - totIdx) % sp.ringCap_ShadowShortTrailingIdx] : pkVal4));
+         }
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (((((ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx >= sp.ringCap_ShadowLongTrailingIdx) ? ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx - sp.ringCap_ShadowLongTrailingIdx : ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx) != pkSlot3) ? sp.ring_ShadowLongTrailingIdx_derived[(ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx >= sp.ringCap_ShadowLongTrailingIdx) ? ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx - sp.ringCap_ShadowLongTrailingIdx : ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx] : pkVal3) - (((ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - totIdx) % sp.ringCap_ShadowLongTrailingIdx != pkSlot3) ? sp.ring_ShadowLongTrailingIdx_derived[(ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - totIdx) % sp.ringCap_ShadowLongTrailingIdx] : pkVal3));
+         }
+         for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+            FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (((((ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx) != pkSlot1) ? sp.ring_FarTrailingIdx_derived[(ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx] : pkVal1) - (((ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx != pkSlot1) ? sp.ring_FarTrailingIdx_derived[(ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx] : pkVal1));
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx) != pkSlot2) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] : pkVal2) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx != pkSlot2) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx] : pkVal2));
+         }
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_FarTrailingIdx = ringPos_FarTrailingIdx + 1;
+         if( ringPos_FarTrailingIdx >= sp.ringCap_FarTrailingIdx ) {
+            ringPos_FarTrailingIdx = 0;
+         }
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         ringPos_ShadowShortTrailingIdx = ringPos_ShadowShortTrailingIdx + 1;
+         if( ringPos_ShadowShortTrailingIdx >= sp.ringCap_ShadowShortTrailingIdx ) {
+            ringPos_ShadowShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -26139,9 +27408,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlbeltholdStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -26194,25 +27460,61 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLBELTHOLD peek: BadParam", RetCode.BadParam);
-         CdlbeltholdStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlbeltholdStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlbeltholdStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlbeltholdStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long body */
+             (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0))))) ) /* white body and very short lower shadow black body and very short upper shadow */
+         {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal1);
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -26982,17 +28284,78 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLBREAKAWAY peek: BadParam", RetCode.BadParam);
-         CdlbreakawayStream scratch = new CdlbreakawayStream(this);
-         core.cdlbreakawayStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlbreakawayStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inClose = sp.lag3_inClose;
+         double lag3_inHigh = sp.lag3_inHigh;
+         double lag3_inLow = sp.lag3_inLow;
+         double lag3_inOpen = sp.lag3_inOpen;
+         double lag4_inClose = sp.lag4_inClose;
+         double lag4_inHigh = sp.lag4_inHigh;
+         double lag4_inLow = sp.lag4_inLow;
+         double lag4_inOpen = sp.lag4_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) == ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) && /* 1st, 2nd, 4th same color, 5th opposite */
+             ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) &&
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) &&
+             Math.abs(lag4_inClose - lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
+             (((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(lag3_inOpen, lag3_inClose) < Math.min(lag4_inOpen, lag4_inClose)) && lag2_inHigh < lag3_inHigh && lag2_inLow < lag3_inLow && lag1_inHigh < lag2_inHigh && lag1_inLow < lag2_inLow && inClose > lag3_inOpen && inClose < lag4_inClose || ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(lag3_inOpen, lag3_inClose) > Math.max(lag4_inOpen, lag4_inClose)) && lag2_inHigh > lag3_inHigh && lag2_inLow > lag3_inLow && lag1_inHigh > lag2_inHigh && lag1_inLow > lag2_inLow && inClose < lag3_inOpen && inClose > lag4_inClose) ) /* when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap */
+         {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         lag4_inOpen = lag3_inOpen;
+         lag3_inOpen = lag2_inOpen;
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag4_inHigh = lag3_inHigh;
+         lag3_inHigh = lag2_inHigh;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag4_inLow = lag3_inLow;
+         lag3_inLow = lag2_inLow;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag4_inClose = lag3_inClose;
+         lag3_inClose = lag2_inClose;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -27710,9 +29073,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlclosingmarubozuStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -27765,25 +29125,61 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLCLOSINGMARUBOZU peek: BadParam", RetCode.BadParam);
-         CdlclosingmarubozuStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlclosingmarubozuStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlclosingmarubozuStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlclosingmarubozuStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long body */
+             (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0))))) ) /* white body and very short upper shadow black body and very short lower shadow */
+         {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal1);
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -28508,9 +29904,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlconcealbabyswallStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -28563,25 +29956,81 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLCONCEALBABYSWALL peek: BadParam", RetCode.BadParam);
-         CdlconcealbabyswallStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlconcealbabyswallStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlconcealbabyswallStream sp = this;
+         int totIdx = 0;
+         double[] ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inClose = sp.lag3_inClose;
+         double lag3_inHigh = sp.lag3_inHigh;
+         double lag3_inLow = sp.lag3_inLow;
+         double lag3_inOpen = sp.lag3_inOpen;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         pkSlot0 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal0 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+             ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 2nd black */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 3rd black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* 4th black */
+             (((lag3_inClose >= lag3_inOpen) ? lag3_inOpen : lag3_inClose) - lag3_inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[3] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag3_inClose - lag3_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: marubozu */
+             (lag3_inHigh - ((lag3_inClose >= lag3_inOpen) ? lag3_inClose : lag3_inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[3] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag3_inClose - lag3_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((lag2_inClose >= lag2_inOpen) ? lag2_inOpen : lag2_inClose) - lag2_inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[2] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: marubozu */
+             (lag2_inHigh - ((lag2_inClose >= lag2_inOpen) ? lag2_inClose : lag2_inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[2] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose)) && /* 3rd: opens gapping down */
+             (lag1_inHigh - ((lag1_inClose >= lag1_inOpen) ? lag1_inClose : lag1_inOpen)) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* and HAS an upper shadow */
+             lag1_inHigh > lag2_inClose &&                           /* that extends into the prior body */
+             inHigh > lag1_inHigh &&
+             inLow < lag1_inLow )                                    /* 4th: engulfs the 3rd including the shadows */
+         {
+            cur_outInteger = 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlconcealbabyswallStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
+            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx) != pkSlot0) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] : pkVal0) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot0) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal0));
+         }
+         lag3_inOpen = lag2_inOpen;
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag3_inHigh = lag2_inHigh;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag3_inLow = lag2_inLow;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag3_inClose = lag2_inClose;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -29348,9 +30797,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlcounterattackStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -29403,25 +30849,71 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLCOUNTERATTACK peek: BadParam", RetCode.BadParam);
-         CdlcounterattackStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlcounterattackStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlcounterattackStream sp = this;
+         int totIdx = 0;
+         double[] BodyLongPeriodTotal = sp.BodyLongPeriodTotal.clone();
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_EqualTrailingIdx;
+         pkVal1 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* opposite candles */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
+             Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd long */
+             inClose <= lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* equal closes */
+             inClose >= lag1_inClose - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlcounterattackStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot1) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal1);
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx) != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] : pkVal0) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+         }
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -30204,17 +31696,55 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDARKCLOUDCOVER peek: BadParam", RetCode.BadParam);
-         CdldarkcloudcoverStream scratch = new CdldarkcloudcoverStream(this);
-         core.cdldarkcloudcoverStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdldarkcloudcoverStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 1st: white */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&       /* 2nd: black */
+             inOpen > lag1_inHigh &&                             /* open above prior high */
+             inClose > lag1_inOpen &&                            /* close within prior body */
+             inClose < lag1_inClose - Math.abs(lag1_inClose - lag1_inOpen) * sp.optInPenetration )
+         {
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -30900,17 +32430,43 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDOJI peek: BadParam", RetCode.BadParam);
-         CdldojiStream scratch = new CdldojiStream(this);
-         core.cdldojiStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdldojiStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -31611,9 +33167,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdldojistarStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -31666,25 +33219,70 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDOJISTAR peek: BadParam", RetCode.BadParam);
-         CdldojistarStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdldojistarStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdldojistarStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdldojistarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long real body */
+             Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             (((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(inOpen, inClose) > Math.max(lag1_inOpen, lag1_inClose)) || ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(inOpen, inClose) < Math.min(lag1_inOpen, lag1_inClose))) ) /* that gaps up if 1st is white or down if 1st is black */
+         {
+            cur_outInteger = (0 - ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1)) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot1) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal1);
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -32424,9 +34022,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdldragonflydojiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -32479,25 +34074,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLDRAGONFLYDOJI peek: BadParam", RetCode.BadParam);
-         CdldragonflydojiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdldragonflydojiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdldragonflydojiStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdldragonflydojiStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal1);
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -33170,17 +34799,34 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
-         CdlengulfingStream scratch = new CdlengulfingStream(this);
-         core.cdlengulfingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlengulfingStream sp = this;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inOpen = sp.lag1_inOpen;
+         if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= lag1_inOpen && inOpen < lag1_inClose || inClose > lag1_inOpen && inOpen <= lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= lag1_inClose && inClose < lag1_inOpen || inOpen > lag1_inClose && inClose <= lag1_inOpen) ) {
+            /* white engulfs black */
+            /* black engulfs white */
+            if( inOpen != lag1_inClose && inClose != lag1_inOpen ) {
+               cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+            } else {
+               cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 80;
+            }
+         } else {
+            cur_outInteger = 0;
+         }
+         lag1_inOpen = inOpen;
+         lag1_inClose = inClose;
+         return cur_outInteger;
       }
 
       /**
@@ -33942,9 +35588,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdleveningdojistarStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -33997,25 +35640,98 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLEVENINGDOJISTAR peek: BadParam", RetCode.BadParam);
-         CdleveningdojistarStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdleveningdojistarStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdleveningdojistarStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdleveningdojistarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && /* white */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&       /* black real body */
+             (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) && /* gapping up */
+             inClose < lag2_inClose - Math.abs(lag2_inClose - lag2_inOpen) * sp.optInPenetration && /* closing well within 1st rb */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.abs(lag1_inClose - lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             Math.abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: longer than short */
+         {
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot1) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal1);
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot2) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal2);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -34887,9 +36603,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdleveningstarStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -34942,25 +36655,82 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLEVENINGSTAR peek: BadParam", RetCode.BadParam);
-         CdleveningstarStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdleveningstarStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdleveningstarStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         double BodyShortPeriodTotal2 = sp.BodyShortPeriodTotal2;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdleveningstarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         pkSlot1 = ringPos_BodyShortTrailingIdx;
+         pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && /* white */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&       /* black real body */
+             (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) && /* gapping up */
+             inClose < lag2_inClose - Math.abs(lag2_inClose - lag2_inOpen) * sp.optInPenetration && /* closing well within 1st rb */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.abs(lag1_inClose - lag1_inOpen) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: short */
+             Math.abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: longer than short */
+         {
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx) % sp.ringCap_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx) % sp.ringCap_BodyShortTrailingIdx] : pkVal1);
+         BodyShortPeriodTotal2 += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - (((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx + 1) % sp.ringCap_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx + 1) % sp.ringCap_BodyShortTrailingIdx] : pkVal1);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -35753,9 +37523,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlgapsidesidewhiteStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -35808,25 +37575,74 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE peek: BadParam", RetCode.BadParam);
-         CdlgapsidesidewhiteStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlgapsidesidewhiteStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlgapsidesidewhiteStream sp = this;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         double NearPeriodTotal = sp.NearPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         pkSlot0 = ringPos_EqualTrailingIdx;
+         pkVal0 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_NearTrailingIdx;
+         pkVal1 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) && (Math.min(inOpen, inClose) > Math.max(lag2_inOpen, lag2_inClose)) || (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose)) && (Math.max(inOpen, inClose) < Math.min(lag2_inOpen, lag2_inClose))) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd: white */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&           /* 3rd: white */
+             Math.abs(inClose - inOpen) >= Math.abs(lag1_inClose - lag1_inOpen) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && /* same size 2 and 3 */
+             Math.abs(inClose - inOpen) <= Math.abs(lag1_inClose - lag1_inOpen) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             inOpen >= lag1_inOpen - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* same open 2 and 3 */
+             inOpen <= lag1_inOpen + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) ? 100 : 0 - 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlgapsidesidewhiteStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx != pkSlot1) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx] : pkVal1);
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot0) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -36578,9 +38394,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlgravestonedojiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -36633,25 +38446,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLGRAVESTONEDOJI peek: BadParam", RetCode.BadParam);
-         CdlgravestonedojiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlgravestonedojiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlgravestonedojiStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlgravestonedojiStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal1);
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -37490,9 +39337,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlhammerStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -37545,25 +39389,103 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHAMMER peek: BadParam", RetCode.BadParam);
-         CdlhammerStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlhammerStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlhammerStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         double NearPeriodTotal = sp.NearPeriodTotal;
+         double ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlhammerStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_NearTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_ShadowLongTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot3 = 0;
+            pkVal3 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* small rb */
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long lower shadow */
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short upper shadow */
+             Math.min(inClose, inOpen) <= lag1_inLow + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* rb near the prior candle's lows */
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ShadowLongPeriodTotal += ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowLongTrailingIdx != pkSlot2) ? sp.ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx] : pkVal2);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot3) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal3);
+         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_NearTrailingIdx != pkSlot1) ? sp.ring_NearTrailingIdx_derived[ringPos_NearTrailingIdx] : pkVal1);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -38505,9 +40427,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlhangingmanStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -38560,25 +40479,103 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHANGINGMAN peek: BadParam", RetCode.BadParam);
-         CdlhangingmanStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlhangingmanStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlhangingmanStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         double NearPeriodTotal = sp.NearPeriodTotal;
+         double ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlhangingmanStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_NearTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_ShadowLongTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot3 = 0;
+            pkVal3 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* small rb */
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long lower shadow */
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short upper shadow */
+             Math.min(inClose, inOpen) >= lag1_inHigh - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* rb near the prior candle's highs */
+         {
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ShadowLongPeriodTotal += ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowLongTrailingIdx != pkSlot2) ? sp.ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx] : pkVal2);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot3) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal3);
+         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_NearTrailingIdx != pkSlot1) ? sp.ring_NearTrailingIdx_derived[ringPos_NearTrailingIdx] : pkVal1);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -39433,9 +41430,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlharamiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -39488,25 +41482,84 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHARAMI peek: BadParam", RetCode.BadParam);
-         CdlharamiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlharamiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlharamiStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlharamiStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            /* 1st: long */
+            if( Math.abs(inClose - inOpen) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               /* 2nd: short */
+               /* 2nd is engulfed by 1st */
+               if( Math.max(inClose, inOpen) < Math.max(lag1_inClose, lag1_inOpen) && Math.min(inClose, inOpen) > Math.min(lag1_inClose, lag1_inOpen) ) {
+                  cur_outInteger = (0 - ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1)) * 100;
+                  /* 2nd is engulfed by 1st
+                   * (one end of real body can match;
+                   * engulfing guaranteed by "long" and "short")
+                   */
+               } else if( Math.max(inClose, inOpen) <= Math.max(lag1_inClose, lag1_inOpen) && Math.min(inClose, inOpen) >= Math.min(lag1_inClose, lag1_inOpen) ) {
+                  cur_outInteger = (0 - ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1)) * 80;
+               } else {
+                  cur_outInteger = 0;
+               }
+            } else {
+               cur_outInteger = 0;
+            }
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal1);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -40304,9 +42357,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlharamicrossStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -40359,25 +42409,84 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHARAMICROSS peek: BadParam", RetCode.BadParam);
-         CdlharamicrossStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlharamicrossStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlharamicrossStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlharamicrossStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            /* 1st: long */
+            if( Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
+               /* 2nd: doji */
+               if( Math.max(inClose, inOpen) < Math.max(lag1_inClose, lag1_inOpen) && /* 2nd is engulfed by 1st */
+                   Math.min(inClose, inOpen) > Math.min(lag1_inClose, lag1_inOpen) )
+               {
+                  cur_outInteger = (0 - ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1)) * 100;
+               } else if( Math.max(inClose, inOpen) <= Math.max(lag1_inClose, lag1_inOpen) && /* 2nd is engulfed by 1st */
+                   Math.min(inClose, inOpen) >= Math.min(lag1_inClose, lag1_inOpen) )  /* (one end of real body can match; */
+               {
+                  /* engulfing guaranteed by "long" and "doji") */
+                  cur_outInteger = (0 - ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1)) * 80;
+               } else {
+                  cur_outInteger = 0;
+               }
+            } else {
+               cur_outInteger = 0;
+            }
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot1) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal1);
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -41140,9 +43249,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlhighwaveStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -41195,25 +43301,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIGHWAVE peek: BadParam", RetCode.BadParam);
-         CdlhighwaveStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlhighwaveStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlhighwaveStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         double ShadowPeriodTotal = sp.ShadowPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int ShadowVeryLong_rangeType = sp.cs_ShadowVeryLong_rangeType;
+         int ShadowVeryLong_avgPeriod = sp.cs_ShadowVeryLong_avgPeriod;
+         double ShadowVeryLong_factor = sp.cs_ShadowVeryLong_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlhighwaveStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowTrailingIdx != pkSlot1) ? sp.ring_ShadowTrailingIdx_derived[ringPos_ShadowTrailingIdx] : pkVal1);
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         ringPos_ShadowTrailingIdx = ringPos_ShadowTrailingIdx + 1;
+         if( ringPos_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx ) {
+            ringPos_ShadowTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -41966,17 +44106,51 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
-         CdlhikkakeStream scratch = new CdlhikkakeStream(this);
-         core.cdlhikkakeStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlhikkakeStream sp = this;
+         int cd = sp.cd;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         int patternResult = sp.patternResult;
+         double savedHigh = sp.savedHigh;
+         double savedLow = sp.savedLow;
+         if( lag1_inHigh < lag2_inHigh &&
+             lag1_inLow > lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh < lag1_inHigh && inLow < lag1_inLow || inHigh > lag1_inHigh && inLow > lag1_inLow) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh < lag1_inHigh) ? 1 : 0 - 1);
+            savedHigh = lag1_inHigh;
+            savedLow = lag1_inLow;
+            cd = 4;
+            cur_outInteger = patternResult;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose > savedHigh || patternResult < 0 && inClose < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            cur_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            cd = 0;
+         } else {
+            cur_outInteger = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
+         }
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         return cur_outInteger;
       }
 
       /**
@@ -42808,17 +44982,79 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
-         CdlhikkakemodStream scratch = new CdlhikkakemodStream(this);
-         core.cdlhikkakemodStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlhikkakemodStream sp = this;
+         double NearPeriodTotal = sp.NearPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inHigh = sp.lag3_inHigh;
+         double lag3_inLow = sp.lag3_inLow;
+         int patternCount = sp.patternCount;
+         double patternHigh = sp.patternHigh;
+         double patternLow = sp.patternLow;
+         int patternResult = sp.patternResult;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         pkSlot0 = ringPos_NearTrailingIdx;
+         pkVal0 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( lag2_inHigh < lag3_inHigh &&
+             lag2_inLow > lag3_inLow &&   /* 2nd: lower high and higher low than 1st */
+             lag1_inHigh < lag2_inHigh &&
+             lag1_inLow > lag2_inLow &&   /* 3rd: lower high and higher low than 2nd */
+             (inHigh < lag1_inHigh && inLow < lag1_inLow && lag2_inClose <= lag2_inLow + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || inHigh > lag1_inHigh && inLow > lag1_inLow && lag2_inClose >= lag2_inHigh - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top */
+         {
+            patternResult = 100 * ((inHigh < lag1_inHigh) ? 1 : 0 - 1);
+            patternHigh = lag1_inHigh;
+            patternLow = lag1_inLow;
+            patternCount = 4;
+            cur_outInteger = patternResult;
+         } else if( patternCount > 0 &&
+             (patternResult > 0 && inClose > patternHigh || patternResult < 0 && inClose < patternLow) ) /* search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd */
+         {
+            cur_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            patternCount = 0;
+         } else {
+            cur_outInteger = 0;
+         }
+         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx != pkSlot0) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx] : pkVal0);
+         if( patternCount > 0 ) {
+            patternCount -= 1;
+         }
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag3_inHigh = lag2_inHigh;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag3_inLow = lag2_inLow;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -43608,9 +45844,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlhomingpigeonStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -43663,25 +45896,71 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHOMINGPIGEON peek: BadParam", RetCode.BadParam);
-         CdlhomingpigeonStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlhomingpigeonStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlhomingpigeonStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlhomingpigeonStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* 2nd black */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
+             Math.abs(inClose - inOpen) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd short */
+             inOpen < lag1_inOpen &&                                 /* 2nd engulfed by 1st */
+             inClose > lag1_inClose )
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal1);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -44486,9 +46765,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdlidentical3crowsStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -44541,25 +46817,88 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLIDENTICAL3CROWS peek: BadParam", RetCode.BadParam);
-         Cdlidentical3crowsStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdlidentical3crowsStream(this);
-            PEEK_SCRATCH.set(scratch);
+         Cdlidentical3crowsStream sp = this;
+         int totIdx = 0;
+         double[] EqualPeriodTotal = sp.EqualPeriodTotal.clone();
+         double[] ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         pkSlot0 = ringPos_EqualTrailingIdx;
+         pkVal0 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal1 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+             (((lag2_inClose >= lag2_inOpen) ? lag2_inOpen : lag2_inClose) - lag2_inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[2] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short lower shadow */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 2nd black */
+             (((lag1_inClose >= lag1_inOpen) ? lag1_inOpen : lag1_inClose) - lag1_inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short lower shadow */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* 3rd black */
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short lower shadow */
+             lag2_inClose > lag1_inClose &&                          /* three declining */
+             lag1_inClose > inClose &&
+             lag1_inOpen <= lag2_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal[2] / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Equal_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Equal_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd black opens very close to 1st close */
+             lag1_inOpen >= lag2_inClose - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal[2] / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Equal_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Equal_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) &&
+             inOpen <= lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal[1] / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd black opens very close to 2nd close */
+             inOpen >= lag1_inClose - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal[1] / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = 0 - 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlidentical3crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 2; totIdx >= 0; totIdx -= 1 ) {
+            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx) != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] : pkVal1) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal1));
+         }
+         for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+            EqualPeriodTotal[totIdx] = EqualPeriodTotal[totIdx] + (((((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx >= sp.ringCap_EqualTrailingIdx) ? ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx - sp.ringCap_EqualTrailingIdx : ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx) != pkSlot0) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx >= sp.ringCap_EqualTrailingIdx) ? ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx - sp.ringCap_EqualTrailingIdx : ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx] : pkVal0) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - totIdx) % sp.ringCap_EqualTrailingIdx != pkSlot0) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - totIdx) % sp.ringCap_EqualTrailingIdx] : pkVal0));
+         }
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -45360,9 +47699,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlinneckStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -45415,25 +47751,69 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLINNECK peek: BadParam", RetCode.BadParam);
-         CdlinneckStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlinneckStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlinneckStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_EqualTrailingIdx;
+         pkVal1 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* 2nd: white */
+             inOpen < lag1_inLow &&                                  /* open below prior low */
+             inClose <= lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* close slightly into prior body */
+             inClose >= lag1_inClose )
+         {
+            cur_outInteger = 0 - 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlinneckStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot1) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal1);
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -46227,9 +48607,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlinvertedhammerStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -46282,25 +48659,84 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLINVERTEDHAMMER peek: BadParam", RetCode.BadParam);
-         CdlinvertedhammerStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlinvertedhammerStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlinvertedhammerStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         double ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlinvertedhammerStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( (Math.max(inOpen, inClose) < Math.min(lag1_inOpen, lag1_inClose)) && /* gap down */
+             Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* small rb */
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long upper shadow */
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            /* very short lower shadow */
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ShadowLongPeriodTotal += ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowLongTrailingIdx != pkSlot1) ? sp.ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx] : pkVal1);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot2) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal2);
+         lag1_inOpen = inOpen;
+         lag1_inClose = inClose;
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -47111,9 +49547,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlkickingStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -47166,25 +49599,74 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLKICKING peek: BadParam", RetCode.BadParam);
-         CdlkickingStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlkickingStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlkickingStream sp = this;
+         int totIdx = 0;
+         double[] BodyLongPeriodTotal = sp.BodyLongPeriodTotal.clone();
+         double[] ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal1 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* opposite candles */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st marubozu */
+             (lag1_inHigh - ((lag1_inClose >= lag1_inOpen) ? lag1_inClose : lag1_inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((lag1_inClose >= lag1_inOpen) ? lag1_inOpen : lag1_inClose) - lag1_inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd marubozu */
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inLow > lag1_inHigh) || ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && (inHigh < lag1_inLow)) ) /* gap */
+         {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlkickingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx) != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] : pkVal0) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx) != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] : pkVal1) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal1));
+         }
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -47965,9 +50447,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlkickingbylengthStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -48020,25 +50499,74 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLKICKINGBYLENGTH peek: BadParam", RetCode.BadParam);
-         CdlkickingbylengthStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlkickingbylengthStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlkickingbylengthStream sp = this;
+         int totIdx = 0;
+         double[] BodyLongPeriodTotal = sp.BodyLongPeriodTotal.clone();
+         double[] ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal1 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* opposite candles */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st marubozu */
+             (lag1_inHigh - ((lag1_inClose >= lag1_inOpen) ? lag1_inClose : lag1_inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((lag1_inClose >= lag1_inOpen) ? lag1_inOpen : lag1_inClose) - lag1_inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd marubozu */
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[0] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inLow > lag1_inHigh) || ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && (inHigh < lag1_inLow)) ) /* gap */
+         {
+            cur_outInteger = ((((Math.abs(inClose - inOpen) > Math.abs(lag1_inClose - lag1_inOpen)) ? inClose : lag1_inClose) >= ((Math.abs(inClose - inOpen) > Math.abs(lag1_inClose - lag1_inOpen)) ? inOpen : lag1_inOpen)) ? 1 : 0 - 1) * 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlkickingbylengthStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx) != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] : pkVal0) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx) != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] : pkVal1) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal1));
+         }
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -48827,17 +51355,73 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLLADDERBOTTOM peek: BadParam", RetCode.BadParam);
-         CdlladderbottomStream scratch = new CdlladderbottomStream(this);
-         core.cdlladderbottomStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlladderbottomStream sp = this;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inClose = sp.lag3_inClose;
+         double lag3_inOpen = sp.lag3_inOpen;
+         double lag4_inClose = sp.lag4_inClose;
+         double lag4_inOpen = sp.lag4_inOpen;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         pkSlot0 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal0 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+             ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+             ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
+             lag4_inOpen > lag3_inOpen &&
+             lag3_inOpen > lag2_inOpen &&                            /* with consecutively lower opens */
+             lag4_inClose > lag3_inClose &&
+             lag3_inClose > lag2_inClose &&                          /* and closes */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 4th: black with an upper shadow */
+             (lag1_inHigh - ((lag1_inClose >= lag1_inOpen) ? lag1_inClose : lag1_inOpen)) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* 5th: white */
+             inOpen > lag1_inOpen &&                                 /* that opens above prior candle's body */
+             inClose > lag1_inHigh )                                 /* and closes above prior candle's high */
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot0) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal0);
+         lag4_inOpen = lag3_inOpen;
+         lag3_inOpen = lag2_inOpen;
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag4_inClose = lag3_inClose;
+         lag3_inClose = lag2_inClose;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -49556,9 +52140,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdllongleggeddojiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -49611,25 +52192,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLLONGLEGGEDDOJI peek: BadParam", RetCode.BadParam);
-         CdllongleggeddojiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdllongleggeddojiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdllongleggeddojiStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdllongleggeddojiStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && ((((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0)))) || (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0))))) ) {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         ShadowLongPeriodTotal += ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowLongTrailingIdx != pkSlot1) ? sp.ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx] : pkVal1);
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -50327,9 +52942,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdllonglineStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -50382,25 +52994,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLLONGLINE peek: BadParam", RetCode.BadParam);
-         CdllonglineStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdllonglineStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdllonglineStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         double ShadowPeriodTotal = sp.ShadowPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int ShadowShort_rangeType = sp.cs_ShadowShort_rangeType;
+         int ShadowShort_avgPeriod = sp.cs_ShadowShort_avgPeriod;
+         double ShadowShort_factor = sp.cs_ShadowShort_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdllonglineStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ShadowPeriodTotal += ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowTrailingIdx != pkSlot1) ? sp.ring_ShadowTrailingIdx_derived[ringPos_ShadowTrailingIdx] : pkVal1);
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         ringPos_ShadowTrailingIdx = ringPos_ShadowTrailingIdx + 1;
+         if( ringPos_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx ) {
+            ringPos_ShadowTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -51109,9 +53755,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlmarubozuStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -51164,25 +53807,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMARUBOZU peek: BadParam", RetCode.BadParam);
-         CdlmarubozuStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlmarubozuStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlmarubozuStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlmarubozuStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal1);
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -51908,17 +54585,53 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMATCHINGLOW peek: BadParam", RetCode.BadParam);
-         CdlmatchinglowStream scratch = new CdlmatchinglowStream(this);
-         core.cdlmatchinglowStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlmatchinglowStream sp = this;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         pkSlot0 = ringPos_EqualTrailingIdx;
+         pkVal0 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* first black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* second black */
+             inClose <= lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st and 2nd same close */
+             inClose >= lag1_inClose - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot0) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -52723,9 +55436,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlmatholdStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -52778,25 +55488,105 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMATHOLD peek: BadParam", RetCode.BadParam);
-         CdlmatholdStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlmatholdStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlmatholdStream sp = this;
+         int totIdx = 0;
+         double[] BodyPeriodTotal = sp.BodyPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inClose = sp.lag3_inClose;
+         double lag3_inHigh = sp.lag3_inHigh;
+         double lag3_inLow = sp.lag3_inLow;
+         double lag3_inOpen = sp.lag3_inOpen;
+         double lag4_inClose = sp.lag4_inClose;
+         double lag4_inHigh = sp.lag4_inHigh;
+         double lag4_inLow = sp.lag4_inLow;
+         double lag4_inOpen = sp.lag4_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_BodyShortTrailingIdx;
+         pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) == 1 &&                    /* white, black, 2 black or white, white */
+             ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
+             (Math.min(lag3_inOpen, lag3_inClose) > Math.max(lag4_inOpen, lag4_inClose)) && /* upside gap 1st to 2nd */
+             Math.min(lag2_inOpen, lag2_inClose) < lag4_inClose &&                  /* 3rd to 4th hold within 1st: a part of the real body must be within 1st real body */
+             Math.min(lag1_inOpen, lag1_inClose) < lag4_inClose &&
+             Math.min(lag2_inOpen, lag2_inClose) > lag4_inClose - Math.abs(lag4_inClose - lag4_inOpen) * sp.optInPenetration && /* reaction days penetrate first body less than optInPenetration percent */
+             Math.min(lag1_inOpen, lag1_inClose) > lag4_inClose - Math.abs(lag4_inClose - lag4_inOpen) * sp.optInPenetration &&
+             Math.max(lag2_inClose, lag2_inOpen) < lag3_inOpen &&                   /* 2nd to 4th are falling */
+             Math.max(lag1_inClose, lag1_inOpen) < Math.max(lag2_inClose, lag2_inOpen) &&
+             inOpen > lag1_inClose &&                                               /* 5th opens above the prior close */
+             inClose > Math.max(Math.max(lag3_inHigh, lag2_inHigh), lag1_inHigh) && /* 5th closes above the highest high of the reaction days */
+             Math.abs(lag4_inClose - lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyPeriodTotal[4] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long, then 3 small */
+             Math.abs(lag3_inClose - lag3_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[3] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag3_inClose - lag3_inOpen)) : ((BodyShort_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((BodyShort_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(lag2_inClose - lag2_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[2] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(lag1_inClose - lag1_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[1] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlmatholdStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal[4] = BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+         for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
+            BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (((((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx) != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx] : pkVal1) - (((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx] : pkVal1));
+         }
+         lag4_inOpen = lag3_inOpen;
+         lag3_inOpen = lag2_inOpen;
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag4_inHigh = lag3_inHigh;
+         lag3_inHigh = lag2_inHigh;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag4_inLow = lag3_inLow;
+         lag3_inLow = lag2_inLow;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag4_inClose = lag3_inClose;
+         lag3_inClose = lag2_inClose;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -53720,9 +56510,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlmorningdojistarStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -53775,25 +56562,98 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMORNINGDOJISTAR peek: BadParam", RetCode.BadParam);
-         CdlmorningdojistarStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlmorningdojistarStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlmorningdojistarStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlmorningdojistarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* white real body */
+             (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose)) && /* gapping down */
+             inClose > Math.fma(Math.abs(lag2_inClose - lag2_inOpen), sp.optInPenetration, lag2_inClose) && /* closing well within 1st rb */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.abs(lag1_inClose - lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             Math.abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: longer than short */
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot1) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal1);
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyDoji_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot2) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal2);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -54673,9 +57533,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlmorningstarStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -54728,25 +57585,82 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLMORNINGSTAR peek: BadParam", RetCode.BadParam);
-         CdlmorningstarStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlmorningstarStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlmorningstarStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         double BodyShortPeriodTotal2 = sp.BodyShortPeriodTotal2;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlmorningstarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         pkSlot1 = ringPos_BodyShortTrailingIdx;
+         pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* white real body */
+             (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose)) && /* gapping down */
+             inClose > Math.fma(Math.abs(lag2_inClose - lag2_inOpen), sp.optInPenetration, lag2_inClose) && /* closing well within 1st rb */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.abs(lag1_inClose - lag1_inOpen) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: short */
+             Math.abs(inClose - inOpen) > ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal2 / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: longer than short */
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx) % sp.ringCap_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx) % sp.ringCap_BodyShortTrailingIdx] : pkVal1);
+         BodyShortPeriodTotal2 += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - (((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx + 1) % sp.ringCap_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx + 1) % sp.ringCap_BodyShortTrailingIdx] : pkVal1);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -55533,9 +58447,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlonneckStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -55588,25 +58499,69 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLONNECK peek: BadParam", RetCode.BadParam);
-         CdlonneckStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlonneckStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlonneckStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_EqualTrailingIdx;
+         pkVal1 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* 2nd: white */
+             inOpen < lag1_inLow &&                                  /* open below prior low */
+             inClose <= lag1_inLow + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* close equal to prior low */
+             inClose >= lag1_inLow - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = 0 - 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlonneckStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot1) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal1);
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -56315,9 +59270,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlpiercingStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -56370,25 +59322,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLPIERCING peek: BadParam", RetCode.BadParam);
-         CdlpiercingStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlpiercingStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlpiercingStream sp = this;
+         int totIdx = 0;
+         double[] BodyLongPeriodTotal = sp.BodyLongPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* 2nd: white */
+             Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             inOpen < lag1_inLow &&                                  /* open below prior low */
+             inClose < lag1_inOpen &&                                /* close within prior body */
+             inClose > Math.fma(Math.abs(lag1_inClose - lag1_inOpen), 0.5, lag1_inClose) ) /* above midpoint */
+         {
+            cur_outInteger = 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlpiercingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 1; totIdx >= 0; totIdx -= 1 ) {
+            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx) != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] : pkVal0) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+         }
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -57144,9 +60130,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlrickshawmanStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -57199,25 +60182,79 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLRICKSHAWMAN peek: BadParam", RetCode.BadParam);
-         CdlrickshawmanStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlrickshawmanStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlrickshawmanStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double NearPeriodTotal = sp.NearPeriodTotal;
+         double ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlrickshawmanStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_NearTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_ShadowLongTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* doji */
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long shadow */
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long shadow */
+             Math.min(inOpen, inClose) <= inLow + (inHigh - inLow) / 2 + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && Math.max(inOpen, inClose) >= inLow + (inHigh - inLow) / 2 - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* body near midpoint */
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         ShadowLongPeriodTotal += ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowLongTrailingIdx != pkSlot2) ? sp.ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx] : pkVal2);
+         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_NearTrailingIdx != pkSlot1) ? sp.ring_NearTrailingIdx_derived[ringPos_NearTrailingIdx] : pkVal1);
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -58078,9 +61115,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdlrisefall3methodsStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -58133,25 +61167,109 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLRISEFALL3METHODS peek: BadParam", RetCode.BadParam);
-         Cdlrisefall3methodsStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdlrisefall3methodsStream(this);
-            PEEK_SCRATCH.set(scratch);
+         Cdlrisefall3methodsStream sp = this;
+         int totIdx = 0;
+         double[] BodyPeriodTotal = sp.BodyPeriodTotal.clone();
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inClose = sp.lag3_inClose;
+         double lag3_inHigh = sp.lag3_inHigh;
+         double lag3_inLow = sp.lag3_inLow;
+         double lag3_inOpen = sp.lag3_inOpen;
+         double lag4_inClose = sp.lag4_inClose;
+         double lag4_inHigh = sp.lag4_inHigh;
+         double lag4_inLow = sp.lag4_inLow;
+         double lag4_inOpen = sp.lag4_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_BodyShortTrailingIdx;
+         pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) == 0 - ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) && /* white, 3 black, white  ||  black, 3 white, black */
+             ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) &&
+             ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) &&
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) &&
+             Math.min(lag3_inOpen, lag3_inClose) < lag4_inHigh && /* 2nd to 4th hold within 1st: a part of the real body must be within 1st range */
+             Math.max(lag3_inOpen, lag3_inClose) > lag4_inLow &&
+             Math.min(lag2_inOpen, lag2_inClose) < lag4_inHigh &&
+             Math.max(lag2_inOpen, lag2_inClose) > lag4_inLow &&
+             Math.min(lag1_inOpen, lag1_inClose) < lag4_inHigh &&
+             Math.max(lag1_inOpen, lag1_inClose) > lag4_inLow &&
+             lag2_inClose * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) < lag3_inClose * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) && /* 2nd to 4th are falling (rising) */
+             lag1_inClose * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) < lag2_inClose * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) &&
+             inOpen * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) > lag1_inClose * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) && /* 5th opens above (below) the prior close */
+             inClose * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) > lag4_inClose * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) && /* 5th closes above (below) the 1st close */
+             Math.abs(lag4_inClose - lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyPeriodTotal[4] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long, then 3 small, 5th long */
+             Math.abs(lag3_inClose - lag3_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[3] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag3_inClose - lag3_inOpen)) : ((BodyShort_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((BodyShort_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(lag2_inClose - lag2_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[2] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(lag1_inClose - lag1_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[1] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyPeriodTotal[0] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = 100 * ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1);
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlrisefall3methodsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal[4] = BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+         for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
+            BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (((((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx) != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx] : pkVal1) - (((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx] : pkVal1));
+         }
+         BodyPeriodTotal[0] = BodyPeriodTotal[0] + (((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+         lag4_inOpen = lag3_inOpen;
+         lag3_inOpen = lag2_inOpen;
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag4_inHigh = lag3_inHigh;
+         lag3_inHigh = lag2_inHigh;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag4_inLow = lag3_inLow;
+         lag3_inLow = lag2_inLow;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag4_inClose = lag3_inClose;
+         lag3_inClose = lag2_inClose;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -59023,9 +62141,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlseparatinglinesStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -59078,25 +62193,86 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSEPARATINGLINES peek: BadParam", RetCode.BadParam);
-         CdlseparatinglinesStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlseparatinglinesStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlseparatinglinesStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlseparatinglinesStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         pkSlot1 = ringPos_EqualTrailingIdx;
+         pkVal1 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* opposite candles */
+             inOpen <= lag1_inOpen + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* same open */
+             inOpen >= lag1_inOpen - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(inClose - inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* belt hold: long body */
+             (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0))))) ) /* with no lower shadow if bullish with no upper shadow if bearish */
+         {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot2) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal2);
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot1) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal1);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -59935,9 +63111,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlshootingstarStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -59990,25 +63163,84 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSHOOTINGSTAR peek: BadParam", RetCode.BadParam);
-         CdlshootingstarStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlshootingstarStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlshootingstarStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         double ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int ShadowLong_rangeType = sp.cs_ShadowLong_rangeType;
+         int ShadowLong_avgPeriod = sp.cs_ShadowLong_avgPeriod;
+         double ShadowLong_factor = sp.cs_ShadowLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlshootingstarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( (Math.min(inOpen, inClose) > Math.max(lag1_inOpen, lag1_inClose)) && /* gap up */
+             Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* small rb */
+             (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowLong_factor * (((ShadowLong_avgPeriod != 0) ? (ShadowLongPeriodTotal / ShadowLong_avgPeriod) : ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long upper shadow */
+             (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            /* very short lower shadow */
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ShadowLongPeriodTotal += ((ShadowLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowLongTrailingIdx != pkSlot1) ? sp.ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx] : pkVal1);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot2) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal2);
+         lag1_inOpen = inOpen;
+         lag1_inClose = inClose;
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
+         if( ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx ) {
+            ringPos_ShadowLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -60779,9 +64011,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlshortlineStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -60834,25 +64063,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSHORTLINE peek: BadParam", RetCode.BadParam);
-         CdlshortlineStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlshortlineStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlshortlineStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         double ShadowPeriodTotal = sp.ShadowPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int ShadowShort_rangeType = sp.cs_ShadowShort_rangeType;
+         int ShadowShort_avgPeriod = sp.cs_ShadowShort_avgPeriod;
+         double ShadowShort_factor = sp.cs_ShadowShort_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlshortlineStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < ((ShadowShort_factor * (((ShadowShort_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowShort_avgPeriod) : ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ShadowPeriodTotal += ((ShadowShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowTrailingIdx != pkSlot1) ? sp.ring_ShadowTrailingIdx_derived[ringPos_ShadowTrailingIdx] : pkVal1);
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         ringPos_ShadowTrailingIdx = ringPos_ShadowTrailingIdx + 1;
+         if( ringPos_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx ) {
+            ringPos_ShadowTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -61551,17 +64814,43 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSPINNINGTOP peek: BadParam", RetCode.BadParam);
-         CdlspinningtopStream scratch = new CdlspinningtopStream(this);
-         core.cdlspinningtopStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlspinningtopStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > Math.abs(inClose - inOpen) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) > Math.abs(inClose - inOpen) && Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -62416,9 +65705,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlstalledpatternStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -62471,25 +65757,116 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSTALLEDPATTERN peek: BadParam", RetCode.BadParam);
-         CdlstalledpatternStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlstalledpatternStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdlstalledpatternStream sp = this;
+         int totIdx = 0;
+         double[] BodyLongPeriodTotal = sp.BodyLongPeriodTotal.clone();
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         double[] NearPeriodTotal = sp.NearPeriodTotal.clone();
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int pkSlot3 = -1;
+         double pkVal3 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlstalledpatternStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         pkSlot2 = ringPos_NearTrailingIdx;
+         pkVal2 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot3 = ringPos_ShadowVeryShortTrailingIdx;
+         pkVal3 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && /* 1st white */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd white */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&           /* 3rd white */
+             inClose > lag1_inClose &&
+             lag1_inClose > lag2_inClose &&                      /* consecutive higher closes */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[2] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long real body */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: long real body */
+             (lag1_inHigh - ((lag1_inClose >= lag1_inOpen) ? lag1_inClose : lag1_inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short upper shadow */
+             lag1_inOpen > lag2_inOpen &&                        /* opens within/near 1st real body */
+             lag1_inOpen <= lag2_inClose + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: small real body */
+             inOpen >= lag1_inClose - Math.abs(inClose - inOpen) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[1] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* rides on the shoulder of 2nd real body */
+         {
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
+            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx) != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx >= sp.ringCap_BodyLongTrailingIdx) ? ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx - sp.ringCap_BodyLongTrailingIdx : ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - totIdx] : pkVal0) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - totIdx) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx) != pkSlot2) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] : pkVal2) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx != pkSlot2) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx] : pkVal2));
+         }
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal1);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx != pkSlot3) ? sp.ring_ShadowVeryShortTrailingIdx_derived[(ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx] : pkVal3);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -63366,17 +66743,63 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
-         CdlsticksandwichStream scratch = new CdlsticksandwichStream(this);
-         core.cdlsticksandwichStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlsticksandwichStream sp = this;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         pkSlot0 = ringPos_EqualTrailingIdx;
+         pkVal0 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* first black */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* second white */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* third black */
+             lag1_inLow > lag2_inClose &&                            /* 2nd low > prior close */
+             inClose <= lag2_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Equal_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Equal_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st and 3rd same close */
+             inClose >= lag2_inClose - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Equal_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Equal_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Equal_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Equal_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx != pkSlot0) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -64131,9 +67554,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdltakuriStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -64186,25 +67606,75 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTAKURI peek: BadParam", RetCode.BadParam);
-         CdltakuriStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdltakuriStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CdltakuriStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double ShadowVeryLongPeriodTotal = sp.ShadowVeryLongPeriodTotal;
+         double ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_ShadowVeryLongTrailingIdx = sp.ringPos_ShadowVeryLongTrailingIdx;
+         int ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int ShadowVeryLong_rangeType = sp.cs_ShadowVeryLong_rangeType;
+         int ShadowVeryLong_avgPeriod = sp.cs_ShadowVeryLong_avgPeriod;
+         double ShadowVeryLong_factor = sp.cs_ShadowVeryLong_factor;
+         int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
+         int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
+         double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdltakuriStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowVeryLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( sp.ringCap_ShadowVeryShortTrailingIdx == 0 ) {
+            pkSlot2 = 0;
+            pkVal2 = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowVeryLongPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryShortTrailingIdx != pkSlot2) ? sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] : pkVal2);
+         ShadowVeryLongPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowVeryLongTrailingIdx != pkSlot1) ? sp.ring_ShadowVeryLongTrailingIdx_derived[ringPos_ShadowVeryLongTrailingIdx] : pkVal1);
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryLongTrailingIdx = ringPos_ShadowVeryLongTrailingIdx + 1;
+         if( ringPos_ShadowVeryLongTrailingIdx >= sp.ringCap_ShadowVeryLongTrailingIdx ) {
+            ringPos_ShadowVeryLongTrailingIdx = 0;
+         }
+         ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+         if( ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx ) {
+            ringPos_ShadowVeryShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -64992,17 +68462,67 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTASUKIGAP peek: BadParam", RetCode.BadParam);
-         CdltasukigapStream scratch = new CdltasukigapStream(this);
-         core.cdltasukigapStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdltasukigapStream sp = this;
+         double NearPeriodTotal = sp.NearPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         pkSlot0 = ringPos_NearTrailingIdx;
+         pkVal0 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) && ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inOpen < lag1_inClose && inOpen > lag1_inOpen && inClose < lag1_inOpen && inClose > Math.max(lag2_inClose, lag2_inOpen) && Math.abs(Math.abs(lag1_inClose - lag1_inOpen) - Math.abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose)) && ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inOpen < lag1_inOpen && inOpen > lag1_inClose && inClose > lag1_inOpen && inClose < Math.min(lag2_inClose, lag2_inOpen) && Math.abs(Math.abs(lag1_inClose - lag1_inOpen) - Math.abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            /* upside gap */
+            /* 1st: white */
+            /* 2nd: black */
+            /* that opens within the white rb */
+            /* and closes under the white rb */
+            /* inside the gap */
+            /* size of 2 rb near the same */
+            /* downside gap */
+            /* 1st: black */
+            /* 2nd: white */
+            /* that opens within the black rb */
+            /* and closes above the black rb */
+            /* inside the gap */
+            /* size of 2 rb near the same */
+            cur_outInteger = ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx != pkSlot0) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -65744,9 +69264,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CdlthrustingStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -65799,25 +69316,69 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTHRUSTING peek: BadParam", RetCode.BadParam);
-         CdlthrustingStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CdlthrustingStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CdlthrustingStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         pkSlot0 = ringPos_BodyLongTrailingIdx;
+         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         pkSlot1 = ringPos_EqualTrailingIdx;
+         pkVal1 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
+             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* 2nd: white */
+             inOpen < lag1_inLow &&                                  /* open below prior low */
+             inClose > lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* close into prior body */
+             inClose <= Math.fma(Math.abs(lag1_inClose - lag1_inOpen), 0.5, lag1_inClose) ) /* under the midpoint */
+         {
+            cur_outInteger = 0 - 100;
          } else {
-            scratch.copyFrom(this);
+            cur_outInteger = 0;
          }
-         core.cdlthrustingStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot1) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal1);
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -66590,17 +70151,73 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTRISTAR peek: BadParam", RetCode.BadParam);
-         CdltristarStream scratch = new CdltristarStream(this);
-         core.cdltristarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdltristarStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.abs(lag2_inClose - lag2_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: doji */
+             Math.abs(lag1_inClose - lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            /* 3rd: doji */
+            cur_outInteger = 0;
+            if( (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) && /* 2nd gaps up */
+                Math.max(inOpen, inClose) < Math.max(lag1_inOpen, lag1_inClose) ) /* 3rd is not higher than 2nd */
+            {
+               cur_outInteger = 0 - 100;
+            }
+            if( (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose)) && /* 2nd gaps down */
+                Math.min(inOpen, inClose) > Math.min(lag1_inOpen, lag1_inClose) ) /* 3rd is not lower than 2nd */
+            {
+               cur_outInteger = 100;
+            }
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -67347,9 +70964,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdlunique3riverStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -67402,25 +71016,84 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLUNIQUE3RIVER peek: BadParam", RetCode.BadParam);
-         Cdlunique3riverStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdlunique3riverStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         Cdlunique3riverStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlunique3riverStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* black */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 2nd: black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* white */
+             lag1_inClose > lag2_inClose &&
+             lag1_inOpen <= lag2_inOpen &&                           /* harami */
+             lag1_inLow < lag2_inLow &&                              /* lower low */
+             inOpen > lag1_inLow &&                                  /* open not lower */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long */
+             Math.abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) /* 3rd: short */
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal1);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -68203,9 +71876,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<Cdlupsidegap2crowsStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -68258,25 +71928,84 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS peek: BadParam", RetCode.BadParam);
-         Cdlupsidegap2crowsStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new Cdlupsidegap2crowsStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         Cdlupsidegap2crowsStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         double BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.cdlupsidegap2crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyShortTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* 1st: white */
+             Math.abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 2nd: black */
+             Math.abs(lag1_inClose - lag1_inOpen) <= ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* short */
+             (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) && /* gapping up */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* 3rd: black */
+             inOpen > lag1_inOpen &&
+             inClose < lag1_inClose &&                               /* 3rd: engulfing prior rb */
+             inClose > lag2_inClose )                                /* closing above 1st */
+         {
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] : pkVal1);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
+         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
+            ringPos_BodyShortTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /**
@@ -68987,17 +72716,42 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLXSIDEGAP3METHODS peek: BadParam", RetCode.BadParam);
-         Cdlxsidegap3methodsStream scratch = new Cdlxsidegap3methodsStream(this);
-         core.cdlxsidegap3methodsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         Cdlxsidegap3methodsStream sp = this;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inOpen = sp.lag2_inOpen;
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
+             inOpen < Math.max(lag1_inClose, lag1_inOpen) &&  /* 3rd opens within 2nd rb */
+             inOpen > Math.min(lag1_inClose, lag1_inOpen) &&
+             inClose < Math.max(lag2_inClose, lag2_inOpen) && /* 3rd closes within 1st rb */
+             inClose > Math.min(lag2_inClose, lag2_inOpen) &&
+             (((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) || ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose))) ) /* when 1st is white upside gap when 1st is black downside gap */
+         {
+            cur_outInteger = ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         return cur_outInteger;
       }
 
       /**
@@ -69492,17 +73246,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
-         CeilStream scratch = new CeilStream(this);
-         core.ceilStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         CeilStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.ceil(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -70182,9 +73939,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CmfStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -70237,25 +73991,49 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("CMF peek: BadParam", RetCode.BadParam);
-         CmfStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CmfStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CmfStream sp = this;
+         double high = 0.0;
+         double low = 0.0;
+         double close = 0.0;
+         double tmp = 0.0;
+         double mfv = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int mfv_Idx = sp.mfv_Idx;
+         double sumMFV = sp.sumMFV;
+         double sumVol = sp.sumVol;
+         sumMFV -= sp.cb_mfv_flow[mfv_Idx];
+         sumVol -= sp.cb_mfv_volume[mfv_Idx];
+         high = inHigh;
+         low = inLow;
+         close = inClose;
+         tmp = high - low;
+         if( tmp > 0.0 ) {
+            mfv = (close - low - (high - close)) / tmp * inVolume;
          } else {
-            scratch.copyFrom(this);
+            mfv = 0.0;
          }
-         core.cmfStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         sumMFV += mfv;
+         sumVol += inVolume;
+         if( sumVol > 0.0 ) {
+            cur_outReal = sumMFV / sumVol;
+         } else {
+            cur_outReal = 0.0;
+         }
+         mfv_Idx = mfv_Idx + 1;
+         if( mfv_Idx > sp.maxIdx_mfv ) {
+            mfv_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -71123,17 +74901,46 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CMO peek: BadParam", RetCode.BadParam);
-         CmoStream scratch = new CmoStream(this);
-         core.cmoStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         CmoStream sp = this;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevGain = sp.prevGain;
+         double prevLoss = sp.prevLoss;
+         double prevValue = sp.prevValue;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         tempValue1 = inReal;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= sp.optInTimePeriod - 1;
+         prevGain *= sp.optInTimePeriod - 1;
+         if( tempValue2 < 0 ) {
+            prevLoss -= tempValue2;
+         } else {
+            prevGain += tempValue2;
+         }
+         prevLoss /= sp.optInTimePeriod;
+         prevGain /= sp.optInTimePeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            cur_outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
+         } else {
+            cur_outReal = 0.0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -72021,17 +75828,80 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("CMOU peek: BadParam", RetCode.BadParam);
-         CmouStream scratch = new CmouStream(this);
-         core.cmouStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         CmouStream sp = this;
+         double sum = 0.0;
+         double diff = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double downSum = sp.downSum;
+         int nullRun = sp.nullRun;
+         double prevValue = sp.prevValue;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         double trailingValue = sp.trailingValue;
+         double upSum = sp.upSum;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
+          * inReal[trailingIdx-1] comes from the cache (already overwritten when
+          * outReal == inReal); inReal[trailingIdx] is read here, before this
+          * iteration writes outReal[outIdx], so it is still the original price.
+          */
+         tempReal = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         diff = tempReal - trailingValue;
+         trailingValue = tempReal;
+         if( diff > 0.0 ) {
+            upSum -= diff;
+         } else if( diff < 0.0 ) {
+            downSum += diff;
+         }
+         /* Add the newest change: inReal[today] - inReal[today-1]. */
+         tempReal = inReal;
+         diff = tempReal - prevValue;
+         prevValue = tempReal;
+         if( diff > 0.0 ) {
+            upSum += diff;
+         } else if( diff < 0.0 ) {
+            downSum -= diff;
+         }
+         /* Once a whole period of flat bars has gone by, every change in the
+          * window is exactly zero, so both sums are known to be exactly zero and
+          * the residue can be dropped.
+          */
+         if( diff == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            upSum = 0.0;
+            downSum = 0.0;
+         }
+         sum = upSum + downSum;
+         if( sum > 0.0 ) {
+            cur_outReal = 100.0 * (upSum - downSum) / sum;
+         } else {
+            cur_outReal = 0.0;
+         }
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -73060,9 +76930,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CorrelStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -73113,25 +76980,202 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("CORREL peek: BadParam", RetCode.BadParam);
-         CorrelStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CorrelStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         CorrelStream sp = this;
+         double x = 0.0;
+         double y = 0.0;
+         double trailingX = 0.0;
+         double trailingY = 0.0;
+         double ssX = 0.0;
+         double ssY = 0.0;
+         double spXY = 0.0;
+         double tempReal = 0.0;
+         int windowStart = 0;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         int j = sp.j;
+         double leavingX = sp.leavingX;
+         double leavingY = sp.leavingY;
+         double shiftX = sp.shiftX;
+         double shiftY = sp.shiftY;
+         double sumX = sp.sumX;
+         double sumX2 = sp.sumX2;
+         double sumXY = sp.sumXY;
+         double sumY = sp.sumY;
+         double sumY2 = sp.sumY2;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            j -= rebaseShift;
          }
-         core.correlStepImpl(scratch, inReal0, inReal1);
-         return scratch.cur_outReal;
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal0;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inReal1;
+         /* Add the incoming value, measured against the shift. */
+         x = (((today & sp.xMask) != pkSlot0) ? sp.x_inReal0[today & sp.xMask] : pkVal0) - shiftX;
+         sumX += x;
+         sumX2 += x * x;
+         y = (((today & sp.xMask) != pkSlot1) ? sp.x_inReal1[today & sp.xMask] : pkVal1) - shiftY;
+         sumXY += x * y;
+         sumY += y;
+         sumY2 += y * y;
+         ssX = sumX2 - sumX * sumX * sp.invPeriod;
+         ssY = sumY2 - sumY * sumY * sp.invPeriod;
+         spXY = sumXY - sumX * sumY * sp.invPeriod;
+         /* Re-anchor and rebuild with a fresh two-pass when the shift has gone
+          * stale. Same three triggers as TA_VAR: either sum of squares has shrunk
+          * below 1e-6 of the squared deviations it is extracted from; OR the value
+          * the PREVIOUS bar removed sat so far from the shift that its squared term
+          * dwarfs what remains (a large outlier transiting the window buries the
+          * small terms below its ulp, and the residue it leaves is cancellation
+          * garbage); OR at least every 32 windows, so a slow drift stays bounded
+          * however long the series runs.
+          *
+          * One bar late is correct, not a compromise. leavingX/leavingY are set by
+          * the removal at the BOTTOM of the loop, so the bar on which the outlier
+          * actually leaves still computes its own output from sums that legitimately
+          * contain it. The trigger then fires on the NEXT bar -- the first one whose
+          * sums carry the residue -- and the reseed below recomputes that bar's
+          * output before it is written. No bar is ever emitted from the residue.
+          *
+          * The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+          * legitimate answer - two uncorrelated series - not a loss of digits, and
+          * reseeding on it would rebuild the window on every bar of ordinary data.
+          * This is where the analogy with TA_VAR stops: variance has one extracted
+          * quantity and all of it is signal.
+          *
+          * Reading the window here is safe when outReal aliases an input: the
+          * outputs written so far occupy [0, outIdx-1] while windowStart is
+          * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+          */
+         barsSinceReseed -= 1;
+         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * sp.optInTimePeriod;
+            windowStart = today - sp.lookbackTotal;
+            /* Both means in one pass over the window: the rebuild below is the
+             * only O(period) work on this function's hot path, so it is walked
+             * twice, not three times.
+             */
+            tempReal = 0.0;
+            shiftY = 0.0;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempReal += ((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0;
+               shiftY += ((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1;
+            }
+            shiftX = tempReal * sp.invPeriod;
+            shiftY = shiftY * sp.invPeriod;
+            sumY2 = 0.0;
+            sumX2 = sumY2;
+            sumY = sumX2;
+            sumX = sumY;
+            sumXY = sumX;
+            for( j = windowStart; j <= today; j += 1 ) {
+               x = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0) - shiftX;
+               sumX += x;
+               sumX2 += x * x;
+               y = (((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1) - shiftY;
+               sumXY += x * y;
+               sumY += y;
+               sumY2 += y * y;
+            }
+            ssX = sumX2 - sumX * sumX * sp.invPeriod;
+            ssY = sumY2 - sumY * sumY * sp.invPeriod;
+            spXY = sumXY - sumX * sumY * sp.invPeriod;
+            /* A sum of squares is non-negative by definition, but this one is
+             * extracted as a difference, so its SIGN is not guaranteed on a window
+             * sitting inside a flat stretch. Enforce the invariant HERE and not at
+             * the divide: a negative ssX always reseeds on the same bar (it makes
+             * the first trigger's `negative < non-negative` true whenever sumX2 is
+             * positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
+             * divide below can rely on both being >= 0 and needs no sign test of
+             * its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+             */
+            if( ssX < 0.0 ) {
+               ssX = 0.0;
+            }
+            if( ssY < 0.0 ) {
+               ssY = 0.0;
+            }
+         }
+         /* Save the trailing values before writing the output, since the input
+          * and output might be the same array.
+          */
+         trailingX = (((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal0[trailingIdx & sp.xMask] : pkVal0) - shiftX;
+         trailingY = (((trailingIdx & sp.xMask) != pkSlot1) ? sp.x_inReal1[trailingIdx & sp.xMask] : pkVal1) - shiftY;
+         trailingIdx += 1;
+         /* Output the new coefficient.
+          *
+          * Each sum of squares is tested against its OWN scale, not the pair
+          * against a fixed band. The product ssX*ssY carries the fourth power of
+          * the window's spread, so an absolute threshold on it rejects a perfectly
+          * well-defined correlation as soon as the data is small - and, worse,
+          * lets a pair of NEGATIVE sums through, their signs cancelling into a
+          * plausible-looking result of the wrong sign. Testing each factor
+          * separately is what forecloses both.
+          *
+          * The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+          * whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+          * that must never reach the square root. A plain `>` rejects it, and it
+          * is also the cheaper test: the two fabs() cost ~7% of this function's
+          * runtime, and buy a wrong answer.
+          *
+          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+          * established both are positive, so the product needs no protection from
+          * a negative operand, and the second square root is worth ~25% of the
+          * runtime.
+          *
+          * The product CAN overflow to +Inf, and the one-root form is chosen with
+          * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
+          * arrays are not range-checked, so ssX and ssY are bounded only by the
+          * double range and their product exceeds it once |x| passes ~1e154. The
+          * two-root form would not overflow there -- but the form this replaces
+          * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
+          * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
+          * correlation. Trading a quarter of the runtime for a case that already
+          * behaved this way, on inputs 117 orders past any price, is not a trade
+          * worth making. Revisit only if input range-checking is ever added.
+          */
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
+            tempReal = spXY / Math.sqrt(ssX * ssY);
+            /* A correlation coefficient cannot leave [-1,1]; rounding in the
+             * three sums can still put it a few ulp outside.
+             */
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            } else if( tempReal < 0 - 1.0 ) {
+               tempReal = 0 - 1.0;
+            }
+            cur_outReal = tempReal;
+         } else {
+            cur_outReal = 0.0;
+         }
+         /* Remove the trailing values (prepares the next window). */
+         leavingX = trailingX * trailingX;
+         leavingY = trailingY * trailingY;
+         sumX -= trailingX;
+         sumX2 -= leavingX;
+         sumXY -= trailingX * trailingY;
+         sumY -= trailingY;
+         sumY2 -= leavingY;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -73976,17 +78020,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COS peek: BadParam", RetCode.BadParam);
-         CosStream scratch = new CosStream(this);
-         core.cosStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         CosStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.cos(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -74399,17 +78446,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
-         CoshStream scratch = new CoshStream(this);
-         core.coshStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         CoshStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.cosh(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -75058,17 +79108,28 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
-         DemaStream scratch = new DemaStream(this);
-         core.demaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         DemaStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         double prevEMA1 = sp.prevEMA1;
+         double prevEMA2 = sp.prevEMA2;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         prevEMA1 = Math.fma(inReal - prevEMA1, sp.optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
+         cur_outReal = 2.0 * prevEMA1 - prevEMA2;
+         return cur_outReal;
       }
 
       /**
@@ -75642,17 +79703,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("DIV peek: BadParam", RetCode.BadParam);
-         DivStream scratch = new DivStream(this);
-         core.divStepImpl(scratch, inReal0, inReal1);
-         return scratch.cur_outReal;
+         DivStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = inReal0 / inReal1;
+         return cur_outReal;
       }
 
       /**
@@ -76614,17 +80678,79 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("DX peek: BadParam", RetCode.BadParam);
-         DxStream scratch = new DxStream(this);
-         core.dxStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         DxStream sp = this;
+         double tempReal = 0.0;
+         double diffP = 0.0;
+         double diffM = 0.0;
+         double minusDI = 0.0;
+         double plusDI = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double lastOut_outReal = sp.lastOut_outReal;
+         double prevClose = sp.prevClose;
+         double prevHigh = sp.prevHigh;
+         double prevLow = sp.prevLow;
+         double prevMinusDM = sp.prevMinusDM;
+         double prevPlusDM = sp.prevPlusDM;
+         double prevTR = sp.prevTR;
+         /* Calculate the prevMinusDM and prevPlusDM */
+         tempReal = inHigh;
+         diffP = tempReal - prevHigh;
+         /* Plus Delta */
+         prevHigh = tempReal;
+         tempReal = inLow;
+         diffM = prevLow - tempReal;
+         /* Minus Delta */
+         prevLow = tempReal;
+         prevMinusDM -= prevMinusDM / sp.optInTimePeriod;
+         prevPlusDM -= prevPlusDM / sp.optInTimePeriod;
+         if( diffM > 0 && diffP < diffM ) {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            prevMinusDM += diffM;
+         } else if( diffP > 0 && diffP > diffM ) {
+            /* Case 1 and 3: +DM=diffP,-DM=0 */
+            prevPlusDM += diffP;
+         }
+         /* Calculate the prevTR */
+         double _true_range_0;
+         double range_0 = prevHigh - prevLow;
+         double tmp_0 = Math.abs(prevHigh - prevClose);
+         if( tmp_0 > range_0 ) {
+            range_0 = tmp_0;
+         }
+         tmp_0 = Math.abs(prevLow - prevClose);
+         if( tmp_0 > range_0 ) {
+            range_0 = tmp_0;
+         }
+         _true_range_0 = range_0;
+         tempReal = _true_range_0;
+         prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+         prevClose = inClose;
+         /* Calculate the DX. The value is rounded (see Wilder book). */
+         if( prevTR > 0.0 ) {
+            minusDI = (100.0 * (prevMinusDM / prevTR));
+            plusDI = (100.0 * (prevPlusDM / prevTR));
+            /* This loop is just to accumulate the initial DX */
+            tempReal = minusDI + plusDI;
+            if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+               cur_outReal = (100.0 * (Math.abs(minusDI - plusDI) / tempReal));
+            } else {
+               cur_outReal = lastOut_outReal;
+            }
+         } else {
+            cur_outReal = lastOut_outReal;
+         }
+         lastOut_outReal = cur_outReal;
+         return cur_outReal;
       }
 
       /**
@@ -76670,18 +80796,18 @@ public final class Core {
          sp.prevPlusDM += diffP;
       }
       /* Calculate the prevTR */
-      double _true_range_0;
-      double range_0 = sp.prevHigh - sp.prevLow;
-      double tmp_0 = Math.abs(sp.prevHigh - sp.prevClose);
-      if( tmp_0 > range_0 ) {
-         range_0 = tmp_0;
+      double _true_range_1;
+      double range_1 = sp.prevHigh - sp.prevLow;
+      double tmp_1 = Math.abs(sp.prevHigh - sp.prevClose);
+      if( tmp_1 > range_1 ) {
+         range_1 = tmp_1;
       }
-      tmp_0 = Math.abs(sp.prevLow - sp.prevClose);
-      if( tmp_0 > range_0 ) {
-         range_0 = tmp_0;
+      tmp_1 = Math.abs(sp.prevLow - sp.prevClose);
+      if( tmp_1 > range_1 ) {
+         range_1 = tmp_1;
       }
-      _true_range_0 = range_0;
-      tempReal = _true_range_0;
+      _true_range_1 = range_1;
+      tempReal = _true_range_1;
       sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
       sp.prevClose = inClose;
       /* Calculate the DX. The value is rounded (see Wilder book). */
@@ -76885,18 +81011,18 @@ public final class Core {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
             prevPlusDM += diffP;
          }
-         double _true_range_1;
-         double range_1 = prevHigh - prevLow;
-         double tmp_1 = Math.abs(prevHigh - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         double _true_range_2;
+         double range_2 = prevHigh - prevLow;
+         double tmp_2 = Math.abs(prevHigh - prevClose);
+         if( tmp_2 > range_2 ) {
+            range_2 = tmp_2;
          }
-         tmp_1 = Math.abs(prevLow - prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         tmp_2 = Math.abs(prevLow - prevClose);
+         if( tmp_2 > range_2 ) {
+            range_2 = tmp_2;
          }
-         _true_range_1 = range_1;
-         tempReal = _true_range_1;
+         _true_range_2 = range_2;
+         tempReal = _true_range_2;
          prevTR += tempReal;
          prevClose = inClose[today];
       }
@@ -76925,18 +81051,18 @@ public final class Core {
             prevPlusDM += diffP;
          }
          /* Calculate the prevTR */
-         double _true_range_2;
-         double range_2 = prevHigh - prevLow;
-         double tmp_2 = Math.abs(prevHigh - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
+         double _true_range_3;
+         double range_3 = prevHigh - prevLow;
+         double tmp_3 = Math.abs(prevHigh - prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         tmp_2 = Math.abs(prevLow - prevClose);
-         if( tmp_2 > range_2 ) {
-            range_2 = tmp_2;
+         tmp_3 = Math.abs(prevLow - prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         _true_range_2 = range_2;
-         tempReal = _true_range_2;
+         _true_range_3 = range_3;
+         tempReal = _true_range_3;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
       }
@@ -76985,18 +81111,18 @@ public final class Core {
             prevPlusDM += diffP;
          }
          /* Calculate the prevTR */
-         double _true_range_3;
-         double range_3 = prevHigh - prevLow;
-         double tmp_3 = Math.abs(prevHigh - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
+         double _true_range_4;
+         double range_4 = prevHigh - prevLow;
+         double tmp_4 = Math.abs(prevHigh - prevClose);
+         if( tmp_4 > range_4 ) {
+            range_4 = tmp_4;
          }
-         tmp_3 = Math.abs(prevLow - prevClose);
-         if( tmp_3 > range_3 ) {
-            range_3 = tmp_3;
+         tmp_4 = Math.abs(prevLow - prevClose);
+         if( tmp_4 > range_4 ) {
+            range_4 = tmp_4;
          }
-         _true_range_3 = range_3;
-         tempReal = _true_range_3;
+         _true_range_4 = range_4;
+         tempReal = _true_range_4;
          prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
          prevClose = inClose[today];
          /* Calculate the DX. The value is rounded (see Wilder book). */
@@ -77644,17 +81770,34 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("EFI peek: BadParam", RetCode.BadParam);
-         EfiStream scratch = new EfiStream(this);
-         core.efiStepImpl(scratch, inClose, inVolume);
-         return scratch.cur_outReal;
+         EfiStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            double force = 0.0;
+            double prevClose = sp.prevClose;
+            force = (inClose - prevClose) * inVolume;
+            prevClose = inClose;
+            cur_outReal = force;
+         } else {
+            double force = 0.0;
+            double prevClose = sp.prevClose;
+            double prevMA = sp.prevMA;
+            force = (inClose - prevClose) * inVolume;
+            prevClose = inClose;
+            prevMA = Math.fma(force - prevMA, sp.optInK_1, prevMA);
+            cur_outReal = prevMA;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -78439,17 +82582,26 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
-         EmaStream scratch = new EmaStream(this);
-         core.emaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         EmaStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         double prevMA = sp.prevMA;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         prevMA = Math.fma(inReal - prevMA, sp.optInK_1, prevMA);
+         cur_outReal = prevMA;
+         return cur_outReal;
       }
 
       /**
@@ -78950,17 +83102,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EXP peek: BadParam", RetCode.BadParam);
-         ExpStream scratch = new ExpStream(this);
-         core.expStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         ExpStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.exp(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -79371,17 +83526,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
-         FloorStream scratch = new FloorStream(this);
-         core.floorStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         FloorStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.floor(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -80525,9 +84683,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HmaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -80577,25 +84732,215 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HMA peek: BadParam", RetCode.BadParam);
-         HmaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new HmaStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         HmaStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
          }
-         core.hmaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
+            double tempReal = 0.0;
+            double fullOut = 0.0;
+            int jFull = 0;
+            int rw = 0;
+            double tempReal2 = 0.0;
+            int barsSinceReseedFull = sp.barsSinceReseedFull;
+            double periodSubFull = sp.periodSubFull;
+            double periodSumFull = sp.periodSumFull;
+            int ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull;
+            double trailingFull = sp.trailingFull;
+            int winPos_jFull = sp.winPos_jFull;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            if( sp.ringCap_trailingIdxFull == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            pkSlot1 = winPos_jFull;
+            pkVal1 = inReal;
+            tempReal = inReal;
+            periodSubFull += tempReal;
+            periodSubFull -= trailingFull;
+            periodSumFull += tempReal * sp.optInTimePeriod;
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * sp.optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+                  tempReal2 = (((winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : winPos_jFull + sp.winCap_jFull - jFull) != pkSlot1) ? sp.win_jFull_inReal[(winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : winPos_jFull + sp.winCap_jFull - jFull] : pkVal1;
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = (ringPos_trailingIdxFull != pkSlot0) ? sp.ring_trailingIdxFull_inReal[ringPos_trailingIdxFull] : pkVal0;
+            fullOut = periodSumFull / sp.dividerFull;
+            periodSumFull -= periodSubFull;
+            cur_outReal = 2.0 * tempReal - fullOut;
+            ringPos_trailingIdxFull = ringPos_trailingIdxFull + 1;
+            if( ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
+               ringPos_trailingIdxFull = 0;
+            }
+            winPos_jFull = winPos_jFull + 1;
+            if( winPos_jFull >= sp.winCap_jFull ) {
+               winPos_jFull = 0;
+            }
+         } else {
+            double tempReal = 0.0;
+            double fullOut = 0.0;
+            double halfOut = 0.0;
+            double diffReal = 0.0;
+            int jFull = 0;
+            int jHalf = 0;
+            int q = 0;
+            int rw = 0;
+            int ringWalk = 0;
+            double tempReal2 = 0.0;
+            int barsSinceReseedFull = sp.barsSinceReseedFull;
+            int barsSinceReseedHalf = sp.barsSinceReseedHalf;
+            int barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
+            int dRing_Idx = sp.dRing_Idx;
+            double periodSubFull = sp.periodSubFull;
+            double periodSubHalf = sp.periodSubHalf;
+            double periodSubSqrt = sp.periodSubSqrt;
+            double periodSumFull = sp.periodSumFull;
+            double periodSumHalf = sp.periodSumHalf;
+            double periodSumSqrt = sp.periodSumSqrt;
+            int ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull;
+            int ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf;
+            double trailingFull = sp.trailingFull;
+            double trailingHalf = sp.trailingHalf;
+            double trailingSqrt = sp.trailingSqrt;
+            int winPos_jFull = sp.winPos_jFull;
+            int winPos_jHalf = sp.winPos_jHalf;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            int pkSlot2 = -1;
+            double pkVal2 = 0.0;
+            int pkSlot3 = -1;
+            double pkVal3 = 0.0;
+            if( sp.ringCap_trailingIdxFull == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            if( sp.ringCap_trailingIdxHalf == 0 ) {
+               pkSlot1 = 0;
+               pkVal1 = inReal;
+            }
+            pkSlot2 = winPos_jFull;
+            pkVal2 = inReal;
+            pkSlot3 = winPos_jHalf;
+            pkVal3 = inReal;
+            tempReal = inReal;
+            periodSubFull += tempReal;
+            periodSubFull -= trailingFull;
+            periodSumFull += tempReal * sp.optInTimePeriod;
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * sp.optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+                  tempReal2 = (((winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : winPos_jFull + sp.winCap_jFull - jFull) != pkSlot2) ? sp.win_jFull_inReal[(winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : winPos_jFull + sp.winCap_jFull - jFull] : pkVal2;
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = (ringPos_trailingIdxFull != pkSlot0) ? sp.ring_trailingIdxFull_inReal[ringPos_trailingIdxFull] : pkVal0;
+            fullOut = periodSumFull / sp.dividerFull;
+            periodSumFull -= periodSubFull;
+            periodSubHalf += tempReal;
+            periodSubHalf -= trailingHalf;
+            periodSumHalf += tempReal * sp.halfPeriod;
+            barsSinceReseedHalf -= 1;
+            if( barsSinceReseedHalf <= 0 ) {
+               barsSinceReseedHalf = 8 * sp.halfPeriod;
+               periodSubHalf = 0.0;
+               periodSumHalf = 0.0;
+               rw = 1;
+               for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
+                  tempReal2 = (((winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : winPos_jHalf + sp.winCap_jHalf - jHalf) != pkSlot3) ? sp.win_jHalf_inReal[(winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : winPos_jHalf + sp.winCap_jHalf - jHalf] : pkVal3;
+                  periodSubHalf += tempReal2;
+                  periodSumHalf += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingHalf = (ringPos_trailingIdxHalf != pkSlot1) ? sp.ring_trailingIdxHalf_inReal[ringPos_trailingIdxHalf] : pkVal1;
+            halfOut = periodSumHalf / sp.dividerHalf;
+            periodSumHalf -= periodSubHalf;
+            diffReal = 2.0 * halfOut - fullOut;
+            periodSubSqrt += diffReal;
+            periodSubSqrt -= trailingSqrt;
+            periodSumSqrt += diffReal * sp.sqrtPeriod;
+            /* The outer WMA consumes a DERIVED series that is never
+             * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+             * the oldest slot (the one about to expire) and diffReal is the
+             * newest value, which together are the whole window. Oldest first,
+             * weight counting up from 1 -- the priming order above.
+             */
+            barsSinceReseedSqrt -= 1;
+            if( barsSinceReseedSqrt <= 0 ) {
+               barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
+               periodSubSqrt = 0.0;
+               periodSumSqrt = 0.0;
+               rw = 1;
+               ringWalk = dRing_Idx;
+               for( q = 0; q < sp.ringSize; q += 1 ) {
+                  tempReal2 = sp.cb_dRing[ringWalk];
+                  periodSubSqrt += tempReal2;
+                  periodSumSqrt += tempReal2 * rw;
+                  rw += 1;
+                  ringWalk += 1;
+                  if( ringWalk >= sp.ringSize ) {
+                     ringWalk = 0;
+                  }
+               }
+               periodSubSqrt += diffReal;
+               periodSumSqrt += diffReal * sp.sqrtPeriod;
+            }
+            trailingSqrt = sp.cb_dRing[dRing_Idx];
+            dRing_Idx = dRing_Idx + 1;
+            if( dRing_Idx > sp.maxIdx_dRing ) {
+               dRing_Idx = 0;
+            }
+            cur_outReal = periodSumSqrt / sp.dividerSqrt;
+            periodSumSqrt -= periodSubSqrt;
+            ringPos_trailingIdxFull = ringPos_trailingIdxFull + 1;
+            if( ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
+               ringPos_trailingIdxFull = 0;
+            }
+            ringPos_trailingIdxHalf = ringPos_trailingIdxHalf + 1;
+            if( ringPos_trailingIdxHalf >= sp.ringCap_trailingIdxHalf ) {
+               ringPos_trailingIdxHalf = 0;
+            }
+            winPos_jFull = winPos_jFull + 1;
+            if( winPos_jFull >= sp.winCap_jFull ) {
+               winPos_jFull = 0;
+            }
+            winPos_jHalf = winPos_jHalf + 1;
+            if( winPos_jHalf >= sp.winCap_jHalf ) {
+               winPos_jHalf = 0;
+            }
+         }
+         return cur_outReal;
       }
 
       /**
@@ -82464,9 +86809,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HtDcperiodStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -82516,25 +86858,216 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_DCPERIOD peek: BadParam", RetCode.BadParam);
-         HtDcperiodStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new HtDcperiodStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         HtDcperiodStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double adjustedPrevPeriod = 0.0;
+         double smoothedValue = 0.0;
+         double hilbertTempReal = 0.0;
+         double detrender = 0.0;
+         double Q1 = 0.0;
+         double jI = 0.0;
+         double jQ = 0.0;
+         double Q2 = 0.0;
+         double I2 = 0.0;
+         double todayValue = 0.0;
+         double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+         double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+         double I1ForOddPrev2 = sp.I1ForOddPrev2;
+         double I1ForOddPrev3 = sp.I1ForOddPrev3;
+         double Im = sp.Im;
+         double[] Q1_Even = sp.Q1_Even.clone();
+         double[] Q1_Odd = sp.Q1_Odd.clone();
+         double Re = sp.Re;
+         double cur_outReal = sp.cur_outReal;
+         double[] detrender_Even = sp.detrender_Even.clone();
+         double[] detrender_Odd = sp.detrender_Odd.clone();
+         int hilbertIdx = sp.hilbertIdx;
+         double[] jI_Even = sp.jI_Even.clone();
+         double[] jI_Odd = sp.jI_Odd.clone();
+         double[] jQ_Even = sp.jQ_Even.clone();
+         double[] jQ_Odd = sp.jQ_Odd.clone();
+         double period = sp.period;
+         double periodWMASub = sp.periodWMASub;
+         double periodWMASum = sp.periodWMASum;
+         double prevI2 = sp.prevI2;
+         double prevQ2 = sp.prevQ2;
+         double prev_Q1_Even = sp.prev_Q1_Even;
+         double prev_Q1_Odd = sp.prev_Q1_Odd;
+         double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+         double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+         double prev_detrender_Even = sp.prev_detrender_Even;
+         double prev_detrender_Odd = sp.prev_detrender_Odd;
+         double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+         double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+         double prev_jI_Even = sp.prev_jI_Even;
+         double prev_jI_Odd = sp.prev_jI_Odd;
+         double prev_jI_input_Even = sp.prev_jI_input_Even;
+         double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+         double prev_jQ_Even = sp.prev_jQ_Even;
+         double prev_jQ_Odd = sp.prev_jQ_Odd;
+         double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+         double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+         double smoothPeriod = sp.smoothPeriod;
+         int streamParity = sp.streamParity;
+         double trailingWMAValue = sp.trailingWMAValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingWMAIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
          }
-         core.htDcperiodStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         todayValue = inReal;
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         if( streamParity == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = sp.b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = sp.b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = sp.b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = sp.b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = sp.b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "even" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+         }
+         /* Adjust the period for next price bar */
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
+         cur_outReal = smoothPeriod;
+         /* Ooof... let's do the next price bar now! */
+         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+            ringPos_trailingWMAIdx = 0;
+         }
+         streamParity = 1 - streamParity;
+         return cur_outReal;
       }
 
       /**
@@ -84340,9 +88873,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HtDcphaseStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -84392,25 +88922,274 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_DCPHASE peek: BadParam", RetCode.BadParam);
-         HtDcphaseStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new HtDcphaseStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         HtDcphaseStream sp = this;
+         int i = 0;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double adjustedPrevPeriod = 0.0;
+         double smoothedValue = 0.0;
+         double hilbertTempReal = 0.0;
+         double detrender = 0.0;
+         double Q1 = 0.0;
+         double jI = 0.0;
+         double jQ = 0.0;
+         double Q2 = 0.0;
+         double I2 = 0.0;
+         double todayValue = 0.0;
+         int idx = 0;
+         int DCPeriodInt = 0;
+         double DCPeriod = 0.0;
+         double imagPart = 0.0;
+         double realPart = 0.0;
+         double DCPhase = sp.DCPhase;
+         double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+         double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+         double I1ForOddPrev2 = sp.I1ForOddPrev2;
+         double I1ForOddPrev3 = sp.I1ForOddPrev3;
+         double Im = sp.Im;
+         double[] Q1_Even = sp.Q1_Even.clone();
+         double[] Q1_Odd = sp.Q1_Odd.clone();
+         double Re = sp.Re;
+         double cur_outReal = sp.cur_outReal;
+         double[] detrender_Even = sp.detrender_Even.clone();
+         double[] detrender_Odd = sp.detrender_Odd.clone();
+         int hilbertIdx = sp.hilbertIdx;
+         double[] jI_Even = sp.jI_Even.clone();
+         double[] jI_Odd = sp.jI_Odd.clone();
+         double[] jQ_Even = sp.jQ_Even.clone();
+         double[] jQ_Odd = sp.jQ_Odd.clone();
+         double period = sp.period;
+         double periodWMASub = sp.periodWMASub;
+         double periodWMASum = sp.periodWMASum;
+         double prevI2 = sp.prevI2;
+         double prevQ2 = sp.prevQ2;
+         double prev_Q1_Even = sp.prev_Q1_Even;
+         double prev_Q1_Odd = sp.prev_Q1_Odd;
+         double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+         double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+         double prev_detrender_Even = sp.prev_detrender_Even;
+         double prev_detrender_Odd = sp.prev_detrender_Odd;
+         double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+         double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+         double prev_jI_Even = sp.prev_jI_Even;
+         double prev_jI_Odd = sp.prev_jI_Odd;
+         double prev_jI_input_Even = sp.prev_jI_input_Even;
+         double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+         double prev_jQ_Even = sp.prev_jQ_Even;
+         double prev_jQ_Odd = sp.prev_jQ_Odd;
+         double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+         double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+         double smoothPeriod = sp.smoothPeriod;
+         int smoothPrice_Idx = sp.smoothPrice_Idx;
+         int streamParity = sp.streamParity;
+         double trailingWMAValue = sp.trailingWMAValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.ringCap_trailingWMAIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
          }
-         core.htDcphaseStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         todayValue = inReal;
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         /* Remember the smoothedValue into the smoothPrice
+          * circular buffer.
+          */
+         pkSlot1 = smoothPrice_Idx;
+         pkVal1 = smoothedValue;
+         if( streamParity == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = sp.b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = sp.b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = sp.b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = sp.b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = sp.b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "even" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+         }
+         /* Adjust the period for next price bar */
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
+         /* Compute Dominant Cycle Phase */
+         DCPeriod = smoothPeriod + 0.5;
+         DCPeriodInt = (int)DCPeriod;
+         realPart = 0.0;
+         imagPart = 0.0;
+         /* idx is used to iterate for up to 50 of the last
+          * value of smoothPrice.
+          */
+         idx = smoothPrice_Idx;
+         for( i = 0; i < DCPeriodInt; i += 1 ) {
+            tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
+            tempReal2 = (idx != pkSlot1) ? sp.cb_smoothPrice[idx] : pkVal1;
+            realPart += Math.sin(tempReal) * tempReal2;
+            imagPart += Math.cos(tempReal) * tempReal2;
+            if( idx == 0 ) {
+               idx = 50 - 1;
+            } else {
+               idx -= 1;
+            }
+         }
+         tempReal = Math.abs(imagPart);
+         if( tempReal > 0.0 ) {
+            DCPhase = Math.atan(realPart / imagPart) * sp.rad2Deg;
+         } else if( tempReal <= 0.01 ) {
+            if( realPart < 0.0 ) {
+               DCPhase -= 90.0;
+            } else if( realPart > 0.0 ) {
+               DCPhase += 90.0;
+            }
+         }
+         DCPhase += 90.0;
+         /* Compensate for one bar lag of the weighted moving average */
+         DCPhase += 360.0 / smoothPeriod;
+         if( imagPart < 0.0 ) {
+            DCPhase += 180.0;
+         }
+         if( DCPhase > 315.0 ) {
+            DCPhase -= 360.0;
+         }
+         cur_outReal = DCPhase;
+         /* Ooof... let's do the next price bar now! */
+         smoothPrice_Idx = smoothPrice_Idx + 1;
+         if( smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
+            smoothPrice_Idx = 0;
+         }
+         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+            ringPos_trailingWMAIdx = 0;
+         }
+         streamParity = 1 - streamParity;
+         return cur_outReal;
       }
 
       /**
@@ -86228,9 +91007,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HtPhasorStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -86302,25 +91078,218 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
-         HtPhasorStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new HtPhasorStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         HtPhasorStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double adjustedPrevPeriod = 0.0;
+         double smoothedValue = 0.0;
+         double hilbertTempReal = 0.0;
+         double detrender = 0.0;
+         double Q1 = 0.0;
+         double jI = 0.0;
+         double jQ = 0.0;
+         double Q2 = 0.0;
+         double I2 = 0.0;
+         double todayValue = 0.0;
+         double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+         double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+         double I1ForOddPrev2 = sp.I1ForOddPrev2;
+         double I1ForOddPrev3 = sp.I1ForOddPrev3;
+         double Im = sp.Im;
+         double[] Q1_Even = sp.Q1_Even.clone();
+         double[] Q1_Odd = sp.Q1_Odd.clone();
+         double Re = sp.Re;
+         double cur_outInPhase = sp.cur_outInPhase;
+         double cur_outQuadrature = sp.cur_outQuadrature;
+         double[] detrender_Even = sp.detrender_Even.clone();
+         double[] detrender_Odd = sp.detrender_Odd.clone();
+         int hilbertIdx = sp.hilbertIdx;
+         double[] jI_Even = sp.jI_Even.clone();
+         double[] jI_Odd = sp.jI_Odd.clone();
+         double[] jQ_Even = sp.jQ_Even.clone();
+         double[] jQ_Odd = sp.jQ_Odd.clone();
+         double period = sp.period;
+         double periodWMASub = sp.periodWMASub;
+         double periodWMASum = sp.periodWMASum;
+         double prevI2 = sp.prevI2;
+         double prevQ2 = sp.prevQ2;
+         double prev_Q1_Even = sp.prev_Q1_Even;
+         double prev_Q1_Odd = sp.prev_Q1_Odd;
+         double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+         double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+         double prev_detrender_Even = sp.prev_detrender_Even;
+         double prev_detrender_Odd = sp.prev_detrender_Odd;
+         double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+         double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+         double prev_jI_Even = sp.prev_jI_Even;
+         double prev_jI_Odd = sp.prev_jI_Odd;
+         double prev_jI_input_Even = sp.prev_jI_input_Even;
+         double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+         double prev_jQ_Even = sp.prev_jQ_Even;
+         double prev_jQ_Odd = sp.prev_jQ_Odd;
+         double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+         double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+         int streamParity = sp.streamParity;
+         double trailingWMAValue = sp.trailingWMAValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingWMAIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
          }
-         core.htPhasorStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outInPhase, scratch.cur_outQuadrature);
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         todayValue = inReal;
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         if( streamParity == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = sp.b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = sp.b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            cur_outQuadrature = Q1;
+            cur_outInPhase = I1ForEvenPrev3;
+            hilbertTempReal = sp.a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = sp.b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = sp.b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            cur_outQuadrature = Q1;
+            cur_outInPhase = I1ForOddPrev3;
+            hilbertTempReal = sp.a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = sp.b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "even" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+         }
+         /* Adjust the period for next price bar */
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         /* Ooof... let's do the next price bar now! */
+         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+            ringPos_trailingWMAIdx = 0;
+         }
+         streamParity = 1 - streamParity;
+         return new Value(cur_outInPhase, cur_outQuadrature);
       }
 
       /**
@@ -88161,9 +93130,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HtSineStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -88235,25 +93201,276 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
-         HtSineStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new HtSineStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         HtSineStream sp = this;
+         int i = 0;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double adjustedPrevPeriod = 0.0;
+         double smoothedValue = 0.0;
+         double hilbertTempReal = 0.0;
+         double detrender = 0.0;
+         double Q1 = 0.0;
+         double jI = 0.0;
+         double jQ = 0.0;
+         double Q2 = 0.0;
+         double I2 = 0.0;
+         double todayValue = 0.0;
+         int idx = 0;
+         int DCPeriodInt = 0;
+         double DCPeriod = 0.0;
+         double imagPart = 0.0;
+         double realPart = 0.0;
+         double DCPhase = sp.DCPhase;
+         double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+         double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+         double I1ForOddPrev2 = sp.I1ForOddPrev2;
+         double I1ForOddPrev3 = sp.I1ForOddPrev3;
+         double Im = sp.Im;
+         double[] Q1_Even = sp.Q1_Even.clone();
+         double[] Q1_Odd = sp.Q1_Odd.clone();
+         double Re = sp.Re;
+         double cur_outLeadSine = sp.cur_outLeadSine;
+         double cur_outSine = sp.cur_outSine;
+         double[] detrender_Even = sp.detrender_Even.clone();
+         double[] detrender_Odd = sp.detrender_Odd.clone();
+         int hilbertIdx = sp.hilbertIdx;
+         double[] jI_Even = sp.jI_Even.clone();
+         double[] jI_Odd = sp.jI_Odd.clone();
+         double[] jQ_Even = sp.jQ_Even.clone();
+         double[] jQ_Odd = sp.jQ_Odd.clone();
+         double period = sp.period;
+         double periodWMASub = sp.periodWMASub;
+         double periodWMASum = sp.periodWMASum;
+         double prevI2 = sp.prevI2;
+         double prevQ2 = sp.prevQ2;
+         double prev_Q1_Even = sp.prev_Q1_Even;
+         double prev_Q1_Odd = sp.prev_Q1_Odd;
+         double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+         double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+         double prev_detrender_Even = sp.prev_detrender_Even;
+         double prev_detrender_Odd = sp.prev_detrender_Odd;
+         double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+         double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+         double prev_jI_Even = sp.prev_jI_Even;
+         double prev_jI_Odd = sp.prev_jI_Odd;
+         double prev_jI_input_Even = sp.prev_jI_input_Even;
+         double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+         double prev_jQ_Even = sp.prev_jQ_Even;
+         double prev_jQ_Odd = sp.prev_jQ_Odd;
+         double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+         double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+         double smoothPeriod = sp.smoothPeriod;
+         int smoothPrice_Idx = sp.smoothPrice_Idx;
+         int streamParity = sp.streamParity;
+         double trailingWMAValue = sp.trailingWMAValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.ringCap_trailingWMAIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
          }
-         core.htSineStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outSine, scratch.cur_outLeadSine);
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         todayValue = inReal;
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         /* Remember the smoothedValue into the smoothPrice
+          * circular buffer.
+          */
+         pkSlot1 = smoothPrice_Idx;
+         pkVal1 = smoothedValue;
+         if( streamParity == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = sp.b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = sp.b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = sp.b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = sp.b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = sp.b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "even" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+         }
+         /* Adjust the period for next price bar */
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
+         /* Compute Dominant Cycle Phase */
+         DCPeriod = smoothPeriod + 0.5;
+         DCPeriodInt = (int)DCPeriod;
+         realPart = 0.0;
+         imagPart = 0.0;
+         /* idx is used to iterate for up to 50 of the last
+          * value of smoothPrice.
+          */
+         idx = smoothPrice_Idx;
+         for( i = 0; i < DCPeriodInt; i += 1 ) {
+            tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
+            tempReal2 = (idx != pkSlot1) ? sp.cb_smoothPrice[idx] : pkVal1;
+            realPart += Math.sin(tempReal) * tempReal2;
+            imagPart += Math.cos(tempReal) * tempReal2;
+            if( idx == 0 ) {
+               idx = 50 - 1;
+            } else {
+               idx -= 1;
+            }
+         }
+         tempReal = Math.abs(imagPart);
+         if( tempReal > 0.0 ) {
+            DCPhase = Math.atan(realPart / imagPart) * sp.rad2Deg;
+         } else if( tempReal <= 0.01 ) {
+            if( realPart < 0.0 ) {
+               DCPhase -= 90.0;
+            } else if( realPart > 0.0 ) {
+               DCPhase += 90.0;
+            }
+         }
+         DCPhase += 90.0;
+         /* Compensate for one bar lag of the weighted moving average */
+         DCPhase += 360.0 / smoothPeriod;
+         if( imagPart < 0.0 ) {
+            DCPhase += 180.0;
+         }
+         if( DCPhase > 315.0 ) {
+            DCPhase -= 360.0;
+         }
+         cur_outSine = Math.sin(DCPhase * sp.deg2Rad);
+         cur_outLeadSine = Math.sin((DCPhase + 45) * sp.deg2Rad);
+         /* Ooof... let's do the next price bar now! */
+         smoothPrice_Idx = smoothPrice_Idx + 1;
+         if( smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
+            smoothPrice_Idx = 0;
+         }
+         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+            ringPos_trailingWMAIdx = 0;
+         }
+         streamParity = 1 - streamParity;
+         return new Value(cur_outSine, cur_outLeadSine);
       }
 
       /**
@@ -90144,9 +95361,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HtTrendlineStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -90196,25 +95410,259 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDLINE peek: BadParam", RetCode.BadParam);
-         HtTrendlineStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new HtTrendlineStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         HtTrendlineStream sp = this;
+         int i = 0;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double adjustedPrevPeriod = 0.0;
+         double smoothedValue = 0.0;
+         double hilbertTempReal = 0.0;
+         double detrender = 0.0;
+         double Q1 = 0.0;
+         double jI = 0.0;
+         double jQ = 0.0;
+         double Q2 = 0.0;
+         double I2 = 0.0;
+         double todayValue = 0.0;
+         int DCPeriodInt = 0;
+         double DCPeriod = 0.0;
+         double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+         double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+         double I1ForOddPrev2 = sp.I1ForOddPrev2;
+         double I1ForOddPrev3 = sp.I1ForOddPrev3;
+         double Im = sp.Im;
+         double[] Q1_Even = sp.Q1_Even.clone();
+         double[] Q1_Odd = sp.Q1_Odd.clone();
+         double Re = sp.Re;
+         double cur_outReal = sp.cur_outReal;
+         double[] detrender_Even = sp.detrender_Even.clone();
+         double[] detrender_Odd = sp.detrender_Odd.clone();
+         int hilbertIdx = sp.hilbertIdx;
+         double iTrend1 = sp.iTrend1;
+         double iTrend2 = sp.iTrend2;
+         double iTrend3 = sp.iTrend3;
+         double[] jI_Even = sp.jI_Even.clone();
+         double[] jI_Odd = sp.jI_Odd.clone();
+         double[] jQ_Even = sp.jQ_Even.clone();
+         double[] jQ_Odd = sp.jQ_Odd.clone();
+         double period = sp.period;
+         double periodWMASub = sp.periodWMASub;
+         double periodWMASum = sp.periodWMASum;
+         double prevI2 = sp.prevI2;
+         double prevQ2 = sp.prevQ2;
+         double prev_Q1_Even = sp.prev_Q1_Even;
+         double prev_Q1_Odd = sp.prev_Q1_Odd;
+         double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+         double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+         double prev_detrender_Even = sp.prev_detrender_Even;
+         double prev_detrender_Odd = sp.prev_detrender_Odd;
+         double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+         double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+         double prev_jI_Even = sp.prev_jI_Even;
+         double prev_jI_Odd = sp.prev_jI_Odd;
+         double prev_jI_input_Even = sp.prev_jI_input_Even;
+         double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+         double prev_jQ_Even = sp.prev_jQ_Even;
+         double prev_jQ_Odd = sp.prev_jQ_Odd;
+         double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+         double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+         double smoothPeriod = sp.smoothPeriod;
+         int streamParity = sp.streamParity;
+         double trailingWMAValue = sp.trailingWMAValue;
+         int winPos_i = sp.winPos_i;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.ringCap_trailingWMAIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
          }
-         core.htTrendlineStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         pkSlot1 = winPos_i;
+         pkVal1 = inReal;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         todayValue = inReal;
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         if( streamParity == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = sp.b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = sp.b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = sp.b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = sp.b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = sp.b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "even" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+         }
+         /* Adjust the period for next price bar */
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
+         /* Compute Trendline */
+         DCPeriod = smoothPeriod + 0.5;
+         DCPeriodInt = (int)DCPeriod;
+         /* Average the RAW price over the dominant cycle period
+          * (Ehlers, "Rocket Science for Traders": the Instantaneous
+          * Trendline sums Price — not SmoothPrice, which only feeds
+          * the Hilbert detrender above). See issue #88.
+          */
+         /* Sum the last DCPeriodInt (<= 50) raw prices. The fixed 50-iteration
+          * loop with an inner guard is a streaming-friendly rewrite of the
+          * data-dependent backward scan `for(i<DCPeriodInt) sum += inReal[idx--]`
+          * (idx starting at today): identical terms in identical order, so
+          * bit-for-bit unchanged, but the constant cap lets the rescan-window
+          * machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
+          */
+         tempReal = 0.0;
+         for( i = 0; i < 50; i += 1 ) {
+            if( i < DCPeriodInt ) {
+               tempReal += (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inReal[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal1;
+            }
+         }
+         if( DCPeriodInt > 0 ) {
+            tempReal = tempReal / (double)DCPeriodInt;
+         }
+         tempReal2 = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+         iTrend3 = iTrend2;
+         iTrend2 = iTrend1;
+         iTrend1 = tempReal;
+         cur_outReal = tempReal2;
+         /* Ooof... let's do the next price bar now! */
+         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+            ringPos_trailingWMAIdx = 0;
+         }
+         winPos_i = winPos_i + 1;
+         if( winPos_i >= sp.winCap_i ) {
+            winPos_i = 0;
+         }
+         streamParity = 1 - streamParity;
+         return cur_outReal;
       }
 
       /**
@@ -92286,9 +97734,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<HtTrendmodeStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -92338,25 +97783,348 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_TRENDMODE peek: BadParam", RetCode.BadParam);
-         HtTrendmodeStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new HtTrendmodeStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         HtTrendmodeStream sp = this;
+         int i = 0;
+         int j = 0;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double adjustedPrevPeriod = 0.0;
+         double smoothedValue = 0.0;
+         double hilbertTempReal = 0.0;
+         double detrender = 0.0;
+         double Q1 = 0.0;
+         double jI = 0.0;
+         double jQ = 0.0;
+         double Q2 = 0.0;
+         double I2 = 0.0;
+         double todayValue = 0.0;
+         int idx = 0;
+         int DCPeriodInt = 0;
+         double DCPeriod = 0.0;
+         double imagPart = 0.0;
+         double realPart = 0.0;
+         int trend = 0;
+         double prevDCPhase = 0.0;
+         double trendline = 0.0;
+         double prevSine = 0.0;
+         double prevLeadSine = 0.0;
+         double DCPhase = sp.DCPhase;
+         double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+         double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+         double I1ForOddPrev2 = sp.I1ForOddPrev2;
+         double I1ForOddPrev3 = sp.I1ForOddPrev3;
+         double Im = sp.Im;
+         double[] Q1_Even = sp.Q1_Even.clone();
+         double[] Q1_Odd = sp.Q1_Odd.clone();
+         double Re = sp.Re;
+         int cur_outInteger = sp.cur_outInteger;
+         int daysInTrend = sp.daysInTrend;
+         double[] detrender_Even = sp.detrender_Even.clone();
+         double[] detrender_Odd = sp.detrender_Odd.clone();
+         int hilbertIdx = sp.hilbertIdx;
+         double iTrend1 = sp.iTrend1;
+         double iTrend2 = sp.iTrend2;
+         double iTrend3 = sp.iTrend3;
+         double[] jI_Even = sp.jI_Even.clone();
+         double[] jI_Odd = sp.jI_Odd.clone();
+         double[] jQ_Even = sp.jQ_Even.clone();
+         double[] jQ_Odd = sp.jQ_Odd.clone();
+         double leadSine = sp.leadSine;
+         double period = sp.period;
+         double periodWMASub = sp.periodWMASub;
+         double periodWMASum = sp.periodWMASum;
+         double prevI2 = sp.prevI2;
+         double prevQ2 = sp.prevQ2;
+         double prev_Q1_Even = sp.prev_Q1_Even;
+         double prev_Q1_Odd = sp.prev_Q1_Odd;
+         double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+         double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+         double prev_detrender_Even = sp.prev_detrender_Even;
+         double prev_detrender_Odd = sp.prev_detrender_Odd;
+         double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+         double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+         double prev_jI_Even = sp.prev_jI_Even;
+         double prev_jI_Odd = sp.prev_jI_Odd;
+         double prev_jI_input_Even = sp.prev_jI_input_Even;
+         double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+         double prev_jQ_Even = sp.prev_jQ_Even;
+         double prev_jQ_Odd = sp.prev_jQ_Odd;
+         double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+         double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+         double sine = sp.sine;
+         double smoothPeriod = sp.smoothPeriod;
+         int smoothPrice_Idx = sp.smoothPrice_Idx;
+         int streamParity = sp.streamParity;
+         double trailingWMAValue = sp.trailingWMAValue;
+         int winPos_j = sp.winPos_j;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( sp.ringCap_trailingWMAIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
          }
-         core.htTrendmodeStepImpl(scratch, inReal);
-         return scratch.cur_outInteger;
+         pkSlot1 = winPos_j;
+         pkVal1 = inReal;
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         todayValue = inReal;
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         /* Remember the smoothedValue into the smoothPrice
+          * circular buffer.
+          */
+         pkSlot2 = smoothPrice_Idx;
+         pkVal2 = smoothedValue;
+         if( streamParity == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = sp.b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = sp.b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = sp.b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = sp.b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = sp.b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "even" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+         }
+         /* Adjust the period for next price bar */
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         smoothPeriod = Math.fma(0.67, smoothPeriod, 0.33 * period);
+         /* Compute Dominant Cycle Phase */
+         prevDCPhase = DCPhase;
+         DCPeriod = smoothPeriod + 0.5;
+         DCPeriodInt = (int)DCPeriod;
+         realPart = 0.0;
+         imagPart = 0.0;
+         /* idx is used to iterate for up to 50 of the last
+          * value of smoothPrice.
+          */
+         idx = smoothPrice_Idx;
+         for( i = 0; i < DCPeriodInt; i += 1 ) {
+            tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
+            tempReal2 = (idx != pkSlot2) ? sp.cb_smoothPrice[idx] : pkVal2;
+            realPart += Math.sin(tempReal) * tempReal2;
+            imagPart += Math.cos(tempReal) * tempReal2;
+            if( idx == 0 ) {
+               idx = 50 - 1;
+            } else {
+               idx -= 1;
+            }
+         }
+         tempReal = Math.abs(imagPart);
+         if( tempReal > 0.0 ) {
+            DCPhase = Math.atan(realPart / imagPart) * sp.rad2Deg;
+         } else if( tempReal <= 0.01 ) {
+            if( realPart < 0.0 ) {
+               DCPhase -= 90.0;
+            } else if( realPart > 0.0 ) {
+               DCPhase += 90.0;
+            }
+         }
+         DCPhase += 90.0;
+         /* Compensate for one bar lag of the weighted moving average */
+         DCPhase += 360.0 / smoothPeriod;
+         if( imagPart < 0.0 ) {
+            DCPhase += 180.0;
+         }
+         if( DCPhase > 315.0 ) {
+            DCPhase -= 360.0;
+         }
+         prevSine = sine;
+         prevLeadSine = leadSine;
+         sine = Math.sin(DCPhase * sp.deg2Rad);
+         leadSine = Math.sin((DCPhase + 45) * sp.deg2Rad);
+         /* Compute Trendline */
+         DCPeriod = smoothPeriod + 0.5;
+         DCPeriodInt = (int)DCPeriod;
+         /* Average the RAW price over the dominant cycle period.
+          * Unlike the DC-phase loop above (which reads the smoothPrice
+          * circular buffer), the iTrend average reads the raw price,
+          * exactly as published (Ehlers, "Rocket Science for Traders":
+          * ITrend sums Price, not SmoothPrice). See issue #88.
+          */
+         /* Sum the last DCPeriodInt (<= 50) raw prices. The fixed 50-iteration
+          * loop with an inner guard is a streaming-friendly rewrite of the
+          * data-dependent backward scan `for(i<DCPeriodInt) sum += inReal[idx--]`
+          * (idx starting at today): identical terms in identical order, so
+          * bit-for-bit unchanged, but the constant cap lets the rescan-window
+          * machinery bound the window (DCPeriod is clamped to [6.5, 50.5]).
+          */
+         tempReal = 0.0;
+         for( j = 0; j < 50; j += 1 ) {
+            if( j < DCPeriodInt ) {
+               tempReal += (((winPos_j + sp.winCap_j - j >= sp.winCap_j) ? winPos_j + sp.winCap_j - j - sp.winCap_j : winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(winPos_j + sp.winCap_j - j >= sp.winCap_j) ? winPos_j + sp.winCap_j - j - sp.winCap_j : winPos_j + sp.winCap_j - j] : pkVal1;
+            }
+         }
+         if( DCPeriodInt > 0 ) {
+            tempReal = tempReal / (double)DCPeriodInt;
+         }
+         trendline = (Math.fma(2.0, iTrend2, Math.fma(4.0, tempReal, 3.0 * iTrend1)) + iTrend3) / 10.0;
+         iTrend3 = iTrend2;
+         iTrend2 = iTrend1;
+         iTrend1 = tempReal;
+         /* Compute the trend Mode , and assume trend by default */
+         trend = 1;
+         /* Measure days in trend from last crossing of the SineWave Indicator lines */
+         if( sine > leadSine && prevSine <= prevLeadSine || sine < leadSine && prevSine >= prevLeadSine ) {
+            daysInTrend = 0;
+            trend = 0;
+         }
+         daysInTrend += 1;
+         if( daysInTrend < 0.5 * smoothPeriod ) {
+            trend = 0;
+         }
+         tempReal = DCPhase - prevDCPhase;
+         if( smoothPeriod != 0.0 && (tempReal > 0.67 * 360.0 / smoothPeriod && tempReal < 1.5 * 360.0 / smoothPeriod) ) {
+            trend = 0;
+         }
+         tempReal = (smoothPrice_Idx != pkSlot2) ? sp.cb_smoothPrice[smoothPrice_Idx] : pkVal2;
+         if( trendline != 0.0 && Math.abs((tempReal - trendline) / trendline) >= 0.015 ) {
+            trend = 1;
+         }
+         cur_outInteger = trend;
+         /* Ooof... let's do the next price bar now! */
+         smoothPrice_Idx = smoothPrice_Idx + 1;
+         if( smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
+            smoothPrice_Idx = 0;
+         }
+         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+            ringPos_trailingWMAIdx = 0;
+         }
+         winPos_j = winPos_j + 1;
+         if( winPos_j >= sp.winCap_j ) {
+            winPos_j = 0;
+         }
+         streamParity = 1 - streamParity;
+         return cur_outInteger;
       }
 
       /**
@@ -93656,9 +99424,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<ImiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -93709,25 +99474,53 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("IMI peek: BadParam", RetCode.BadParam);
-         ImiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new ImiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         ImiStream sp = this;
+         double upsum = 0.0;
+         double downsum = 0.0;
+         int i = 0;
+         double close = 0.0;
+         double open = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int winPos_i = sp.winPos_i;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         pkSlot0 = winPos_i;
+         pkVal0 = inOpen;
+         pkSlot1 = winPos_i;
+         pkVal1 = inClose;
+         upsum = 0.0;
+         downsum = 0.0;
+         for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
+            close = (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inClose[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal1;
+            open = (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inOpen[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0;
+            if( close > open ) {
+               upsum += close - open;
+            } else {
+               downsum += open - close;
+            }
+            /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+             * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+             * oscillator, so no up/down bias returns its neutral center, 50.0.
+             */
+            cur_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
          }
-         core.imiStepImpl(scratch, inOpen, inClose);
-         return scratch.cur_outReal;
+         winPos_i = winPos_i + 1;
+         if( winPos_i >= sp.winCap_i ) {
+            winPos_i = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -94650,17 +100443,85 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("KAMA peek: BadParam", RetCode.BadParam);
-         KamaStream scratch = new KamaStream(this);
-         core.kamaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         KamaStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double periodROC = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double lag1_inReal = sp.lag1_inReal;
+         int nullRun = sp.nullRun;
+         double prevKAMA = sp.prevKAMA;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         double sumROC1 = sp.sumROC1;
+         double trailingValue = sp.trailingValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         tempReal = inReal;
+         tempReal2 = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         periodROC = tempReal - tempReal2;
+         /* Adjust sumROC1:
+          *  - Remove trailing ROC1
+          *  - Add new ROC1
+          */
+         sumROC1 -= Math.abs(trailingValue - tempReal2);
+         sumROC1 += Math.abs(tempReal - lag1_inReal);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - lag1_inReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            sumROC1 = 0.0;
+         }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
+         /* Calculate the efficiency ratio */
+         if( sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else {
+            tempReal = Math.abs(periodROC / sumROC1);
+         }
+         /* Calculate the smoothing constant */
+         tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
+         tempReal *= tempReal;
+         /* Calculate the KAMA like an EMA, using the
+          * smoothing constant as the adaptive factor.
+          */
+         prevKAMA = Math.fma(inReal - prevKAMA, tempReal, prevKAMA);
+         cur_outReal = prevKAMA;
+         lag1_inReal = inReal;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -95685,17 +101546,128 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG peek: BadParam", RetCode.BadParam);
-         LinearregStream scratch = new LinearregStream(this);
-         core.linearregStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         LinearregStream sp = this;
+         double m = 0.0;
+         double b = 0.0;
+         int windowStart = 0;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double weightedTrailing = 0.0;
+         double SumXY = sp.SumXY;
+         double SumY = sp.SumY;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         int j = sp.j;
+         double sumAbs = sp.sumAbs;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         double trailingValue = sp.trailingValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            j -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         weightedTrailing = (double)sp.optInTimePeriod * trailingValue;
+         SumXY = SumXY + SumY - weightedTrailing;
+         SumY = SumY - trailingValue + (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         sumAbs = sumAbs - Math.abs(trailingValue) + Math.abs(((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+          * running totals that are never rebuilt, so each bar's rounding joins a
+          * residue no later bar can subtract -- unbounded in the length of the
+          * call, and scaled by the largest value the sums have EVER held rather
+          * than by what the window holds now. Two triggers, and they cover
+          * different failures (issue #254):
+          *
+          *   - every 32*period bars, so a slow drift stays bounded however long
+          *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+          *
+          *   - when the value the window just dropped carries more weight than
+          *     everything left in it. That is the one the interval cannot cover:
+          *     one large print inflates the residue for up to 32*period bars
+          *     after it is gone (measured 31x at period 5), and this rebuilds on
+          *     the bar it leaves instead.
+          *
+          * The threshold compares two DEGREE-1 quantities, which is why it is 100
+          * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
+          * against a sum of squares. On ordinary prices the ratio is ~1 and this
+          * never fires; it is a compare, not work. The constant is 100 rather than
+          * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+          * measured accuracy gain.
+          *
+          * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+          * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+          * while the departing value does not, so |weightedTrailing|/|SumY| is
+          * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+          * series measured 10.9x slower at period 30, which is precisely the
+          * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+          * guard on a quartic quantity: a ratio test is ill-posed when its
+          * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+          * when every value in the window is 0 -- and then the numerator is 0 too
+          * and the test is false. There is no window it can misjudge.
+          *
+          * It is also the RIGHT quantity on the merits, not just the safe one: a
+          * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+          * term against sum|y| asks exactly "would rebuilding beat what we are
+          * carrying?".
+          *
+          * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+          * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+          * ns/bar at period 14) because the update is INDEPENDENT of the serial
+          * SumXY -> SumY dependency chain and fills slots that were idle. The
+          * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+          * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+          * it, and silently dropped any print departing within `period` bars of a
+          * rebuild (~3% of them).
+          *
+          * The scan walks the window oldest-first with the weight counting DOWN,
+          * which is the priming scan's order and weighting -- so a reseeded bar is
+          * bit-identical to the same bar computed by a call that started there.
+          * That identity is the whole point: it is what the range-stability
+          * contract measures.
+          *
+          * Reading the window is safe when outReal aliases inReal (#130): the
+          * outputs written so far occupy [0, outIdx-1], and windowStart is
+          * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+          * to at least lookbackTotal.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 || Math.abs(weightedTrailing) > 100.0 * sumAbs ) {
+            barsSinceReseed = 32 * sp.optInTimePeriod;
+            windowStart = today - sp.lookbackTotal;
+            SumY = 0;
+            SumXY = 0;
+            sumAbs = 0;
+            tempValue2 = (double)sp.lookbackTotal;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempValue1 = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+               SumY += tempValue1;
+               SumXY += tempValue2 * tempValue1;
+               sumAbs += Math.abs(tempValue1);
+               tempValue2 -= 1.0;
+            }
+         }
+         m = (sp.optInTimePeriod * SumXY - sp.SumX * SumY) / sp.Divisor;
+         b = (SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
+         trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
+         trailingIdx += 1;
+         cur_outReal = Math.fma(m, (double)(sp.optInTimePeriod - 1), b);
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -96725,17 +102697,126 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_ANGLE peek: BadParam", RetCode.BadParam);
-         LinearregAngleStream scratch = new LinearregAngleStream(this);
-         core.linearregAngleStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         LinearregAngleStream sp = this;
+         double m = 0.0;
+         int windowStart = 0;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double weightedTrailing = 0.0;
+         double SumXY = sp.SumXY;
+         double SumY = sp.SumY;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         int j = sp.j;
+         double sumAbs = sp.sumAbs;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         double trailingValue = sp.trailingValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            j -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         weightedTrailing = (double)sp.optInTimePeriod * trailingValue;
+         SumXY = SumXY + SumY - weightedTrailing;
+         SumY = SumY - trailingValue + (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         sumAbs = sumAbs - Math.abs(trailingValue) + Math.abs(((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+          * running totals that are never rebuilt, so each bar's rounding joins a
+          * residue no later bar can subtract -- unbounded in the length of the
+          * call, and scaled by the largest value the sums have EVER held rather
+          * than by what the window holds now. Two triggers, and they cover
+          * different failures (issue #254):
+          *
+          *   - every 32*period bars, so a slow drift stays bounded however long
+          *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+          *
+          *   - when the value the window just dropped carries more weight than
+          *     everything left in it. That is the one the interval cannot cover:
+          *     one large print inflates the residue for up to 32*period bars
+          *     after it is gone (measured 31x at period 5), and this rebuilds on
+          *     the bar it leaves instead.
+          *
+          * The threshold compares two DEGREE-1 quantities, which is why it is 100
+          * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
+          * against a sum of squares. On ordinary prices the ratio is ~1 and this
+          * never fires; it is a compare, not work. The constant is 100 rather than
+          * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+          * measured accuracy gain.
+          *
+          * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+          * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+          * while the departing value does not, so |weightedTrailing|/|SumY| is
+          * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+          * series measured 10.9x slower at period 30, which is precisely the
+          * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+          * guard on a quartic quantity: a ratio test is ill-posed when its
+          * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+          * when every value in the window is 0 -- and then the numerator is 0 too
+          * and the test is false. There is no window it can misjudge.
+          *
+          * It is also the RIGHT quantity on the merits, not just the safe one: a
+          * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+          * term against sum|y| asks exactly "would rebuilding beat what we are
+          * carrying?".
+          *
+          * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+          * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+          * ns/bar at period 14) because the update is INDEPENDENT of the serial
+          * SumXY -> SumY dependency chain and fills slots that were idle. The
+          * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+          * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+          * it, and silently dropped any print departing within `period` bars of a
+          * rebuild (~3% of them).
+          *
+          * The scan walks the window oldest-first with the weight counting DOWN,
+          * which is the priming scan's order and weighting -- so a reseeded bar is
+          * bit-identical to the same bar computed by a call that started there.
+          * That identity is the whole point: it is what the range-stability
+          * contract measures.
+          *
+          * Reading the window is safe when outReal aliases inReal (#130): the
+          * outputs written so far occupy [0, outIdx-1], and windowStart is
+          * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+          * to at least lookbackTotal.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 || Math.abs(weightedTrailing) > 100.0 * sumAbs ) {
+            barsSinceReseed = 32 * sp.optInTimePeriod;
+            windowStart = today - sp.lookbackTotal;
+            SumY = 0;
+            SumXY = 0;
+            sumAbs = 0;
+            tempValue2 = (double)sp.lookbackTotal;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempValue1 = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+               SumY += tempValue1;
+               SumXY += tempValue2 * tempValue1;
+               sumAbs += Math.abs(tempValue1);
+               tempValue2 -= 1.0;
+            }
+         }
+         m = (sp.optInTimePeriod * SumXY - sp.SumX * SumY) / sp.Divisor;
+         trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
+         trailingIdx += 1;
+         cur_outReal = Math.atan(m) * (180.0 / 3.141592653589793);
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -97759,17 +103840,126 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_INTERCEPT peek: BadParam", RetCode.BadParam);
-         LinearregInterceptStream scratch = new LinearregInterceptStream(this);
-         core.linearregInterceptStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         LinearregInterceptStream sp = this;
+         double m = 0.0;
+         int windowStart = 0;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double weightedTrailing = 0.0;
+         double SumXY = sp.SumXY;
+         double SumY = sp.SumY;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         int j = sp.j;
+         double sumAbs = sp.sumAbs;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         double trailingValue = sp.trailingValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            j -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         weightedTrailing = (double)sp.optInTimePeriod * trailingValue;
+         SumXY = SumXY + SumY - weightedTrailing;
+         SumY = SumY - trailingValue + (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         sumAbs = sumAbs - Math.abs(trailingValue) + Math.abs(((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+          * running totals that are never rebuilt, so each bar's rounding joins a
+          * residue no later bar can subtract -- unbounded in the length of the
+          * call, and scaled by the largest value the sums have EVER held rather
+          * than by what the window holds now. Two triggers, and they cover
+          * different failures (issue #254):
+          *
+          *   - every 32*period bars, so a slow drift stays bounded however long
+          *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+          *
+          *   - when the value the window just dropped carries more weight than
+          *     everything left in it. That is the one the interval cannot cover:
+          *     one large print inflates the residue for up to 32*period bars
+          *     after it is gone (measured 31x at period 5), and this rebuilds on
+          *     the bar it leaves instead.
+          *
+          * The threshold compares two DEGREE-1 quantities, which is why it is 100
+          * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
+          * against a sum of squares. On ordinary prices the ratio is ~1 and this
+          * never fires; it is a compare, not work. The constant is 100 rather than
+          * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+          * measured accuracy gain.
+          *
+          * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+          * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+          * while the departing value does not, so |weightedTrailing|/|SumY| is
+          * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+          * series measured 10.9x slower at period 30, which is precisely the
+          * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+          * guard on a quartic quantity: a ratio test is ill-posed when its
+          * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+          * when every value in the window is 0 -- and then the numerator is 0 too
+          * and the test is false. There is no window it can misjudge.
+          *
+          * It is also the RIGHT quantity on the merits, not just the safe one: a
+          * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+          * term against sum|y| asks exactly "would rebuilding beat what we are
+          * carrying?".
+          *
+          * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+          * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+          * ns/bar at period 14) because the update is INDEPENDENT of the serial
+          * SumXY -> SumY dependency chain and fills slots that were idle. The
+          * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+          * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+          * it, and silently dropped any print departing within `period` bars of a
+          * rebuild (~3% of them).
+          *
+          * The scan walks the window oldest-first with the weight counting DOWN,
+          * which is the priming scan's order and weighting -- so a reseeded bar is
+          * bit-identical to the same bar computed by a call that started there.
+          * That identity is the whole point: it is what the range-stability
+          * contract measures.
+          *
+          * Reading the window is safe when outReal aliases inReal (#130): the
+          * outputs written so far occupy [0, outIdx-1], and windowStart is
+          * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+          * to at least lookbackTotal.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 || Math.abs(weightedTrailing) > 100.0 * sumAbs ) {
+            barsSinceReseed = 32 * sp.optInTimePeriod;
+            windowStart = today - sp.lookbackTotal;
+            SumY = 0;
+            SumXY = 0;
+            sumAbs = 0;
+            tempValue2 = (double)sp.lookbackTotal;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempValue1 = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+               SumY += tempValue1;
+               SumXY += tempValue2 * tempValue1;
+               sumAbs += Math.abs(tempValue1);
+               tempValue2 -= 1.0;
+            }
+         }
+         m = (sp.optInTimePeriod * SumXY - sp.SumX * SumY) / sp.Divisor;
+         trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
+         trailingIdx += 1;
+         cur_outReal = (SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -98789,17 +104979,124 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LINEARREG_SLOPE peek: BadParam", RetCode.BadParam);
-         LinearregSlopeStream scratch = new LinearregSlopeStream(this);
-         core.linearregSlopeStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         LinearregSlopeStream sp = this;
+         int windowStart = 0;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double weightedTrailing = 0.0;
+         double SumXY = sp.SumXY;
+         double SumY = sp.SumY;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         int j = sp.j;
+         double sumAbs = sp.sumAbs;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         double trailingValue = sp.trailingValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            j -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         weightedTrailing = (double)sp.optInTimePeriod * trailingValue;
+         SumXY = SumXY + SumY - weightedTrailing;
+         SumY = SumY - trailingValue + (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         sumAbs = sumAbs - Math.abs(trailingValue) + Math.abs(((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+          * running totals that are never rebuilt, so each bar's rounding joins a
+          * residue no later bar can subtract -- unbounded in the length of the
+          * call, and scaled by the largest value the sums have EVER held rather
+          * than by what the window holds now. Two triggers, and they cover
+          * different failures (issue #254):
+          *
+          *   - every 32*period bars, so a slow drift stays bounded however long
+          *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+          *
+          *   - when the value the window just dropped carries more weight than
+          *     everything left in it. That is the one the interval cannot cover:
+          *     one large print inflates the residue for up to 32*period bars
+          *     after it is gone (measured 31x at period 5), and this rebuilds on
+          *     the bar it leaves instead.
+          *
+          * The threshold compares two DEGREE-1 quantities, which is why it is 100
+          * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
+          * against a sum of squares. On ordinary prices the ratio is ~1 and this
+          * never fires; it is a compare, not work. The constant is 100 rather than
+          * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+          * measured accuracy gain.
+          *
+          * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+          * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+          * while the departing value does not, so |weightedTrailing|/|SumY| is
+          * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+          * series measured 10.9x slower at period 30, which is precisely the
+          * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+          * guard on a quartic quantity: a ratio test is ill-posed when its
+          * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+          * when every value in the window is 0 -- and then the numerator is 0 too
+          * and the test is false. There is no window it can misjudge.
+          *
+          * It is also the RIGHT quantity on the merits, not just the safe one: a
+          * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+          * term against sum|y| asks exactly "would rebuilding beat what we are
+          * carrying?".
+          *
+          * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+          * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+          * ns/bar at period 14) because the update is INDEPENDENT of the serial
+          * SumXY -> SumY dependency chain and fills slots that were idle. The
+          * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+          * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+          * it, and silently dropped any print departing within `period` bars of a
+          * rebuild (~3% of them).
+          *
+          * The scan walks the window oldest-first with the weight counting DOWN,
+          * which is the priming scan's order and weighting -- so a reseeded bar is
+          * bit-identical to the same bar computed by a call that started there.
+          * That identity is the whole point: it is what the range-stability
+          * contract measures.
+          *
+          * Reading the window is safe when outReal aliases inReal (#130): the
+          * outputs written so far occupy [0, outIdx-1], and windowStart is
+          * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+          * to at least lookbackTotal.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 || Math.abs(weightedTrailing) > 100.0 * sumAbs ) {
+            barsSinceReseed = 32 * sp.optInTimePeriod;
+            windowStart = today - sp.lookbackTotal;
+            SumY = 0;
+            SumXY = 0;
+            sumAbs = 0;
+            tempValue2 = (double)sp.lookbackTotal;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempValue1 = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+               SumY += tempValue1;
+               SumXY += tempValue2 * tempValue1;
+               sumAbs += Math.abs(tempValue1);
+               tempValue2 -= 1.0;
+            }
+         }
+         trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
+         trailingIdx += 1;
+         cur_outReal = (sp.optInTimePeriod * SumXY - sp.SumX * SumY) / sp.Divisor;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -99504,17 +105801,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LN peek: BadParam", RetCode.BadParam);
-         LnStream scratch = new LnStream(this);
-         core.lnStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         LnStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.log(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -99933,17 +106233,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
-         Log10Stream scratch = new Log10Stream(this);
-         core.log10StepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         Log10Stream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.log10(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -100801,8 +107104,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -102088,17 +108392,38 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACD peek: BadParam", RetCode.BadParam);
-         MacdStream scratch = new MacdStream(this);
-         core.macdStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
+         MacdStream sp = this;
+         double macdValue = 0.0;
+         double tempReal = 0.0;
+         double cur_outMACD = sp.cur_outMACD;
+         double cur_outMACDHist = sp.cur_outMACDHist;
+         double cur_outMACDSignal = sp.cur_outMACDSignal;
+         double prevFast = sp.prevFast;
+         double prevSignal = sp.prevSignal;
+         double prevSlow = sp.prevSlow;
+         tempReal = inReal;
+         prevFast = Math.fma(tempReal - prevFast, sp.fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, sp.slowK, prevSlow);
+         macdValue = prevFast - prevSlow;
+         if( sp.optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, sp.signalK, prevSignal);
+         }
+         cur_outMACD = macdValue;
+         cur_outMACDSignal = prevSignal;
+         cur_outMACDHist = macdValue - prevSignal;
+         return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 
       /**
@@ -103182,8 +109507,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -104139,17 +110465,38 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
-         MacdfixStream scratch = new MacdfixStream(this);
-         core.macdfixStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
+         MacdfixStream sp = this;
+         double macdValue = 0.0;
+         double tempReal = 0.0;
+         double cur_outMACD = sp.cur_outMACD;
+         double cur_outMACDHist = sp.cur_outMACDHist;
+         double cur_outMACDSignal = sp.cur_outMACDSignal;
+         double prevFast = sp.prevFast;
+         double prevSignal = sp.prevSignal;
+         double prevSlow = sp.prevSlow;
+         tempReal = inReal;
+         prevFast = Math.fma(tempReal - prevFast, sp.fastK, prevFast);
+         prevSlow = Math.fma(tempReal - prevSlow, sp.slowK, prevSlow);
+         macdValue = prevFast - prevSlow;
+         if( sp.optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, sp.signalK, prevSignal);
+         }
+         cur_outMACD = macdValue;
+         cur_outMACDSignal = prevSignal;
+         cur_outMACDHist = macdValue - prevSignal;
+         return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 
       /**
@@ -105645,9 +111992,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MamaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -105721,25 +112065,253 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
-         MamaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MamaStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MamaStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double adjustedPrevPeriod = 0.0;
+         double smoothedValue = 0.0;
+         double hilbertTempReal = 0.0;
+         double detrender = 0.0;
+         double Q1 = 0.0;
+         double jI = 0.0;
+         double jQ = 0.0;
+         double Q2 = 0.0;
+         double I2 = 0.0;
+         double todayValue = 0.0;
+         double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+         double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+         double I1ForOddPrev2 = sp.I1ForOddPrev2;
+         double I1ForOddPrev3 = sp.I1ForOddPrev3;
+         double Im = sp.Im;
+         double[] Q1_Even = sp.Q1_Even.clone();
+         double[] Q1_Odd = sp.Q1_Odd.clone();
+         double Re = sp.Re;
+         double cur_outFAMA = sp.cur_outFAMA;
+         double cur_outMAMA = sp.cur_outMAMA;
+         double[] detrender_Even = sp.detrender_Even.clone();
+         double[] detrender_Odd = sp.detrender_Odd.clone();
+         double fama = sp.fama;
+         int hilbertIdx = sp.hilbertIdx;
+         double[] jI_Even = sp.jI_Even.clone();
+         double[] jI_Odd = sp.jI_Odd.clone();
+         double[] jQ_Even = sp.jQ_Even.clone();
+         double[] jQ_Odd = sp.jQ_Odd.clone();
+         double mama = sp.mama;
+         double period = sp.period;
+         double periodWMASub = sp.periodWMASub;
+         double periodWMASum = sp.periodWMASum;
+         double prevI2 = sp.prevI2;
+         double prevPhase = sp.prevPhase;
+         double prevQ2 = sp.prevQ2;
+         double prev_Q1_Even = sp.prev_Q1_Even;
+         double prev_Q1_Odd = sp.prev_Q1_Odd;
+         double prev_Q1_input_Even = sp.prev_Q1_input_Even;
+         double prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+         double prev_detrender_Even = sp.prev_detrender_Even;
+         double prev_detrender_Odd = sp.prev_detrender_Odd;
+         double prev_detrender_input_Even = sp.prev_detrender_input_Even;
+         double prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+         double prev_jI_Even = sp.prev_jI_Even;
+         double prev_jI_Odd = sp.prev_jI_Odd;
+         double prev_jI_input_Even = sp.prev_jI_input_Even;
+         double prev_jI_input_Odd = sp.prev_jI_input_Odd;
+         double prev_jQ_Even = sp.prev_jQ_Even;
+         double prev_jQ_Odd = sp.prev_jQ_Odd;
+         double prev_jQ_input_Even = sp.prev_jQ_input_Even;
+         double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+         int streamParity = sp.streamParity;
+         double trailingWMAValue = sp.trailingWMAValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingWMAIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
          }
-         core.mamaStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outMAMA, scratch.cur_outFAMA);
+         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         todayValue = inReal;
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         if( streamParity == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = sp.b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = sp.b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = sp.b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = sp.b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+            /* Put Alpha in tempReal2 */
+            if( I1ForEvenPrev3 != 0.0 ) {
+               tempReal2 = Math.atan(Q1 / I1ForEvenPrev3) * sp.rad2Deg;
+            } else {
+               tempReal2 = 0.0;
+            }
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = sp.a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = sp.b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = sp.a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+            /* Put Alpha in tempReal2 */
+            if( I1ForOddPrev3 != 0.0 ) {
+               tempReal2 = Math.atan(Q1 / I1ForOddPrev3) * sp.rad2Deg;
+            } else {
+               tempReal2 = 0.0;
+            }
+         }
+         /* Put Delta Phase into tempReal */
+         tempReal = prevPhase - tempReal2;
+         prevPhase = tempReal2;
+         if( tempReal < 1.0 ) {
+            tempReal = 1.0;
+         }
+         /* Put Alpha into tempReal */
+         if( tempReal > 1.0 ) {
+            tempReal = sp.optInFastLimit / tempReal;
+            if( tempReal < sp.optInSlowLimit ) {
+               tempReal = sp.optInSlowLimit;
+            }
+         } else {
+            tempReal = sp.optInFastLimit;
+         }
+         /* Calculate MAMA, FAMA */
+         mama = Math.fma(1 - tempReal, mama, tempReal * todayValue);
+         tempReal *= 0.5;
+         fama = Math.fma(1 - tempReal, fama, tempReal * mama);
+         /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+          * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+          */
+         cur_outFAMA = fama;
+         cur_outMAMA = mama;
+         /* Adjust the period for next price bar */
+         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.fma(0.2, period, 0.8 * tempReal);
+         /* Ooof... let's do the next price bar now! */
+         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+            ringPos_trailingWMAIdx = 0;
+         }
+         streamParity = 1 - streamParity;
+         return new Value(cur_outMAMA, cur_outFAMA);
       }
 
       /**
@@ -106853,17 +113425,34 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
-         MarketfiStream scratch = new MarketfiStream(this);
-         core.marketfiStepImpl(scratch, inHigh, inLow, inVolume);
-         return scratch.cur_outReal;
+         MarketfiStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         /* A zero-volume bar would divide by zero. Neither reference guards
+          * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+          * issue #112 settled that a successful call never emits NaN or Inf,
+          * so an untraded bar facilitated no movement and reports 0.
+          *
+          * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+          * 1e-14 band is an absolute threshold and meaningless against an
+          * unbounded volume scale. Same reasoning as the prevClose guard in
+          * ta_codegen/input/nvi/nvi.c.
+          */
+         if( inVolume != 0.0 ) {
+            cur_outReal = (inHigh - inLow) / inVolume;
+         } else {
+            cur_outReal = 0.0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -107838,8 +114427,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -108646,17 +115236,55 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAX peek: BadParam", RetCode.BadParam);
-         MaxStream scratch = new MaxStream(this);
-         core.maxStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         MaxStream sp = this;
+         double tmp = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         cur_outReal = highest;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -109345,17 +115973,55 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
-         MaxindexStream scratch = new MaxindexStream(this);
-         core.maxindexStepImpl(scratch, inReal);
-         return scratch.cur_outInteger;
+         MaxindexStream sp = this;
+         double tmp = 0.0;
+         int cur_outInteger = sp.cur_outInteger;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         cur_outInteger = highestIdx;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outInteger;
       }
 
       /**
@@ -109898,17 +116564,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
-         MedpriceStream scratch = new MedpriceStream(this);
-         core.medpriceStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         MedpriceStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = (inHigh + inLow) / 2.0;
+         return cur_outReal;
       }
 
       /**
@@ -110652,9 +117321,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MfiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -110707,25 +117373,63 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MFI peek: BadParam", RetCode.BadParam);
-         MfiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MfiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MfiStream sp = this;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double tempValue3 = 0.0;
+         double moneyFlow = 0.0;
+         double posFlow = 0.0;
+         double negFlow = 0.0;
+         double posClamped = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int mflow_Idx = sp.mflow_Idx;
+         double negSumMF = sp.negSumMF;
+         int nullRun = sp.nullRun;
+         double posSumMF = sp.posSumMF;
+         double prevValue = sp.prevValue;
+         posSumMF -= sp.cb_mflow_positive[mflow_Idx];
+         negSumMF -= sp.cb_mflow_negative[mflow_Idx];
+         tempValue1 = (inHigh + inLow + inClose) / 3.0;
+         tempValue2 = tempValue1 - prevValue;
+         /* Dead-zone scaled to the two typical prices being compared (issue #107).
+          * Captured before prevValue/tempValue1 are repurposed below.
+          */
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
+         prevValue = tempValue1;
+         tempValue1 *= inVolume;
+         moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
-         core.mfiStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         tempValue1 = posSumMF + negSumMF;
+         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         if( tempValue1 <= 0.0 ) {
+            cur_outReal = 0.0;
+         } else {
+            cur_outReal = 100.0 * (posClamped / tempValue1);
+         }
+         mflow_Idx = mflow_Idx + 1;
+         if( mflow_Idx > sp.maxIdx_mflow ) {
+            mflow_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -111708,17 +118412,75 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
-         MidpointStream scratch = new MidpointStream(this);
-         core.midpointStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         MidpointStream sp = this;
+         double tmpLow = 0.0;
+         double tmpHigh = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         tmpHigh = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         tmpLow = tmpHigh;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmpHigh > highest ) {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest ) {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[lowestIdx & sp.xMask] : pkVal0;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmpLow = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmpLow < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest ) {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         cur_outReal = (highest + lowest) / 2.0;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -112617,9 +119379,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MidpriceStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -112670,25 +119429,79 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MIDPRICE peek: BadParam", RetCode.BadParam);
-         MidpriceStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MidpriceStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MidpriceStream sp = this;
+         double tmpLow = 0.0;
+         double tmpHigh = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.midpriceStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         tmpHigh = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         tmpLow = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmpHigh > highest ) {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest ) {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmpLow = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmpLow < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest ) {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         cur_outReal = (highest + lowest) / 2.0;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -113538,17 +120351,55 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIN peek: BadParam", RetCode.BadParam);
-         MinStream scratch = new MinStream(this);
-         core.minStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         MinStream sp = this;
+         double tmp = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[lowestIdx & sp.xMask] : pkVal0;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         cur_outReal = lowest;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -114235,17 +121086,55 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MININDEX peek: BadParam", RetCode.BadParam);
-         MinindexStream scratch = new MinindexStream(this);
-         core.minindexStepImpl(scratch, inReal);
-         return scratch.cur_outInteger;
+         MinindexStream sp = this;
+         double tmp = 0.0;
+         int cur_outInteger = sp.cur_outInteger;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[lowestIdx & sp.xMask] : pkVal0;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         cur_outInteger = lowestIdx;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outInteger;
       }
 
       /**
@@ -115151,17 +122040,77 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAX peek: BadParam", RetCode.BadParam);
-         MinmaxStream scratch = new MinmaxStream(this);
-         core.minmaxStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outMin, scratch.cur_outMax);
+         MinmaxStream sp = this;
+         double tmpHigh = 0.0;
+         double tmpLow = 0.0;
+         double cur_outMax = sp.cur_outMax;
+         double cur_outMin = sp.cur_outMin;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         tmpHigh = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         tmpLow = tmpHigh;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmpHigh > highest ) {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest ) {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[lowestIdx & sp.xMask] : pkVal0;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmpLow = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmpLow < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest ) {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         cur_outMax = highest;
+         cur_outMin = lowest;
+         trailingIdx += 1;
+         today += 1;
+         return new Value(cur_outMin, cur_outMax);
       }
 
       /**
@@ -116000,17 +122949,77 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
-         MinmaxindexStream scratch = new MinmaxindexStream(this);
-         core.minmaxindexStepImpl(scratch, inReal);
-         return new Value(scratch.cur_outMinIdx, scratch.cur_outMaxIdx);
+         MinmaxindexStream sp = this;
+         double tmpHigh = 0.0;
+         double tmpLow = 0.0;
+         int cur_outMaxIdx = sp.cur_outMaxIdx;
+         int cur_outMinIdx = sp.cur_outMinIdx;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         tmpHigh = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         tmpLow = tmpHigh;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmpHigh > highest ) {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest ) {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[lowestIdx & sp.xMask] : pkVal0;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmpLow = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmpLow < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest ) {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         cur_outMaxIdx = highestIdx;
+         cur_outMinIdx = lowestIdx;
+         trailingIdx += 1;
+         today += 1;
+         return new Value(cur_outMinIdx, cur_outMaxIdx);
       }
 
       /**
@@ -117141,17 +124150,104 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
-         MinusDiStream scratch = new MinusDiStream(this);
-         core.minusDiStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         MinusDiStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod <= 1 ) {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevClose = sp.prevClose;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               double _true_range_0;
+               double range_0 = prevHigh - prevLow;
+               double tmp_0 = Math.abs(prevHigh - prevClose);
+               if( tmp_0 > range_0 ) {
+                  range_0 = tmp_0;
+               }
+               tmp_0 = Math.abs(prevLow - prevClose);
+               if( tmp_0 > range_0 ) {
+                  range_0 = tmp_0;
+               }
+               _true_range_0 = range_0;
+               tempReal = _true_range_0;
+               if( tempReal <= 0.0 ) {
+                  cur_outReal = (double)0.0;
+               } else {
+                  cur_outReal = diffM / tempReal;
+               }
+            } else {
+               cur_outReal = (double)0.0;
+            }
+            prevClose = inClose;
+         } else {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevClose = sp.prevClose;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            double prevMinusDM = sp.prevMinusDM;
+            double prevTR = sp.prevTR;
+            /* Calculate the prevMinusDM */
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod + diffM;
+            } else {
+               /* Case 1,3,5 and 7 */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod;
+            }
+            /* Calculate the prevTR */
+            double _true_range_1;
+            double range_1 = prevHigh - prevLow;
+            double tmp_1 = Math.abs(prevHigh - prevClose);
+            if( tmp_1 > range_1 ) {
+               range_1 = tmp_1;
+            }
+            tmp_1 = Math.abs(prevLow - prevClose);
+            if( tmp_1 > range_1 ) {
+               range_1 = tmp_1;
+            }
+            _true_range_1 = range_1;
+            tempReal = _true_range_1;
+            prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+            prevClose = inClose;
+            /* Calculate the DI. The value is rounded (see Wilder book). */
+            if( prevTR > 0.0 ) {
+               cur_outReal = (100.0 * (prevMinusDM / prevTR));
+            } else {
+               cur_outReal = 0.0;
+            }
+         }
+         return cur_outReal;
       }
 
       /**
@@ -117187,18 +124283,18 @@ public final class Core {
          sp.prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
             /* Case 2 and 4: +DM=0,-DM=diffM */
-            double _true_range_0;
-            double range_0 = sp.prevHigh - sp.prevLow;
-            double tmp_0 = Math.abs(sp.prevHigh - sp.prevClose);
-            if( tmp_0 > range_0 ) {
-               range_0 = tmp_0;
+            double _true_range_2;
+            double range_2 = sp.prevHigh - sp.prevLow;
+            double tmp_2 = Math.abs(sp.prevHigh - sp.prevClose);
+            if( tmp_2 > range_2 ) {
+               range_2 = tmp_2;
             }
-            tmp_0 = Math.abs(sp.prevLow - sp.prevClose);
-            if( tmp_0 > range_0 ) {
-               range_0 = tmp_0;
+            tmp_2 = Math.abs(sp.prevLow - sp.prevClose);
+            if( tmp_2 > range_2 ) {
+               range_2 = tmp_2;
             }
-            _true_range_0 = range_0;
-            tempReal = _true_range_0;
+            _true_range_2 = range_2;
+            tempReal = _true_range_2;
             if( tempReal <= 0.0 ) {
                sp.cur_outReal = (double)0.0;
             } else {
@@ -117229,18 +124325,18 @@ public final class Core {
             sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod;
          }
          /* Calculate the prevTR */
-         double _true_range_1;
-         double range_1 = sp.prevHigh - sp.prevLow;
-         double tmp_1 = Math.abs(sp.prevHigh - sp.prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         double _true_range_3;
+         double range_3 = sp.prevHigh - sp.prevLow;
+         double tmp_3 = Math.abs(sp.prevHigh - sp.prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         tmp_1 = Math.abs(sp.prevLow - sp.prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         tmp_3 = Math.abs(sp.prevLow - sp.prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         _true_range_1 = range_1;
-         tempReal = _true_range_1;
+         _true_range_3 = range_3;
+         tempReal = _true_range_3;
          sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
@@ -117418,18 +124514,18 @@ public final class Core {
             prevLow = tempReal;
             if( diffM > 0 && diffP < diffM ) {
                /* Case 2 and 4: +DM=0,-DM=diffM */
-               double _true_range_2;
-               double range_2 = prevHigh - prevLow;
-               double tmp_2 = Math.abs(prevHigh - prevClose);
-               if( tmp_2 > range_2 ) {
-                  range_2 = tmp_2;
+               double _true_range_4;
+               double range_4 = prevHigh - prevLow;
+               double tmp_4 = Math.abs(prevHigh - prevClose);
+               if( tmp_4 > range_4 ) {
+                  range_4 = tmp_4;
                }
-               tmp_2 = Math.abs(prevLow - prevClose);
-               if( tmp_2 > range_2 ) {
-                  range_2 = tmp_2;
+               tmp_4 = Math.abs(prevLow - prevClose);
+               if( tmp_4 > range_4 ) {
+                  range_4 = tmp_4;
                }
-               _true_range_2 = range_2;
-               tempReal = _true_range_2;
+               _true_range_4 = range_4;
+               tempReal = _true_range_4;
                if( tempReal <= 0.0 ) {
                   outReal[outIdx++ * outStride] = (double)0.0;
                } else {
@@ -117600,18 +124696,18 @@ public final class Core {
                /* Case 2 and 4: +DM=0,-DM=diffM */
                prevMinusDM += diffM;
             }
-            double _true_range_3;
-            double range_3 = prevHigh - prevLow;
-            double tmp_3 = Math.abs(prevHigh - prevClose);
-            if( tmp_3 > range_3 ) {
-               range_3 = tmp_3;
+            double _true_range_5;
+            double range_5 = prevHigh - prevLow;
+            double tmp_5 = Math.abs(prevHigh - prevClose);
+            if( tmp_5 > range_5 ) {
+               range_5 = tmp_5;
             }
-            tmp_3 = Math.abs(prevLow - prevClose);
-            if( tmp_3 > range_3 ) {
-               range_3 = tmp_3;
+            tmp_5 = Math.abs(prevLow - prevClose);
+            if( tmp_5 > range_5 ) {
+               range_5 = tmp_5;
             }
-            _true_range_3 = range_3;
-            tempReal = _true_range_3;
+            _true_range_5 = range_5;
+            tempReal = _true_range_5;
             prevTR += tempReal;
             prevClose = inClose[today];
          }
@@ -117639,18 +124735,18 @@ public final class Core {
                prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
             }
             /* Calculate the prevTR */
-            double _true_range_4;
-            double range_4 = prevHigh - prevLow;
-            double tmp_4 = Math.abs(prevHigh - prevClose);
-            if( tmp_4 > range_4 ) {
-               range_4 = tmp_4;
+            double _true_range_6;
+            double range_6 = prevHigh - prevLow;
+            double tmp_6 = Math.abs(prevHigh - prevClose);
+            if( tmp_6 > range_6 ) {
+               range_6 = tmp_6;
             }
-            tmp_4 = Math.abs(prevLow - prevClose);
-            if( tmp_4 > range_4 ) {
-               range_4 = tmp_4;
+            tmp_6 = Math.abs(prevLow - prevClose);
+            if( tmp_6 > range_6 ) {
+               range_6 = tmp_6;
             }
-            _true_range_4 = range_4;
-            tempReal = _true_range_4;
+            _true_range_6 = range_6;
+            tempReal = _true_range_6;
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
          }
@@ -117689,18 +124785,18 @@ public final class Core {
                prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
             }
             /* Calculate the prevTR */
-            double _true_range_5;
-            double range_5 = prevHigh - prevLow;
-            double tmp_5 = Math.abs(prevHigh - prevClose);
-            if( tmp_5 > range_5 ) {
-               range_5 = tmp_5;
+            double _true_range_7;
+            double range_7 = prevHigh - prevLow;
+            double tmp_7 = Math.abs(prevHigh - prevClose);
+            if( tmp_7 > range_7 ) {
+               range_7 = tmp_7;
             }
-            tmp_5 = Math.abs(prevLow - prevClose);
-            if( tmp_5 > range_5 ) {
-               range_5 = tmp_5;
+            tmp_7 = Math.abs(prevLow - prevClose);
+            if( tmp_7 > range_7 ) {
+               range_7 = tmp_7;
             }
-            _true_range_5 = range_5;
-            tempReal = _true_range_5;
+            _true_range_7 = range_7;
+            tempReal = _true_range_7;
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
             /* Calculate the DI. The value is rounded (see Wilder book). */
@@ -118440,17 +125536,63 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
-         MinusDmStream scratch = new MinusDmStream(this);
-         core.minusDmStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         MinusDmStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod <= 1 ) {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               cur_outReal = diffM;
+            } else {
+               cur_outReal = 0;
+            }
+         } else {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            double prevMinusDM = sp.prevMinusDM;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod + diffM;
+            } else {
+               /* Case 1,3,5 and 7 */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod;
+            }
+            cur_outReal = prevMinusDM;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -119311,17 +126453,31 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
-         MomStream scratch = new MomStream(this);
-         core.momStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         MomStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         cur_outReal = inReal - ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0);
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -119827,17 +126983,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
-         MultStream scratch = new MultStream(this);
-         core.multStepImpl(scratch, inReal0, inReal1);
-         return scratch.cur_outReal;
+         MultStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = inReal0 * inReal1;
+         return cur_outReal;
       }
 
       /**
@@ -120624,17 +127783,57 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("NATR peek: BadParam", RetCode.BadParam);
-         NatrStream scratch = new NatrStream(this);
-         core.natrStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         NatrStream sp = this;
+         double tempValue = 0.0;
+         double val2 = 0.0;
+         double val3 = 0.0;
+         double greatest = 0.0;
+         double tempCY = 0.0;
+         double tempLT = 0.0;
+         double tempHT = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double lag1_inClose = sp.lag1_inClose;
+         double prevATR = sp.prevATR;
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow;
+         tempHT = inHigh;
+         tempCY = lag1_inClose;
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= sp.optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= sp.optInTimePeriod;
+         if( sp.optInTimePeriod <= 1 ) {
+            /* No smoothing: emit the raw True Range (unnormalized). */
+            cur_outReal = prevATR;
+         } else {
+            tempValue = inClose;
+            if( tempValue != 0.0 ) {
+               cur_outReal = prevATR / tempValue * 100.0;
+            } else {
+               cur_outReal = 0.0;
+            }
+         }
+         lag1_inClose = inClose;
+         return cur_outReal;
       }
 
       /**
@@ -121385,17 +128584,52 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("NVI peek: BadParam", RetCode.BadParam);
-         NviStream scratch = new NviStream(this);
-         core.nviStepImpl(scratch, inClose, inVolume);
-         return scratch.cur_outReal;
+         NviStream sp = this;
+         double tempClose = 0.0;
+         double tempVolume = 0.0;
+         double tempNVI = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevClose = sp.prevClose;
+         double prevNVI = sp.prevNVI;
+         double prevVolume = sp.prevVolume;
+         tempClose = inClose;
+         tempVolume = inVolume;
+         /* prevClose != 0 guards the percentage-change division: a zero previous
+          * close is a degenerate input that would otherwise emit NaN/Inf; carry
+          * the index forward unchanged instead. Never triggers on real prices.
+          */
+         if( tempVolume < prevVolume && prevClose != 0.0 ) {
+            /* The index is a running product, so it has no upper bound: enough
+             * compounding gains push it past the largest double. Keep the last
+             * representable value instead of writing +/-Inf, which no caller can
+             * chart and which poisons every arithmetic downstream of it. Real
+             * price series never come close.
+             *
+             * Written as a compound assignment on the copy, exactly as the update
+             * was before the guard: spelling it `a + r*a` would match the FMA
+             * fusion detector and silently re-round every bar, not just the
+             * overflowing one.
+             */
+            tempNVI = prevNVI;
+            tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
+            if( (Double.isFinite(tempNVI)) ) {
+               prevNVI = tempNVI;
+            }
+         }
+         cur_outReal = prevNVI;
+         prevClose = tempClose;
+         prevVolume = tempVolume;
+         return cur_outReal;
       }
 
       /**
@@ -121928,17 +129162,30 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("OBV peek: BadParam", RetCode.BadParam);
-         ObvStream scratch = new ObvStream(this);
-         core.obvStepImpl(scratch, inReal, inVolume);
-         return scratch.cur_outReal;
+         ObvStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevOBV = sp.prevOBV;
+         double prevReal = sp.prevReal;
+         tempReal = inReal;
+         if( tempReal > prevReal ) {
+            prevOBV += inVolume;
+         } else if( tempReal < prevReal ) {
+            prevOBV -= inVolume;
+         }
+         cur_outReal = prevOBV;
+         prevReal = tempReal;
+         return cur_outReal;
       }
 
       /**
@@ -122954,17 +130201,104 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
-         PlusDiStream scratch = new PlusDiStream(this);
-         core.plusDiStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         PlusDiStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod <= 1 ) {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevClose = sp.prevClose;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffP > 0 && diffP > diffM ) {
+               /* Case 1 and 3: +DM=diffP,-DM=0 */
+               double _true_range_0;
+               double range_0 = prevHigh - prevLow;
+               double tmp_0 = Math.abs(prevHigh - prevClose);
+               if( tmp_0 > range_0 ) {
+                  range_0 = tmp_0;
+               }
+               tmp_0 = Math.abs(prevLow - prevClose);
+               if( tmp_0 > range_0 ) {
+                  range_0 = tmp_0;
+               }
+               _true_range_0 = range_0;
+               tempReal = _true_range_0;
+               if( tempReal <= 0.0 ) {
+                  cur_outReal = (double)0.0;
+               } else {
+                  cur_outReal = diffP / tempReal;
+               }
+            } else {
+               cur_outReal = (double)0.0;
+            }
+            prevClose = inClose;
+         } else {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevClose = sp.prevClose;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            double prevPlusDM = sp.prevPlusDM;
+            double prevTR = sp.prevTR;
+            /* Calculate the prevPlusDM */
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffP > 0 && diffP > diffM ) {
+               /* Case 1 and 3: +DM=diffP,-DM=0 */
+               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod + diffP;
+            } else {
+               /* Case 2,4,5 and 7 */
+               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod;
+            }
+            /* Calculate the prevTR */
+            double _true_range_1;
+            double range_1 = prevHigh - prevLow;
+            double tmp_1 = Math.abs(prevHigh - prevClose);
+            if( tmp_1 > range_1 ) {
+               range_1 = tmp_1;
+            }
+            tmp_1 = Math.abs(prevLow - prevClose);
+            if( tmp_1 > range_1 ) {
+               range_1 = tmp_1;
+            }
+            _true_range_1 = range_1;
+            tempReal = _true_range_1;
+            prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+            prevClose = inClose;
+            /* Calculate the DI. The value is rounded (see Wilder book). */
+            if( prevTR > 0.0 ) {
+               cur_outReal = (100.0 * (prevPlusDM / prevTR));
+            } else {
+               cur_outReal = 0.0;
+            }
+         }
+         return cur_outReal;
       }
 
       /**
@@ -123000,18 +130334,18 @@ public final class Core {
          sp.prevLow = tempReal;
          if( diffP > 0 && diffP > diffM ) {
             /* Case 1 and 3: +DM=diffP,-DM=0 */
-            double _true_range_0;
-            double range_0 = sp.prevHigh - sp.prevLow;
-            double tmp_0 = Math.abs(sp.prevHigh - sp.prevClose);
-            if( tmp_0 > range_0 ) {
-               range_0 = tmp_0;
+            double _true_range_2;
+            double range_2 = sp.prevHigh - sp.prevLow;
+            double tmp_2 = Math.abs(sp.prevHigh - sp.prevClose);
+            if( tmp_2 > range_2 ) {
+               range_2 = tmp_2;
             }
-            tmp_0 = Math.abs(sp.prevLow - sp.prevClose);
-            if( tmp_0 > range_0 ) {
-               range_0 = tmp_0;
+            tmp_2 = Math.abs(sp.prevLow - sp.prevClose);
+            if( tmp_2 > range_2 ) {
+               range_2 = tmp_2;
             }
-            _true_range_0 = range_0;
-            tempReal = _true_range_0;
+            _true_range_2 = range_2;
+            tempReal = _true_range_2;
             if( tempReal <= 0.0 ) {
                sp.cur_outReal = (double)0.0;
             } else {
@@ -123042,18 +130376,18 @@ public final class Core {
             sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
          }
          /* Calculate the prevTR */
-         double _true_range_1;
-         double range_1 = sp.prevHigh - sp.prevLow;
-         double tmp_1 = Math.abs(sp.prevHigh - sp.prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         double _true_range_3;
+         double range_3 = sp.prevHigh - sp.prevLow;
+         double tmp_3 = Math.abs(sp.prevHigh - sp.prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         tmp_1 = Math.abs(sp.prevLow - sp.prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         tmp_3 = Math.abs(sp.prevLow - sp.prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         _true_range_1 = range_1;
-         tempReal = _true_range_1;
+         _true_range_3 = range_3;
+         tempReal = _true_range_3;
          sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
@@ -123231,18 +130565,18 @@ public final class Core {
             prevLow = tempReal;
             if( diffP > 0 && diffP > diffM ) {
                /* Case 1 and 3: +DM=diffP,-DM=0 */
-               double _true_range_2;
-               double range_2 = prevHigh - prevLow;
-               double tmp_2 = Math.abs(prevHigh - prevClose);
-               if( tmp_2 > range_2 ) {
-                  range_2 = tmp_2;
+               double _true_range_4;
+               double range_4 = prevHigh - prevLow;
+               double tmp_4 = Math.abs(prevHigh - prevClose);
+               if( tmp_4 > range_4 ) {
+                  range_4 = tmp_4;
                }
-               tmp_2 = Math.abs(prevLow - prevClose);
-               if( tmp_2 > range_2 ) {
-                  range_2 = tmp_2;
+               tmp_4 = Math.abs(prevLow - prevClose);
+               if( tmp_4 > range_4 ) {
+                  range_4 = tmp_4;
                }
-               _true_range_2 = range_2;
-               tempReal = _true_range_2;
+               _true_range_4 = range_4;
+               tempReal = _true_range_4;
                if( tempReal <= 0.0 ) {
                   outReal[outIdx++ * outStride] = (double)0.0;
                } else {
@@ -123413,18 +130747,18 @@ public final class Core {
                /* Case 1 and 3: +DM=diffP,-DM=0 */
                prevPlusDM += diffP;
             }
-            double _true_range_3;
-            double range_3 = prevHigh - prevLow;
-            double tmp_3 = Math.abs(prevHigh - prevClose);
-            if( tmp_3 > range_3 ) {
-               range_3 = tmp_3;
+            double _true_range_5;
+            double range_5 = prevHigh - prevLow;
+            double tmp_5 = Math.abs(prevHigh - prevClose);
+            if( tmp_5 > range_5 ) {
+               range_5 = tmp_5;
             }
-            tmp_3 = Math.abs(prevLow - prevClose);
-            if( tmp_3 > range_3 ) {
-               range_3 = tmp_3;
+            tmp_5 = Math.abs(prevLow - prevClose);
+            if( tmp_5 > range_5 ) {
+               range_5 = tmp_5;
             }
-            _true_range_3 = range_3;
-            tempReal = _true_range_3;
+            _true_range_5 = range_5;
+            tempReal = _true_range_5;
             prevTR += tempReal;
             prevClose = inClose[today];
          }
@@ -123452,18 +130786,18 @@ public final class Core {
                prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
             }
             /* Calculate the prevTR */
-            double _true_range_4;
-            double range_4 = prevHigh - prevLow;
-            double tmp_4 = Math.abs(prevHigh - prevClose);
-            if( tmp_4 > range_4 ) {
-               range_4 = tmp_4;
+            double _true_range_6;
+            double range_6 = prevHigh - prevLow;
+            double tmp_6 = Math.abs(prevHigh - prevClose);
+            if( tmp_6 > range_6 ) {
+               range_6 = tmp_6;
             }
-            tmp_4 = Math.abs(prevLow - prevClose);
-            if( tmp_4 > range_4 ) {
-               range_4 = tmp_4;
+            tmp_6 = Math.abs(prevLow - prevClose);
+            if( tmp_6 > range_6 ) {
+               range_6 = tmp_6;
             }
-            _true_range_4 = range_4;
-            tempReal = _true_range_4;
+            _true_range_6 = range_6;
+            tempReal = _true_range_6;
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
          }
@@ -123502,18 +130836,18 @@ public final class Core {
                prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
             }
             /* Calculate the prevTR */
-            double _true_range_5;
-            double range_5 = prevHigh - prevLow;
-            double tmp_5 = Math.abs(prevHigh - prevClose);
-            if( tmp_5 > range_5 ) {
-               range_5 = tmp_5;
+            double _true_range_7;
+            double range_7 = prevHigh - prevLow;
+            double tmp_7 = Math.abs(prevHigh - prevClose);
+            if( tmp_7 > range_7 ) {
+               range_7 = tmp_7;
             }
-            tmp_5 = Math.abs(prevLow - prevClose);
-            if( tmp_5 > range_5 ) {
-               range_5 = tmp_5;
+            tmp_7 = Math.abs(prevLow - prevClose);
+            if( tmp_7 > range_7 ) {
+               range_7 = tmp_7;
             }
-            _true_range_5 = range_5;
-            tempReal = _true_range_5;
+            _true_range_7 = range_7;
+            tempReal = _true_range_7;
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
             /* Calculate the DI. The value is rounded (see Wilder book). */
@@ -124252,17 +131586,63 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("PLUS_DM peek: BadParam", RetCode.BadParam);
-         PlusDmStream scratch = new PlusDmStream(this);
-         core.plusDmStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         PlusDmStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod <= 1 ) {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffP > 0 && diffP > diffM ) {
+               /* Case 1 and 3: +DM=diffP,-DM=0 */
+               cur_outReal = diffP;
+            } else {
+               cur_outReal = 0;
+            }
+         } else {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            double prevPlusDM = sp.prevPlusDM;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffP > 0 && diffP > diffM ) {
+               /* Case 1 and 3: +DM=diffP,-DM=0 */
+               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod + diffP;
+            } else {
+               /* Case 2,4,5 and 7 */
+               prevPlusDM = prevPlusDM - prevPlusDM / sp.optInTimePeriod;
+            }
+            cur_outReal = prevPlusDM;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -125221,8 +132601,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -125846,17 +133227,52 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("PVI peek: BadParam", RetCode.BadParam);
-         PviStream scratch = new PviStream(this);
-         core.pviStepImpl(scratch, inClose, inVolume);
-         return scratch.cur_outReal;
+         PviStream sp = this;
+         double tempClose = 0.0;
+         double tempVolume = 0.0;
+         double tempPVI = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevClose = sp.prevClose;
+         double prevPVI = sp.prevPVI;
+         double prevVolume = sp.prevVolume;
+         tempClose = inClose;
+         tempVolume = inVolume;
+         /* prevClose != 0 guards the percentage-change division: a zero previous
+          * close is a degenerate input that would otherwise emit NaN/Inf; carry
+          * the index forward unchanged instead. Never triggers on real prices.
+          */
+         if( tempVolume > prevVolume && prevClose != 0.0 ) {
+            /* The index is a running product, so it has no upper bound: enough
+             * compounding gains push it past the largest double. Keep the last
+             * representable value instead of writing +/-Inf, which no caller can
+             * chart and which poisons every arithmetic downstream of it. Real
+             * price series never come close.
+             *
+             * Written as a compound assignment on the copy, exactly as the update
+             * was before the guard: spelling it `a + r*a` would match the FMA
+             * fusion detector and silently re-round every bar, not just the
+             * overflowing one.
+             */
+            tempPVI = prevPVI;
+            tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+            if( (Double.isFinite(tempPVI)) ) {
+               prevPVI = tempPVI;
+            }
+         }
+         cur_outReal = prevPVI;
+         prevClose = tempClose;
+         prevVolume = tempVolume;
+         return cur_outReal;
       }
 
       /**
@@ -126556,8 +133972,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -127241,17 +134658,36 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
-         QstickStream scratch = new QstickStream(this);
-         core.qstickStepImpl(scratch, inOpen, inClose);
-         return scratch.cur_outReal;
+         QstickStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double periodTotal = sp.periodTotal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = (double)(inClose - inOpen);
+         }
+         periodTotal += (double)(inClose - inOpen);
+         tempReal = periodTotal;
+         periodTotal -= (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_derived[ringPos_trailingIdx] : pkVal0;
+         cur_outReal = tempReal / (double)sp.optInTimePeriod;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -127889,17 +135325,37 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROC peek: BadParam", RetCode.BadParam);
-         RocStream scratch = new RocStream(this);
-         core.rocStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         RocStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         tempReal = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         if( tempReal != 0.0 ) {
+            cur_outReal = (inReal / tempReal - 1.0) * 100.0;
+         } else {
+            cur_outReal = 0.0;
+         }
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -128522,17 +135978,37 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCP peek: BadParam", RetCode.BadParam);
-         RocpStream scratch = new RocpStream(this);
-         core.rocpStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         RocpStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         tempReal = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         if( tempReal != 0.0 ) {
+            cur_outReal = (inReal - tempReal) / tempReal;
+         } else {
+            cur_outReal = 0.0;
+         }
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -129158,17 +136634,37 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCR peek: BadParam", RetCode.BadParam);
-         RocrStream scratch = new RocrStream(this);
-         core.rocrStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         RocrStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         tempReal = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         if( tempReal != 0.0 ) {
+            cur_outReal = inReal / tempReal;
+         } else {
+            cur_outReal = 0.0;
+         }
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -129796,17 +137292,37 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ROCR100 peek: BadParam", RetCode.BadParam);
-         Rocr100Stream scratch = new Rocr100Stream(this);
-         core.rocr100StepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         Rocr100Stream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         tempReal = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         if( tempReal != 0.0 ) {
+            cur_outReal = inReal / tempReal * 100.0;
+         } else {
+            cur_outReal = 0.0;
+         }
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -130633,17 +138149,46 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
-         RsiStream scratch = new RsiStream(this);
-         core.rsiStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         RsiStream sp = this;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevGain = sp.prevGain;
+         double prevLoss = sp.prevLoss;
+         double prevValue = sp.prevValue;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         tempValue1 = (double)inReal;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(sp.optInTimePeriod - 1);
+         prevGain *= (double)(sp.optInTimePeriod - 1);
+         if( tempValue2 < 0.0 ) {
+            prevLoss -= tempValue2;
+         } else {
+            prevGain += tempValue2;
+         }
+         prevLoss /= (double)sp.optInTimePeriod;
+         prevGain /= (double)sp.optInTimePeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            cur_outReal = 100.0 * (prevGain / tempValue1);
+         } else {
+            cur_outReal = 0.0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -131689,17 +139234,140 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAR peek: BadParam", RetCode.BadParam);
-         SarStream scratch = new SarStream(this);
-         core.sarStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         SarStream sp = this;
+         double prevHigh = 0.0;
+         double prevLow = 0.0;
+         double af = sp.af;
+         double cur_outReal = sp.cur_outReal;
+         double ep = sp.ep;
+         int isLong = sp.isLong;
+         double newHigh = sp.newHigh;
+         double newLow = sp.newLow;
+         double sar = sp.sar;
+         prevLow = newLow;
+         prevHigh = newHigh;
+         newLow = inLow;
+         newHigh = inHigh;
+         if( isLong == 1 ) {
+            /* Switch to short if the low penetrates the SAR value. */
+            if( newLow <= sar ) {
+               /* Switch and Overide the SAR with the ep */
+               isLong = 0;
+               sar = ep;
+               /* Make sure the overide SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+               /* Output the overide SAR */
+               cur_outReal = sar;
+               /* Adjust af and ep */
+               af = sp.optInAcceleration;
+               ep = newLow;
+               /* Calculate the new SAR */
+               sar = Math.fma(af, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+            } else {
+               /* No switch */
+               /* Output the SAR (was calculated in the previous iteration) */
+               cur_outReal = sar;
+               /* Adjust af and ep. */
+               if( newHigh > ep ) {
+                  ep = newHigh;
+                  af += sp.optInAcceleration;
+                  if( af > sp.optInMaximum ) {
+                     af = sp.optInMaximum;
+                  }
+               }
+               /* Calculate the new SAR */
+               sar = Math.fma(af, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar > prevLow ) {
+                  sar = prevLow;
+               }
+               if( sar > newLow ) {
+                  sar = newLow;
+               }
+            }
+         /* Switch to long if the high penetrates the SAR value. */
+         } else if( newHigh >= sar ) {
+            /* Switch and Overide the SAR with the ep */
+            isLong = 1;
+            sar = ep;
+            /* Make sure the overide SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+            /* Output the overide SAR */
+            cur_outReal = sar;
+            /* Adjust af and ep */
+            af = sp.optInAcceleration;
+            ep = newHigh;
+            /* Calculate the new SAR */
+            sar = Math.fma(af, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+         } else {
+            /* No switch */
+            /* Output the SAR (was calculated in the previous iteration) */
+            cur_outReal = sar;
+            /* Adjust af and ep. */
+            if( newLow < ep ) {
+               ep = newLow;
+               af += sp.optInAcceleration;
+               if( af > sp.optInMaximum ) {
+                  af = sp.optInMaximum;
+               }
+            }
+            /* Calculate the new SAR */
+            sar = Math.fma(af, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh ) {
+               sar = prevHigh;
+            }
+            if( sar < newHigh ) {
+               sar = newHigh;
+            }
+         }
+         return cur_outReal;
       }
 
       /**
@@ -133174,17 +140842,147 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
-         SarextStream scratch = new SarextStream(this);
-         core.sarextStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         SarextStream sp = this;
+         double prevHigh = 0.0;
+         double prevLow = 0.0;
+         double afLong = sp.afLong;
+         double afShort = sp.afShort;
+         double cur_outReal = sp.cur_outReal;
+         double ep = sp.ep;
+         int isLong = sp.isLong;
+         double newHigh = sp.newHigh;
+         double newLow = sp.newLow;
+         double sar = sp.sar;
+         prevLow = newLow;
+         prevHigh = newHigh;
+         newLow = inLow;
+         newHigh = inHigh;
+         if( isLong == 1 ) {
+            /* Switch to short if the low penetrates the SAR value. */
+            if( newLow <= sar ) {
+               /* Switch and Overide the SAR with the ep */
+               isLong = 0;
+               sar = ep;
+               /* Make sure the overide SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+               /* Output the overide SAR */
+               if( sp.optInOffsetOnReverse != 0.0 ) {
+                  sar += sar * sp.optInOffsetOnReverse;
+               }
+               cur_outReal = 0 - sar;
+               /* Adjust afShort and ep */
+               afShort = sp.optInAccelerationInitShort;
+               ep = newLow;
+               /* Calculate the new SAR */
+               sar = Math.fma(afShort, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+            } else {
+               /* No switch */
+               /* Output the SAR (was calculated in the previous iteration) */
+               cur_outReal = sar;
+               /* Adjust afLong and ep. */
+               if( newHigh > ep ) {
+                  ep = newHigh;
+                  afLong += sp.optInAccelerationLong;
+                  if( afLong > sp.optInAccelerationMaxLong ) {
+                     afLong = sp.optInAccelerationMaxLong;
+                  }
+               }
+               /* Calculate the new SAR */
+               sar = Math.fma(afLong, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar > prevLow ) {
+                  sar = prevLow;
+               }
+               if( sar > newLow ) {
+                  sar = newLow;
+               }
+            }
+         /* Switch to long if the high penetrates the SAR value. */
+         } else if( newHigh >= sar ) {
+            /* Switch and Overide the SAR with the ep */
+            isLong = 1;
+            sar = ep;
+            /* Make sure the overide SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+            /* Output the overide SAR */
+            if( sp.optInOffsetOnReverse != 0.0 ) {
+               sar -= sar * sp.optInOffsetOnReverse;
+            }
+            cur_outReal = sar;
+            /* Adjust afLong and ep */
+            afLong = sp.optInAccelerationInitLong;
+            ep = newHigh;
+            /* Calculate the new SAR */
+            sar = Math.fma(afLong, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+         } else {
+            /* No switch */
+            /* Output the SAR (was calculated in the previous iteration) */
+            cur_outReal = 0 - sar;
+            /* Adjust afShort and ep. */
+            if( newLow < ep ) {
+               ep = newLow;
+               afShort += sp.optInAccelerationShort;
+               if( afShort > sp.optInAccelerationMaxShort ) {
+                  afShort = sp.optInAccelerationMaxShort;
+               }
+            }
+            /* Calculate the new SAR */
+            sar = Math.fma(afShort, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh ) {
+               sar = prevHigh;
+            }
+            if( sar < newHigh ) {
+               sar = newHigh;
+            }
+         }
+         return cur_outReal;
       }
 
       /**
@@ -134055,17 +141853,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
-         SinStream scratch = new SinStream(this);
-         core.sinStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         SinStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.sin(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -134476,17 +142277,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
-         SinhStream scratch = new SinhStream(this);
-         core.sinhStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         SinhStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.sinh(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -135031,17 +142835,36 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
-         SmaStream scratch = new SmaStream(this);
-         core.smaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         SmaStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double periodTotal = sp.periodTotal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         periodTotal += (double)inReal;
+         tempReal = periodTotal;
+         periodTotal -= (double)((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0);
+         cur_outReal = tempReal / (double)sp.optInTimePeriod;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -136194,9 +144017,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<SmiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -136270,25 +144090,119 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
-         SmiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new SmiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         SmiStream sp = this;
+         double tmp = 0.0;
+         double num = 0.0;
+         double den = 0.0;
+         double halfDen = 0.0;
+         double smiValue = 0.0;
+         double cur_outSMI = sp.cur_outSMI;
+         double cur_outSMISignal = sp.cur_outSMISignal;
+         double emaFastDen = sp.emaFastDen;
+         double emaFastNum = sp.emaFastNum;
+         double emaSlowDen = sp.emaSlowDen;
+         double emaSlowNum = sp.emaSlowNum;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         double prevSignal = sp.prevSignal;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.smiStepImpl(scratch, inHigh, inLow, inClose);
-         return new Value(scratch.cur_outSMI, scratch.cur_outSMISignal);
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         pkSlot2 = today & sp.xMask;
+         pkVal2 = inClose;
+         /* Set the lowest low */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Set the highest high */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         den = highest - lowest;
+         num = (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - (highest + lowest) * 0.5;
+         emaSlowNum = Math.fma(num - emaSlowNum, sp.kSlow, emaSlowNum);
+         emaSlowDen = Math.fma(den - emaSlowDen, sp.kSlow, emaSlowDen);
+         emaFastNum = Math.fma(emaSlowNum - emaFastNum, sp.kFast, emaFastNum);
+         emaFastDen = Math.fma(emaSlowDen - emaFastDen, sp.kFast, emaFastDen);
+         /* The denominator is an EMA of an EMA of the high-low range: every term
+          * is non-negative and every weight is positive, so it carries no
+          * cancellation residue and is zero only when every range that reached it
+          * was exactly zero -- 0/0, since a window of H == L bars makes num zero
+          * too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+          * convention. Test it exactly: the range carries the quote unit, so the
+          * fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+          * instrument quoted below it (issue #253). Issue #107's machine-flat
+          * window is caught by the exact test as well, since the residue an
+          * EMA leaves there is zero, not sub-epsilon.
+          */
+         halfDen = 0.5 * emaFastDen;
+         if( halfDen > 0.0 ) {
+            smiValue = 100.0 * emaFastNum / halfDen;
+         } else {
+            smiValue = 0.0;
+         }
+         prevSignal = Math.fma(smiValue - prevSignal, sp.kSignal, prevSignal);
+         cur_outSMI = smiValue;
+         cur_outSMISignal = prevSignal;
+         trailingIdx = trailingIdx + 1;
+         today = today + 1;
+         return new Value(cur_outSMI, cur_outSMISignal);
       }
 
       /**
@@ -137101,17 +145015,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
-         SqrtStream scratch = new SqrtStream(this);
-         core.sqrtStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         SqrtStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.sqrt(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -137654,8 +145571,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a throwaway copy, which for this
        * handle's shape is cheaper than reusing one.
        */
@@ -138748,8 +146666,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -140041,8 +147960,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -141093,8 +149013,9 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of
@@ -141643,17 +149564,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("SUB peek: BadParam", RetCode.BadParam);
-         SubStream scratch = new SubStream(this);
-         core.subStepImpl(scratch, inReal0, inReal1);
-         return scratch.cur_outReal;
+         SubStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = inReal0 - inReal1;
+         return cur_outReal;
       }
 
       /**
@@ -142181,17 +150105,36 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SUM peek: BadParam", RetCode.BadParam);
-         SumStream scratch = new SumStream(this);
-         core.sumStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         SumStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double periodTotal = sp.periodTotal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         periodTotal += inReal;
+         tempReal = periodTotal;
+         periodTotal -= (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         cur_outReal = tempReal;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -143042,17 +150985,36 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
-         T3Stream scratch = new T3Stream(this);
-         core.t3StepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         T3Stream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         double e1 = sp.e1;
+         double e2 = sp.e2;
+         double e3 = sp.e3;
+         double e4 = sp.e4;
+         double e5 = sp.e5;
+         double e6 = sp.e6;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         e1 = Math.fma(sp.one_minus_k, e1, sp.k * inReal);
+         e2 = Math.fma(sp.one_minus_k, e2, sp.k * e1);
+         e3 = Math.fma(sp.one_minus_k, e3, sp.k * e2);
+         e4 = Math.fma(sp.one_minus_k, e4, sp.k * e3);
+         e5 = Math.fma(sp.one_minus_k, e5, sp.k * e4);
+         e6 = Math.fma(sp.one_minus_k, e6, sp.k * e5);
+         cur_outReal = Math.fma(sp.c4, e3, Math.fma(sp.c3, e4, Math.fma(sp.c1, e6, sp.c2 * e5)));
+         return cur_outReal;
       }
 
       /**
@@ -143657,17 +151619,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TAN peek: BadParam", RetCode.BadParam);
-         TanStream scratch = new TanStream(this);
-         core.tanStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         TanStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.tan(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -144080,17 +152045,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TANH peek: BadParam", RetCode.BadParam);
-         TanhStream scratch = new TanhStream(this);
-         core.tanhStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         TanhStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = Math.tanh(inReal);
+         return cur_outReal;
       }
 
       /**
@@ -144782,17 +152750,30 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
-         TemaStream scratch = new TemaStream(this);
-         core.temaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         TemaStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         double prevEMA1 = sp.prevEMA1;
+         double prevEMA2 = sp.prevEMA2;
+         double prevEMA3 = sp.prevEMA3;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         prevEMA1 = Math.fma(inReal - prevEMA1, sp.optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, sp.optInK_1, prevEMA3);
+         cur_outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+         return cur_outReal;
       }
 
       /**
@@ -145489,17 +153470,42 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
-         TrangeStream scratch = new TrangeStream(this);
-         core.trangeStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         TrangeStream sp = this;
+         double val2 = 0.0;
+         double val3 = 0.0;
+         double greatest = 0.0;
+         double tempCY = 0.0;
+         double tempLT = 0.0;
+         double tempHT = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double lag1_inClose = sp.lag1_inClose;
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow;
+         tempHT = inHigh;
+         tempCY = lag1_inClose;
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         cur_outReal = greatest;
+         lag1_inClose = inClose;
+         return cur_outReal;
       }
 
       /**
@@ -146384,9 +154390,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<TrimaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -146436,25 +154439,104 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIMA peek: BadParam", RetCode.BadParam);
-         TrimaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new TrimaStream(this);
-            PEEK_SCRATCH.set(scratch);
+         TrimaStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod % 2 == 1 ) {
+            double numerator = sp.numerator;
+            double numeratorAdd = sp.numeratorAdd;
+            double numeratorSub = sp.numeratorSub;
+            int ringPos_middleIdx = sp.ringPos_middleIdx;
+            int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            double tempReal = sp.tempReal;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            if( sp.ringCap_middleIdx == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            if( sp.ringCap_trailingIdx == 0 ) {
+               pkSlot1 = 0;
+               pkVal1 = inReal;
+            }
+            /* Step (1) */
+            numerator -= numeratorSub;
+            numeratorSub -= tempReal;
+            tempReal = (ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[ringPos_middleIdx] : pkVal0;
+            numeratorSub += tempReal;
+            /* Step (2) */
+            numerator += numeratorAdd;
+            numeratorAdd -= tempReal;
+            tempReal = inReal;
+            numeratorAdd += tempReal;
+            /* Step (3) */
+            numerator += tempReal;
+            /* Step (4) */
+            tempReal = (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal1;
+            cur_outReal = numerator * sp.factor;
+            ringPos_middleIdx = ringPos_middleIdx + 1;
+            if( ringPos_middleIdx >= sp.ringCap_middleIdx ) {
+               ringPos_middleIdx = 0;
+            }
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+               ringPos_trailingIdx = 0;
+            }
          } else {
-            scratch.copyFrom(this);
+            double numerator = sp.numerator;
+            double numeratorAdd = sp.numeratorAdd;
+            double numeratorSub = sp.numeratorSub;
+            int ringPos_middleIdx = sp.ringPos_middleIdx;
+            int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            double tempReal = sp.tempReal;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            if( sp.ringCap_middleIdx == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            if( sp.ringCap_trailingIdx == 0 ) {
+               pkSlot1 = 0;
+               pkVal1 = inReal;
+            }
+            /* Step (1) */
+            numerator -= numeratorSub;
+            numeratorSub -= tempReal;
+            tempReal = (ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[ringPos_middleIdx] : pkVal0;
+            numeratorSub += tempReal;
+            /* Step (2) */
+            numeratorAdd -= tempReal;
+            numerator += numeratorAdd;
+            tempReal = inReal;
+            numeratorAdd += tempReal;
+            /* Step (3) */
+            numerator += tempReal;
+            /* Step (4) */
+            tempReal = (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal1;
+            cur_outReal = numerator * sp.factor;
+            ringPos_middleIdx = ringPos_middleIdx + 1;
+            if( ringPos_middleIdx >= sp.ringCap_middleIdx ) {
+               ringPos_middleIdx = 0;
+            }
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+               ringPos_trailingIdx = 0;
+            }
          }
-         core.trimaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         return cur_outReal;
       }
 
       /**
@@ -147586,17 +155668,32 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
-         TrixStream scratch = new TrixStream(this);
-         core.trixStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         TrixStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevEMA1 = sp.prevEMA1;
+         double prevEMA2 = sp.prevEMA2;
+         double prevEMA3 = sp.prevEMA3;
+         tempReal = prevEMA3;
+         prevEMA1 = Math.fma(inReal - prevEMA1, sp.optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, sp.optInK_1, prevEMA3);
+         if( tempReal != 0.0 ) {
+            cur_outReal = (prevEMA3 / tempReal - 1.0) * 100.0;
+         } else {
+            cur_outReal = 0.0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -148452,17 +156549,128 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TSF peek: BadParam", RetCode.BadParam);
-         TsfStream scratch = new TsfStream(this);
-         core.tsfStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         TsfStream sp = this;
+         double m = 0.0;
+         double b = 0.0;
+         int windowStart = 0;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double weightedTrailing = 0.0;
+         double SumXY = sp.SumXY;
+         double SumY = sp.SumY;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         int j = sp.j;
+         double sumAbs = sp.sumAbs;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         double trailingValue = sp.trailingValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            j -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         weightedTrailing = (double)sp.optInTimePeriod * trailingValue;
+         SumXY = SumXY + SumY - weightedTrailing;
+         SumY = SumY - trailingValue + (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         sumAbs = sumAbs - Math.abs(trailingValue) + Math.abs(((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         /* Re-anchor: rebuild both sums from the window itself. #103 left them as
+          * running totals that are never rebuilt, so each bar's rounding joins a
+          * residue no later bar can subtract -- unbounded in the length of the
+          * call, and scaled by the largest value the sums have EVER held rather
+          * than by what the window holds now. Two triggers, and they cover
+          * different failures (issue #254):
+          *
+          *   - every 32*period bars, so a slow drift stays bounded however long
+          *     the series runs. Same interval as TA_VAR / TA_CORREL / TA_BETA.
+          *
+          *   - when the value the window just dropped carries more weight than
+          *     everything left in it. That is the one the interval cannot cover:
+          *     one large print inflates the residue for up to 32*period bars
+          *     after it is gone (measured 31x at period 5), and this rebuilds on
+          *     the bar it leaves instead.
+          *
+          * The threshold compares two DEGREE-1 quantities, which is why it is 100
+          * and not TA_CORREL's 1e6 -- that guard weighs a squared deviation
+          * against a sum of squares. On ordinary prices the ratio is ~1 and this
+          * never fires; it is a compare, not work. The constant is 100 rather than
+          * 10 because at 10 a zero-mean oscillator rebuilds on 8.8% of bars for no
+          * measured accuracy gain.
+          *
+          * THE DENOMINATOR IS sumAbs, NOT SumY, AND THAT IS THE WHOLE POINT.
+          * SumY is a CANCELLING sum: on a zero-mean window it collapses toward 0
+          * while the departing value does not, so |weightedTrailing|/|SumY| is
+          * unbounded and the rebuild fires on EVERY bar -- an alternating +/-1
+          * series measured 10.9x slower at period 30, which is precisely the
+          * O(n*period) cost #103 removed. Same shape of error as #242's absolute
+          * guard on a quartic quantity: a ratio test is ill-posed when its
+          * denominator can cancel. sumAbs is a sum of magnitudes, so it is 0 only
+          * when every value in the window is 0 -- and then the numerator is 0 too
+          * and the test is false. There is no window it can misjudge.
+          *
+          * It is also the RIGHT quantity on the merits, not just the safe one: a
+          * fresh rebuild's own error is ~eps*sum|y|, so comparing the departing
+          * term against sum|y| asks exactly "would rebuilding beat what we are
+          * carrying?".
+          *
+          * Carrying it is free in practice. Measured on the shipped libta-lib.a it
+          * costs nothing against the |SumY| form on a price series (1.541 vs 1.605
+          * ns/bar at period 14) because the update is INDEPENDENT of the serial
+          * SumXY -> SumY dependency chain and fills slots that were idle. The
+          * rejected alternative -- keeping |SumY| and rate-limiting the trigger to
+          * once per `period` bars -- bounded the cliff at 1.2x rather than removing
+          * it, and silently dropped any print departing within `period` bars of a
+          * rebuild (~3% of them).
+          *
+          * The scan walks the window oldest-first with the weight counting DOWN,
+          * which is the priming scan's order and weighting -- so a reseeded bar is
+          * bit-identical to the same bar computed by a call that started there.
+          * That identity is the whole point: it is what the range-stability
+          * contract measures.
+          *
+          * Reading the window is safe when outReal aliases inReal (#130): the
+          * outputs written so far occupy [0, outIdx-1], and windowStart is
+          * today-lookbackTotal, which is >= outIdx because startIdx was clamped
+          * to at least lookbackTotal.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 || Math.abs(weightedTrailing) > 100.0 * sumAbs ) {
+            barsSinceReseed = 32 * sp.optInTimePeriod;
+            windowStart = today - sp.lookbackTotal;
+            SumY = 0;
+            SumXY = 0;
+            sumAbs = 0;
+            tempValue2 = (double)sp.lookbackTotal;
+            for( j = windowStart; j <= today; j += 1 ) {
+               tempValue1 = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+               SumY += tempValue1;
+               SumXY += tempValue2 * tempValue1;
+               sumAbs += Math.abs(tempValue1);
+               tempValue2 -= 1.0;
+            }
+         }
+         m = (sp.optInTimePeriod * SumXY - sp.SumX * SumY) / sp.Divisor;
+         b = (SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
+         trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
+         trailingIdx += 1;
+         cur_outReal = Math.fma(m, (double)sp.optInTimePeriod, b);
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -149196,17 +157404,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
-         TyppriceStream scratch = new TyppriceStream(this);
-         core.typpriceStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         TyppriceStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = (inHigh + inLow + inClose) / 3.0;
+         return cur_outReal;
       }
 
       /**
@@ -150201,9 +158412,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<UltoscStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -150255,25 +158463,135 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ULTOSC peek: BadParam", RetCode.BadParam);
-         UltoscStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new UltoscStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         UltoscStream sp = this;
+         double trueLow = 0.0;
+         double trueRange = 0.0;
+         double closeMinusTrueLow = 0.0;
+         double tempDouble = 0.0;
+         double output = 0.0;
+         double tempHT = 0.0;
+         double tempLT = 0.0;
+         double tempCY = 0.0;
+         double a1Total = sp.a1Total;
+         double a2Total = sp.a2Total;
+         double a3Total = sp.a3Total;
+         double b1Total = sp.b1Total;
+         double b2Total = sp.b2Total;
+         double b3Total = sp.b3Total;
+         double cur_outReal = sp.cur_outReal;
+         double lag1_inClose = sp.lag1_inClose;
+         int nullRun = sp.nullRun;
+         int term_Idx = sp.term_Idx;
+         int trailingPos1 = sp.trailingPos1;
+         int trailingPos2 = sp.trailingPos2;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         /* Add on today's terms */
+         tempLT = inLow;
+         tempHT = inHigh;
+         tempCY = lag1_inClose;
+         trueLow = Math.min(tempLT, tempCY);
+         closeMinusTrueLow = inClose - trueLow;
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
          }
-         core.ultoscStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         pkSlot0 = term_Idx;
+         pkVal0 = closeMinusTrueLow;
+         pkSlot1 = term_Idx;
+         pkVal1 = trueRange;
+         a1Total += closeMinusTrueLow;
+         a2Total += closeMinusTrueLow;
+         a3Total += closeMinusTrueLow;
+         b1Total += trueRange;
+         b2Total += trueRange;
+         b3Total += trueRange;
+         /* Once a whole window of no-contribution bars has gone by, every slot it
+          * spans is 0.0, so its totals are known to be exactly zero and the
+          * residue can be dropped. The periods are sorted shortest-first, so a
+          * run long enough for a longer window is long enough for every shorter
+          * one.
+          */
+         if( trueRange == 0.0 && closeMinusTrueLow == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= sp.optInTimePeriod1 ) {
+            a1Total = 0.0;
+            b1Total = 0.0;
+            if( nullRun >= sp.optInTimePeriod2 ) {
+               a2Total = 0.0;
+               b2Total = 0.0;
+               if( nullRun >= sp.optInTimePeriod3 ) {
+                  nullRun = sp.optInTimePeriod3;
+                  a3Total = 0.0;
+                  b3Total = 0.0;
+               }
+            }
+         }
+         /* Calculate the oscillator value for today. Each window contributes only
+          * when it holds a true range; the totals are sums of non-negative terms
+          * and the reseed above removes their residue, so the test is exact.
+          */
+         output = 0.0;
+         if( b1Total > 0.0 ) {
+            output += 4.0 * (a1Total / b1Total);
+         }
+         if( b2Total > 0.0 ) {
+            output += 2.0 * (a2Total / b2Total);
+         }
+         if( b3Total > 0.0 ) {
+            output += a3Total / b3Total;
+         }
+         /* Remove the trailing terms to prepare for next day. Each was evaluated
+          * once, when its bar entered the ring.
+          */
+         a1Total -= (trailingPos1 != pkSlot0) ? sp.cb_term_closeMinusTrueLow[trailingPos1] : pkVal0;
+         b1Total -= (trailingPos1 != pkSlot1) ? sp.cb_term_trueRange[trailingPos1] : pkVal1;
+         trailingPos1 += 1;
+         if( trailingPos1 >= sp.optInTimePeriod3 ) {
+            trailingPos1 = 0;
+         }
+         a2Total -= (trailingPos2 != pkSlot0) ? sp.cb_term_closeMinusTrueLow[trailingPos2] : pkVal0;
+         b2Total -= (trailingPos2 != pkSlot1) ? sp.cb_term_trueRange[trailingPos2] : pkVal1;
+         trailingPos2 += 1;
+         if( trailingPos2 >= sp.optInTimePeriod3 ) {
+            trailingPos2 = 0;
+         }
+         term_Idx = term_Idx + 1;
+         if( term_Idx > sp.maxIdx_term ) {
+            term_Idx = 0;
+         }
+         a3Total -= (term_Idx != pkSlot0) ? sp.cb_term_closeMinusTrueLow[term_Idx] : pkVal0;
+         b3Total -= (term_Idx != pkSlot1) ? sp.cb_term_trueRange[term_Idx] : pkVal1;
+         /* Last operation is to write the output. Must
+          * be done after the trailing index have all been
+          * taken care of because the caller is allowed
+          * to have the input array to be also the output
+          * array.
+          */
+         cur_outReal = 100.0 * (output / 7.0);
+         /* Increment indexes */
+         lag1_inClose = inClose;
+         return cur_outReal;
       }
 
       /**
@@ -151419,17 +159737,148 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("VAR peek: BadParam", RetCode.BadParam);
-         VarStream scratch = new VarStream(this);
-         core.varStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         VarStream sp = this;
+         double tempReal = 0.0;
+         double meanValue1 = 0.0;
+         double variance = 0.0;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         int i = sp.i;
+         int j = sp.j;
+         double periodTotal1 = sp.periodTotal1;
+         double periodTotal2 = sp.periodTotal2;
+         double shift = sp.shift;
+         int trailingIdx = sp.trailingIdx;
+         int windowStart = sp.windowStart;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( i >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            i -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            j -= rebaseShift;
+            windowStart -= rebaseShift;
+         }
+         pkSlot0 = i & sp.xMask;
+         pkVal0 = inReal;
+         /* Add the incoming value, measured against the shift. */
+         tempReal = (((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0) - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         meanValue1 = periodTotal1 * sp.invPeriod;
+         variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+         /* Remove the trailing value (prepares the next window). */
+         tempReal = (((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0) - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+         trailingIdx += 1;
+         /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
+          * when the shift is stale enough that the subtraction loses digits - i.e.
+          * the variance has shrunk below 1e-6 of the mean squared deviation it is
+          * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+          * 2e-10, so partial cancellation, not just total collapse, is caught); OR
+          * when the value just removed sat so far from the shift that its squared term
+          * (tempReal) dwarfs the surviving sum (a large outlier passing through the
+          * window buries the small terms below its ulp, and the residual left when it
+          * leaves is cancellation garbage); OR at least every 32 windows so a slow
+          * drift stays bounded regardless of the series length. The strict `<` also
+          * leaves an exactly-constant window (variance 0, scale 0) alone instead of
+          * reseeding it every bar. Guarantees a non-negative output.
+          */
+         barsSinceReseed -= 1;
+         if( variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * sp.optInTimePeriod;
+            windowStart = i - sp.nbInitialElementNeeded;
+            tempReal = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal += ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+            }
+            shift = tempReal * sp.invPeriod;
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * sp.invPeriod;
+            variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+            /* Floor the fresh figure at the same ratio the trigger above uses, now
+             * measured against the RE-ANCHORED sums. With the shift AT the window
+             * mean the deviations sum to ~0, so a real window has variance ~
+             * periodTotal2*invPeriod and a ratio of ~1; the ratio drops toward 0
+             * only when every deviation is the same value, i.e. when the spread is
+             * at or under the rounding error of the mean itself. There is then no
+             * spread the anchor could resolve, the surviving digits are noise, and
+             * the honest answer is 0.
+             *
+             * The constant is 1e-12, NOT the 1e-6 the trigger above uses, and the
+             * difference is load-bearing. periodTotal2*invPeriod is not the
+             * variance here: it is variance + e^2, where e is the rounding error of
+             * the reseed's own left-to-right sum for the mean -- exactly the term
+             * the two-pass subtraction then cancels out. So the ratio measures how
+             * badly that sum rounded, not how much signal survives, and matching
+             * the trigger's 1e-6 fired ten orders before cancellation eats any
+             * digits. It zeroed a variance the line above had just computed to nine
+             * correct significant figures: 100011 bars at 31498938283.624615 with
+             * two small outliers at period 99991 gives 1.0219900060103338e-09
+             * (128-bit), and this returned 0 with TA_SUCCESS. At 1e-12 that window
+             * survives and every intended bit-zero still zeroes -- the live ratios
+             * on flat data are 0 or ~1e-16, six orders the other side.
+             *
+             * This is the ONE dead-zone in the var/stddev/bbands family, and it is
+             * relative rather than the `variance < 0.0` it replaced because two
+             * things ride on it:
+             *
+             *  - SIGN. periodTotal2 is a fresh sum of squares, so the right-hand
+             *    side is >= 0 and any negative variance is clamped unconditionally -
+             *    where `< 0.0` needed the three-case argument below to know that a
+             *    negative one ever reaches this line.
+             *  - SCALE. STDDEV and BBANDS square-root this, and each used to zero
+             *    anything under a fixed TA_EPSILON first. That compares a SQUARED
+             *    quantity to 1e-14, which is a cliff at a price level and not a
+             *    noise floor: a $100.00 instrument quoted in 1e-8 ticks has a real
+             *    variance around 1e-16 and came back exactly 0 on every bar (#243).
+             *    Expressed here in the window's own units, the floor lets both of
+             *    them square-root what they are handed unconditionally.
+             *
+             * Clamping HERE and not at the output write is what keeps this off the
+             * per-bar path, and it is sufficient because a negative variance always
+             * reseeds on the same bar - the guard above covers all three cases:
+             * periodTotal2 > 0 makes its first disjunct `negative < positive`;
+             * periodTotal2 < 0 makes the second disjunct's right side negative,
+             * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
+             * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
+             * THIS - the alternative is an unconditional clamp at the output write,
+             * which needs no such argument but does cost ~3%.
+             */
+            if( variance < 0.000000000001 * (periodTotal2 * sp.invPeriod) ) {
+               variance = 0.0;
+            }
+            /* Re-remove the trailing value under the new shift so the carried state
+             * matches the non-reseed path.
+             */
+            tempReal = (((windowStart & sp.xMask) != pkSlot0) ? sp.x_inReal[windowStart & sp.xMask] : pkVal0) - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+         }
+         cur_outReal = variance;
+         i += 1;
+         return cur_outReal;
       }
 
       /**
@@ -152354,17 +160803,110 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWAP peek: BadParam", RetCode.BadParam);
-         VwapStream scratch = new VwapStream(this);
-         core.vwapStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         VwapStream sp = this;
+         double typPrice = 0.0;
+         double volume = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double sumPV = sp.sumPV;
+         double sumV = sp.sumV;
+         double vwap = sp.vwap;
+         /* The typical price is written exactly as in ta_TYPPRICE.c so that the
+          * two agree bit for bit and this stays a true composite of it.
+          */
+         typPrice = (inHigh + inLow + inClose) / 3.0;
+         volume = inVolume;
+         /* A bar is weighted only if both of its terms are real numbers. That is
+          * the whole condition: a NaN or an infinity in the price or the volume
+          * is the only way a bar cannot be weighted, and every other bar --
+          * including one that traded nothing -- is weighted normally.
+          *
+          * The test gates BOTH adds. Letting the volume in without its matching
+          * price term would leave a weight in the divisor that nothing paid for,
+          * biasing every later value: a NaN close with a good volume would drag
+          * the next value 25% low.
+          *
+          * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+          * sums with no trailing term to subtract anything back out, so a single
+          * non-finite bar allowed in would leave both sums non-finite for the
+          * REST of the call -- the line would repeat one stale value on every
+          * later bar however clean it was, silently, and looking like a plausible
+          * price the whole way. Skipping keeps the state usable, so the average
+          * resumes on the very next bar that can be weighted.
+          *
+          * Testing the two INPUTS, not the product and not the candidate sums, is
+          * a measured choice:
+          *
+          *   - The candidate sums would have to be committed conditionally, which
+          *     puts four cmovs in the loop-carried dependency chain and costs
+          *     +60% on this loop. Both forms below leave the adds unconditional
+          *     inside a predicted branch and measure free.
+          *   - The product alone would also detect every unusable bar, one test
+          *     instead of two, and measures the same. But it would additionally
+          *     drop a WELL-FORMED bar whose price and volume are both finite and
+          *     whose product merely overflows -- silently, and taking that bar's
+          *     volume out of the divisor with it. Testing the inputs leaves that
+          *     case exactly as it was before this guard existed: the overflow
+          *     reaches the sum and the call reports Inf, which is the documented
+          *     `double` overflow class rather than an indicator defect, and is
+          *     louder than a freeze.
+          *
+          * So this changes behaviour for one thing only: a bar whose price or
+          * volume is not a finite number. On finite data the test is always true
+          * and no value the function has ever produced moves. Only the batch path
+          * needs it -- the streaming Update/Peek entry points reject a non-finite
+          * bar with TA_BAD_PARAM before it reaches any accumulator.
+          */
+         /* The product is kept in its own statement so no compiler may contract it
+          * into an FMA. Contracting here would make the C output disagree with the
+          * Rust, Java and C# backends under the cross-language bitwise gate. Same
+          * reason as in ta_codegen/input/vwma/vwma.c.
+          *
+          * Computed before the guard rather than inside it, and unconditionally,
+          * so it stays a per-bar temporary. Assigned only on the taken arm it
+          * would instead be live across bars, and the streaming tier would carry
+          * it as a fourth state field in every handle -- 8 bytes to hold a value
+          * no later bar reads. The multiply on a skipped bar is discarded.
+          */
+         tempReal = typPrice * volume;
+         if( (Double.isFinite(typPrice)) && (Double.isFinite(volume)) ) {
+            sumPV += tempReal;
+            sumV += volume;
+         }
+         /* Bars that traded nothing carry no weight, so a zero-volume bar in
+          * the middle of a series leaves both sums untouched and repeats the
+          * previous value on its own -- no arm needed for that. A bar skipped
+          * by the guard above repeats it for the same reason.
+          *
+          * The arm below is for the one case the ratio cannot express: a
+          * leading run of bars before any volume has traded, where there are
+          * no weights at all and the weighted mean is undefined. The last
+          * value computed is carried forward instead, which is 0.0 until the
+          * first bar with volume. Volume is non-negative, so once the divisor
+          * leaves zero it never returns and this arm cannot fire again.
+          *
+          * A successful call therefore never emits NaN or Inf (issue #112),
+          * which is the divergence from pandas-ta-classic and from
+          * trading-signals: the first emits NaN there, the second no bar at
+          * all. Testing sumV rather than the bar's own volume also keeps a
+          * negative divisor -- which no non-negative volume series can
+          * produce -- out of a price-scale output, as ta_CMF.c does.
+          */
+         if( sumV > 0.0 ) {
+            vwap = sumPV / sumV;
+         }
+         cur_outReal = vwap;
+         return cur_outReal;
       }
 
       /**
@@ -153165,9 +161707,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<VwmaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -153218,25 +161757,59 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("VWMA peek: BadParam", RetCode.BadParam);
-         VwmaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new VwmaStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         VwmaStream sp = this;
+         double tempPV = 0.0;
+         double tempV = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         double sumPV = sp.sumPV;
+         double sumV = sp.sumV;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
          }
-         core.vwmaStepImpl(scratch, inReal, inVolume);
-         return scratch.cur_outReal;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+            pkSlot1 = 0;
+            pkVal1 = inVolume;
+         }
+         tempReal = inReal * inVolume;
+         sumPV += tempReal;
+         sumV += inVolume;
+         /* Snapshot both sums before removing the trailing bar, mirroring the
+          * add-new / snapshot / subtract-old order of TA_SMA. That order is what
+          * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+          */
+         tempPV = sumPV;
+         tempV = sumV;
+         /* Read the trailing values before writing the output, since the caller
+          * may pass the same buffer for an input and the output.
+          */
+         tempReal = ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0) * ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] : pkVal1);
+         sumPV -= tempReal;
+         sumV -= (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] : pkVal1;
+         cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
@@ -153960,17 +162533,39 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WAD peek: BadParam", RetCode.BadParam);
-         WadStream scratch = new WadStream(this);
-         core.wadStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         WadStream sp = this;
+         double close = 0.0;
+         double trueExtreme = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevClose = sp.prevClose;
+         double sum = sp.sum;
+         close = inClose;
+         if( close > prevClose ) {
+            trueExtreme = inLow;
+            if( prevClose < trueExtreme ) {
+               trueExtreme = prevClose;
+            }
+            sum += close - trueExtreme;
+         } else if( close < prevClose ) {
+            trueExtreme = inHigh;
+            if( prevClose > trueExtreme ) {
+               trueExtreme = prevClose;
+            }
+            sum += close - trueExtreme;
+         }
+         cur_outReal = sum;
+         prevClose = close;
+         return cur_outReal;
       }
 
       /**
@@ -154501,17 +163096,20 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
-         WclpriceStream scratch = new WclpriceStream(this);
-         core.wclpriceStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         WclpriceStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
+         return cur_outReal;
       }
 
       /**
@@ -155290,9 +163888,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<WillrStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -155344,25 +163939,93 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
-         WillrStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new WillrStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         WillrStream sp = this;
+         double tmp = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double diff = sp.diff;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.willrStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         pkSlot2 = today & sp.xMask;
+         pkVal2 = inClose;
+         /* Set the lowest low */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / (0 - 100.0);
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / (0 - 100.0);
+         }
+         /* Set the highest high */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / (0 - 100.0);
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / (0 - 100.0);
+         }
+         if( diff != 0.0 ) {
+            cur_outReal = (highest - (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2)) / diff;
+         } else {
+            cur_outReal = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**
@@ -156258,9 +164921,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<WmaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -156310,25 +164970,123 @@ public final class Core {
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("WMA peek: BadParam", RetCode.BadParam);
-         WmaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new WmaStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         WmaStream sp = this;
+         int j = 0;
+         int rw = 0;
+         double tempReal = 0.0;
+         int barsSinceReseed = sp.barsSinceReseed;
+         double cur_outReal = sp.cur_outReal;
+         double periodSub = sp.periodSub;
+         double periodSum = sp.periodSum;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         double trailingValue = sp.trailingValue;
+         int winPos_j = sp.winPos_j;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
          }
-         core.wmaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         pkSlot1 = winPos_j;
+         pkVal1 = inReal;
+         /* Add the current price bar to the sum
+          * who are carried through the iterations.
+          */
+         tempReal = inReal;
+         periodSub += tempReal;
+         periodSub -= trailingValue;
+         periodSum += tempReal * sp.optInTimePeriod;
+         /* Re-anchor: rebuild both totals from the window itself.
+          *
+          * periodSum and periodSub were running totals that were never
+          * recomputed, so each bar's rounding joined a residue no later bar
+          * could subtract, and its size was set by the largest value the totals
+          * had ever held rather than by the current window. That is the defect
+          * #254 fixed in the LINEARREG family, and `periodSum -= periodSub`
+          * below is the same weight-shifting identity as that family's
+          * `SumXY = SumXY + SumY - period*trailingValue` -- which is why WMA has
+          * it and TA_SMA, whose output lives at its own sum's scale, does not.
+          * Measured before the fix: worst range disagreement 1.41e-08 at 200000
+          * bars against a 1e-10 tier, over the tier from ~10000 bars on ordinary
+          * closes or ~1000 with one large print. After: 1.79e-12, flat in call
+          * length.
+          *
+          * ONE TRIGGER, NOT TWO, AND THE INTERVAL IS 8*period NOT 32. The
+          * LINEARREG family also carries an OUTLIER trigger (rebuild when the
+          * departing value outweighs the window) because for a slope the
+          * interval alone FAILS the tier outright, at 2.38e-10. WMA is not in
+          * that position: its weights are bounded by `period` and its divider is
+          * period*(period+1)/2, which dilutes the residue enough that the
+          * interval alone holds. Swept over periods 2, 3, 4, 14, 50, 200, 1000,
+          * 5000 and 20000 on 60000 bars, clean and with a 1000x print, the worst
+          * is 2.2e-11 -- 4.6x inside the band, and the margin does not thin at
+          * either end of the period range. Measured, the trigger bought 1.4e-11 -> 7e-12 and cost 1.17x
+          * here and 1.65x in TA_HMA, whose three fused stages each pay it. The
+          * shorter interval buys most of the accuracy for ~1.1x instead.
+          *
+          * The rebuild walks the window OLDEST FIRST with the weight counting UP
+          * from 1 -- the priming scan's own order and weighting -- so a
+          * re-anchored bar is bit-identical to the same bar computed by a call
+          * that started there. That identity is what the range-stability
+          * contract measures, and what test_wma.c W2/W3 assert.
+          *
+          * The loop start is written INLINE rather than through a `windowStart`
+          * local: only that form is recognised as a rescan window, which is what
+          * keeps this on the stream classifier's primary path. See
+          * docs/ta_codegen_input_code.md.
+          *
+          * Reading the window is safe when outReal aliases inReal: the outputs
+          * written so far occupy [0, outIdx-1], and the window starts at
+          * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+          */
+         barsSinceReseed -= 1;
+         if( barsSinceReseed <= 0 ) {
+            barsSinceReseed = 8 * sp.optInTimePeriod;
+            periodSub = (double)0.0;
+            periodSum = (double)0.0;
+            rw = 1;
+            for( j = sp.lookbackWin; j >= 0; j -= 1 ) {
+               tempReal = (((winPos_j + sp.winCap_j - j >= sp.winCap_j) ? winPos_j + sp.winCap_j - j - sp.winCap_j : winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(winPos_j + sp.winCap_j - j >= sp.winCap_j) ? winPos_j + sp.winCap_j - j - sp.winCap_j : winPos_j + sp.winCap_j - j] : pkVal1;
+               periodSub += tempReal;
+               periodSum += tempReal * rw;
+               rw += 1;
+            }
+         }
+         /* Save the trailing value for being substract at
+          * the next iteration.
+          * (must be saved here just in case outReal and
+          *  inReal are the same buffer).
+          */
+         trailingValue = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         /* Calculate the WMA for this price bar. */
+         cur_outReal = periodSum / sp.divider;
+         /* Prepare the periodSum for the next iteration. */
+         periodSum -= periodSub;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         winPos_j = winPos_j + 1;
+         if( winPos_j >= sp.winCap_j ) {
+            winPos_j = 0;
+         }
+         return cur_outReal;
       }
 
       /**

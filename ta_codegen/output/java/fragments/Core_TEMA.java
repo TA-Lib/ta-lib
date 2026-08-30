@@ -558,17 +558,30 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
-         TemaStream scratch = new TemaStream(this);
-         core.temaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         TemaStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         double prevEMA1 = sp.prevEMA1;
+         double prevEMA2 = sp.prevEMA2;
+         double prevEMA3 = sp.prevEMA3;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         prevEMA1 = Math.fma(inReal - prevEMA1, sp.optInK_1, prevEMA1);
+         prevEMA2 = Math.fma(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
+         prevEMA3 = Math.fma(prevEMA2 - prevEMA3, sp.optInK_1, prevEMA3);
+         cur_outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+         return cur_outReal;
       }
 
       /**

@@ -289,17 +289,20 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("SUB peek: BadParam", RetCode.BadParam);
-         SubStream scratch = new SubStream(this);
-         core.subStepImpl(scratch, inReal0, inReal1);
-         return scratch.cur_outReal;
+         SubStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         cur_outReal = inReal0 - inReal1;
+         return cur_outReal;
       }
 
       /**

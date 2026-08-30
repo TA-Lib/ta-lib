@@ -595,9 +595,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MidpriceStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -648,25 +645,79 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MIDPRICE peek: BadParam", RetCode.BadParam);
-         MidpriceStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MidpriceStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MidpriceStream sp = this;
+         double tmpLow = 0.0;
+         double tmpHigh = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.midpriceStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         tmpHigh = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         tmpLow = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmpHigh > highest ) {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest ) {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmpLow = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmpLow < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest ) {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         cur_outReal = (highest + lowest) / 2.0;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**

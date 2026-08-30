@@ -488,9 +488,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AroonStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -563,25 +560,85 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public Value peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
-         AroonStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AroonStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AroonStream sp = this;
+         double tmp = 0.0;
+         double cur_outAroonDown = sp.cur_outAroonDown;
+         double cur_outAroonUp = sp.cur_outAroonUp;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.aroonStepImpl(scratch, inHigh, inLow);
-         return new Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         /* Keep track of the lowestIdx */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp <= lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Keep track of the highestIdx */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp >= highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         /* Note: Do not forget that input and output buffer can be the same,
+          *       so writing to the output is the last thing being done here.
+          */
+         cur_outAroonUp = sp.factor * (sp.optInTimePeriod - (today - highestIdx));
+         cur_outAroonDown = sp.factor * (sp.optInTimePeriod - (today - lowestIdx));
+         trailingIdx += 1;
+         today += 1;
+         return new Value(cur_outAroonDown, cur_outAroonUp);
       }
 
       /**

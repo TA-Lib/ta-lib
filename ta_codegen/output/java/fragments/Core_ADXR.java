@@ -436,8 +436,9 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a throwaway copy, which for this
        * handle's shape is cheaper than reusing one.
        */

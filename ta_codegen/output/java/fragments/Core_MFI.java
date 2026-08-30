@@ -596,9 +596,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<MfiStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -651,25 +648,63 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MFI peek: BadParam", RetCode.BadParam);
-         MfiStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new MfiStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         MfiStream sp = this;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double tempValue3 = 0.0;
+         double moneyFlow = 0.0;
+         double posFlow = 0.0;
+         double negFlow = 0.0;
+         double posClamped = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int mflow_Idx = sp.mflow_Idx;
+         double negSumMF = sp.negSumMF;
+         int nullRun = sp.nullRun;
+         double posSumMF = sp.posSumMF;
+         double prevValue = sp.prevValue;
+         posSumMF -= sp.cb_mflow_positive[mflow_Idx];
+         negSumMF -= sp.cb_mflow_negative[mflow_Idx];
+         tempValue1 = (inHigh + inLow + inClose) / 3.0;
+         tempValue2 = tempValue1 - prevValue;
+         /* Dead-zone scaled to the two typical prices being compared (issue #107).
+          * Captured before prevValue/tempValue1 are repurposed below.
+          */
+         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
+         prevValue = tempValue1;
+         tempValue1 *= inVolume;
+         moneyFlow = (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
-         core.mfiStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         tempValue1 = posSumMF + negSumMF;
+         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         if( tempValue1 <= 0.0 ) {
+            cur_outReal = 0.0;
+         } else {
+            cur_outReal = 100.0 * (posClamped / tempValue1);
+         }
+         mflow_Idx = mflow_Idx + 1;
+         if( mflow_Idx > sp.maxIdx_mflow ) {
+            mflow_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /**

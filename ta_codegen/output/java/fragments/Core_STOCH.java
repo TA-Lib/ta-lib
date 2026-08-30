@@ -883,8 +883,9 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
        * indicator on this thread. That scratch is retained for the life of

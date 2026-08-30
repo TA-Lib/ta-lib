@@ -621,17 +621,75 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
-         MidpointStream scratch = new MidpointStream(this);
-         core.midpointStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         MidpointStream sp = this;
+         double tmpLow = 0.0;
+         double tmpHigh = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
+         }
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inReal;
+         tmpHigh = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         tmpLow = tmpHigh;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmpHigh > highest ) {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest ) {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[lowestIdx & sp.xMask] : pkVal0;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmpLow = ((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0;
+               if( tmpLow < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest ) {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         cur_outReal = (highest + lowest) / 2.0;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**

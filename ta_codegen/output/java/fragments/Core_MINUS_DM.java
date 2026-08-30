@@ -626,17 +626,63 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MINUS_DM peek: BadParam", RetCode.BadParam);
-         MinusDmStream scratch = new MinusDmStream(this);
-         core.minusDmStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         MinusDmStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod <= 1 ) {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               cur_outReal = diffM;
+            } else {
+               cur_outReal = 0;
+            }
+         } else {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            double prevMinusDM = sp.prevMinusDM;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod + diffM;
+            } else {
+               /* Case 1,3,5 and 7 */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod;
+            }
+            cur_outReal = prevMinusDM;
+         }
+         return cur_outReal;
       }
 
       /**

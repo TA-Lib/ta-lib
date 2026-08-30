@@ -360,17 +360,34 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
-         MarketfiStream scratch = new MarketfiStream(this);
-         core.marketfiStepImpl(scratch, inHigh, inLow, inVolume);
-         return scratch.cur_outReal;
+         MarketfiStream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         /* A zero-volume bar would divide by zero. Neither reference guards
+          * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+          * issue #112 settled that a successful call never emits NaN or Inf,
+          * so an untraded bar facilitated no movement and reports 0.
+          *
+          * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+          * 1e-14 band is an absolute threshold and meaningless against an
+          * unbounded volume scale. Same reasoning as the prevClose guard in
+          * ta_codegen/input/nvi/nvi.c.
+          */
+         if( inVolume != 0.0 ) {
+            cur_outReal = (inHigh - inLow) / inVolume;
+         } else {
+            cur_outReal = 0.0;
+         }
+         return cur_outReal;
       }
 
       /**

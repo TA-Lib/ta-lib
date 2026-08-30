@@ -388,17 +388,36 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
-         Cdl3outsideStream scratch = new Cdl3outsideStream(this);
-         core.cdl3outsideStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         Cdl3outsideStream sp = this;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inOpen = sp.lag2_inOpen;
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && lag1_inClose > lag2_inOpen && lag1_inOpen < lag2_inClose && inClose > lag1_inClose || ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && lag1_inOpen > lag2_inClose && lag1_inClose < lag2_inOpen && inClose < lag1_inClose ) {
+            /* white engulfs black */
+            /* third candle higher */
+            /* black engulfs white */
+            /* third candle lower */
+            cur_outInteger = ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         return cur_outInteger;
       }
 
       /**

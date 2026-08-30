@@ -395,17 +395,42 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLXSIDEGAP3METHODS peek: BadParam", RetCode.BadParam);
-         Cdlxsidegap3methodsStream scratch = new Cdlxsidegap3methodsStream(this);
-         core.cdlxsidegap3methodsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         Cdlxsidegap3methodsStream sp = this;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inOpen = sp.lag2_inOpen;
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
+             inOpen < Math.max(lag1_inClose, lag1_inOpen) &&  /* 3rd opens within 2nd rb */
+             inOpen > Math.min(lag1_inClose, lag1_inOpen) &&
+             inClose < Math.max(lag2_inClose, lag2_inOpen) && /* 3rd closes within 1st rb */
+             inClose > Math.min(lag2_inClose, lag2_inOpen) &&
+             (((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) || ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose))) ) /* when 1st is white upside gap when 1st is black downside gap */
+         {
+            cur_outInteger = ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         return cur_outInteger;
       }
 
       /**

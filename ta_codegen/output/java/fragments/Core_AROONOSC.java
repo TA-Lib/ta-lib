@@ -484,9 +484,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<AroonoscStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -537,25 +534,93 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROONOSC peek: BadParam", RetCode.BadParam);
-         AroonoscStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new AroonoscStream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
+         AroonoscStream sp = this;
+         double tmp = 0.0;
+         double aroon = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.aroonoscStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         /* Keep track of the lowestIdx */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp <= lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Keep track of the highestIdx */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp >= highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         /* The oscillator is the following:
+          *  AroonUp   = factor*(optInTimePeriod-(today-highestIdx));
+          *  AroonDown = factor*(optInTimePeriod-(today-lowestIdx));
+          *  AroonOsc  = AroonUp-AroonDown;
+          *
+          * An arithmetic simplification give us:
+          *  Aroon = factor*(highestIdx-lowestIdx)
+          */
+         aroon = sp.factor * (highestIdx - lowestIdx);
+         /* Note: Do not forget that input and output buffer can be the same,
+          *       so writing to the output is the last thing being done here.
+          */
+         cur_outReal = aroon;
+         trailingIdx += 1;
+         today += 1;
+         return cur_outReal;
       }
 
       /**

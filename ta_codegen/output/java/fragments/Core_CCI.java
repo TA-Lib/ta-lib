@@ -514,17 +514,67 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a throwaway copy, which for this
-       * handle's shape is cheaper than reusing one.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CCI peek: BadParam", RetCode.BadParam);
-         CciStream scratch = new CciStream(this);
-         core.cciStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         CciStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double tempReal3 = 0.0;
+         double theAverage = 0.0;
+         double lastValue = 0.0;
+         int j = 0;
+         int circBuffer_Idx = sp.circBuffer_Idx;
+         double cur_outReal = sp.cur_outReal;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         lastValue = (inHigh + inLow + inClose) / 3;
+         pkSlot0 = circBuffer_Idx;
+         pkVal0 = lastValue;
+         /* Calculate the average for the whole period. */
+         theAverage = 0;
+         for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+            theAverage += (j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0;
+         }
+         theAverage /= sp.optInTimePeriod;
+         /* Do the summation of the ABS(TypePrice-average)
+          * for the whole period, then its mean.
+          */
+         tempReal2 = 0;
+         for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+            tempReal2 += Math.abs(((j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0) - theAverage);
+         }
+         tempReal2 /= sp.optInTimePeriod;
+         /* And finally, the CCI... */
+         tempReal = lastValue - theAverage;
+         /* Both tests are relative to the window's own price level (issue #253).
+          * They ask "is this window flat?", and flatness is a property of the
+          * prices relative to each other -- but a deviation carries the quote
+          * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output. The band is still wide enough (~90 ulp of the average) to
+          * absorb the sub-epsilon residue an identical-price window leaves in the
+          * average, which is what it was widened for in the first place (#7).
+          */
+         tempReal3 = Math.abs(theAverage);
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            cur_outReal = tempReal / (0.015 * tempReal2);
+         } else {
+            cur_outReal = 0.0;
+         }
+         /* Move forward the circular buffer indexes. */
+         circBuffer_Idx = circBuffer_Idx + 1;
+         if( circBuffer_Idx > sp.maxIdx_circBuffer ) {
+            circBuffer_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /**

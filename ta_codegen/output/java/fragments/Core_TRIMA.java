@@ -670,9 +670,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<TrimaStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -722,25 +719,104 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("TRIMA peek: BadParam", RetCode.BadParam);
-         TrimaStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new TrimaStream(this);
-            PEEK_SCRATCH.set(scratch);
+         TrimaStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod % 2 == 1 ) {
+            double numerator = sp.numerator;
+            double numeratorAdd = sp.numeratorAdd;
+            double numeratorSub = sp.numeratorSub;
+            int ringPos_middleIdx = sp.ringPos_middleIdx;
+            int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            double tempReal = sp.tempReal;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            if( sp.ringCap_middleIdx == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            if( sp.ringCap_trailingIdx == 0 ) {
+               pkSlot1 = 0;
+               pkVal1 = inReal;
+            }
+            /* Step (1) */
+            numerator -= numeratorSub;
+            numeratorSub -= tempReal;
+            tempReal = (ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[ringPos_middleIdx] : pkVal0;
+            numeratorSub += tempReal;
+            /* Step (2) */
+            numerator += numeratorAdd;
+            numeratorAdd -= tempReal;
+            tempReal = inReal;
+            numeratorAdd += tempReal;
+            /* Step (3) */
+            numerator += tempReal;
+            /* Step (4) */
+            tempReal = (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal1;
+            cur_outReal = numerator * sp.factor;
+            ringPos_middleIdx = ringPos_middleIdx + 1;
+            if( ringPos_middleIdx >= sp.ringCap_middleIdx ) {
+               ringPos_middleIdx = 0;
+            }
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+               ringPos_trailingIdx = 0;
+            }
          } else {
-            scratch.copyFrom(this);
+            double numerator = sp.numerator;
+            double numeratorAdd = sp.numeratorAdd;
+            double numeratorSub = sp.numeratorSub;
+            int ringPos_middleIdx = sp.ringPos_middleIdx;
+            int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            double tempReal = sp.tempReal;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            if( sp.ringCap_middleIdx == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            if( sp.ringCap_trailingIdx == 0 ) {
+               pkSlot1 = 0;
+               pkVal1 = inReal;
+            }
+            /* Step (1) */
+            numerator -= numeratorSub;
+            numeratorSub -= tempReal;
+            tempReal = (ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[ringPos_middleIdx] : pkVal0;
+            numeratorSub += tempReal;
+            /* Step (2) */
+            numeratorAdd -= tempReal;
+            numerator += numeratorAdd;
+            tempReal = inReal;
+            numeratorAdd += tempReal;
+            /* Step (3) */
+            numerator += tempReal;
+            /* Step (4) */
+            tempReal = (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal1;
+            cur_outReal = numerator * sp.factor;
+            ringPos_middleIdx = ringPos_middleIdx + 1;
+            if( ringPos_middleIdx >= sp.ringCap_middleIdx ) {
+               ringPos_middleIdx = 0;
+            }
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+               ringPos_trailingIdx = 0;
+            }
          }
-         core.trimaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         return cur_outReal;
       }
 
       /**

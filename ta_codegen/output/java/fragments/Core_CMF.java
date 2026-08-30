@@ -546,9 +546,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CmfStream> PEEK_SCRATCH = new ThreadLocal<>();
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -601,25 +598,49 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this
+       * handle, reading its buffers and storing into locals, so the cost does
+       * not grow with the period and `peek` never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("CMF peek: BadParam", RetCode.BadParam);
-         CmfStream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CmfStream(this);
-            PEEK_SCRATCH.set(scratch);
+         CmfStream sp = this;
+         double high = 0.0;
+         double low = 0.0;
+         double close = 0.0;
+         double tmp = 0.0;
+         double mfv = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int mfv_Idx = sp.mfv_Idx;
+         double sumMFV = sp.sumMFV;
+         double sumVol = sp.sumVol;
+         sumMFV -= sp.cb_mfv_flow[mfv_Idx];
+         sumVol -= sp.cb_mfv_volume[mfv_Idx];
+         high = inHigh;
+         low = inLow;
+         close = inClose;
+         tmp = high - low;
+         if( tmp > 0.0 ) {
+            mfv = (close - low - (high - close)) / tmp * inVolume;
          } else {
-            scratch.copyFrom(this);
+            mfv = 0.0;
          }
-         core.cmfStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         sumMFV += mfv;
+         sumVol += inVolume;
+         if( sumVol > 0.0 ) {
+            cur_outReal = sumMFV / sumVol;
+         } else {
+            cur_outReal = 0.0;
+         }
+         mfv_Idx = mfv_Idx + 1;
+         if( mfv_Idx > sp.maxIdx_mfv ) {
+            mfv_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /**
