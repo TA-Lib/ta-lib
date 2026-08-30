@@ -400,9 +400,9 @@ impl FuncId {
     /// Number of functions in the registry.
     pub const COUNT: usize = 176;
     /// Metadata for this function (O(1) index into the const table).
-    #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
+    #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
-    #[inline] pub fn name(self) -> &'static str { FUNCS[self as usize].name }
+    #[inline] pub fn name(self) -> &'static str { FUNC_TABLE[self as usize].name }
 }
 
 /// Function group (closed set — replaces C's runtime group-string table + linear `getGroupId`).
@@ -721,8 +721,9 @@ impl FuncInfo {
     #[inline] pub const fn nb_output(&self) -> usize { self.outputs.len() }
 }
 
-/// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 176] = [
+/// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
+/// `.rodata`. Private, so its length is nobody's business but this module's.
+static FUNC_TABLE: [FuncInfo; 176] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2660,6 +2661,14 @@ pub static FUNCS: [FuncInfo; 176] = [
         unst_id: None,
     },
 ];
+
+/// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
+///
+/// A slice, not a `[FuncInfo; N]`: the row count is deliberately kept out of
+/// the public type, so adding an indicator is not a breaking change for code
+/// that names this static's type. [`FuncId::COUNT`] and `FUNCS.len()` are the
+/// count.
+pub static FUNCS: &[FuncInfo] = &FUNC_TABLE;
 
 /// Resolve a function name (e.g. "RSI") to its [`FuncId`], exact-case first.
 ///
@@ -5754,6 +5763,20 @@ mod registry_tests {
         for (i, f) in FUNCS.iter().enumerate() {
             assert_eq!(f.id as usize, i, "FuncId discriminant must equal its FUNCS index");
         }
+    }
+
+    /// The row count must not be part of `FUNCS`'s published type (#179 C9).
+    ///
+    /// This is a type assertion, not a value one, and it is the only thing in
+    /// the tree that can fail on the shape: every other reader here goes
+    /// through `.len()` or `.iter()`, which an array answers just as well. A
+    /// `[FuncInfo; N]` does not coerce to `&'static [FuncInfo]` by value, so
+    /// re-freezing the count stops the test target compiling rather than
+    /// passing quietly.
+    #[test]
+    fn funcs_is_a_slice_so_the_count_is_not_public_api() {
+        let table: &'static [FuncInfo] = FUNCS;
+        assert_eq!(table.len(), FuncId::COUNT);
     }
 
     #[test]

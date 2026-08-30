@@ -85,21 +85,38 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let _ = writeln!(o, "    /// Number of functions in the registry.");
     let _ = writeln!(o, "    pub const COUNT: usize = {n};");
     o.push_str("    /// Metadata for this function (O(1) index into the const table).\n");
-    o.push_str("    #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }\n");
+    o.push_str("    #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }\n");
     o.push_str("    /// Upper-case TA name, e.g. \"RSI\".\n");
-    o.push_str("    #[inline] pub fn name(self) -> &'static str { FUNCS[self as usize].name }\n");
+    o.push_str("    #[inline] pub fn name(self) -> &'static str { FUNC_TABLE[self as usize].name }\n");
     o.push_str("}\n\n");
 
     // --- model types (fixed) ---
     o.push_str(MODEL);
 
     // --- the one flat master table ---
-    let _ = writeln!(o, "/// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.");
-    let _ = writeln!(o, "pub static FUNCS: [FuncInfo; {n}] = [");
+    //
+    // The array is private and the public handle is a slice over it, so the row
+    // count is not part of any published type (#179 C9): adding an indicator
+    // moves `FUNCS.len()` and `FuncId::COUNT`, not `FUNCS`'s signature. The
+    // array stays a named symbol rather than an inline `&[...]` so the two O(1)
+    // paths above (`FuncId::info`, `FuncId::name`) still index it directly,
+    // with no slice pointer to load first.
+    let _ = writeln!(o, "/// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in");
+    let _ = writeln!(o, "/// `.rodata`. Private, so its length is nobody's business but this module's.");
+    let _ = writeln!(o, "static FUNC_TABLE: [FuncInfo; {n}] = [");
     for f in &sorted {
         emit_func(&mut o, f);
     }
     o.push_str("];\n\n");
+    o.push_str(
+        "/// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.\n\
+         ///\n\
+         /// A slice, not a `[FuncInfo; N]`: the row count is deliberately kept out of\n\
+         /// the public type, so adding an indicator is not a breaking change for code\n\
+         /// that names this static's type. [`FuncId::COUNT`] and `FUNCS.len()` are the\n\
+         /// count.\n",
+    );
+    o.push_str("pub static FUNCS: &[FuncInfo] = &FUNC_TABLE;\n\n");
 
     // --- API surface (C-recognizable names, idiomatic shapes) ---
     emit_api(&mut o, &sorted, &enum_params);
@@ -1169,6 +1186,20 @@ mod registry_tests {
         for (i, f) in FUNCS.iter().enumerate() {
             assert_eq!(f.id as usize, i, "FuncId discriminant must equal its FUNCS index");
         }
+    }
+
+    /// The row count must not be part of `FUNCS`'s published type (#179 C9).
+    ///
+    /// This is a type assertion, not a value one, and it is the only thing in
+    /// the tree that can fail on the shape: every other reader here goes
+    /// through `.len()` or `.iter()`, which an array answers just as well. A
+    /// `[FuncInfo; N]` does not coerce to `&'static [FuncInfo]` by value, so
+    /// re-freezing the count stops the test target compiling rather than
+    /// passing quietly.
+    #[test]
+    fn funcs_is_a_slice_so_the_count_is_not_public_api() {
+        let table: &'static [FuncInfo] = FUNCS;
+        assert_eq!(table.len(), FuncId::COUNT);
     }
 
     #[test]
