@@ -805,14 +805,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `MavpStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static MAVP_PEEK_SCRATCH: std::cell::Cell<Option<Box<MavpStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(unused_mut)]
@@ -880,8 +872,10 @@ impl MavpStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -892,15 +886,19 @@ impl MavpStream {
         if !inReal.is_finite() || !inPeriods.is_finite() {
             return Err(RetCode::BadParam);
         }
-        MAVP_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            let stepped = Core::mavp_step_impl(&mut scratch, inReal, inPeriods, &mut outReal);
-            cell.set(Some(scratch));
-            stepped?;
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let mut cp: i32 = inPeriods as i32;
+            if cp < sp.optInMinPeriod {
+                cp = sp.optInMinPeriod;
+            } else if cp > sp.optInMaxPeriod {
+                cp = sp.optInMaxPeriod;
+            }
+            let slot: usize = (cp - sp.optInMinPeriod) as usize;
+            outReal = sp.bank[slot].peek(inReal)?;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

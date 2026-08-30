@@ -3745,6 +3745,58 @@ fn emit_dispatch(
     let _ = writeln!(o, "        }}");
     emit_step_end(o, true);
 
+    // The peek frame: the same routing, into each callee's PUBLIC `peek`. The
+    // sub-handle is behind a `&`, which is the whole point — nothing here
+    // commits, so the dispatch tier needs no copy of the handle it delegates to.
+    let ret_expr = open_value_tuple_names(func);
+    let mut frame = String::from("        {\n            let sp = &self.state;\n");
+    if let Some(idp) = &dp.identity {
+        let cond = params_on_state(func, &idp.condition);
+        let cond = render_expr(&cond, &ctx, &[], registry, helpers);
+        let _ = writeln!(frame, "            if {cond} {{");
+        for (out, inp) in &idp.pairs {
+            let _ = writeln!(frame, "                {out} = {inp};");
+        }
+        let _ = writeln!(frame, "                return Ok({ret_expr});");
+        let _ = writeln!(frame, "            }}");
+    }
+    let _ = writeln!(frame, "            match &sp.sub {{");
+    if let Some(idp) = &dp.identity {
+        let mut ident = String::new();
+        for (out, inp) in &idp.pairs {
+            let _ = write!(ident, "{out} = {inp}; ");
+        }
+        let _ = writeln!(frame, "                {sub_enum}::Identity => {{ {ident}}}");
+    }
+    for arm in dp.arms.iter().filter(|a| a.supported) {
+        let variant = callee_variant(&arm.callee);
+        if arm.out_map.len() == 1 {
+            let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
+                panic!("single-output arm cannot discard its only slot");
+            };
+            let _ = writeln!(
+                frame,
+                "                {sub_enum}::{variant}(sub) => {{ {} = sub.peek({bar_args})?; }}",
+                outputs[k]
+            );
+        } else {
+            // The callee answers a tuple; the arm's OutSlot map says which
+            // component lands where, and which the dispatch drops (MAMA's FAMA
+            // when MA routes only the MAMA line, #125).
+            let _ = writeln!(frame, "                {sub_enum}::{variant}(sub) => {{");
+            let _ = writeln!(frame, "                    let subValue = sub.peek({bar_args})?;");
+            for (i, slot) in arm.out_map.iter().enumerate() {
+                if let streaming::OutSlot::Forward(k) = slot {
+                    let _ = writeln!(frame, "                    {} = subValue.{i};", outputs[*k]);
+                }
+            }
+            let _ = writeln!(frame, "                }}");
+        }
+    }
+    let _ = writeln!(frame, "            }}");
+    let _ = writeln!(frame, "        }}");
+    let dispatch_frame = Some(frame);
+
     // --- open bodies --------------------------------------------------------
     // One body emitter, three modes. The scalar open warms the handle and hands
     // back the last history bar's value; the two fills write the caller's arrays
@@ -3974,7 +4026,7 @@ fn emit_dispatch(
     }
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape, true, None);
+    emit_update_and_peek(o, func, shape, true, dispatch_frame.as_deref());
     emit_trait_pin(o, func);
 }
 
@@ -4073,6 +4125,21 @@ fn emit_period_bank(
     let _ = writeln!(o, "        }}");
     emit_step_end(o, true);
 
+    // The peek frame: only the SELECTED slot is peeked. The other slots' next
+    // values are not this bar's output and peeking is non-committing per
+    // handle, so advancing them would be work thrown away — which is why the
+    // step advances all of them and the frame does not.
+    let mut bank_frame = String::from("        {\n            let sp = &self.state;\n");
+    let _ = writeln!(bank_frame, "            let mut cp: i32 = {period} as i32;");
+    let _ = writeln!(bank_frame, "            if cp < sp.{min} {{");
+    let _ = writeln!(bank_frame, "                cp = sp.{min};");
+    let _ = writeln!(bank_frame, "            }} else if cp > sp.{max} {{");
+    let _ = writeln!(bank_frame, "                cp = sp.{max};");
+    let _ = writeln!(bank_frame, "            }}");
+    let _ = writeln!(bank_frame, "            let slot: usize = (cp - sp.{min}) as usize;");
+    let _ = writeln!(bank_frame, "            {out} = sp.bank[slot].peek({price})?;");
+    let _ = writeln!(bank_frame, "        }}");
+
     // --- open_internal ------------------------------------------------------
     emit_open_sig(o, func, OutMode::Scalar, enums);
     emit_open_validation_head(o, func, OutMode::Scalar, enums);
@@ -4167,7 +4234,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape, true, None);
+    emit_update_and_peek(o, func, shape, true, Some(&bank_frame));
     emit_trait_pin(o, func);
 }
 

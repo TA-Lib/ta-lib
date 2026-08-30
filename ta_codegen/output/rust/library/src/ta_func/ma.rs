@@ -930,8 +930,31 @@ impl MaStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
+                outReal = inReal;
+                return Ok(outReal);
+            }
+            match &sp.sub {
+                MaSub::Identity => { outReal = inReal; }
+                MaSub::Sma(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Ema(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Wma(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Dema(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Tema(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Trima(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Kama(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Mama(sub) => {
+                    let subValue = sub.peek(inReal)?;
+                    outReal = subValue.0;
+                }
+                MaSub::T3(sub) => { outReal = sub.peek(inReal)?; }
+                MaSub::Hma(sub) => { outReal = sub.peek(inReal)?; }
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'
