@@ -255,6 +255,19 @@ impl Core {
     ///
     /// let out_range = core.MINMAXINDEX(0, data.len() - 1, &data, 30, &mut min_idx, &mut max_idx)?;
     /// assert!(out_range.count > 0);
+    /// assert_eq!(out_range.beg_idx + out_range.count, data.len());
+    /// // every reported index locates the lowest value of its 30-bar window
+    /// for (k, &idx) in min_idx[..out_range.count].iter().enumerate() {
+    ///     let (bar, idx) = (out_range.beg_idx + k, idx as usize);
+    ///     assert!(bar + 1 - 30 <= idx && idx <= bar);
+    ///     assert!(data[bar + 1 - 30..=bar].iter().all(|&v| v >= data[idx]));
+    /// }
+    /// // every reported index locates the highest value of its 30-bar window
+    /// for (k, &idx) in max_idx[..out_range.count].iter().enumerate() {
+    ///     let (bar, idx) = (out_range.beg_idx + k, idx as usize);
+    ///     assert!(bar + 1 - 30 <= idx && idx <= bar);
+    ///     assert!(data[bar + 1 - 30..=bar].iter().all(|&v| v <= data[idx]));
+    /// }
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

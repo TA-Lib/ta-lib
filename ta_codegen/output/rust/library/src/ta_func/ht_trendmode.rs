@@ -649,6 +649,9 @@ impl Core {
     ///
     /// let out_range = core.HT_TRENDMODE(0, data.len() - 1, &data, &mut out)?;
     /// assert!(out_range.count > 0);
+    /// assert_eq!(out_range.beg_idx + out_range.count, data.len());
+    /// // the mode is a flag: 1 in a trend, 0 in a cycle
+    /// assert!(out[..out_range.count].iter().all(|&v| v == 0 || v == 1));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
