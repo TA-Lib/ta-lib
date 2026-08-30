@@ -1040,8 +1040,56 @@ impl PlusDmStream {
         if !inHigh.is_finite() || !inLow.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            if sp.optInTimePeriod <= 1 {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut diffP: f64 = 0.0_f64;
+                let mut diffM: f64 = 0.0_f64;
+                let mut prevHigh = sp.prevHigh;
+                let mut prevLow = sp.prevLow;
+                tempReal = inHigh;
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow;
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    (*outReal) = diffP;
+                } else {
+                    (*outReal) = 0.0;
+                }
+            } else {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut diffP: f64 = 0.0_f64;
+                let mut diffM: f64 = 0.0_f64;
+                let mut prevHigh = sp.prevHigh;
+                let mut prevLow = sp.prevLow;
+                let mut prevPlusDM = sp.prevPlusDM;
+                tempReal = inHigh;
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow;
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffP > 0_f64 && diffP > diffM {
+                    // Case 1 and 3: +DM=diffP,-DM=0
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((sp.optInTimePeriod) as f64) + diffP;
+                } else {
+                    // Case 2,4,5 and 7
+                    prevPlusDM = prevPlusDM - prevPlusDM / ((sp.optInTimePeriod) as f64);
+                }
+                (*outReal) = prevPlusDM;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

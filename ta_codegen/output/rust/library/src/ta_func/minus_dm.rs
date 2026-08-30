@@ -1041,8 +1041,56 @@ impl MinusDmStream {
         if !inHigh.is_finite() || !inLow.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            if sp.optInTimePeriod <= 1 {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut diffP: f64 = 0.0_f64;
+                let mut diffM: f64 = 0.0_f64;
+                let mut prevHigh = sp.prevHigh;
+                let mut prevLow = sp.prevLow;
+                tempReal = inHigh;
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow;
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffM > 0_f64 && diffP < diffM {
+                    // Case 2 and 4: +DM=0,-DM=diffM
+                    (*outReal) = diffM;
+                } else {
+                    (*outReal) = 0.0;
+                }
+            } else {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut diffP: f64 = 0.0_f64;
+                let mut diffM: f64 = 0.0_f64;
+                let mut prevHigh = sp.prevHigh;
+                let mut prevLow = sp.prevLow;
+                let mut prevMinusDM = sp.prevMinusDM;
+                tempReal = inHigh;
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow;
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffM > 0_f64 && diffP < diffM {
+                    // Case 2 and 4: +DM=0,-DM=diffM
+                    prevMinusDM = prevMinusDM - prevMinusDM / ((sp.optInTimePeriod) as f64) + diffM;
+                } else {
+                    // Case 1,3,5 and 7
+                    prevMinusDM = prevMinusDM - prevMinusDM / ((sp.optInTimePeriod) as f64);
+                }
+                (*outReal) = prevMinusDM;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

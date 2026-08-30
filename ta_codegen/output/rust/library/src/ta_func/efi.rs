@@ -869,8 +869,27 @@ impl EfiStream {
         if !inClose.is_finite() || !inVolume.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inClose, inVolume)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            if sp.optInTimePeriod == 1 {
+                let mut force: f64 = 0.0_f64;
+                let mut prevClose = sp.prevClose;
+                force = (inClose - prevClose) * inVolume;
+                prevClose = inClose;
+                (*outReal) = force;
+            } else {
+                let mut force: f64 = 0.0_f64;
+                let mut prevClose = sp.prevClose;
+                let mut prevMA = sp.prevMA;
+                force = (inClose - prevClose) * inVolume;
+                prevClose = inClose;
+                prevMA = (force - prevMA as f64).mul_add(sp.optInK_1, prevMA);
+                (*outReal) = prevMA;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

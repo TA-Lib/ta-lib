@@ -1202,14 +1202,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `TrimaStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static TRIMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<TrimaStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(unused_mut)]
@@ -1277,8 +1269,10 @@ impl TrimaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -1289,14 +1283,97 @@ impl TrimaStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        TRIMA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::trima_step_impl(&mut scratch, inReal, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            if sp.optInTimePeriod % 2 == 1 {
+                let mut numerator = sp.numerator;
+                let mut numeratorAdd = sp.numeratorAdd;
+                let mut numeratorSub = sp.numeratorSub;
+                let mut ringPos_middleIdx = sp.ringPos_middleIdx;
+                let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
+                let mut tempReal = sp.tempReal;
+                let mut pkSlot0: usize = usize::MAX;
+                let mut pkVal0: f64 = 0.0_f64;
+                let mut pkSlot1: usize = usize::MAX;
+                let mut pkVal1: f64 = 0.0_f64;
+                if sp.ringCap_middleIdx == 0 {
+                    pkSlot0 = 0;
+                    pkVal0 = inReal;
+                }
+                if sp.ringCap_trailingIdx == 0 {
+                    pkSlot1 = 0;
+                    pkVal1 = inReal;
+                }
+                // Step (1)
+                numerator -= numeratorSub;
+                numeratorSub -= tempReal;
+                tempReal = (if (ringPos_middleIdx as usize) != pkSlot0 { sp.ring_middleIdx_inReal[ringPos_middleIdx] } else { pkVal0 });
+                numeratorSub += tempReal;
+                // Step (2)
+                numerator += numeratorAdd;
+                numeratorAdd -= tempReal;
+                tempReal = inReal;
+                numeratorAdd += tempReal;
+                // Step (3)
+                numerator += tempReal;
+                // Step (4)
+                tempReal = (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal1 });
+                (*outReal) = numerator * sp.factor;
+                ringPos_middleIdx = ringPos_middleIdx + 1;
+                if ringPos_middleIdx >= sp.ringCap_middleIdx {
+                    ringPos_middleIdx = 0;
+                }
+                ringPos_trailingIdx = ringPos_trailingIdx + 1;
+                if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+                    ringPos_trailingIdx = 0;
+                }
+            } else {
+                let mut numerator = sp.numerator;
+                let mut numeratorAdd = sp.numeratorAdd;
+                let mut numeratorSub = sp.numeratorSub;
+                let mut ringPos_middleIdx = sp.ringPos_middleIdx;
+                let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
+                let mut tempReal = sp.tempReal;
+                let mut pkSlot0: usize = usize::MAX;
+                let mut pkVal0: f64 = 0.0_f64;
+                let mut pkSlot1: usize = usize::MAX;
+                let mut pkVal1: f64 = 0.0_f64;
+                if sp.ringCap_middleIdx == 0 {
+                    pkSlot0 = 0;
+                    pkVal0 = inReal;
+                }
+                if sp.ringCap_trailingIdx == 0 {
+                    pkSlot1 = 0;
+                    pkVal1 = inReal;
+                }
+                // Step (1)
+                numerator -= numeratorSub;
+                numeratorSub -= tempReal;
+                tempReal = (if (ringPos_middleIdx as usize) != pkSlot0 { sp.ring_middleIdx_inReal[ringPos_middleIdx] } else { pkVal0 });
+                numeratorSub += tempReal;
+                // Step (2)
+                numeratorAdd -= tempReal;
+                numerator += numeratorAdd;
+                tempReal = inReal;
+                numeratorAdd += tempReal;
+                // Step (3)
+                numerator += tempReal;
+                // Step (4)
+                tempReal = (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal1 });
+                (*outReal) = numerator * sp.factor;
+                ringPos_middleIdx = ringPos_middleIdx + 1;
+                if ringPos_middleIdx >= sp.ringCap_middleIdx {
+                    ringPos_middleIdx = 0;
+                }
+                ringPos_trailingIdx = ringPos_trailingIdx + 1;
+                if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+                    ringPos_trailingIdx = 0;
+                }
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

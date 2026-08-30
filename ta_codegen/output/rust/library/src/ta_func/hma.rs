@@ -1621,14 +1621,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `HmaStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static HMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<HmaStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(unused_mut)]
@@ -1696,8 +1688,10 @@ impl HmaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -1708,14 +1702,222 @@ impl HmaStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        HMA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::hma_step_impl(&mut scratch, inReal, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            if sp.optInTimePeriod == 1 {
+                (*outReal) = inReal;
+                return Ok((*outReal));
+            }
+            if sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut fullOut: f64 = 0.0_f64;
+                let mut jFull: usize = 0_usize;
+                let mut rw: usize = 0_usize;
+                let mut tempReal2: f64 = 0.0_f64;
+                let mut barsSinceReseedFull = sp.barsSinceReseedFull;
+                let mut periodSubFull = sp.periodSubFull;
+                let mut periodSumFull = sp.periodSumFull;
+                let mut ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull;
+                let mut trailingFull = sp.trailingFull;
+                let mut winPos_jFull = sp.winPos_jFull;
+                let mut pkSlot0: usize = usize::MAX;
+                let mut pkVal0: f64 = 0.0_f64;
+                let mut pkSlot1: usize = usize::MAX;
+                let mut pkVal1: f64 = 0.0_f64;
+                if sp.ringCap_trailingIdxFull == 0 {
+                    pkSlot0 = 0;
+                    pkVal0 = inReal;
+                }
+                pkSlot1 = winPos_jFull as usize;
+                pkVal1 = inReal;
+                tempReal = inReal;
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+                barsSinceReseedFull -= 1;
+                if barsSinceReseedFull <= 0 {
+                    barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
+                    periodSubFull = 0.0;
+                    periodSumFull = 0.0;
+                    rw = 1;
+                    // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
+                    jFull = sp.lookbackFull;
+                    loop {
+                        tempReal2 = (if ((if winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { winPos_jFull + sp.winCap_jFull - jFull }) as usize) != pkSlot1 { sp.win_jFull_inReal[((if winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { winPos_jFull + sp.winCap_jFull - jFull })) as usize] } else { pkVal1 });
+                        periodSubFull += tempReal2;
+                        periodSumFull += tempReal2 * ((rw) as f64);
+                        rw += 1;
+                        if jFull == 0 { break; }
+                        jFull -= 1;
+                    }
+                }
+                trailingFull = (if (ringPos_trailingIdxFull as usize) != pkSlot0 { sp.ring_trailingIdxFull_inReal[ringPos_trailingIdxFull] } else { pkVal0 });
+                fullOut = periodSumFull / sp.dividerFull;
+                periodSumFull -= periodSubFull;
+                (*outReal) = 2.0 * tempReal - fullOut;
+                ringPos_trailingIdxFull = ringPos_trailingIdxFull + 1;
+                if ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
+                    ringPos_trailingIdxFull = 0;
+                }
+                winPos_jFull = winPos_jFull + 1;
+                if winPos_jFull >= sp.winCap_jFull {
+                    winPos_jFull = 0;
+                }
+            } else {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut fullOut: f64 = 0.0_f64;
+                let mut halfOut: f64 = 0.0_f64;
+                let mut diffReal: f64 = 0.0_f64;
+                let mut jFull: usize = 0_usize;
+                let mut jHalf: usize = 0_usize;
+                let mut q: usize = 0_usize;
+                let mut rw: usize = 0_usize;
+                let mut ringWalk: usize = 0_usize;
+                let mut tempReal2: f64 = 0.0_f64;
+                let mut barsSinceReseedFull = sp.barsSinceReseedFull;
+                let mut barsSinceReseedHalf = sp.barsSinceReseedHalf;
+                let mut barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
+                let mut dRing_Idx = sp.dRing_Idx;
+                let mut periodSubFull = sp.periodSubFull;
+                let mut periodSubHalf = sp.periodSubHalf;
+                let mut periodSubSqrt = sp.periodSubSqrt;
+                let mut periodSumFull = sp.periodSumFull;
+                let mut periodSumHalf = sp.periodSumHalf;
+                let mut periodSumSqrt = sp.periodSumSqrt;
+                let mut ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull;
+                let mut ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf;
+                let mut trailingFull = sp.trailingFull;
+                let mut trailingHalf = sp.trailingHalf;
+                let mut trailingSqrt = sp.trailingSqrt;
+                let mut winPos_jFull = sp.winPos_jFull;
+                let mut winPos_jHalf = sp.winPos_jHalf;
+                let mut pkSlot0: usize = usize::MAX;
+                let mut pkVal0: f64 = 0.0_f64;
+                let mut pkSlot1: usize = usize::MAX;
+                let mut pkVal1: f64 = 0.0_f64;
+                let mut pkSlot2: usize = usize::MAX;
+                let mut pkVal2: f64 = 0.0_f64;
+                let mut pkSlot3: usize = usize::MAX;
+                let mut pkVal3: f64 = 0.0_f64;
+                if sp.ringCap_trailingIdxFull == 0 {
+                    pkSlot0 = 0;
+                    pkVal0 = inReal;
+                }
+                if sp.ringCap_trailingIdxHalf == 0 {
+                    pkSlot1 = 0;
+                    pkVal1 = inReal;
+                }
+                pkSlot2 = winPos_jFull as usize;
+                pkVal2 = inReal;
+                pkSlot3 = winPos_jHalf as usize;
+                pkVal3 = inReal;
+                tempReal = inReal;
+                periodSubFull += tempReal;
+                periodSubFull -= trailingFull;
+                periodSumFull += tempReal * ((sp.optInTimePeriod) as f64);
+                barsSinceReseedFull -= 1;
+                if barsSinceReseedFull <= 0 {
+                    barsSinceReseedFull = (8 * sp.optInTimePeriod) as usize;
+                    periodSubFull = 0.0;
+                    periodSumFull = 0.0;
+                    rw = 1;
+                    // for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 )
+                    jFull = sp.lookbackFull;
+                    loop {
+                        tempReal2 = (if ((if winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { winPos_jFull + sp.winCap_jFull - jFull }) as usize) != pkSlot2 { sp.win_jFull_inReal[((if winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull { winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull } else { winPos_jFull + sp.winCap_jFull - jFull })) as usize] } else { pkVal2 });
+                        periodSubFull += tempReal2;
+                        periodSumFull += tempReal2 * ((rw) as f64);
+                        rw += 1;
+                        if jFull == 0 { break; }
+                        jFull -= 1;
+                    }
+                }
+                trailingFull = (if (ringPos_trailingIdxFull as usize) != pkSlot0 { sp.ring_trailingIdxFull_inReal[ringPos_trailingIdxFull] } else { pkVal0 });
+                fullOut = periodSumFull / sp.dividerFull;
+                periodSumFull -= periodSubFull;
+                periodSubHalf += tempReal;
+                periodSubHalf -= trailingHalf;
+                periodSumHalf += tempReal * ((sp.halfPeriod) as f64);
+                barsSinceReseedHalf -= 1;
+                if barsSinceReseedHalf <= 0 {
+                    barsSinceReseedHalf = 8 * sp.halfPeriod;
+                    periodSubHalf = 0.0;
+                    periodSumHalf = 0.0;
+                    rw = 1;
+                    // for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 )
+                    jHalf = sp.lookbackHalf;
+                    loop {
+                        tempReal2 = (if ((if winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { winPos_jHalf + sp.winCap_jHalf - jHalf }) as usize) != pkSlot3 { sp.win_jHalf_inReal[((if winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf { winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf } else { winPos_jHalf + sp.winCap_jHalf - jHalf })) as usize] } else { pkVal3 });
+                        periodSubHalf += tempReal2;
+                        periodSumHalf += tempReal2 * ((rw) as f64);
+                        rw += 1;
+                        if jHalf == 0 { break; }
+                        jHalf -= 1;
+                    }
+                }
+                trailingHalf = (if (ringPos_trailingIdxHalf as usize) != pkSlot1 { sp.ring_trailingIdxHalf_inReal[ringPos_trailingIdxHalf] } else { pkVal1 });
+                halfOut = periodSumHalf / sp.dividerHalf;
+                periodSumHalf -= periodSubHalf;
+                diffReal = 2.0 * halfOut - fullOut;
+                periodSubSqrt += diffReal;
+                periodSubSqrt -= trailingSqrt;
+                periodSumSqrt += diffReal * ((sp.sqrtPeriod) as f64);
+                // The outer WMA consumes a DERIVED series that is never
+                // materialised, so its rescan walks the de-lag ring: dRing_Idx is
+                // the oldest slot (the one about to expire) and diffReal is the
+                // newest value, which together are the whole window. Oldest first,
+                // weight counting up from 1 -- the priming order above.
+                barsSinceReseedSqrt -= 1;
+                if barsSinceReseedSqrt <= 0 {
+                    barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
+                    periodSubSqrt = 0.0;
+                    periodSumSqrt = 0.0;
+                    rw = 1;
+                    ringWalk = dRing_Idx;
+                    // for( q = 0; q < sp.ringSize; q += 1 )
+                    q = 0;
+                    while q < sp.ringSize {
+                        tempReal2 = sp.cb_dRing[ringWalk];
+                        periodSubSqrt += tempReal2;
+                        periodSumSqrt += tempReal2 * ((rw) as f64);
+                        rw += 1;
+                        ringWalk += 1;
+                        if ringWalk >= sp.ringSize {
+                            ringWalk = 0;
+                        }
+                        q += 1;
+                    }
+                    periodSubSqrt += diffReal;
+                    periodSumSqrt += diffReal * ((sp.sqrtPeriod) as f64);
+                }
+                trailingSqrt = sp.cb_dRing[dRing_Idx];
+                dRing_Idx = dRing_Idx + 1;
+                if dRing_Idx > sp.maxIdx_dRing {
+                    dRing_Idx = 0;
+                }
+                (*outReal) = periodSumSqrt / sp.dividerSqrt;
+                periodSumSqrt -= periodSubSqrt;
+                ringPos_trailingIdxFull = ringPos_trailingIdxFull + 1;
+                if ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
+                    ringPos_trailingIdxFull = 0;
+                }
+                ringPos_trailingIdxHalf = ringPos_trailingIdxHalf + 1;
+                if ringPos_trailingIdxHalf >= sp.ringCap_trailingIdxHalf {
+                    ringPos_trailingIdxHalf = 0;
+                }
+                winPos_jFull = winPos_jFull + 1;
+                if winPos_jFull >= sp.winCap_jFull {
+                    winPos_jFull = 0;
+                }
+                winPos_jHalf = winPos_jHalf + 1;
+                if winPos_jHalf >= sp.winCap_jHalf {
+                    winPos_jHalf = 0;
+                }
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

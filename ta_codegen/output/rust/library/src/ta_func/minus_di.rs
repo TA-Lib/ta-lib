@@ -1378,8 +1378,97 @@ impl MinusDiStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            if sp.optInTimePeriod <= 1 {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut diffP: f64 = 0.0_f64;
+                let mut diffM: f64 = 0.0_f64;
+                let mut prevClose = sp.prevClose;
+                let mut prevHigh = sp.prevHigh;
+                let mut prevLow = sp.prevLow;
+                tempReal = inHigh;
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow;
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffM > 0_f64 && diffP < diffM {
+                    // Case 2 and 4: +DM=0,-DM=diffM
+                    let mut _true_range_6: f64;
+                    let mut range_6: f64 = prevHigh - prevLow;
+                    let mut tmp_6: f64 = (prevHigh - prevClose).abs();
+                    if tmp_6 > range_6 {
+                        range_6 = tmp_6;
+                    }
+                    tmp_6 = (prevLow - prevClose).abs();
+                    if tmp_6 > range_6 {
+                        range_6 = tmp_6;
+                    }
+                    _true_range_6 = range_6;
+                    tempReal = _true_range_6;
+                    if tempReal <= 0.0 {
+                        (*outReal) = 0.0 as f64;
+                    } else {
+                        (*outReal) = diffM / tempReal;
+                    }
+                } else {
+                    (*outReal) = 0.0 as f64;
+                }
+                prevClose = inClose;
+            } else {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut diffP: f64 = 0.0_f64;
+                let mut diffM: f64 = 0.0_f64;
+                let mut prevClose = sp.prevClose;
+                let mut prevHigh = sp.prevHigh;
+                let mut prevLow = sp.prevLow;
+                let mut prevMinusDM = sp.prevMinusDM;
+                let mut prevTR = sp.prevTR;
+                // Calculate the prevMinusDM
+                tempReal = inHigh;
+                diffP = tempReal - prevHigh;
+                // Plus Delta
+                prevHigh = tempReal;
+                tempReal = inLow;
+                diffM = prevLow - tempReal;
+                // Minus Delta
+                prevLow = tempReal;
+                if diffM > 0_f64 && diffP < diffM {
+                    // Case 2 and 4: +DM=0,-DM=diffM
+                    prevMinusDM = prevMinusDM - prevMinusDM / ((sp.optInTimePeriod) as f64) + diffM;
+                } else {
+                    // Case 1,3,5 and 7
+                    prevMinusDM = prevMinusDM - prevMinusDM / ((sp.optInTimePeriod) as f64);
+                }
+                // Calculate the prevTR
+                let mut _true_range_7: f64;
+                let mut range_7: f64 = prevHigh - prevLow;
+                let mut tmp_7: f64 = (prevHigh - prevClose).abs();
+                if tmp_7 > range_7 {
+                    range_7 = tmp_7;
+                }
+                tmp_7 = (prevLow - prevClose).abs();
+                if tmp_7 > range_7 {
+                    range_7 = tmp_7;
+                }
+                _true_range_7 = range_7;
+                tempReal = _true_range_7;
+                prevTR = prevTR - prevTR / ((sp.optInTimePeriod) as f64) + tempReal;
+                prevClose = inClose;
+                // Calculate the DI. The value is rounded (see Wilder book).
+                if prevTR > 0.0 {
+                    (*outReal) = (100.0 * (prevMinusDM / prevTR));
+                } else {
+                    (*outReal) = 0.0;
+                }
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

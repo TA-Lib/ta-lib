@@ -1296,11 +1296,25 @@ fn localize_state_writes(
     Some((written.into_iter().collect(), out))
 }
 
-/// The peek frame: the transition rewritten to commit nothing, against
-/// `&self.state`. `None` where the frame cannot be built, and the caller falls
-/// back to peeking a copy of the handle.
+/// The transition's own early exit — the param-degenerate identity
+/// short-circuit — is valueless, because a step returns `()`. Inline in `peek`
+/// it exits a `Result`, and inside the frame's block the outputs are `&mut`.
+fn answer_bare_returns_rust(func: &FuncDef, body: &[Statement]) -> Vec<Statement> {
+    let vals: Vec<String> = func.outputs.iter().map(|o| format!("(*{})", o.name)).collect();
+    let ret = if vals.len() == 1 { vals[0].clone() } else { format!("({})", vals.join(", ")) };
+    streaming::rewrite_stmts(body, &|e| e, &|st| match st {
+        Statement::Return { value: None } => Some(Statement::Return {
+            value: Some(Expr::Var(format!("Ok({ret})"))),
+        }),
+        other => Some(other),
+    })
+}
+
+/// One model's peek frame: the transition rewritten to commit nothing, against
+/// `&self.state`, at `indent`. `None` where the frame cannot be built, and the
+/// caller falls back to peeking a copy of the handle.
 #[allow(clippy::too_many_arguments)]
-fn build_peek_frame(
+fn peek_frame_arm(
     func: &FuncDef,
     model: &StreamModel,
     typing: &Typing,
@@ -1309,10 +1323,8 @@ fn build_peek_frame(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
+    indent: usize,
 ) -> Option<String> {
-    // The frame is a block so the `&mut` rebindings below end before the
-    // method returns the outputs by value.
-    let indent = 12;
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, &RustStreamNames).ok()?;
     let pt = streaming::peek_transition(
@@ -1394,13 +1406,6 @@ fn build_peek_frame(
     });
 
     let mut out = String::new();
-    let _ = writeln!(out, "        {{");
-    let _ = writeln!(out, "{pad}let sp = &self.state;");
-    // The outputs are the caller's locals; rebinding each as `&mut` keeps the
-    // body's `(*out) = …` spelling, and with it every cast the step renders.
-    for o in &func.outputs {
-        let _ = writeln!(out, "{pad}let {0} = &mut {0};", o.name);
-    }
     for (name, ty) in &model.temps {
         let (rty, default) = field_type_and_default(typing, name, ty, false);
         out.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
@@ -1451,6 +1456,81 @@ fn build_peek_frame(
         ));
     }
     out.push_str(&body);
+    Some(out)
+}
+
+/// The scaffolding every frame sits in: a block, so the `&mut` output
+/// rebindings end before the method returns them by value.
+fn peek_frame_head(func: &FuncDef) -> String {
+    let mut out = String::new();
+    let _ = writeln!(out, "        {{");
+    let _ = writeln!(out, "            let sp = &self.state;");
+    // Rebinding each output as `&mut` keeps the body's `(*out) = …` spelling,
+    // and with it every cast the step renders.
+    for o in &func.outputs {
+        let _ = writeln!(out, "            let {0} = &mut {0};", o.name);
+    }
+    out
+}
+
+/// The loop tier's frame: the scaffolding and one arm.
+#[allow(clippy::too_many_arguments)]
+fn build_peek_frame(
+    func: &FuncDef,
+    model: &StreamModel,
+    typing: &Typing,
+    ctx: &RustRenderCtx,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> Option<String> {
+    let arm = peek_frame_arm(func, model, typing, ctx, enums, registry, helpers, counter, 12)?;
+    let mut out = peek_frame_head(func);
+    out.push_str(&arm);
+    let _ = writeln!(out, "        }}");
+    Some(out)
+}
+
+/// The dual-mode frame: the identity short-circuit, then one arm per mode. Each
+/// arm carries its own locals inside its own block, so the two modes' state
+/// never shares a name.
+#[allow(clippy::too_many_arguments)]
+fn build_peek_frame_dual(
+    func: &FuncDef,
+    dmp: &streaming::DualModePlan,
+    typing: &Typing,
+    ctx: &RustRenderCtx,
+    opt_real_params: &[String],
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> Option<String> {
+    let (ma, mb) = (&dmp.mode_a, &dmp.mode_b);
+    let a = peek_frame_arm(func, ma, typing, ctx, enums, registry, helpers, counter, 16)?;
+    let b = peek_frame_arm(func, mb, typing, ctx, enums, registry, helpers, counter, 16)?;
+    let mut out = peek_frame_head(func);
+    // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
+    // in the batch and in Open: it is a property of the function, not of a mode.
+    if let Some(st) = streaming::identity_step_branch(ma, &RustStreamNames) {
+        let st = answer_bare_returns_rust(func, std::slice::from_ref(&st));
+        let var_inits: HashMap<String, &Expr> = HashMap::new();
+        let output_names: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+        for s in &st {
+            out.push_str(&render_statement(
+                s, 12, ctx, &[], &var_inits, &output_names, opt_real_params, enums, registry,
+                helpers, counter,
+            ));
+        }
+    }
+    let pred = params_on_state(func, &dmp.predicate);
+    let pred = render_expr(&pred, ctx, opt_real_params, registry, helpers);
+    let _ = writeln!(out, "            if {pred} {{");
+    out.push_str(&a);
+    let _ = writeln!(out, "            }} else {{");
+    out.push_str(&b);
+    let _ = writeln!(out, "            }}");
     let _ = writeln!(out, "        }}");
     Some(out)
 }
@@ -3388,7 +3468,10 @@ fn emit_dual_mode(
     emit_open_and_fill_internal_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape, false, None);
+    let frame = build_peek_frame_dual(
+        func, dmp, &typing, &ctx, &opt_real_params, enums, registry, helpers, counter,
+    );
+    emit_update_and_peek(o, func, shape, false, frame.as_deref());
     emit_trait_pin(o, func);
 }
 
