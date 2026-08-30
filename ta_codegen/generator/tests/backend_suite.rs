@@ -9704,39 +9704,45 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
 
 /// The #241 range leg's per-site ratchet, pinned across all four servers at once.
 ///
-/// The driver ORs the `range_sites` mask across the run and requires every bit
-/// below the `range_sites_n` the server declares. Two drifts fail OPEN and are
-/// what this catches:
+/// Each server declares the SET of range-compare sites it has as
+/// `range_sites_all`; the driver ORs what actually fired across the run and
+/// requires exactly that set. Two drifts fail OPEN and are what this catches:
 ///
-///   * a site added without bumping the count — the mask then carries a bit the
-///     ratchet never demands, so the new site can die unnoticed;
+///   * a site emitted but left out of the declared set — the fired mask then
+///     carries a bit the ratchet never demands, so the new site can die
+///     unnoticed;
 ///   * a site that reuses an existing bit — its death is masked by the other.
 ///
-/// Neither is visible at run time: both leave a full mask. So the check is on
-/// the emitted text — the set of bits a server actually ORs in must be exactly
-/// `{1, 2, .., 2^(n-1)}` for the `n` it declares. C, Java and C# reach the
-/// anchored `_OpenInternal` seam and declare 4; Rust's server is a separate
-/// crate and cannot, so it declares 3 and says so.
+/// Neither is visible at run time: both leave a mask that satisfies the driver.
+/// So the check is on the emitted text — the set of bits a server actually ORs
+/// in must be exactly the set it declares.
+///
+/// The sets differ, which is why the declaration is a mask and not a count (see
+/// `SvRangeSite`): C, Java and C# reach the anchored `_OpenInternal` seam and
+/// Rust's server, a separate crate, cannot; Java, C# and Rust can fork a live
+/// handle and C cannot. C and Rust therefore have four sites each and neither
+/// set is a prefix of the other.
 #[test]
-fn sv_range_sites_mask_matches_the_declared_count() {
+fn sv_range_sites_mask_matches_the_declared_set() {
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
     let enums = parser::enums::load_enums(&base.join("enums.yaml"));
     let funcs: Vec<ir::FuncDef> = discover_indicators().iter().map(|n| load_indicator(n).0).collect();
 
+    // Fill = 1, Prefix = 2, UpdateFill = 4, Anchored = 8, Copy = 16.
     let servers = [
-        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 4usize),
-        ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 4),
-        ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 4),
-        ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 3),
+        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 1 | 2 | 4 | 8u32),
+        ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
+        ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
+        ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 1 | 2 | 4 | 16),
     ];
 
-    for (lang, src, want_n) in servers {
+    for (lang, src, want_all) in servers {
         // What the server tells the driver about itself.
-        let decl = format!("\\\"range_sites_n\\\":{want_n}");
-        let decl_plain = format!("\"range_sites_n\":{want_n}");
+        let decl = format!("\\\"range_sites_all\\\":{want_all}");
+        let decl_plain = format!("\"range_sites_all\":{want_all}");
         assert!(
             src.contains(&decl) || src.contains(&decl_plain),
-            "{lang}: server does not declare range_sites_n = {want_n}"
+            "{lang}: server does not declare range_sites_all = {want_all}"
         );
 
         // What it actually ORs in. Collect every `rangeSites |= N` / `range_sites |= N`.
@@ -9751,11 +9757,12 @@ fn sv_range_sites_mask_matches_the_declared_count() {
                 from = at;
             }
         }
-        let want: std::collections::BTreeSet<u32> = (0..want_n as u32).map(|b| 1u32 << b).collect();
+        let want: std::collections::BTreeSet<u32> =
+            (0..32u32).map(|b| 1u32 << b).filter(|b| want_all & b != 0).collect();
         assert_eq!(
             bits, want,
-            "{lang}: the site bits the server sets do not match the {want_n} sites it declares. \
-             A bit above the count is a site the ratchet never demands; a missing bit is a site \
+            "{lang}: the site bits the server sets do not match the set it declares. \
+             A bit outside the set is a site the ratchet never demands; a missing bit is a site \
              whose death nothing would see."
         );
     }

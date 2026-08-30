@@ -1650,9 +1650,10 @@ fn emit_sv_range_decls(s: &mut String) {
     s.push_str("        int rB = 0, rN = 0;\n");
 }
 
-/// The range-compare SITES a server emits, in bit order. Each site sets its own
-/// bit in `rangeSites`; the server declares the count as `range_sites_n`; the
-/// driver ORs the mask across the run and requires every bit.
+/// The range-compare SITES a server emits. Each site owns one bit, and it is the
+/// SAME bit in every language; each server declares the set it has as
+/// `range_sites_all`; the driver ORs what actually fired across the run and
+/// requires exactly that set.
 ///
 /// The leg's other floor is a total — it counts functions — so a whole site
 /// class going dead in one language leaves it far above its floor and green.
@@ -1660,44 +1661,81 @@ fn emit_sv_range_decls(s: &mut String) {
 /// because a site can legitimately not run for a given function or vector: the
 /// anchored compare needs `lb < Sidx < svN - 1`, which a large lookback denies.
 ///
-/// One definition per language, and the bit and the count are read from the SAME
-/// place, because the drift that fails OPEN is a site added without bumping the
-/// count: the mask then carries a bit the ratchet never demands. `sv_range_bit`
-/// is the only way to spell a bit, and it asserts against the count.
+/// **Why a mask and not a count.** It was a count, with the driver demanding
+/// `(1 << n) - 1`. That is only expressible while every server's sites are a
+/// prefix of one list, which held until `Copy` (#287): `Copy` runs in Java, C#
+/// and Rust, `Anchored` in C, Java and C#, so C and Rust have four sites each
+/// and neither set is a prefix of the other. A count cannot say WHICH four.
+/// Renumbering per language could keep the prefix, at the price of the same
+/// site meaning a different bit in each server — so a mask printed in a
+/// diagnostic would no longer be readable against any other language's.
+///
+/// One definition per language, and the bit and the declared set are read from
+/// the SAME place, because the drift that fails OPEN is a site emitted but left
+/// out of the set: the mask then carries a bit the ratchet never demands.
+/// `sv_range_bit` is the only way to spell a bit, and it asserts membership.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum SvRangeSite {
     /// The `OpenAndFill` handle.
     Fill = 0,
     /// The `Open(P)` + updates handle.
     Prefix = 1,
-    /// The `Open(P)` + ONE `UpdateAndFill` handle (issue #246). Numbered below
-    /// `Anchored` on purpose: the driver's ratchet demands the mask be
-    /// `(1 << n) - 1`, so the bits have to stay contiguous from 0 and Rust —
-    /// which reaches every site but the anchored one — has to be the server
-    /// whose declared count truncates the list.
+    /// The `Open(P)` + ONE `UpdateAndFill` handle (issue #246).
     UpdateFill = 2,
     /// The `startIdx`-anchored `_OpenInternal` handle. Every server but Rust,
     /// whose server is a separate crate and cannot reach a `pub(crate)` seam.
     Anchored = 3,
+    /// The handle forked mid-stream by `copy()` / `Clone()` / `.clone()` and
+    /// driven to the end (#287). Every server but C, which exposes no way to
+    /// fork a live `TA__Stream *`.
+    Copy = 4,
 }
 
-/// The bit `site` sets, checked against the count the server will declare.
+/// The bit `site` sets, checked against the set the server will declare.
 fn sv_range_bit(site: SvRangeSite, declared: u32) -> u32 {
-    let bit = site as u32;
+    let bit = 1u32 << (site as u32);
     assert!(
-        bit < declared,
-        "range site {bit} is outside the {declared} this server declares — the mask \
-         would carry a bit the driver's ratchet never demands"
+        declared & bit != 0,
+        "range site bit {bit:#x} is outside the {declared:#x} this server declares — the \
+         mask would carry a bit the driver's ratchet never demands"
     );
-    1u32 << bit
+    bit
+}
+
+/// The set `sites` spell, as the bit mask a server declares.
+const fn sv_range_mask(sites: &[SvRangeSite]) -> u32 {
+    let mut m = 0u32;
+    let mut i = 0;
+    while i < sites.len() {
+        m |= 1u32 << (sites[i] as u32);
+        i += 1;
+    }
+    m
 }
 
 /// C, Java and C# reach the anchored seam; Rust cannot — its server is a
-/// separate crate and `_OpenInternal` is `pub(crate)`.
-const SV_RANGE_SITES_C: u32 = 4;
-const SV_RANGE_SITES_JAVA: u32 = 4;
-const SV_RANGE_SITES_CSHARP: u32 = 4;
-const SV_RANGE_SITES_RUST: u32 = 3;
+/// separate crate and `_OpenInternal` is `pub(crate)`. Java, C# and Rust can
+/// fork a live handle; C cannot.
+const SV_RANGE_MASK_C: u32 = sv_range_mask(&[
+    SvRangeSite::Fill,
+    SvRangeSite::Prefix,
+    SvRangeSite::UpdateFill,
+    SvRangeSite::Anchored,
+]);
+const SV_RANGE_MASK_JAVA: u32 = sv_range_mask(&[
+    SvRangeSite::Fill,
+    SvRangeSite::Prefix,
+    SvRangeSite::UpdateFill,
+    SvRangeSite::Anchored,
+    SvRangeSite::Copy,
+]);
+const SV_RANGE_MASK_CSHARP: u32 = SV_RANGE_MASK_JAVA;
+const SV_RANGE_MASK_RUST: u32 = sv_range_mask(&[
+    SvRangeSite::Fill,
+    SvRangeSite::Prefix,
+    SvRangeSite::UpdateFill,
+    SvRangeSite::Copy,
+]);
 
 /// One comparison: `handle`'s range against the `(beg, nb)` the batch reported
 /// for the same bars. `guard` is the leg's own success condition — a leg that
@@ -1711,7 +1749,7 @@ fn emit_sv_range_check(
     let _ = writeln!(
         s,
         "{indent}    rangeChecked = 1; rangeLegs++; rangeSites |= {};",
-        sv_range_bit(site, SV_RANGE_SITES_C)
+        sv_range_bit(site, SV_RANGE_MASK_C)
     );
     let _ = writeln!(s, "{indent}    rB = -1; rN = -1;");
     let _ = writeln!(
@@ -1848,7 +1886,7 @@ fn emit_sv_range_report(s: &mut String) {
     s.push_str("        if( rangeChecked && !rangeOk ) allOk = 0;\n");
     let _ = writeln!(
         s,
-        "        pos = json_appendf(resp, resp_size, pos, \",\\\"range_checked\\\":%d,\\\"range_legs\\\":%d,\\\"range_sites\\\":%d,\\\"range_sites_n\\\":{SV_RANGE_SITES_C},\\\"range_ok\\\":%d\", rangeChecked, rangeLegs, rangeSites, rangeOk);"
+        "        pos = json_appendf(resp, resp_size, pos, \",\\\"range_checked\\\":%d,\\\"range_legs\\\":%d,\\\"range_sites\\\":%d,\\\"range_sites_all\\\":{SV_RANGE_MASK_C},\\\"range_ok\\\":%d\", rangeChecked, rangeLegs, rangeSites, rangeOk);"
     );
 }
 
@@ -6603,7 +6641,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         "        match c2.{fname_snake}_open_and_fill({full_ins}{opts_tail}{fargs}) {{"
     );
     s.push_str("            Err(_) => { fill_ok = false; }\n");
-    let fill_bit = sv_range_bit(SvRangeSite::Fill, SV_RANGE_SITES_RUST);
+    let fill_bit = sv_range_bit(SvRangeSite::Fill, SV_RANGE_MASK_RUST);
     s.push_str("            Ok((_h, fr)) => {\n                range_checked = 1; range_legs += 1; range_sites |= ");
     s.push_str(&fill_bit.to_string());
     s.push_str(";\n                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }\n                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }\n                else {\n");
@@ -6621,6 +6659,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     emit_rust_sv_prefix_sweep(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int, seed_boundary);
     let out_nullable: Vec<bool> = func.outputs.iter().map(crate::ir::Output::is_nullable).collect();
     emit_rust_sv_update_and_fill_leg(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int, &out_nullable);
+    emit_rust_sv_clone_leg(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int);
 
     // Short-history reject leg: at `lb` bars no output is defined for ANY
     // configuration, so open must reject. (The seed-boundary bar `lb+1` is NOT
@@ -6642,7 +6681,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    }\n");
     // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
     // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ufill_checked\\\":{},\\\"ufill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_n\\\":"); s.push_str(&SV_RANGE_SITES_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ufill_checked\\\":{},\\\"ufill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
     s.push_str("}\n\n");
     s
 }
@@ -6732,7 +6771,7 @@ fn emit_rust_sv_prefix_sweep(
     // which leaves the handle short of the bars it was supposed to consume.
     s.push_str("                    if all_ok {\n");
     s.push_str("                        range_checked = 1; range_legs += 1; range_sites |= ");
-    s.push_str(&sv_range_bit(SvRangeSite::Prefix, SV_RANGE_SITES_RUST).to_string());
+    s.push_str(&sv_range_bit(SvRangeSite::Prefix, SV_RANGE_MASK_RUST).to_string());
     s.push_str(";\n");
     s.push_str("                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }\n");
     s.push_str("                    }\n");
@@ -6752,6 +6791,85 @@ fn short_probe_index(out_nullable: &[bool]) -> usize {
         .iter()
         .position(|n| !n)
         .expect("every function has a required output (backends::common's guardable-store assert)")
+}
+
+/// Clone-independence leg (#287), the counterpart of Java's `copy()` leg and
+/// C#'s `Clone()` one: open at the earliest prefix, advance to mid, fork, drive
+/// both handles to the end.
+///
+/// Rust's fork is `#[derive(Clone)]` on the handle rather than a hand-emitted
+/// method, and nothing in the harness exercised it — so a refactor that put a
+/// buffer behind an `Rc`/`Arc` would turn `.clone()` into an aliased shallow
+/// copy with no gate to see it. That is what the value half asserts: the two
+/// handles agree with each other bitwise and each agrees with batch.
+///
+/// The range half is honest about what it is worth TODAY: `out` is a plain
+/// `Copy` field of the derived struct, so it comes across by construction and
+/// the compare cannot currently fail on its own. It is here because the site
+/// has to exist in Rust for the ratchet to demand it — and because the day the
+/// handle grows a hand-written `Clone`, or `out` stops being a stored pair,
+/// this is the leg that already asks the question.
+fn emit_rust_sv_clone_leg(
+    s: &mut String,
+    fname: &str,
+    arrays: &[&'static str],
+    pfx_ins: &str,
+    opts_tail: &str,
+    out_is_int: &[bool],
+) {
+    let n_out = out_is_int.len();
+    let destructure = |var: &str| -> Vec<String> {
+        if n_out == 1 {
+            vec![var.to_string()]
+        } else {
+            (0..n_out).map(|i| format!("{var}.{i}")).collect()
+        }
+    };
+    let t_args = arrays.iter().map(|a| format!("{a}[t]")).collect::<Vec<_>>().join(", ");
+    let fname_snake = crate::backends::common::snake_words(fname);
+    s.push_str("        if let Some(&p) = pcs.first() {\n");
+    let _ = writeln!(s, "            match c2.{fname_snake}_open({pfx_ins}{opts_tail}) {{");
+    s.push_str("                Err(_) => { all_ok = false; if diag.is_empty() { diag = \",\\\"copyOpenReject\\\":1\".to_string(); } }\n");
+    s.push_str("                Ok((mut sa, _v0)) => {\n");
+    s.push_str("                    let mid = (p + svN) / 2;\n");
+    s.push_str("                    let mut forked = true;\n");
+    let _ = writeln!(s, "                    for t in p..mid {{ if sa.update({t_args}).is_err() {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyPreRejected\\\":{{}}\", t); }} break; }} }}");
+    s.push_str("                    let mut sb = sa.clone();\n");
+    s.push_str("                    if forked {\n");
+    s.push_str("                    for t in mid..svN {\n");
+    let _ = writeln!(s, "                        let Ok(u_src) = sa.update({t_args}) else {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyRejected\\\":{{}}\", t); }} break; }};");
+    let _ = writeln!(s, "                        let Ok(u_fork) = sb.update({t_args}) else {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyRejected\\\":{{}}\", t); }} break; }};");
+    let src_parts = destructure("u_src");
+    let fork_parts = destructure("u_fork");
+    for (i, (u_src, u_fork)) in src_parts.iter().zip(fork_parts.iter()).enumerate() {
+        // Same-tier: the fork is the SAME computation, so it is a strict bit
+        // compare — the +/-0 tolerance the cross-tier compare carries has no
+        // business between two handles that ran the same arithmetic.
+        if out_is_int[i] {
+            let _ = writeln!(s, "                        if {u_src} != {u_fork} {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
+            let _ = writeln!(s, "                        if {u_src} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
+        } else {
+            let _ = writeln!(s, "                        if {u_src}.to_bits() != {u_fork}.to_bits() {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
+            let _ = writeln!(s, "                        if sv_xtier_ne({u_src}, b{i}[t - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
+        }
+    }
+    s.push_str("                    }\n");
+    s.push_str("                    }\n");
+    // Both handles have consumed bars [p-1, svN-1] — the fork's own updates
+    // carried it over exactly the bars the original took — so each must report
+    // what batch(0, svN-1) did. The original is the control: it is the prefix
+    // leg's shape, so a failure on it alone says the leg's bookkeeping broke
+    // rather than the fork. Only when the value leg passed, and only when the
+    // fork actually ran every bar: a handle short of its bars has a range that
+    // is legitimately not the batch one.
+    s.push_str("                    if all_ok && forked {\n");
+    s.push_str("                        range_checked = 1; range_legs += 1; range_sites |= ");
+    s.push_str(&sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_RUST).to_string());
+    s.push_str(";\n");
+    s.push_str("                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = \",\\\"copyRangeSrc\\\":1\".to_string(); } }\n");
+    s.push_str("                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = \",\\\"copyRange\\\":1\".to_string(); } }\n");
+    s.push_str("                    }\n");
+    s.push_str("                }\n            }\n        }\n");
 }
 
 /// UpdateAndFill leg (#246): the same `Open(p)` the prefix sweep uses, then ONE
@@ -6848,7 +6966,7 @@ fn emit_rust_sv_update_and_fill_leg(
         let _ = writeln!(s, "                            for t in (svN - p)..svN {{ if u{i}[t] != {canary} {{ ufill_ok = false; }} }}");
     }
     s.push_str("                            range_checked = 1; range_legs += 1; range_sites |= ");
-    s.push_str(&sv_range_bit(SvRangeSite::UpdateFill, SV_RANGE_SITES_RUST).to_string());
+    s.push_str(&sv_range_bit(SvRangeSite::UpdateFill, SV_RANGE_MASK_RUST).to_string());
     s.push_str(";\n");
     s.push_str("                            if stu.out_range().beg_idx != beg || stu.out_range().count != nb { ufill_ok = false; range_ok = false; }\n");
     s.push_str("                        }\n                    }\n");
@@ -7180,7 +7298,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         "                Core.{class} _fh = c2.{base_camel}OpenAndFill({full_ins}{opts_tail}{fargs});"
     );
     s.push_str("                OutRange _fr = _fh.outRange();\n");
-    let _ = writeln!(s, "                rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Fill, SV_RANGE_SITES_JAVA));
+    let _ = writeln!(s, "                rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Fill, SV_RANGE_MASK_JAVA));
     s.push_str("                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;\n");
     s.push_str("                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;\n                else {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
@@ -7326,7 +7444,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // bars and must report exactly what batch(0, svN-1) did. Only when the value
     // leg passed — otherwise the handle is short of the bars it was to consume.
     s.push_str("                if (allOk) {\n");
-    let _ = writeln!(s, "                    rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Prefix, SV_RANGE_SITES_JAVA));
+    let _ = writeln!(s, "                    rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Prefix, SV_RANGE_MASK_JAVA));
     s.push_str("                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;\n");
     s.push_str("                }\n");
     s.push_str("            }\n");
@@ -7424,7 +7542,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let _ = writeln!(
         s,
         "                        rangeChecked = 1; rangeLegs++; rangeSites |= {};",
-        sv_range_bit(SvRangeSite::UpdateFill, SV_RANGE_SITES_JAVA)
+        sv_range_bit(SvRangeSite::UpdateFill, SV_RANGE_MASK_JAVA)
     );
     s.push_str("                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }\n");
     s.push_str("                    } catch (IllegalArgumentException _e) { ufillOk = false; }\n");
@@ -7433,7 +7551,9 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
 
     // copy() independence leg: open at the earliest prefix, advance to mid,
     // copy, drive both to the end — both must match batch bitwise (a shallow
-    // sub-handle/bank/ring copy diverges here).
+    // sub-handle/bank/ring copy diverges here), and both must report the batch
+    // range (#287: a copy that carries every numeric field but drops the range
+    // pair produced identical values and was invisible here).
     s.push_str("            {\n");
     s.push_str("                int p0 = lb + 1 + seedShift;\n");
     s.push_str("                if (p0 <= svN - 1) {\n");
@@ -7462,6 +7582,23 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     } else {
         s.push_str("                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyDiverged\\\":\" + t; }\n");
     }
+    s.push_str("                        }\n");
+    // Both handles have now consumed bars [p0-1, svN-1] — the fork's own
+    // updates carried it over exactly the bars the original took — so each
+    // must report what batch(0, svN-1) did, the same claim the prefix leg
+    // makes about the handle it never copied. The original is the control: it
+    // is the prefix leg's shape, so a failure on sA alone says the leg's own
+    // bookkeeping broke rather than copy().
+    // Only when the value leg passed: a diverged handle is not one whose range
+    // is worth reading.
+    s.push_str("                        if (allOk) {\n");
+    let _ = writeln!(
+        s,
+        "                            rangeChecked = 1; rangeLegs++; rangeSites |= {};",
+        sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_JAVA)
+    );
+    s.push_str("                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = \",\\\"copyRangeSrc\\\":1\"; }\n");
+    s.push_str("                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = \",\\\"copyRange\\\":1\"; }\n");
     s.push_str("                        }\n");
     s.push_str("                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"copyOpenReject\\\":1\"; }\n");
     s.push_str("                }\n");
@@ -7533,7 +7670,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // it. Same shape as the C leg, against a reference recomputed for the
     // anchored range under this request's own settings.
     s.push_str("            {\n");
-    let anchored_bit = sv_range_bit(SvRangeSite::Anchored, SV_RANGE_SITES_JAVA);
+    let anchored_bit = sv_range_bit(SvRangeSite::Anchored, SV_RANGE_MASK_JAVA);
     s.push_str("                int Sidx = lb + (svN - lb) / 3;\n");
     s.push_str("                if (Sidx > lb && Sidx < svN - 1) {\n");
     s.push_str("                    MInteger begS = new MInteger();\n");
@@ -7562,7 +7699,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        }\n");
     // fill_ok folds into ok as a safety net (mirrors the C/Rust gates).
 
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ufill_checked\\\":\" + ufillChecked + \",\\\"ufill_ok\\\":\" + (ufillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_n\\\":"); s.push_str(&SV_RANGE_SITES_JAVA.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg.value + \",\\\"nb\\\":\" + nb.value + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ufill_checked\\\":\" + ufillChecked + \",\\\"ufill_ok\\\":\" + (ufillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_JAVA.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign[0] + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
@@ -8385,7 +8522,7 @@ fn emit_csharp_sv_func(
     // `OutRange` is a PROPERTY on the C# handle (Java spells it `outRange()`),
     // returning the shipped `OutRange` with `BegIdx` / `Count`.
     s.push_str("                OutRange _fr = _fh.OutRange;\n");
-    let _ = writeln!(s, "                rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Fill, SV_RANGE_SITES_CSHARP));
+    let _ = writeln!(s, "                rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Fill, SV_RANGE_MASK_CSHARP));
     s.push_str("                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;\n");
     s.push_str("                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;\n                else {\n");
     for i in 0..n_out {
@@ -8712,7 +8849,7 @@ fn emit_csharp_sv_func(
     // bars and must report exactly what batch(0, svN-1) did. Only when the value
     // leg passed — otherwise the handle is short of the bars it was to consume.
     s.push_str("                if (allOk) {\n");
-    let _ = writeln!(s, "                    rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Prefix, SV_RANGE_SITES_CSHARP));
+    let _ = writeln!(s, "                    rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Prefix, SV_RANGE_MASK_CSHARP));
     s.push_str("                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;\n");
     s.push_str("                }\n");
     s.push_str("            }\n");
@@ -8802,7 +8939,7 @@ fn emit_csharp_sv_func(
     let _ = writeln!(
         s,
         "                        rangeChecked = 1; rangeLegs++; rangeSites |= {};",
-        sv_range_bit(SvRangeSite::UpdateFill, SV_RANGE_SITES_CSHARP)
+        sv_range_bit(SvRangeSite::UpdateFill, SV_RANGE_MASK_CSHARP)
     );
     s.push_str("                        if (stu.OutRange.BegIdx != beg || stu.OutRange.Count != nb) { ufillOk = false; rangeOk = false; }\n");
     s.push_str("                    } catch (ArgumentException) { ufillOk = false; }\n");
@@ -8811,7 +8948,9 @@ fn emit_csharp_sv_func(
 
     // ---- Clone() independence: open at the earliest prefix, advance to mid,
     // clone, drive both to the end. Both must match batch (cross-tier) and each
-    // other (same-tier). A shallow ring / sub-handle / bank copy diverges here.
+    // other (same-tier), and both must report the batch range (#287: a clone
+    // that carries every numeric field but drops the range pair produced
+    // identical values and was invisible here).
     // `Clone()` is C#'s spelling of Java's `copy()`.
     s.push_str("            {\n");
     s.push_str("                int p0 = lb + 1 + seedShift;\n");
@@ -8839,6 +8978,23 @@ fn emit_csharp_sv_func(
             "                            if ({same} || {cross}) {{ allOk = false; if (diag.Length == 0) diag = \",\\\"copyDiverged\\\":\" + t; }}"
         );
     }
+    s.push_str("                        }\n");
+    // Both handles have now consumed bars [p0-1, svN-1] — the fork's own
+    // updates carried it over exactly the bars the original took — so each
+    // must report what batch(0, svN-1) did, the same claim the prefix leg
+    // makes about the handle it never cloned. The original is the control: it
+    // is the prefix leg's shape, so a failure on sA alone says the leg's own
+    // bookkeeping broke rather than Clone().
+    // Only when the value leg passed: a diverged handle is not one whose range
+    // is worth reading.
+    s.push_str("                        if (allOk) {\n");
+    let _ = writeln!(
+        s,
+        "                            rangeChecked = 1; rangeLegs++; rangeSites |= {};",
+        sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_CSHARP)
+    );
+    s.push_str("                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = \",\\\"copyRangeSrc\\\":1\"; }\n");
+    s.push_str("                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = \",\\\"copyRange\\\":1\"; }\n");
     s.push_str("                        }\n");
     s.push_str("                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = \",\\\"copyOpenReject\\\":1\"; }\n");
     s.push_str("                }\n");
@@ -9023,7 +9179,7 @@ fn emit_csharp_sv_func(
     // range is max(startIdx, lookback), resolved by a different emitter branch
     // from the two sites above, and it was gated in C alone.
     s.push_str("            {\n");
-    let anchored_bit = sv_range_bit(SvRangeSite::Anchored, SV_RANGE_SITES_CSHARP);
+    let anchored_bit = sv_range_bit(SvRangeSite::Anchored, SV_RANGE_MASK_CSHARP);
     s.push_str("                int Sidx = lb + (svN - lb) / 3;\n");
     s.push_str("                if (Sidx > lb && Sidx < svN - 1) {\n");
     s.push_str("                    int begS = 0, nbS = 0;\n");
@@ -9059,7 +9215,7 @@ fn emit_csharp_sv_func(
         s.push_str("        extra += \",\\\"candleMut\\\":\" + candleMutRan + \",\\\"candleMutMoved\\\":\" + candleMutMoved + \",\\\"benignMut\\\":\" + zsignMut;\n");
     }
 
-    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ufill_checked\\\":\" + ufillChecked + \",\\\"ufill_ok\\\":\" + (ufillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_n\\\":"); s.push_str(&SV_RANGE_SITES_CSHARP.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
+    s.push_str("        return \"{\\\"retCode\\\":0,\\\"beg\\\":\" + beg + \",\\\"nb\\\":\" + nb + \",\\\"legs\\\":\" + legs + \",\\\"fill_checked\\\":\" + fillChecked + \",\\\"fill_ok\\\":\" + (fillOk ? 1 : 0) + \",\\\"ufill_checked\\\":\" + ufillChecked + \",\\\"ufill_ok\\\":\" + (ufillOk ? 1 : 0) + \",\\\"range_checked\\\":\" + rangeChecked + \",\\\"range_legs\\\":\" + rangeLegs + \",\\\"range_sites\\\":\" + rangeSites + \",\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_CSHARP.to_string()); s.push_str(",\\\"range_ok\\\":\" + (rangeOk ? 1 : 0) + \",\\\"ok\\\":\" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + \",\\\"peek_ok\\\":\" + (peekAll ? 1 : 0) + \",\\\"benign\\\":\" + zsign + extra + diag + \"}\";\n");
     s.push_str("    }\n\n");
     s
 }
