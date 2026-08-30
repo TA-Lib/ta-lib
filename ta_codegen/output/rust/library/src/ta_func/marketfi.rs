@@ -507,6 +507,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl MarketfiStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -581,8 +584,26 @@ impl MarketfiStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inVolume.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inVolume)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            // A zero-volume bar would divide by zero. Neither reference guards
+            // it -- they emit +/-Inf, or NaN when the range is zero too -- but
+            // issue #112 settled that a successful call never emits NaN or Inf,
+            // so an untraded bar facilitated no movement and reports 0.
+            //
+            // The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+            // 1e-14 band is an absolute threshold and meaningless against an
+            // unbounded volume scale. Same reasoning as the prevClose guard in
+            // ta_codegen/input/nvi/nvi.c.
+            if inVolume != 0.0 {
+                (*outReal) = (inHigh - inLow) / inVolume;
+            } else {
+                (*outReal) = 0.0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -454,6 +454,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl ObvStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -528,8 +531,23 @@ impl ObvStream {
         if !inReal.is_finite() || !inVolume.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal, inVolume)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut prevOBV = sp.prevOBV;
+            let mut prevReal = sp.prevReal;
+            tempReal = inReal;
+            if tempReal > prevReal {
+                prevOBV += inVolume;
+            } else if tempReal < prevReal {
+                prevOBV -= inVolume;
+            }
+            (*outReal) = prevOBV;
+            prevReal = tempReal;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

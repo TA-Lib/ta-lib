@@ -724,16 +724,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `AroonStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static AROON_PEEK_SCRATCH: std::cell::Cell<Option<Box<AroonStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl AroonStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -797,8 +792,10 @@ impl AroonStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -809,15 +806,78 @@ impl AroonStream {
         if !inHigh.is_finite() || !inLow.is_finite() {
             return Err(RetCode::BadParam);
         }
-        AROON_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outAroonDown: f64 = 0.0_f64;
-            let mut outAroonUp: f64 = 0.0_f64;
-            Core::aroon_step_impl(&mut scratch, inHigh, inLow, &mut outAroonDown, &mut outAroonUp);
-            cell.set(Some(scratch));
-            Ok((outAroonDown, outAroonUp))
-        })
+        let mut outAroonDown: f64 = 0.0_f64;
+        let mut outAroonUp: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outAroonDown = &mut outAroonDown;
+            let outAroonUp = &mut outAroonUp;
+            let mut tmp: f64 = 0.0_f64;
+            let mut highest = sp.highest;
+            let mut highestIdx = sp.highestIdx;
+            let mut i = sp.i;
+            let mut lowest = sp.lowest;
+            let mut lowestIdx = sp.lowestIdx;
+            let mut today = sp.today;
+            let mut trailingIdx = sp.trailingIdx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            if today >= 1073741824 {
+                let rebaseShift: i32 = trailingIdx & !sp.xMask;
+                today -= rebaseShift;
+                trailingIdx -= rebaseShift;
+                highestIdx -= rebaseShift;
+                i -= rebaseShift;
+                lowestIdx -= rebaseShift;
+            }
+            pkSlot0 = (today & sp.xMask) as usize;
+            pkVal0 = inHigh;
+            pkSlot1 = (today & sp.xMask) as usize;
+            pkVal1 = inLow;
+            // Keep track of the lowestIdx
+            tmp = (if ((today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(today & sp.xMask) as usize] } else { pkVal1 });
+            if lowestIdx < trailingIdx {
+                lowestIdx = trailingIdx;
+                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                i = lowestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmp = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    if tmp <= lowest {
+                        lowestIdx = i;
+                        lowest = tmp;
+                    }
+                }
+            } else if tmp <= lowest {
+                lowestIdx = today;
+                lowest = tmp;
+            }
+            // Keep track of the highestIdx
+            tmp = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(today & sp.xMask) as usize] } else { pkVal0 });
+            if highestIdx < trailingIdx {
+                highestIdx = trailingIdx;
+                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                i = highestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
+                    if tmp >= highest {
+                        highestIdx = i;
+                        highest = tmp;
+                    }
+                }
+            } else if tmp >= highest {
+                highestIdx = today;
+                highest = tmp;
+            }
+            // Note: Do not forget that input and output buffer can be the same,
+            //       so writing to the output is the last thing being done here.
+            (*outAroonUp) = sp.factor * (((sp.optInTimePeriod - (today - highestIdx))) as f64);
+            (*outAroonDown) = sp.factor * (((sp.optInTimePeriod - (today - lowestIdx))) as f64);
+            trailingIdx += 1;
+            today += 1;
+        }
+        Ok((outAroonDown, outAroonUp))
     }
 
     /// The bars this stream has produced a value for, in the input series'

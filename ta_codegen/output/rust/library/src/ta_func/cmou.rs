@@ -778,6 +778,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl CmouStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -854,8 +857,71 @@ impl CmouStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut sum: f64 = 0.0_f64;
+            let mut diff: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut downSum = sp.downSum;
+            let mut nullRun = sp.nullRun;
+            let mut prevValue = sp.prevValue;
+            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            let mut trailingValue = sp.trailingValue;
+            let mut upSum = sp.upSum;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            if sp.ringCap_trailingIdx == 0 {
+                pkSlot0 = 0;
+                pkVal0 = inReal;
+            }
+            // Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
+            // inReal[trailingIdx-1] comes from the cache (already overwritten when
+            // outReal == inReal); inReal[trailingIdx] is read here, before this
+            // iteration writes outReal[outIdx], so it is still the original price.
+            tempReal = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 });
+            diff = tempReal - trailingValue;
+            trailingValue = tempReal;
+            if diff > 0.0 {
+                upSum -= diff;
+            } else if diff < 0.0 {
+                downSum += diff;
+            }
+            // Add the newest change: inReal[today] - inReal[today-1].
+            tempReal = inReal;
+            diff = tempReal - prevValue;
+            prevValue = tempReal;
+            if diff > 0.0 {
+                upSum += diff;
+            } else if diff < 0.0 {
+                downSum -= diff;
+            }
+            // Once a whole period of flat bars has gone by, every change in the
+            // window is exactly zero, so both sums are known to be exactly zero and
+            // the residue can be dropped.
+            if diff == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
+            if nullRun >= ((sp.optInTimePeriod) as usize) {
+                nullRun = (sp.optInTimePeriod) as usize;
+                upSum = 0.0;
+                downSum = 0.0;
+            }
+            sum = upSum + downSum;
+            if sum > 0.0 {
+                (*outReal) = 100.0 * (upSum - downSum) / sum;
+            } else {
+                (*outReal) = 0.0;
+            }
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+                ringPos_trailingIdx = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

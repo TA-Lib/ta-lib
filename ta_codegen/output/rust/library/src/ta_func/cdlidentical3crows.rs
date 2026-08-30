@@ -1109,16 +1109,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `Cdlidentical3crowsStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLIDENTICAL3CROWS_PEEK_SCRATCH: std::cell::Cell<Option<Box<Cdlidentical3crowsStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl Cdlidentical3crowsStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -1181,8 +1176,10 @@ impl Cdlidentical3crowsStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -1193,14 +1190,124 @@ impl Cdlidentical3crowsStream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        CDLIDENTICAL3CROWS_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outInteger: i32 = 0_i32;
-            Core::cdlidentical3crows_step_impl(&mut scratch, &self.cs_equal, &self.cs_shadow_very_short, inOpen, inHigh, inLow, inClose, &mut outInteger);
-            cell.set(Some(scratch));
-            Ok(outInteger)
-        })
+        let mut outInteger: i32 = 0_i32;
+        {
+            let sp = &self.state;
+            let outInteger = &mut outInteger;
+            let mut totIdx: usize = 0_usize;
+            let mut EqualPeriodTotal = sp.EqualPeriodTotal;
+            let mut ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+            let mut lag1_inClose = sp.lag1_inClose;
+            let mut lag1_inHigh = sp.lag1_inHigh;
+            let mut lag1_inLow = sp.lag1_inLow;
+            let mut lag1_inOpen = sp.lag1_inOpen;
+            let mut lag2_inClose = sp.lag2_inClose;
+            let mut lag2_inHigh = sp.lag2_inHigh;
+            let mut lag2_inLow = sp.lag2_inLow;
+            let mut lag2_inOpen = sp.lag2_inOpen;
+            let mut ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+            let mut ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            #[allow(non_snake_case)]
+            let Equal_rangeType: i32 = self.cs_equal.range_type as i32;
+            #[allow(non_snake_case)]
+            let Equal_avgPeriod: i32 = self.cs_equal.avg_period;
+            #[allow(non_snake_case)]
+            let Equal_factor: f64 = self.cs_equal.factor;
+            #[allow(non_snake_case)]
+            let ShadowVeryShort_rangeType: i32 = self.cs_shadow_very_short.range_type as i32;
+            #[allow(non_snake_case)]
+            let ShadowVeryShort_avgPeriod: i32 = self.cs_shadow_very_short.avg_period;
+            #[allow(non_snake_case)]
+            let ShadowVeryShort_factor: f64 = self.cs_shadow_very_short.factor;
+            pkSlot0 = ringPos_EqualTrailingIdx as usize;
+            let mut _candlerange_11: f64;
+            match Equal_rangeType {
+                0 => {
+                    _candlerange_11 = (inClose - inOpen).abs();
+                }
+                1 => {
+                    _candlerange_11 = inHigh - inLow;
+                }
+                2 => {
+                    _candlerange_11 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+                }
+                _ => {
+                    _candlerange_11 = 0.0;
+                }
+            }
+            pkVal0 = _candlerange_11;
+            pkSlot1 = ringPos_ShadowVeryShortTrailingIdx as usize;
+            let mut _candlerange_12: f64;
+            match ShadowVeryShort_rangeType {
+                0 => {
+                    _candlerange_12 = (inClose - inOpen).abs();
+                }
+                1 => {
+                    _candlerange_12 = inHigh - inLow;
+                }
+                2 => {
+                    _candlerange_12 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+                }
+                _ => {
+                    _candlerange_12 = 0.0;
+                }
+            }
+            pkVal1 = _candlerange_12;
+            if (((if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st black
+               ((if lag2_inClose >= lag2_inOpen { lag2_inOpen } else { lag2_inClose }) - lag2_inLow) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[2]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
+               (((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd black
+               ((if lag1_inClose >= lag1_inOpen { lag1_inOpen } else { lag1_inClose }) - lag1_inLow) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[1]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
+               (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3rd black
+               ((if inClose >= inOpen { inOpen } else { inClose }) - inLow) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[0]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
+               lag2_inClose > lag1_inClose &&                                     // three declining
+               lag1_inClose > inClose &&
+               lag1_inOpen <= lag2_inClose + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[2]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd black opens very close to 1st close
+               lag1_inOpen >= lag2_inClose - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[2]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) &&
+               inOpen <= lag1_inClose + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[1]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd black opens very close to 2nd close
+               inOpen >= lag1_inClose - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[1]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 }))
+            {
+                (*outInteger) = (0 - 100) as i32;
+            } else {
+                (*outInteger) = 0;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            // for( totIdx = 2; totIdx >= 0; totIdx -= 1 )
+            totIdx = 2;
+            loop {
+                ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + ((if ((if ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx { ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx } else { ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx }) as usize) != pkSlot1 { sp.ring_ShadowVeryShortTrailingIdx_derived[((if ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx { ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx } else { ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx })) as usize] } else { pkVal1 }) - (if (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize) != pkSlot1 { sp.ring_ShadowVeryShortTrailingIdx_derived[((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] } else { pkVal1 }));
+                if totIdx == 0 { break; }
+                totIdx -= 1;
+            }
+            // for( totIdx = 2; totIdx >= 1; totIdx -= 1 )
+            totIdx = 2;
+            loop {
+                EqualPeriodTotal[totIdx] = EqualPeriodTotal[totIdx] + ((if ((if ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx >= sp.ringCap_EqualTrailingIdx { ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx - sp.ringCap_EqualTrailingIdx } else { ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx }) as usize) != pkSlot0 { sp.ring_EqualTrailingIdx_derived[((if ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx >= sp.ringCap_EqualTrailingIdx { ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx - sp.ringCap_EqualTrailingIdx } else { ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - totIdx })) as usize] } else { pkVal0 }) - (if (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - totIdx) % sp.ringCap_EqualTrailingIdx) as usize) != pkSlot0 { sp.ring_EqualTrailingIdx_derived[((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - totIdx) % sp.ringCap_EqualTrailingIdx) as usize] } else { pkVal0 }));
+                if totIdx == 1 { break; }
+                totIdx -= 1;
+            }
+            lag2_inOpen = lag1_inOpen;
+            lag1_inOpen = inOpen;
+            lag2_inHigh = lag1_inHigh;
+            lag1_inHigh = inHigh;
+            lag2_inLow = lag1_inLow;
+            lag1_inLow = inLow;
+            lag2_inClose = lag1_inClose;
+            lag1_inClose = inClose;
+            ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+            if ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx {
+                ringPos_EqualTrailingIdx = 0;
+            }
+            ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
+            if ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
+                ringPos_ShadowVeryShortTrailingIdx = 0;
+            }
+        }
+        Ok(outInteger)
     }
 
     /// The bars this stream has produced a value for, in the input series'

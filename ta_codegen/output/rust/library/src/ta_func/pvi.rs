@@ -543,6 +543,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl PviStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -617,8 +620,43 @@ impl PviStream {
         if !inClose.is_finite() || !inVolume.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inClose, inVolume)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempClose: f64 = 0.0_f64;
+            let mut tempVolume: f64 = 0.0_f64;
+            let mut tempPVI: f64 = 0.0_f64;
+            let mut prevClose = sp.prevClose;
+            let mut prevPVI = sp.prevPVI;
+            let mut prevVolume = sp.prevVolume;
+            tempClose = inClose;
+            tempVolume = inVolume;
+            // prevClose != 0 guards the percentage-change division: a zero previous
+            // close is a degenerate input that would otherwise emit NaN/Inf; carry
+            // the index forward unchanged instead. Never triggers on real prices.
+            if tempVolume > prevVolume && prevClose != 0.0 {
+                // The index is a running product, so it has no upper bound: enough
+                // compounding gains push it past the largest double. Keep the last
+                // representable value instead of writing +/-Inf, which no caller can
+                // chart and which poisons every arithmetic downstream of it. Real
+                // price series never come close.
+                //
+                // Written as a compound assignment on the copy, exactly as the update
+                // was before the guard: spelling it `a + r*a` would match the FMA
+                // fusion detector and silently re-round every bar, not just the
+                // overflowing one.
+                tempPVI = prevPVI;
+                tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+                if (tempPVI).is_finite() {
+                    prevPVI = tempPVI;
+                }
+            }
+            (*outReal) = prevPVI;
+            prevClose = tempClose;
+            prevVolume = tempVolume;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

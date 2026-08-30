@@ -1131,16 +1131,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `CorrelStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static CORREL_PEEK_SCRATCH: std::cell::Cell<Option<Box<CorrelStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl CorrelStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -1203,8 +1198,10 @@ impl CorrelStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -1215,14 +1212,195 @@ impl CorrelStream {
         if !inReal0.is_finite() || !inReal1.is_finite() {
             return Err(RetCode::BadParam);
         }
-        CORREL_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::correl_step_impl(&mut scratch, inReal0, inReal1, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut x: f64 = 0.0_f64;
+            let mut y: f64 = 0.0_f64;
+            let mut trailingX: f64 = 0.0_f64;
+            let mut trailingY: f64 = 0.0_f64;
+            let mut ssX: f64 = 0.0_f64;
+            let mut ssY: f64 = 0.0_f64;
+            let mut spXY: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut windowStart: usize = 0_usize;
+            let mut barsSinceReseed = sp.barsSinceReseed;
+            let mut j = sp.j;
+            let mut leavingX = sp.leavingX;
+            let mut leavingY = sp.leavingY;
+            let mut shiftX = sp.shiftX;
+            let mut shiftY = sp.shiftY;
+            let mut sumX = sp.sumX;
+            let mut sumX2 = sp.sumX2;
+            let mut sumXY = sp.sumXY;
+            let mut sumY = sp.sumY;
+            let mut sumY2 = sp.sumY2;
+            let mut today = sp.today;
+            let mut trailingIdx = sp.trailingIdx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            if today >= 1073741824 {
+                let rebaseShift: i32 = trailingIdx & !sp.xMask;
+                today -= rebaseShift;
+                trailingIdx -= rebaseShift;
+                j -= rebaseShift;
+            }
+            pkSlot0 = (today & sp.xMask) as usize;
+            pkVal0 = inReal0;
+            pkSlot1 = (today & sp.xMask) as usize;
+            pkVal1 = inReal1;
+            // Add the incoming value, measured against the shift.
+            x = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(today & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
+            sumX += x;
+            sumX2 += x * x;
+            y = (if ((today & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(today & sp.xMask) as usize] } else { pkVal1 }) - shiftY;
+            sumXY += x * y;
+            sumY += y;
+            sumY2 += y * y;
+            ssX = sumX2 - sumX * sumX * sp.invPeriod;
+            ssY = sumY2 - sumY * sumY * sp.invPeriod;
+            spXY = sumXY - sumX * sumY * sp.invPeriod;
+            // Re-anchor and rebuild with a fresh two-pass when the shift has gone
+            // stale. Same three triggers as TA_VAR: either sum of squares has shrunk
+            // below 1e-6 of the squared deviations it is extracted from; OR the value
+            // the PREVIOUS bar removed sat so far from the shift that its squared term
+            // dwarfs what remains (a large outlier transiting the window buries the
+            // small terms below its ulp, and the residue it leaves is cancellation
+            // garbage); OR at least every 32 windows, so a slow drift stays bounded
+            // however long the series runs.
+            //
+            // One bar late is correct, not a compromise. leavingX/leavingY are set by
+            // the removal at the BOTTOM of the loop, so the bar on which the outlier
+            // actually leaves still computes its own output from sums that legitimately
+            // contain it. The trigger then fires on the NEXT bar -- the first one whose
+            // sums carry the residue -- and the reseed below recomputes that bar's
+            // output before it is written. No bar is ever emitted from the residue.
+            //
+            // The triggers watch ssX and ssY only, never spXY. A vanishing spXY is a
+            // legitimate answer - two uncorrelated series - not a loss of digits, and
+            // reseeding on it would rebuild the window on every bar of ordinary data.
+            // This is where the analogy with TA_VAR stops: variance has one extracted
+            // quantity and all of it is signal.
+            //
+            // Reading the window here is safe when outReal aliases an input: the
+            // outputs written so far occupy [0, outIdx-1] while windowStart is
+            // startIdx-lookbackTotal+outIdx, which is >= outIdx.
+            barsSinceReseed -= 1;
+            if ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 {
+                barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
+                windowStart = (today - ((sp.lookbackTotal) as i32)) as usize;
+                // Both means in one pass over the window: the rebuild below is the
+                // only O(period) work on this function's hot path, so it is walked
+                // twice, not three times.
+                tempReal = 0.0;
+                shiftY = 0.0;
+                // for( j = (windowStart) as i32; j <= today; j += 1 )
+                j = (windowStart) as i32;
+                while j <= today {
+                    tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 });
+                    shiftY += (if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 });
+                    j += 1;
+                }
+                shiftX = tempReal * sp.invPeriod;
+                shiftY = shiftY * sp.invPeriod;
+                sumY2 = 0.0;
+                sumX2 = sumY2;
+                sumY = sumX2;
+                sumX = sumY;
+                sumXY = sumX;
+                // for( j = (windowStart) as i32; j <= today; j += 1 )
+                j = (windowStart) as i32;
+                while j <= today {
+                    x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
+                    sumX += x;
+                    sumX2 += x * x;
+                    y = (if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 }) - shiftY;
+                    sumXY += x * y;
+                    sumY += y;
+                    sumY2 += y * y;
+                    j += 1;
+                }
+                ssX = sumX2 - sumX * sumX * sp.invPeriod;
+                ssY = sumY2 - sumY * sumY * sp.invPeriod;
+                spXY = sumXY - sumX * sumY * sp.invPeriod;
+                // A sum of squares is non-negative by definition, but this one is
+                // extracted as a difference, so its SIGN is not guaranteed on a window
+                // sitting inside a flat stretch. Enforce the invariant HERE and not at
+                // the divide: a negative ssX always reseeds on the same bar (it makes
+                // the first trigger's `negative < non-negative` true whenever sumX2 is
+                // positive, and sumX2 == 0 reduces that trigger to `ssX < 0`), so the
+                // divide below can rely on both being >= 0 and needs no sign test of
+                // its own. CHANGING THE TRIGGERS MEANS RE-CHECKING THIS.
+                if ssX < 0.0 {
+                    ssX = 0.0;
+                }
+                if ssY < 0.0 {
+                    ssY = 0.0;
+                }
+            }
+            // Save the trailing values before writing the output, since the input
+            // and output might be the same array.
+            trailingX = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(trailingIdx & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
+            trailingY = (if ((trailingIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(trailingIdx & sp.xMask) as usize] } else { pkVal1 }) - shiftY;
+            trailingIdx += 1;
+            // Output the new coefficient.
+            //
+            // Each sum of squares is tested against its OWN scale, not the pair
+            // against a fixed band. The product ssX*ssY carries the fourth power of
+            // the window's spread, so an absolute threshold on it rejects a perfectly
+            // well-defined correlation as soon as the data is small - and, worse,
+            // lets a pair of NEGATIVE sums through, their signs cancelling into a
+            // plausible-looking result of the wrong sign. Testing each factor
+            // separately is what forecloses both.
+            //
+            // The literal is TA_EPSILON. This is deliberately NOT TA_IS_ZERO_SCALED,
+            // whose fabs() would admit a LARGE NEGATIVE ssX -- exactly the operand
+            // that must never reach the square root. A plain `>` rejects it, and it
+            // is also the cheaper test: the two fabs() cost ~7% of this function's
+            // runtime, and buy a wrong answer.
+            //
+            // sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+            // established both are positive, so the product needs no protection from
+            // a negative operand, and the second square root is worth ~25% of the
+            // runtime.
+            //
+            // The product CAN overflow to +Inf, and the one-root form is chosen with
+            // that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
+            // arrays are not range-checked, so ssX and ssY are bounded only by the
+            // double range and their product exceeds it once |x| passes ~1e154. The
+            // two-root form would not overflow there -- but the form this replaces
+            // built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
+            // the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
+            // correlation. Trading a quarter of the runtime for a case that already
+            // behaved this way, on inputs 117 orders past any price, is not a trade
+            // worth making. Revisit only if input range-checking is ever added.
+            if ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 {
+                tempReal = spXY / (ssX * ssY).sqrt();
+                // A correlation coefficient cannot leave [-1,1]; rounding in the
+                // three sums can still put it a few ulp outside.
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                } else if tempReal < 0_f64 - 1.0 {
+                    tempReal = 0_f64 - 1.0;
+                }
+                (*outReal) = tempReal;
+            } else {
+                (*outReal) = 0.0;
+            }
+            // Remove the trailing values (prepares the next window).
+            leavingX = trailingX * trailingX;
+            leavingY = trailingY * trailingY;
+            sumX -= trailingX;
+            sumX2 -= leavingX;
+            sumXY -= trailingX * trailingY;
+            sumY -= trailingY;
+            sumY2 -= leavingY;
+            today += 1;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

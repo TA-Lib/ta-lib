@@ -1058,6 +1058,9 @@ thread_local! {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl StochfStream {
     /// Commit one closed bar. Never allocates.
     ///

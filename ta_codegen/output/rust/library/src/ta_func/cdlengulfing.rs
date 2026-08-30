@@ -550,6 +550,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl CdlengulfingStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -624,8 +627,27 @@ impl CdlengulfingStream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inOpen, inHigh, inLow, inClose)
+        let mut outInteger: i32 = 0_i32;
+        {
+            let sp = &self.state;
+            let outInteger = &mut outInteger;
+            let mut lag1_inClose = sp.lag1_inClose;
+            let mut lag1_inOpen = sp.lag1_inOpen;
+            if (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && (((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (inClose >= lag1_inOpen && inOpen < lag1_inClose || inClose > lag1_inOpen && inOpen <= lag1_inClose) || (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (inOpen >= lag1_inClose && inClose < lag1_inOpen || inOpen > lag1_inClose && inClose <= lag1_inOpen) {
+                // white engulfs black
+                // black engulfs white
+                if inOpen != lag1_inClose && inClose != lag1_inOpen {
+                    (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+                } else {
+                    (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 80) as i32;
+                }
+            } else {
+                (*outInteger) = 0;
+            }
+            lag1_inOpen = inOpen;
+            lag1_inClose = inClose;
+        }
+        Ok(outInteger)
     }
 
     /// The bars this stream has produced a value for, in the input series'

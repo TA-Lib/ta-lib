@@ -587,6 +587,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl MaxindexStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -663,8 +666,48 @@ impl MaxindexStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outInteger: i32 = 0_i32;
+        {
+            let sp = &self.state;
+            let outInteger = &mut outInteger;
+            let mut tmp: f64 = 0.0_f64;
+            let mut highest = sp.highest;
+            let mut highestIdx = sp.highestIdx;
+            let mut i = sp.i;
+            let mut today = sp.today;
+            let mut trailingIdx = sp.trailingIdx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            if today >= 1073741824 {
+                let rebaseShift: i32 = trailingIdx & !sp.xMask;
+                today -= rebaseShift;
+                trailingIdx -= rebaseShift;
+                highestIdx -= rebaseShift;
+                i -= rebaseShift;
+            }
+            pkSlot0 = (today & sp.xMask) as usize;
+            pkVal0 = inReal;
+            tmp = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(today & sp.xMask) as usize] } else { pkVal0 });
+            if highestIdx < trailingIdx {
+                highestIdx = trailingIdx;
+                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                i = highestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 });
+                    if tmp > highest {
+                        highestIdx = i;
+                        highest = tmp;
+                    }
+                }
+            } else if tmp >= highest {
+                highestIdx = today;
+                highest = tmp;
+            }
+            (*outInteger) = (highestIdx) as i32;
+            trailingIdx += 1;
+            today += 1;
+        }
+        Ok(outInteger)
     }
 
     /// The bars this stream has produced a value for, in the input series'

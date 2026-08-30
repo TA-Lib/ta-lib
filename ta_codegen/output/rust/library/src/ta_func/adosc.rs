@@ -792,6 +792,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl AdoscStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -866,8 +869,29 @@ impl AdoscStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() || !inVolume.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose, inVolume)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut high: f64 = 0.0_f64;
+            let mut low: f64 = 0.0_f64;
+            let mut close: f64 = 0.0_f64;
+            let mut tmp: f64 = 0.0_f64;
+            let mut ad = sp.ad;
+            let mut fastEMA = sp.fastEMA;
+            let mut slowEMA = sp.slowEMA;
+            high = inHigh;
+            low = inLow;
+            tmp = high - low;
+            close = inClose;
+            if tmp > 0.0 {
+                ad += (close - low - (high - close)) / tmp * (inVolume as f64);
+            }
+            fastEMA = (sp.one_minus_fastk as f64).mul_add(fastEMA, sp.fastk * ad);
+            slowEMA = (sp.one_minus_slowk as f64).mul_add(slowEMA, sp.slowk * ad);
+            (*outReal) = fastEMA - slowEMA;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -882,16 +882,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `MfiStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static MFI_PEEK_SCRATCH: std::cell::Cell<Option<Box<MfiStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl MfiStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -954,8 +949,10 @@ impl MfiStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -966,14 +963,55 @@ impl MfiStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() || !inVolume.is_finite() {
             return Err(RetCode::BadParam);
         }
-        MFI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::mfi_step_impl(&mut scratch, inHigh, inLow, inClose, inVolume, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempValue1: f64 = 0.0_f64;
+            let mut tempValue2: f64 = 0.0_f64;
+            let mut tempValue3: f64 = 0.0_f64;
+            let mut moneyFlow: f64 = 0.0_f64;
+            let mut posFlow: f64 = 0.0_f64;
+            let mut negFlow: f64 = 0.0_f64;
+            let mut posClamped: f64 = 0.0_f64;
+            let mut mflow_Idx = sp.mflow_Idx;
+            let mut negSumMF = sp.negSumMF;
+            let mut nullRun = sp.nullRun;
+            let mut posSumMF = sp.posSumMF;
+            let mut prevValue = sp.prevValue;
+            posSumMF -= sp.cb_mflow_positive[mflow_Idx];
+            negSumMF -= sp.cb_mflow_negative[mflow_Idx];
+            tempValue1 = (inHigh + inLow + inClose) / 3.0;
+            tempValue2 = tempValue1 - prevValue;
+            // Dead-zone scaled to the two typical prices being compared (issue #107).
+            // Captured before prevValue/tempValue1 are repurposed below.
+            tempValue3 = (tempValue1).abs() + (prevValue).abs();
+            prevValue = tempValue1;
+            tempValue1 *= inVolume;
+            moneyFlow = (if ((tempValue2).abs() <= 1e-14 * (tempValue3)) { 0.0 } else { tempValue1 });
+            posFlow = (if tempValue2 < 0.0 { 0.0 } else { moneyFlow });
+            negFlow = (if tempValue2 < 0.0 { moneyFlow } else { 0.0 });
+            posSumMF += posFlow;
+            negSumMF += negFlow;
+            nullRun = (if moneyFlow == 0.0 { nullRun + 1 } else { 0 });
+            if nullRun >= ((sp.optInTimePeriod) as usize) {
+                nullRun = (sp.optInTimePeriod) as usize;
+                posSumMF = 0.0;
+                negSumMF = 0.0;
+            }
+            tempValue1 = posSumMF + negSumMF;
+            posClamped = (if posSumMF < 0.0 { 0.0 } else { (if posSumMF > tempValue1 { tempValue1 } else { posSumMF }) });
+            if tempValue1 <= 0.0 {
+                (*outReal) = 0.0;
+            } else {
+                (*outReal) = 100.0 * (posClamped / tempValue1);
+            }
+            mflow_Idx = mflow_Idx + 1;
+            if mflow_Idx > sp.maxIdx_mflow {
+                mflow_Idx = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

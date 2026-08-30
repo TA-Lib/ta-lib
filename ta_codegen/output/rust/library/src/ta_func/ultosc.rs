@@ -1166,16 +1166,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `UltoscStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static ULTOSC_PEEK_SCRATCH: std::cell::Cell<Option<Box<UltoscStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl UltoscStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -1238,8 +1233,10 @@ impl UltoscStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -1250,14 +1247,124 @@ impl UltoscStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        ULTOSC_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::ultosc_step_impl(&mut scratch, inHigh, inLow, inClose, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut trueLow: f64 = 0.0_f64;
+            let mut trueRange: f64 = 0.0_f64;
+            let mut closeMinusTrueLow: f64 = 0.0_f64;
+            let mut tempDouble: f64 = 0.0_f64;
+            let mut output: f64 = 0.0_f64;
+            let mut tempHT: f64 = 0.0_f64;
+            let mut tempLT: f64 = 0.0_f64;
+            let mut tempCY: f64 = 0.0_f64;
+            let mut a1Total = sp.a1Total;
+            let mut a2Total = sp.a2Total;
+            let mut a3Total = sp.a3Total;
+            let mut b1Total = sp.b1Total;
+            let mut b2Total = sp.b2Total;
+            let mut b3Total = sp.b3Total;
+            let mut lag1_inClose = sp.lag1_inClose;
+            let mut nullRun = sp.nullRun;
+            let mut term_Idx = sp.term_Idx;
+            let mut trailingPos1 = sp.trailingPos1;
+            let mut trailingPos2 = sp.trailingPos2;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            // Add on today's terms
+            tempLT = inLow;
+            tempHT = inHigh;
+            tempCY = lag1_inClose;
+            trueLow = (tempLT).min(tempCY);
+            closeMinusTrueLow = inClose - trueLow;
+            trueRange = tempHT - tempLT;
+            tempDouble = (tempCY - tempHT).abs();
+            if tempDouble > trueRange {
+                trueRange = tempDouble;
+            }
+            tempDouble = (tempCY - tempLT).abs();
+            if tempDouble > trueRange {
+                trueRange = tempDouble;
+            }
+            pkSlot0 = term_Idx as usize;
+            pkVal0 = closeMinusTrueLow;
+            pkSlot1 = term_Idx as usize;
+            pkVal1 = trueRange;
+            a1Total += closeMinusTrueLow;
+            a2Total += closeMinusTrueLow;
+            a3Total += closeMinusTrueLow;
+            b1Total += trueRange;
+            b2Total += trueRange;
+            b3Total += trueRange;
+            // Once a whole window of no-contribution bars has gone by, every slot it
+            // spans is 0.0, so its totals are known to be exactly zero and the
+            // residue can be dropped. The periods are sorted shortest-first, so a
+            // run long enough for a longer window is long enough for every shorter
+            // one.
+            if trueRange == 0.0 && closeMinusTrueLow == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
+            if nullRun >= ((sp.optInTimePeriod1) as usize) {
+                a1Total = 0.0;
+                b1Total = 0.0;
+                if nullRun >= ((sp.optInTimePeriod2) as usize) {
+                    a2Total = 0.0;
+                    b2Total = 0.0;
+                    if nullRun >= ((sp.optInTimePeriod3) as usize) {
+                        nullRun = (sp.optInTimePeriod3) as usize;
+                        a3Total = 0.0;
+                        b3Total = 0.0;
+                    }
+                }
+            }
+            // Calculate the oscillator value for today. Each window contributes only
+            // when it holds a true range; the totals are sums of non-negative terms
+            // and the reseed above removes their residue, so the test is exact.
+            output = 0.0;
+            if b1Total > 0.0 {
+                output += 4.0 * (a1Total / b1Total);
+            }
+            if b2Total > 0.0 {
+                output += 2.0 * (a2Total / b2Total);
+            }
+            if b3Total > 0.0 {
+                output += a3Total / b3Total;
+            }
+            // Remove the trailing terms to prepare for next day. Each was evaluated
+            // once, when its bar entered the ring.
+            a1Total -= (if (trailingPos1 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos1] } else { pkVal0 });
+            b1Total -= (if (trailingPos1 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos1] } else { pkVal1 });
+            trailingPos1 += 1;
+            if trailingPos1 >= ((sp.optInTimePeriod3) as usize) {
+                trailingPos1 = 0;
+            }
+            a2Total -= (if (trailingPos2 as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[trailingPos2] } else { pkVal0 });
+            b2Total -= (if (trailingPos2 as usize) != pkSlot1 { sp.cb_term_trueRange[trailingPos2] } else { pkVal1 });
+            trailingPos2 += 1;
+            if trailingPos2 >= ((sp.optInTimePeriod3) as usize) {
+                trailingPos2 = 0;
+            }
+            term_Idx = term_Idx + 1;
+            if term_Idx > sp.maxIdx_term {
+                term_Idx = 0;
+            }
+            a3Total -= (if (term_Idx as usize) != pkSlot0 { sp.cb_term_closeMinusTrueLow[term_Idx] } else { pkVal0 });
+            b3Total -= (if (term_Idx as usize) != pkSlot1 { sp.cb_term_trueRange[term_Idx] } else { pkVal1 });
+            // Last operation is to write the output. Must
+            // be done after the trailing index have all been
+            // taken care of because the caller is allowed
+            // to have the input array to be also the output
+            // array.
+            (*outReal) = 100.0 * (output / 7.0);
+            // Increment indexes
+            lag1_inClose = inClose;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

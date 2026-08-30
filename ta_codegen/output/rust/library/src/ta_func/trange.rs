@@ -547,6 +547,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl TrangeStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -621,8 +624,35 @@ impl TrangeStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut val2: f64 = 0.0_f64;
+            let mut val3: f64 = 0.0_f64;
+            let mut greatest: f64 = 0.0_f64;
+            let mut tempCY: f64 = 0.0_f64;
+            let mut tempLT: f64 = 0.0_f64;
+            let mut tempHT: f64 = 0.0_f64;
+            let mut lag1_inClose = sp.lag1_inClose;
+            // Find the greatest of the 3 values.
+            tempLT = inLow;
+            tempHT = inHigh;
+            tempCY = lag1_inClose;
+            greatest = tempHT - tempLT;
+            // val1
+            val2 = (tempCY - tempHT).abs();
+            if val2 > greatest {
+                greatest = val2;
+            }
+            val3 = (tempCY - tempLT).abs();
+            if val3 > greatest {
+                greatest = val3;
+            }
+            (*outReal) = greatest;
+            lag1_inClose = inClose;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

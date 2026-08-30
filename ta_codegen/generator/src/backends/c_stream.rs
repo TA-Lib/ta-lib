@@ -1210,6 +1210,7 @@ fn emit_composed_frame_body(
                 let pt = streaming::peek_transition(
                     &transition,
                     &streaming::transition_buffers(model, &names),
+                    None,
                 )
                 .unwrap_or_else(|e| panic!("{}: {e}", func.name));
                 decls.push_str(&peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3));
@@ -3528,6 +3529,7 @@ fn emit_step_inner(
             let pt = streaming::peek_transition(
                 &transition,
                 &streaming::transition_buffers(model, &CNames),
+                None,
             )
             .unwrap_or_else(|e| panic!("{}: {e}", model.func.name));
             (answer_bare_returns(&pt.body), pt.shadows, pt.slot_temps)

@@ -564,16 +564,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `ImiStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static IMI_PEEK_SCRATCH: std::cell::Cell<Option<Box<ImiStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl ImiStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -636,8 +631,10 @@ impl ImiStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -648,14 +645,49 @@ impl ImiStream {
         if !inOpen.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        IMI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::imi_step_impl(&mut scratch, inOpen, inClose, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut upsum: f64 = 0.0_f64;
+            let mut downsum: f64 = 0.0_f64;
+            let mut i: usize = 0_usize;
+            let mut close: f64 = 0.0_f64;
+            let mut open: f64 = 0.0_f64;
+            let mut winPos_i = sp.winPos_i;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            pkSlot0 = winPos_i as usize;
+            pkVal0 = inOpen;
+            pkSlot1 = winPos_i as usize;
+            pkVal1 = inClose;
+            upsum = 0.0;
+            downsum = 0.0;
+            // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
+            i = (sp.optInTimePeriod - 1) as usize;
+            loop {
+                close = (if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inClose[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
+                open = (if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inOpen[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
+                if close > open {
+                    upsum += close - open;
+                } else {
+                    downsum += open - close;
+                }
+                // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+                // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+                // oscillator, so no up/down bias returns its neutral center, 50.0.
+                (*outReal) = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+                if i == 0 { break; }
+                i -= 1;
+            }
+            winPos_i = winPos_i + 1;
+            if winPos_i >= sp.winCap_i {
+                winPos_i = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

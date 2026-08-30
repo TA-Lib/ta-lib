@@ -694,16 +694,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `VwmaStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static VWMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<VwmaStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl VwmaStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -766,8 +761,10 @@ impl VwmaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -778,14 +775,50 @@ impl VwmaStream {
         if !inReal.is_finite() || !inVolume.is_finite() {
             return Err(RetCode::BadParam);
         }
-        VWMA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::vwma_step_impl(&mut scratch, inReal, inVolume, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempPV: f64 = 0.0_f64;
+            let mut tempV: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            let mut sumPV = sp.sumPV;
+            let mut sumV = sp.sumV;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            if sp.optInTimePeriod == 1 {
+                (*outReal) = inReal;
+                return Ok((*outReal));
+            }
+            if sp.ringCap_trailingIdx == 0 {
+                pkSlot0 = 0;
+                pkVal0 = inReal;
+                pkSlot1 = 0;
+                pkVal1 = inVolume;
+            }
+            tempReal = inReal * inVolume;
+            sumPV += tempReal;
+            sumV += inVolume;
+            // Snapshot both sums before removing the trailing bar, mirroring the
+            // add-new / snapshot / subtract-old order of TA_SMA. That order is what
+            // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+            tempPV = sumPV;
+            tempV = sumV;
+            // Read the trailing values before writing the output, since the caller
+            // may pass the same buffer for an input and the output.
+            tempReal = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 }) * (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] } else { pkVal1 });
+            sumPV -= tempReal;
+            sumV -= (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] } else { pkVal1 });
+            (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+                ringPos_trailingIdx = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

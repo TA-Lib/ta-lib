@@ -544,6 +544,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl MomStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -620,8 +623,24 @@ impl MomStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            if sp.ringCap_trailingIdx == 0 {
+                pkSlot0 = 0;
+                pkVal0 = inReal;
+            }
+            (*outReal) = inReal - (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 });
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+                ringPos_trailingIdx = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

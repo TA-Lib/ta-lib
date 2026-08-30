@@ -911,16 +911,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `AcStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static AC_PEEK_SCRATCH: std::cell::Cell<Option<Box<AcStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl AcStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -983,8 +978,10 @@ impl AcStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -995,14 +992,72 @@ impl AcStream {
         if !inHigh.is_finite() || !inLow.is_finite() {
             return Err(RetCode::BadParam);
         }
-        AC_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::ac_step_impl(&mut scratch, inHigh, inLow, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut medianPrice: f64 = 0.0_f64;
+            let mut osc: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut oscBuffer_Idx = sp.oscBuffer_Idx;
+            let mut ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
+            let mut ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
+            let mut sumFast = sp.sumFast;
+            let mut sumSignal = sp.sumSignal;
+            let mut sumSlow = sp.sumSlow;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            let mut pkSlot2: usize = usize::MAX;
+            let mut pkVal2: f64 = 0.0_f64;
+            if sp.ringCap_trailingFastIdx == 0 {
+                pkSlot0 = 0;
+                pkVal0 = (inHigh + inLow) / 2.0;
+            }
+            if sp.ringCap_trailingSlowIdx == 0 {
+                pkSlot1 = 0;
+                pkVal1 = (inHigh + inLow) / 2.0;
+            }
+            medianPrice = (inHigh + inLow) / 2.0;
+            sumFast += medianPrice;
+            sumSlow += medianPrice;
+            // Snapshot the oscillator before either total drops its trailing bar,
+            // mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+            osc = sumFast / (sp.optInFastPeriod as f64) - sumSlow / (sp.optInSlowPeriod as f64);
+            sumFast -= (if (ringPos_trailingFastIdx as usize) != pkSlot0 { sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] } else { pkVal0 });
+            sumSlow -= (if (ringPos_trailingSlowIdx as usize) != pkSlot1 { sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] } else { pkVal1 });
+            // Today's oscillator enters the signal window at its own slot, and the
+            // bar leaving that window is read only after the ring has advanced onto
+            // it -- writing first is what makes the slot the loop is about to
+            // overwrite the newest value rather than the oldest one.
+            pkSlot2 = oscBuffer_Idx as usize;
+            pkVal2 = osc;
+            sumSignal += osc;
+            tempReal = osc - sumSignal / (sp.optInSignalPeriod as f64);
+            oscBuffer_Idx = oscBuffer_Idx + 1;
+            if oscBuffer_Idx > sp.maxIdx_oscBuffer {
+                oscBuffer_Idx = 0;
+            }
+            sumSignal -= (if (oscBuffer_Idx as usize) != pkSlot2 { sp.cb_oscBuffer[oscBuffer_Idx] } else { pkVal2 });
+            // Every input read for this bar is done above, so the store is safe
+            // when the caller aliases outReal over inHigh or inLow. Unlike ao.c
+            // there is slack here -- the signal window puts both trailing indices
+            // at least optInSignalPeriod-1 bars ahead of outIdx, so no reachable
+            // parameter makes them collide -- but the order is kept anyway, so
+            // that admitting a signal period of 1 would not silently reintroduce
+            // the collision ao.c has to guard against.
+            (*outReal) = tempReal;
+            ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
+            if ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
+                ringPos_trailingFastIdx = 0;
+            }
+            ringPos_trailingSlowIdx = ringPos_trailingSlowIdx + 1;
+            if ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx {
+                ringPos_trailingSlowIdx = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

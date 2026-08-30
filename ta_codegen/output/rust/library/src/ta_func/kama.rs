@@ -966,6 +966,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl KamaStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -1042,8 +1045,74 @@ impl KamaStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut tempReal2: f64 = 0.0_f64;
+            let mut periodROC: f64 = 0.0_f64;
+            let mut lag1_inReal = sp.lag1_inReal;
+            let mut nullRun = sp.nullRun;
+            let mut prevKAMA = sp.prevKAMA;
+            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            let mut sumROC1 = sp.sumROC1;
+            let mut trailingValue = sp.trailingValue;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            if sp.optInTimePeriod == 1 {
+                (*outReal) = inReal;
+                return Ok((*outReal));
+            }
+            if sp.ringCap_trailingIdx == 0 {
+                pkSlot0 = 0;
+                pkVal0 = inReal;
+            }
+            tempReal = inReal;
+            tempReal2 = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 });
+            periodROC = tempReal - tempReal2;
+            // Adjust sumROC1:
+            //  - Remove trailing ROC1
+            //  - Add new ROC1
+            sumROC1 -= (trailingValue - tempReal2).abs();
+            sumROC1 += (tempReal - lag1_inReal).abs();
+            // Once a whole window of flat bars has gone by, every 1-day change it
+            // spans is exactly zero, so the sum is known to be exactly zero and the
+            // residue can be dropped. That is what lets the efficiency ratio be
+            // decided by `sumROC1 <= periodROC` alone: a window that flat has
+            // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+            if tempReal - lag1_inReal == 0.0 {
+                nullRun += 1;
+            } else {
+                nullRun = 0;
+            }
+            if nullRun >= ((sp.optInTimePeriod) as usize) {
+                nullRun = (sp.optInTimePeriod) as usize;
+                sumROC1 = 0.0;
+            }
+            // Save the trailing value. Do this because inReal
+            // and outReal can be pointers to the same buffer.
+            trailingValue = tempReal2;
+            // Calculate the efficiency ratio
+            if sumROC1 <= periodROC {
+                tempReal = 1.0;
+            } else {
+                tempReal = (periodROC / sumROC1).abs();
+            }
+            // Calculate the smoothing constant
+            tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
+            tempReal *= tempReal;
+            // Calculate the KAMA like an EMA, using the
+            // smoothing constant as the adaptive factor.
+            prevKAMA = (inReal - prevKAMA as f64).mul_add(tempReal, prevKAMA);
+            (*outReal) = prevKAMA;
+            lag1_inReal = inReal;
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+                ringPos_trailingIdx = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

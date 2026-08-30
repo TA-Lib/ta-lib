@@ -563,6 +563,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl Cdlxsidegap3methodsStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -637,8 +640,34 @@ impl Cdlxsidegap3methodsStream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inOpen, inHigh, inLow, inClose)
+        let mut outInteger: i32 = 0_i32;
+        {
+            let sp = &self.state;
+            let outInteger = &mut outInteger;
+            let mut lag1_inClose = sp.lag1_inClose;
+            let mut lag1_inOpen = sp.lag1_inOpen;
+            let mut lag2_inClose = sp.lag2_inClose;
+            let mut lag2_inOpen = sp.lag2_inOpen;
+            if (if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 }) == (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
+               (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) && // 3rd opposite color
+               inOpen < (lag1_inClose).max(lag1_inOpen) &&  // 3rd opens within 2nd rb
+               inOpen > (lag1_inClose).min(lag1_inOpen) &&
+               inClose < (lag2_inClose).max(lag2_inOpen) && // 3rd closes within 1st rb
+               inClose > (lag2_inClose).min(lag2_inOpen) &&
+               ((if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 }) == 1 && ((if (lag1_inOpen).min(lag1_inClose) > (lag2_inOpen).max(lag2_inClose) { 1 } else { 0 }) != 0) || (((if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (lag1_inOpen).max(lag1_inClose) < (lag2_inOpen).min(lag2_inClose) { 1 } else { 0 }) != 0)) // when 1st is white upside gap when 1st is black downside gap
+            {
+                (*outInteger) = ((if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+            } else {
+                (*outInteger) = 0;
+            }
+            // add the current range and subtract the first range: this is done after the pattern recognition
+            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            lag2_inOpen = lag1_inOpen;
+            lag1_inOpen = inOpen;
+            lag2_inClose = lag1_inClose;
+            lag1_inClose = inClose;
+        }
+        Ok(outInteger)
     }
 
     /// The bars this stream has produced a value for, in the input series'

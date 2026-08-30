@@ -105,13 +105,13 @@ fn test_rust_sma_ring_stream_section() {
     // scratch-peek, auto-trait pin.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {"));
     // Every state gets the buffer-reusing restore (#201) — a state can be some
-    // other handle's sub — but SMA's own peek does not use it: one ring, no
-    // sub-handle and a loop-free transition is the shape whose stack copy the
-    // optimizer deletes outright, which no scratch can beat.
+    // other handle's sub — but SMA's own peek does not use it: the loop tier
+    // peeks a FRAME, the transition rewritten to commit nothing, so it copies
+    // neither the handle nor a scratch.
     assert!(s.contains("self.ring_trailingIdx_inReal.clone_from(&src.ring_trailingIdx_inReal);"));
     assert!(s.contains("pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {"));
-    assert!(s.contains("let mut scratch = self.clone();"));
-    assert!(s.contains("scratch.update(inReal)"));
+    assert!(s.contains("let sp = &self.state;"));
+    assert!(!s.contains("let mut scratch = self.clone();"));
     assert!(!s.contains("PEEK_SCRATCH"));
     assert!(s.contains("_assert_auto::<SmaStream>();"));
     // Short history is an error, not batch's empty success.
@@ -130,9 +130,10 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
     assert!(s.contains("self.compatibility"));
     // Update returns the bare value.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {"));
-    // No heap in the state, so peek keeps the throwaway copy and no
-    // thread-local scratch is emitted at all (#201).
-    assert!(s.contains("let mut scratch = self.clone();"));
+    // Peek runs a frame against the borrowed state; no copy of any kind, and
+    // no thread-local scratch (#201's tier is gone for this shape).
+    assert!(s.contains("let sp = &self.state;"));
+    assert!(!s.contains("let mut scratch = self.clone();"));
     assert!(!s.contains("PEEK_SCRATCH"), "a scalar state needs no scratch buffer");
     // The restore is still emitted: EMA is a sub-stream of several composed
     // handles, whose own scratch restores through it.
@@ -187,8 +188,10 @@ fn test_rust_cdldoji_candle_settings_and_int_output() {
     // Asserted in both directions on purpose: the absence check alone would start
     // passing for free the day the emitter stopped naming the scratch at all.
     assert!(!s.contains("CDLDOJI_PEEK_SCRATCH"));
-    assert!(s.contains("let mut scratch = self.clone();"));
-    assert!(s.contains("scratch.update(inOpen, inHigh, inLow, inClose)"));
+    assert!(!s.contains("let mut scratch = self.clone();"));
+    // The frame reads the settings the handle snapshotted, not a step parameter.
+    assert!(s.contains("let sp = &self.state;"));
+    assert!(s.contains("self.cs_body_doji"));
 }
 
 #[test]

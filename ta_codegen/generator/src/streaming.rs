@@ -7364,9 +7364,15 @@ fn buffer_is_read(stmts: &[Statement], buf: &str) -> bool {
 /// store inside a loop — each would make one shadow per store unsound, and each
 /// is absent from the corpus, so the point of the check is that a new one fails
 /// generation instead of peeking against a buffer it also wrote.
+///
+/// `slot_cast` types the slot the select compares: C indexes with plain ints and
+/// passes `None`, Rust indexes with `usize` and passes `VarType::Index`, so the
+/// comparison and the store agree with the subscript rather than with whatever
+/// the raw index expression happens to be.
 pub fn peek_transition(
     transition: &[Statement],
     buffers: &[(String, bool)],
+    slot_cast: Option<VarType>,
 ) -> Result<PeekTransition, String> {
     let bufs: BTreeMap<String, bool> = buffers.iter().map(|(n, i)| (n.clone(), *i)).collect();
     validate_peekable(transition, &bufs, 0)?;
@@ -7378,6 +7384,7 @@ pub fn peek_transition(
     let mut rw = PeekRewrite {
         bufs: &bufs,
         shadowed: &shadowed,
+        slot_cast,
         armed: BTreeMap::new(),
         pending: Vec::new(),
         cond_depth: 0,
@@ -7564,6 +7571,7 @@ fn validate_peekable(
 struct PeekRewrite<'a> {
     bufs: &'a BTreeMap<String, bool>,
     shadowed: &'a BTreeSet<String>,
+    slot_cast: Option<VarType>,
     /// Buffer -> indices into `out.shadows` whose store may have run.
     armed: BTreeMap<String, Vec<usize>>,
     /// Slot loads hoisted out of the statement being rewritten.
@@ -7646,7 +7654,7 @@ impl PeekRewrite<'_> {
                 let stmts = vec![
                     Statement::Assign {
                         target: Expr::Var(sh.slot_var.clone()),
-                        value: idx,
+                        value: self.as_slot(idx),
                         compound: false,
                     },
                     Statement::Assign {
@@ -7719,6 +7727,14 @@ impl PeekRewrite<'_> {
         }
     }
 
+    /// An index as the SLOT type — what the subscript would coerce it to.
+    fn as_slot(&self, e: Expr) -> Expr {
+        match &self.slot_cast {
+            Some(t) => Expr::Cast(t.clone(), Box::new(e)),
+            None => e,
+        }
+    }
+
     /// An expression a loop re-evaluates. A hoist lands where the STATEMENT
     /// begins, so it would run a counter-moving index once for a whole loop
     /// that ran it per iteration — the same unsoundness a ternary arm has.
@@ -7752,9 +7768,10 @@ impl PeekRewrite<'_> {
                     );
                     let t = format!("pkIdx{}", self.out.slot_temps.len());
                     self.out.slot_temps.push(t.clone());
+                    let slot = self.as_slot(idx);
                     self.pending.push(Statement::Assign {
                         target: Expr::Var(t.clone()),
-                        value: idx,
+                        value: slot,
                         compound: false,
                     });
                     Expr::Var(t)
@@ -7766,7 +7783,7 @@ impl PeekRewrite<'_> {
                     let sh = &self.out.shadows[k];
                     out = Expr::Ternary(
                         Box::new(Expr::BinOp(
-                            Box::new(idx.clone()),
+                            Box::new(self.as_slot(idx.clone())),
                             BinOp::NotEq,
                             Box::new(Expr::Var(sh.slot_var.clone())),
                         )),
@@ -7827,7 +7844,7 @@ mod tests {
     }
 
     fn pk(stmts: &[Statement]) -> PeekTransition {
-        peek_transition(stmts, &[("buf".to_string(), false)]).expect("peekable")
+        peek_transition(stmts, &[("buf".to_string(), false)], None).expect("peekable")
     }
 
     /// The tail ring push: kept for the NEXT bar, and peek has none.
@@ -7936,7 +7953,7 @@ mod tests {
             (moving_store, "moves a counter"),
             (escaping, "escapes or is written"),
         ] {
-            let err = peek_transition(&[stmt], &[("buf".to_string(), false)])
+            let err = peek_transition(&[stmt], &[("buf".to_string(), false)], None)
                 .expect_err("must refuse");
             assert!(err.contains(want), "expected `{want}`, got `{err}`");
         }

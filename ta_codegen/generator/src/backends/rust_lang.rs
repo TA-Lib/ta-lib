@@ -85,6 +85,13 @@ use super::stmt_walk::StatementEmitter;
 /// Controls how the Rust renderer emits code.
 #[derive(Clone)]
 pub struct RustRenderCtx {
+    /// Whether a `for(i=a; i<=b; i++)` may be lowered to `for i in a..b+1`.
+    /// The lowering rebinds the counter as `usize`, which is right where the
+    /// counter is a batch local and wrong in a peek frame, where it is a state
+    /// field the handle declares `i32` — and it only becomes reachable there
+    /// because the frame's locals drop the `sp.` qualifier the gate keys on.
+    /// Off, the loop takes the same generic fallback the step takes.
+    pub for_range_lowering: bool,
     /// If true, emit a pre-loop bounds-assert preamble at the top of the body. The
     /// asserts give LLVM the proof it needs to elide the per-access bounds checks on
     /// the safe `[]` indexing that follows — the generated code never uses `unsafe`.
@@ -247,6 +254,7 @@ impl RustRenderCtx {
     /// this as a blank body context clear it.
     pub fn empty() -> Self {
         RustRenderCtx {
+            for_range_lowering: true,
             bounds_asserts: false,
             index_vars: std::collections::HashSet::new(),
             real_vars: std::collections::HashSet::new(),
@@ -634,6 +642,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     let enum_vars = enum_local_types(func);
     prune_enum_locals(&mut index_vars, &enum_vars);
     let ctx = RustRenderCtx {
+            for_range_lowering: true,
         bounds_asserts: true,
         index_vars,
         real_vars,
@@ -1010,6 +1019,7 @@ fn gen_guarded_func(
         let enum_vars = enum_local_types(func);
         prune_enum_locals(&mut g_index_vars, &enum_vars);
         let g_ctx = RustRenderCtx {
+            for_range_lowering: true,
             // The guarded preamble is emitted once by gen_guarded_func above, not
             // from the statement renderer — keep this false so it cannot double.
             bounds_asserts: false,
@@ -1110,6 +1120,7 @@ fn gen_guarded_func(
         let enum_vars = enum_local_types(func);
         prune_enum_locals(&mut g_index_vars, &enum_vars);
         let g_ctx = RustRenderCtx {
+            for_range_lowering: true,
             // The guarded preamble is emitted once by gen_guarded_func above, not
             // from the statement renderer — keep this false so it cannot double.
             bounds_asserts: false,
@@ -3288,7 +3299,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
         let pad = " ".repeat(indent);
         if let Expr::BinOp(left, BinOp::LessEq, right) = condition {
             if let Expr::Var(iter_name) = left.as_ref() {
-                if self.for_loop_vars.contains(iter_name) {
+                if self.ctx.for_range_lowering && self.for_loop_vars.contains(iter_name) {
                     let start_expr = if let Some(init) = self.var_inits.get(iter_name) {
                         render_expr(init, self.ctx, self.opt_real_params, self.registry, self.helpers)
                     } else {
@@ -3474,8 +3485,10 @@ impl StatementEmitter for RustStmt<'_, '_> {
             if let Expr::Var(iter_name) = cond_left.as_ref() {
                 // A dotted iter var (stream-state field, `sp.j`) is not a valid
                 // `for` pattern binding — those loops take the generic fallback.
-                if let Some(start_expr) =
-                    (!iter_name.contains('.')).then(|| extract_init_value(init, iter_name)).flatten()
+                if let Some(start_expr) = (self.ctx.for_range_lowering
+                    && !iter_name.contains('.'))
+                .then(|| extract_init_value(init, iter_name))
+                .flatten()
                 {
                     if is_simple_increment(update, iter_name) {
                         let start_str = render_expr(start_expr, self.ctx, self.opt_real_params, self.registry, self.helpers);

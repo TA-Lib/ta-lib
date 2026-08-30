@@ -420,6 +420,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl DivStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -494,8 +497,13 @@ impl DivStream {
         if !inReal0.is_finite() || !inReal1.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal0, inReal1)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            (*outReal) = inReal0 / inReal1;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

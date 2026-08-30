@@ -1370,6 +1370,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl HtPhasorStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -1447,8 +1450,210 @@ impl HtPhasorStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outInPhase: f64 = 0.0_f64;
+        let mut outQuadrature: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outInPhase = &mut outInPhase;
+            let outQuadrature = &mut outQuadrature;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut tempReal2: f64 = 0.0_f64;
+            let mut adjustedPrevPeriod: f64 = 0.0_f64;
+            let mut smoothedValue: f64 = 0.0_f64;
+            let mut hilbertTempReal: f64 = 0.0_f64;
+            let mut detrender: f64 = 0.0_f64;
+            let mut Q1: f64 = 0.0_f64;
+            let mut jI: f64 = 0.0_f64;
+            let mut jQ: f64 = 0.0_f64;
+            let mut Q2: f64 = 0.0_f64;
+            let mut I2: f64 = 0.0_f64;
+            let mut todayValue: f64 = 0.0_f64;
+            let mut I1ForEvenPrev2 = sp.I1ForEvenPrev2;
+            let mut I1ForEvenPrev3 = sp.I1ForEvenPrev3;
+            let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
+            let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
+            let mut Im = sp.Im;
+            let mut Q1_Even = sp.Q1_Even;
+            let mut Q1_Odd = sp.Q1_Odd;
+            let mut Re = sp.Re;
+            let mut detrender_Even = sp.detrender_Even;
+            let mut detrender_Odd = sp.detrender_Odd;
+            let mut hilbertIdx = sp.hilbertIdx;
+            let mut jI_Even = sp.jI_Even;
+            let mut jI_Odd = sp.jI_Odd;
+            let mut jQ_Even = sp.jQ_Even;
+            let mut jQ_Odd = sp.jQ_Odd;
+            let mut period = sp.period;
+            let mut periodWMASub = sp.periodWMASub;
+            let mut periodWMASum = sp.periodWMASum;
+            let mut prevI2 = sp.prevI2;
+            let mut prevQ2 = sp.prevQ2;
+            let mut prev_Q1_Even = sp.prev_Q1_Even;
+            let mut prev_Q1_Odd = sp.prev_Q1_Odd;
+            let mut prev_Q1_input_Even = sp.prev_Q1_input_Even;
+            let mut prev_Q1_input_Odd = sp.prev_Q1_input_Odd;
+            let mut prev_detrender_Even = sp.prev_detrender_Even;
+            let mut prev_detrender_Odd = sp.prev_detrender_Odd;
+            let mut prev_detrender_input_Even = sp.prev_detrender_input_Even;
+            let mut prev_detrender_input_Odd = sp.prev_detrender_input_Odd;
+            let mut prev_jI_Even = sp.prev_jI_Even;
+            let mut prev_jI_Odd = sp.prev_jI_Odd;
+            let mut prev_jI_input_Even = sp.prev_jI_input_Even;
+            let mut prev_jI_input_Odd = sp.prev_jI_input_Odd;
+            let mut prev_jQ_Even = sp.prev_jQ_Even;
+            let mut prev_jQ_Odd = sp.prev_jQ_Odd;
+            let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
+            let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
+            let mut ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
+            let mut streamParity = sp.streamParity;
+            let mut trailingWMAValue = sp.trailingWMAValue;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            if sp.ringCap_trailingWMAIdx == 0 {
+                pkSlot0 = 0;
+                pkVal0 = inReal;
+            }
+            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
+            todayValue = inReal;
+            periodWMASub += todayValue;
+            periodWMASub -= trailingWMAValue;
+            periodWMASum += todayValue * 4.0;
+            trailingWMAValue = (if (ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] } else { pkVal0 });
+            smoothedValue = periodWMASum * 0.1;
+            periodWMASum -= periodWMASub;
+            if streamParity == 0 {
+                // Do the Hilbert Transforms for even price bar
+                hilbertTempReal = sp.a * smoothedValue;
+                detrender = 0_f64 - detrender_Even[hilbertIdx];
+                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender += hilbertTempReal;
+                detrender -= prev_detrender_Even;
+                prev_detrender_Even = sp.b * prev_detrender_input_Even;
+                detrender += prev_detrender_Even;
+                prev_detrender_input_Even = smoothedValue;
+                detrender *= adjustedPrevPeriod;
+                hilbertTempReal = sp.a * detrender;
+                Q1 = 0_f64 - Q1_Even[hilbertIdx];
+                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 += hilbertTempReal;
+                Q1 -= prev_Q1_Even;
+                prev_Q1_Even = sp.b * prev_Q1_input_Even;
+                Q1 += prev_Q1_Even;
+                prev_Q1_input_Even = detrender;
+                Q1 *= adjustedPrevPeriod;
+                (*outQuadrature) = Q1;
+                (*outInPhase) = I1ForEvenPrev3;
+                hilbertTempReal = sp.a * I1ForEvenPrev3;
+                jI = 0_f64 - jI_Even[hilbertIdx];
+                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI += hilbertTempReal;
+                jI -= prev_jI_Even;
+                prev_jI_Even = sp.b * prev_jI_input_Even;
+                jI += prev_jI_Even;
+                prev_jI_input_Even = I1ForEvenPrev3;
+                jI *= adjustedPrevPeriod;
+                hilbertTempReal = sp.a * Q1;
+                jQ = 0_f64 - jQ_Even[hilbertIdx];
+                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ += hilbertTempReal;
+                jQ -= prev_jQ_Even;
+                prev_jQ_Even = sp.b * prev_jQ_input_Even;
+                jQ += prev_jQ_Even;
+                prev_jQ_input_Even = Q1;
+                jQ *= adjustedPrevPeriod;
+                if { hilbertIdx += 1; hilbertIdx } == 3 {
+                    hilbertIdx = 0;
+                }
+                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
+                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+                // The variable I1 is the detrender delayed for
+                // 3 price bars.
+                //
+                // Save the current detrender value for being
+                // used by the "odd" logic later.
+                I1ForOddPrev3 = I1ForOddPrev2;
+                I1ForOddPrev2 = detrender;
+            } else {
+                // Do the Hilbert Transforms for odd price bar
+                hilbertTempReal = sp.a * smoothedValue;
+                detrender = 0_f64 - detrender_Odd[hilbertIdx];
+                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender += hilbertTempReal;
+                detrender -= prev_detrender_Odd;
+                prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
+                detrender += prev_detrender_Odd;
+                prev_detrender_input_Odd = smoothedValue;
+                detrender *= adjustedPrevPeriod;
+                hilbertTempReal = sp.a * detrender;
+                Q1 = 0_f64 - Q1_Odd[hilbertIdx];
+                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 += hilbertTempReal;
+                Q1 -= prev_Q1_Odd;
+                prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
+                Q1 += prev_Q1_Odd;
+                prev_Q1_input_Odd = detrender;
+                Q1 *= adjustedPrevPeriod;
+                (*outQuadrature) = Q1;
+                (*outInPhase) = I1ForOddPrev3;
+                hilbertTempReal = sp.a * I1ForOddPrev3;
+                jI = 0_f64 - jI_Odd[hilbertIdx];
+                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI += hilbertTempReal;
+                jI -= prev_jI_Odd;
+                prev_jI_Odd = sp.b * prev_jI_input_Odd;
+                jI += prev_jI_Odd;
+                prev_jI_input_Odd = I1ForOddPrev3;
+                jI *= adjustedPrevPeriod;
+                hilbertTempReal = sp.a * Q1;
+                jQ = 0_f64 - jQ_Odd[hilbertIdx];
+                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ += hilbertTempReal;
+                jQ -= prev_jQ_Odd;
+                prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
+                jQ += prev_jQ_Odd;
+                prev_jQ_input_Odd = Q1;
+                jQ *= adjustedPrevPeriod;
+                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
+                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
+                // The varaiable I1 is the detrender delayed for
+                // 3 price bars.
+                //
+                // Save the current detrender value for being
+                // used by the "even" logic later.
+                I1ForEvenPrev3 = I1ForEvenPrev2;
+                I1ForEvenPrev2 = detrender;
+            }
+            // Adjust the period for next price bar
+            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
+            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+            prevQ2 = Q2;
+            prevI2 = I2;
+            tempReal = period;
+            if Im != 0.0 && Re != 0.0 {
+                period = 360.0 / ((Im / Re).atan() * sp.rad2Deg);
+            }
+            tempReal2 = 1.5 * tempReal;
+            if period > tempReal2 {
+                period = tempReal2;
+            }
+            tempReal2 = 0.67 * tempReal;
+            if period < tempReal2 {
+                period = tempReal2;
+            }
+            if period < 6_f64 {
+                period = 6.0;
+            } else if period > 50_f64 {
+                period = 50.0;
+            }
+            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
+            // Ooof... let's do the next price bar now!
+            ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
+            if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
+                ringPos_trailingWMAIdx = 0;
+            }
+            streamParity = 1 - streamParity;
+        }
+        Ok((outInPhase, outQuadrature))
     }
 
     /// The bars this stream has produced a value for, in the input series'

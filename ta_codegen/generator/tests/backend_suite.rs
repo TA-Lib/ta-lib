@@ -13278,9 +13278,10 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
 /// * `BBANDS` — in the reuse tier. Pins all four halves: the scratch is a bare
 ///   state, the step runs on it with the settings still read off the live
 ///   handle, `update` is not re-entered, and the bar is checked once.
-/// * `SMA` — outside it. Must keep the pre-#201 throwaway clone verbatim, so a
-///   generator that rewrites every peek reddens here rather than passing on
-///   BBANDS alone.
+/// * `SMA` — a loop tier, which peeks a FRAME instead: the transition rewritten
+///   to commit nothing, run against `&self.state`. It is the control, so a
+///   generator that put one tier's shape on the other reddens here rather than
+///   passing on BBANDS alone.
 #[test]
 fn a_reused_peek_scratch_is_a_bare_state_stepped_directly() {
     let registry = make_registry();
@@ -13316,19 +13317,31 @@ fn a_reused_peek_scratch_is_a_bare_state_stepped_directly() {
         "the bar is checked once, not twice\n{peek}"
     );
 
-    // The control: outside the reuse tier the throwaway clone is unchanged.
+    // The control: the loop tier copies nothing at all.
     let (func, enums) = load_indicator("sma");
     let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     assert!(
         !rust.contains("SMA_PEEK_SCRATCH"),
-        "SMA is outside the reuse tier and must have no scratch"
+        "SMA peeks a frame and needs no scratch"
     );
     let peek = {
         let at = rust.find("    pub fn peek(&self").expect("sma has a peek");
         &rust[at..at + rust[at..].find("\n    }").expect("peek end")]
     };
     assert!(
-        peek.contains("let mut scratch = self.clone();") && peek.contains("scratch.update("),
-        "the throwaway tier keeps the pre-#201 clone verbatim\n{peek}"
+        !peek.contains("self.clone()") && !peek.contains("scratch"),
+        "a frame copies no state — neither a handle nor a scratch\n{peek}"
+    );
+    assert!(
+        peek.contains("let sp = &self.state;"),
+        "the frame runs against the live state, borrowed\n{peek}"
+    );
+    assert!(
+        peek.contains("pkSlot0") && peek.contains("pkVal0"),
+        "SMA's cap-0 store is carried in locals\n{peek}"
+    );
+    assert!(
+        !peek.contains("sp.ring_trailingIdx_inReal[ringPos_trailingIdx] ="),
+        "and nothing stores into the buffer the handle shares\n{peek}"
     );
 }

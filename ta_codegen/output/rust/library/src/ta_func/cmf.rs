@@ -779,16 +779,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `CmfStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static CMF_PEEK_SCRATCH: std::cell::Cell<Option<Box<CmfStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl CmfStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -851,8 +846,10 @@ impl CmfStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -863,14 +860,42 @@ impl CmfStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() || !inVolume.is_finite() {
             return Err(RetCode::BadParam);
         }
-        CMF_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::cmf_step_impl(&mut scratch, inHigh, inLow, inClose, inVolume, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut high: f64 = 0.0_f64;
+            let mut low: f64 = 0.0_f64;
+            let mut close: f64 = 0.0_f64;
+            let mut tmp: f64 = 0.0_f64;
+            let mut mfv: f64 = 0.0_f64;
+            let mut mfv_Idx = sp.mfv_Idx;
+            let mut sumMFV = sp.sumMFV;
+            let mut sumVol = sp.sumVol;
+            sumMFV -= sp.cb_mfv_flow[mfv_Idx];
+            sumVol -= sp.cb_mfv_volume[mfv_Idx];
+            high = inHigh;
+            low = inLow;
+            close = inClose;
+            tmp = high - low;
+            if tmp > 0.0 {
+                mfv = (close - low - (high - close)) / tmp * inVolume;
+            } else {
+                mfv = 0.0;
+            }
+            sumMFV += mfv;
+            sumVol += inVolume;
+            if sumVol > 0.0 {
+                (*outReal) = sumMFV / sumVol;
+            } else {
+                (*outReal) = 0.0;
+            }
+            mfv_Idx = mfv_Idx + 1;
+            if mfv_Idx > sp.maxIdx_mfv {
+                mfv_Idx = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

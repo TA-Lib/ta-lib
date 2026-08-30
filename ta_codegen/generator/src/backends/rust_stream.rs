@@ -269,6 +269,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
 
     Typing {
         ctx: RustRenderCtx {
+            for_range_lowering: true,
             bounds_asserts: false,
             index_vars,
             real_vars,
@@ -540,7 +541,9 @@ fn emit_loop(
     emit_open_and_fill_internal_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape, false);
+    let ctx = build_step_ctx(func, &[model], &typing);
+    let frame = build_peek_frame(func, model, &typing, &ctx, enums, registry, helpers, counter);
+    emit_update_and_peek(o, func, shape, false, frame.as_deref());
     emit_trait_pin(o, func);
 }
 
@@ -1187,6 +1190,270 @@ fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
     )
 }
 
+
+
+/// The state fields a transition writes, and the transition with every mention
+/// of them moved to a bare local.
+///
+/// A peek frame runs against `&self.state`, so anything it would store has to
+/// live in a local instead. The local keeps the field's OWN name: `stream_base`
+/// strips the `sp.` qualifier before classifying an operand, so `sp.x` and `x`
+/// fuse alike — any other spelling would silently move an FMA site.
+///
+/// Returns `None` when a written field's bare name would collide with a bar
+/// input or an output, where the local would shadow the parameter instead of
+/// failing to compile.
+fn localize_state_writes(
+    func: &FuncDef,
+    transition: &[Statement],
+    extra: &[String],
+    buffers: &[(String, bool)],
+) -> Option<(Vec<String>, Vec<Statement>)> {
+    let mut written: std::collections::BTreeSet<String> = extra.iter().cloned().collect();
+    fn note(e: &Expr, out: &mut std::collections::BTreeSet<String>) {
+        if let Expr::Var(v) = e {
+            if let Some(bare) = v.strip_prefix("sp.") {
+                out.insert(bare.to_string());
+            }
+        }
+    }
+    for st in transition {
+        streaming::walk_stmt_exprs(st, &mut |top| {
+            streaming::walk_expr(top, &mut |e| match e {
+                Expr::PostIncrement(i)
+                | Expr::PostDecrement(i)
+                | Expr::PreIncrement(i)
+                | Expr::PreDecrement(i) => note(i, &mut written),
+                _ => {}
+            });
+        });
+    }
+    fn targets(list: &[Statement], out: &mut std::collections::BTreeSet<String>) {
+        for st in list {
+            if let Statement::Assign { target, .. } = st {
+                note(target, out);
+                // A fixed-size array field is written element-wise; it is `Copy`,
+                // so it localizes like a scalar. Heap buffers are excluded by the
+                // caller — those the peek frame never writes at all.
+                if let Expr::ArrayAccess(n, _) = target {
+                    note(&Expr::Var(n.clone()), out);
+                }
+            }
+            let inner: Vec<&[Statement]> = match st {
+                Statement::While { body, .. }
+                | Statement::DoWhile { body, .. }
+                | Statement::For { body, .. }
+                | Statement::Block { body } => vec![body.as_slice()],
+                Statement::ForC { init, update, body, .. } => vec![
+                    std::slice::from_ref(init.as_ref()),
+                    std::slice::from_ref(update.as_ref()),
+                    body.as_slice(),
+                ],
+                Statement::If { then_body, else_body, .. } => {
+                    vec![then_body.as_slice(), else_body.as_slice()]
+                }
+                Statement::Switch { cases, default, .. } => {
+                    let mut v: Vec<&[Statement]> = cases.iter().map(|(_, b)| b.as_slice()).collect();
+                    v.push(default.as_slice());
+                    v
+                }
+                _ => Vec::new(),
+            };
+            for b in inner {
+                targets(b, out);
+            }
+        }
+    }
+    targets(transition, &mut written);
+    for (b, _) in buffers {
+        if let Some(bare) = b.strip_prefix("sp.") {
+            written.remove(bare);
+        }
+    }
+
+    let mut taken: std::collections::BTreeSet<String> =
+        streaming::input_array_names(func).into_iter().collect();
+    taken.extend(func.outputs.iter().map(|o| o.name.clone()));
+    if written.iter().any(|w| taken.contains(w)) {
+        return None;
+    }
+    let bare: std::collections::BTreeMap<String, String> =
+        written.iter().map(|w| (format!("sp.{w}"), w.clone())).collect();
+    let out = streaming::rewrite_stmts(
+        transition,
+        &|e| match e {
+            Expr::Var(ref v) => bare.get(v).map_or(e, |b| Expr::Var(b.clone())),
+            // A fixed-size array field is named through its subscript, which the
+            // `Var` arm never sees.
+            Expr::ArrayAccess(ref v, ref i) => match bare.get(v) {
+                Some(b) => Expr::ArrayAccess(b.clone(), i.clone()),
+                None => e,
+            },
+            other => other,
+        },
+        &|st| Some(st),
+    );
+    Some((written.into_iter().collect(), out))
+}
+
+/// The peek frame: the transition rewritten to commit nothing, against
+/// `&self.state`. `None` where the frame cannot be built, and the caller falls
+/// back to peeking a copy of the handle.
+#[allow(clippy::too_many_arguments)]
+fn build_peek_frame(
+    func: &FuncDef,
+    model: &StreamModel,
+    typing: &Typing,
+    ctx: &RustRenderCtx,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> Option<String> {
+    // The frame is a block so the `&mut` rebindings below end before the
+    // method returns the outputs by value.
+    let indent = 12;
+    let pad = " ".repeat(indent);
+    let transition = streaming::build_transition(model, &RustStreamNames).ok()?;
+    let pt = streaming::peek_transition(
+        &transition,
+        &streaming::transition_buffers(model, &RustStreamNames),
+        Some(VarType::Index),
+    )
+    .ok()?;
+    // The extrema rebase moves the cursor before the first store, so its
+    // targets are localized with the transition's own.
+    let mut rebased: Vec<String> = Vec::new();
+    if let Some(ex) = model.extrema() {
+        rebased.push(model.cursor.clone());
+        rebased.push(ex.trailing.clone());
+        rebased.extend(ex.index_vars.iter().cloned());
+    }
+    let bufs = streaming::transition_buffers(model, &RustStreamNames);
+    let (locals, body_ir) = localize_state_writes(func, &pt.body, &rebased, &bufs)?;
+    // A localized field keeps its own name, so the renderer must classify the
+    // bare spelling exactly as it classified `sp.<name>` — the sets carry both,
+    // and the extrema override touches only one of the pair. Mirror the
+    // qualified entry onto the bare one, or an `i32` cursor renders as a
+    // `usize` and the arithmetic around it stops compiling.
+    let mut ctx = ctx.clone();
+    for name in &locals {
+        let q = format!("sp.{name}");
+        for set in [
+            &mut ctx.index_vars,
+            &mut ctx.real_vars,
+            &mut ctx.vec_vars,
+            &mut ctx.real_array_vars,
+            &mut ctx.int_vec_vars,
+            &mut ctx.sentinel_vars,
+        ] {
+            if set.contains(&q) {
+                set.insert(name.clone());
+            } else {
+                set.remove(name);
+            }
+        }
+    }
+    ctx.for_range_lowering = false;
+    let ctx = &ctx;
+
+    let real_outs: HashSet<String> = func
+        .outputs
+        .iter()
+        .filter(|out| out.param_type != ParamType::Integer)
+        .map(|out| out.name.clone())
+        .collect();
+    let body_ir = streaming::rewrite_stmts(&body_ir, &|e| e, &|st| match st {
+        Statement::Assign {
+            target: Expr::PointerDeref(nm),
+            value: Expr::IntLiteral(n),
+            compound: false,
+        } if real_outs.contains(&nm) =>
+        {
+            #[allow(clippy::cast_precision_loss)]
+            Some(Statement::Assign {
+                target: Expr::PointerDeref(nm),
+                value: Expr::Literal(n as f64),
+                compound: false,
+            })
+        }
+        other => Some(other),
+    });
+
+    // The transition's own early exit — the param-degenerate identity
+    // short-circuit — is valueless, because a step returns `()`. Inline in
+    // `peek` it exits a `Result`.
+    // Inside the block the outputs are `&mut`, so an early exit dereferences.
+    let vals: Vec<String> = func.outputs.iter().map(|o| format!("(*{})", o.name)).collect();
+    let ret = if vals.len() == 1 { vals[0].clone() } else { format!("({})", vals.join(", ")) };
+    let body_ir = streaming::rewrite_stmts(&body_ir, &|e| e, &|st| match st {
+        Statement::Return { value: None } => Some(Statement::Return {
+            value: Some(Expr::Var(format!("Ok({ret})"))),
+        }),
+        other => Some(other),
+    });
+
+    let mut out = String::new();
+    let _ = writeln!(out, "        {{");
+    let _ = writeln!(out, "{pad}let sp = &self.state;");
+    // The outputs are the caller's locals; rebinding each as `&mut` keeps the
+    // body's `(*out) = …` spelling, and with it every cast the step renders.
+    for o in &func.outputs {
+        let _ = writeln!(out, "{pad}let {0} = &mut {0};", o.name);
+    }
+    for (name, ty) in &model.temps {
+        let (rty, default) = field_type_and_default(typing, name, ty, false);
+        out.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
+    }
+    for name in &locals {
+        let _ = writeln!(out, "{pad}let mut {name} = sp.{name};");
+    }
+    for sh in &pt.shadows {
+        let (t, z) = if sh.int_elem { ("i32", "0_i32") } else { ("f64", "0.0_f64") };
+        let _ = writeln!(out, "{pad}let mut {}: usize = usize::MAX;", sh.slot_var);
+        let _ = writeln!(out, "{pad}let mut {}: {t} = {z};", sh.val_var);
+    }
+    for t in &pt.slot_temps {
+        let _ = writeln!(out, "{pad}let mut {t}: usize = 0;");
+    }
+    if let Some(ex) = model.extrema() {
+        let inner = " ".repeat(indent + 4);
+        let _ = writeln!(out, "{pad}if {} >= 1073741824 {{", model.cursor);
+        let _ = writeln!(out, "{inner}let rebaseShift: i32 = {} & !sp.xMask;", ex.trailing);
+        for v in &rebased {
+            let _ = writeln!(out, "{inner}{v} -= rebaseShift;");
+        }
+        let _ = writeln!(out, "{pad}}}");
+    }
+    let output_names: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+    let opt_real_params: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .filter(|p| p.param_type == ParamType::Real)
+        .map(|p| p.name.clone())
+        .collect();
+    let var_inits: HashMap<String, &Expr> = HashMap::new();
+    let mut body = String::new();
+    for st in &body_ir {
+        body.push_str(&render_statement(
+            st, indent, ctx, &[], &var_inits, &output_names, &opt_real_params, enums, registry,
+            helpers, counter,
+        ));
+    }
+    let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
+    if !step_settings.is_empty() {
+        // In a step these arrive as `cs_*` parameters; the frame is a method on
+        // the handle, which is where they are snapshotted.
+        out.push_str(&crate::candle_settings::emit_rust_unpacking_from(
+            &step_settings,
+            indent,
+            &|x| format!("self.{}", cs_binding(x)),
+        ));
+    }
+    out.push_str(&body);
+    let _ = writeln!(out, "        }}");
+    Some(out)
+}
 
 /// `fn <NAME>_step_impl(&self, sp: &mut State, <bars>, <&mut outs>)`.
 #[allow(clippy::too_many_arguments)]
@@ -2570,7 +2837,13 @@ fn open_and_fill_doctest(
 }
 
 #[allow(clippy::too_many_lines)]
-fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_fallible: bool) {
+fn emit_update_and_peek(
+    o: &mut String,
+    func: &FuncDef,
+    shape: StateShape,
+    step_fallible: bool,
+    peek_frame: Option<&str>,
+) {
     let sn = snake(func);
     let cs_args = cs_step_args(&handle_candle_settings(func));
     let n = func.name.to_uppercase();
@@ -2599,7 +2872,7 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
         let _ = write!(out_refs, ", &mut {}", out.name);
     }
     let ret = open_value_tuple_names(func);
-    let reuse = shape.scratch_pays();
+    let reuse = shape.scratch_pays() && peek_frame.is_none();
     // The sub-stream tiers' steps are fallible (their sub `update` is); the
     // self-contained ones cannot fail and return `()`.
     let step_try = if step_fallible { "?" } else { "" };
@@ -2635,7 +2908,7 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
 
     let _ = writeln!(
         o,
-        "#[allow(non_snake_case)]\n#[allow(unused_variables)]\nimpl {handle} {{"
+        "#[allow(non_snake_case)]\n#[allow(unused_variables)]\n#[allow(unused_mut)]\n#[allow(unused_assignments)]\n#[allow(unused_parens)]\nimpl {handle} {{"
     );
     let _ = writeln!(
         o,
@@ -2891,6 +3164,14 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_
              \x20           Ok({ret})\n\
              \x20       }})"
         );
+    } else if let Some(frame) = peek_frame {
+        // The frame commits nothing, so it runs against `&self.state` — no copy
+        // of the handle, and the buffers it reads are the live ones. Inline
+        // rather than a second method: it has one caller and always will, since
+        // a cross-indicator call enters the callee's PUBLIC `peek`.
+        o.push_str(&out_decls);
+        o.push_str(frame);
+        let _ = writeln!(o, "        Ok({ret})");
     } else {
         // Verbatim what every function did before #201, so these functions are
         // byte-identical to the previous release: the clone is a local that
@@ -3107,7 +3388,7 @@ fn emit_dual_mode(
     emit_open_and_fill_internal_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape, false);
+    emit_update_and_peek(o, func, shape, false, None);
     emit_trait_pin(o, func);
 }
 
@@ -3205,6 +3486,7 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
     index_vars.insert("endIdx".to_string());
     index_vars.insert("historyLen".to_string());
     RustRenderCtx {
+            for_range_lowering: true,
         bounds_asserts: false,
         index_vars,
         real_vars: HashSet::new(),
@@ -3609,7 +3891,7 @@ fn emit_dispatch(
     }
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape, true);
+    emit_update_and_peek(o, func, shape, true, None);
     emit_trait_pin(o, func);
 }
 
@@ -3802,7 +4084,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape, true);
+    emit_update_and_peek(o, func, shape, true, None);
     emit_trait_pin(o, func);
 }
 
@@ -4710,6 +4992,6 @@ fn emit_composed(
     emit_open_and_fill_internal_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape, true);
+    emit_update_and_peek(o, func, shape, true, None);
     emit_trait_pin(o, func);
 }

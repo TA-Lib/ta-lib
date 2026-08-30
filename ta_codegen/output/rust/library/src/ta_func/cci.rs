@@ -729,6 +729,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl CciStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -805,8 +808,64 @@ impl CciStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut tempReal2: f64 = 0.0_f64;
+            let mut tempReal3: f64 = 0.0_f64;
+            let mut theAverage: f64 = 0.0_f64;
+            let mut lastValue: f64 = 0.0_f64;
+            let mut j: usize = 0_usize;
+            let mut circBuffer_Idx = sp.circBuffer_Idx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            lastValue = (inHigh + inLow + inClose) / 3_f64;
+            pkSlot0 = circBuffer_Idx as usize;
+            pkVal0 = lastValue;
+            // Calculate the average for the whole period.
+            theAverage = 0.0;
+            // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+            j = 0;
+            while j < ((sp.optInTimePeriod) as usize) {
+                theAverage += (if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 });
+                j += 1;
+            }
+            theAverage /= ((sp.optInTimePeriod) as f64);
+            // Do the summation of the ABS(TypePrice-average)
+            // for the whole period, then its mean.
+            tempReal2 = 0.0;
+            // for( j = 0; j < ((sp.optInTimePeriod) as usize); j += 1 )
+            j = 0;
+            while j < ((sp.optInTimePeriod) as usize) {
+                tempReal2 += ((if (j as usize) != pkSlot0 { sp.cb_circBuffer[j] } else { pkVal0 }) - theAverage).abs();
+                j += 1;
+            }
+            tempReal2 /= ((sp.optInTimePeriod) as f64);
+            // And finally, the CCI...
+            tempReal = lastValue - theAverage;
+            // Both tests are relative to the window's own price level (issue #253).
+            // They ask "is this window flat?", and flatness is a property of the
+            // prices relative to each other -- but a deviation carries the quote
+            // unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+            // every window of an instrument quoted below it and zeroed the whole
+            // output. The band is still wide enough (~90 ulp of the average) to
+            // absorb the sub-epsilon residue an identical-price window leaves in the
+            // average, which is what it was widened for in the first place (#7).
+            tempReal3 = (theAverage).abs();
+            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) {
+                (*outReal) = tempReal / (0.015 * tempReal2);
+            } else {
+                (*outReal) = 0.0;
+            }
+            // Move forward the circular buffer indexes.
+            circBuffer_Idx = circBuffer_Idx + 1;
+            if circBuffer_Idx > sp.maxIdx_circBuffer {
+                circBuffer_Idx = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

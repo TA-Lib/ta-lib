@@ -953,6 +953,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl MacdStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -1029,8 +1032,33 @@ impl MacdStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outMACD: f64 = 0.0_f64;
+        let mut outMACDSignal: f64 = 0.0_f64;
+        let mut outMACDHist: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outMACD = &mut outMACD;
+            let outMACDSignal = &mut outMACDSignal;
+            let outMACDHist = &mut outMACDHist;
+            let mut macdValue: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut prevFast = sp.prevFast;
+            let mut prevSignal = sp.prevSignal;
+            let mut prevSlow = sp.prevSlow;
+            tempReal = inReal;
+            prevFast = (tempReal - prevFast as f64).mul_add(sp.fastK, prevFast);
+            prevSlow = (tempReal - prevSlow as f64).mul_add(sp.slowK, prevSlow);
+            macdValue = prevFast - prevSlow;
+            if sp.optInSignalPeriod == 1 {
+                prevSignal = macdValue;
+            } else {
+                prevSignal = (macdValue - prevSignal as f64).mul_add(sp.signalK, prevSignal);
+            }
+            (*outMACD) = macdValue;
+            (*outMACDSignal) = prevSignal;
+            (*outMACDHist) = macdValue - prevSignal;
+        }
+        Ok((outMACD, outMACDSignal, outMACDHist))
     }
 
     /// The bars this stream has produced a value for, in the input series'

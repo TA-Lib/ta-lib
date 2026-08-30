@@ -872,6 +872,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl CmoStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -946,8 +949,39 @@ impl CmoStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempValue1: f64 = 0.0_f64;
+            let mut tempValue2: f64 = 0.0_f64;
+            let mut prevGain = sp.prevGain;
+            let mut prevLoss = sp.prevLoss;
+            let mut prevValue = sp.prevValue;
+            if sp.optInTimePeriod == 1 {
+                (*outReal) = inReal;
+                return Ok((*outReal));
+            }
+            tempValue1 = inReal;
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= ((sp.optInTimePeriod - 1) as f64);
+            prevGain *= ((sp.optInTimePeriod - 1) as f64);
+            if tempValue2 < 0_f64 {
+                prevLoss -= tempValue2;
+            } else {
+                prevGain += tempValue2;
+            }
+            prevLoss /= ((sp.optInTimePeriod) as f64);
+            prevGain /= ((sp.optInTimePeriod) as f64);
+            tempValue1 = prevGain + prevLoss;
+            if tempValue1 > 0.0 {
+                (*outReal) = 100.0 * ((prevGain - prevLoss) / tempValue1);
+            } else {
+                (*outReal) = 0.0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

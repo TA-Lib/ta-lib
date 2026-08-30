@@ -523,6 +523,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl AvgdevStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -599,8 +602,39 @@ impl AvgdevStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut todaySum: f64 = 0.0_f64;
+            let mut todayDev: f64 = 0.0_f64;
+            let mut i: usize = 0_usize;
+            let mut winPos_i = sp.winPos_i;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            pkSlot0 = winPos_i as usize;
+            pkVal0 = inReal;
+            todaySum = 0.0;
+            // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
+            i = 0;
+            while i < ((sp.optInTimePeriod) as usize) {
+                todaySum += (if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
+                i += 1;
+            }
+            todayDev = 0.0;
+            // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
+            i = 0;
+            while i < ((sp.optInTimePeriod) as usize) {
+                todayDev += ((if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 }) - todaySum / ((sp.optInTimePeriod) as f64)).abs();
+                i += 1;
+            }
+            (*outReal) = todayDev / ((sp.optInTimePeriod) as f64);
+            winPos_i = winPos_i + 1;
+            if winPos_i >= sp.winCap_i {
+                winPos_i = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

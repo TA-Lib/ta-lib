@@ -913,16 +913,11 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `WmaStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static WMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<WmaStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl WmaStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -985,8 +980,10 @@ impl WmaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -997,14 +994,117 @@ impl WmaStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        WMA_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            Core::wma_step_impl(&mut scratch, inReal, &mut outReal);
-            cell.set(Some(scratch));
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut j: usize = 0_usize;
+            let mut rw: usize = 0_usize;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut barsSinceReseed = sp.barsSinceReseed;
+            let mut periodSub = sp.periodSub;
+            let mut periodSum = sp.periodSum;
+            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            let mut trailingValue = sp.trailingValue;
+            let mut winPos_j = sp.winPos_j;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            if sp.optInTimePeriod == 1 {
+                (*outReal) = inReal;
+                return Ok((*outReal));
+            }
+            if sp.ringCap_trailingIdx == 0 {
+                pkSlot0 = 0;
+                pkVal0 = inReal;
+            }
+            pkSlot1 = winPos_j as usize;
+            pkVal1 = inReal;
+            // Add the current price bar to the sum
+            // who are carried through the iterations.
+            tempReal = inReal;
+            periodSub += tempReal;
+            periodSub -= trailingValue;
+            periodSum += tempReal * ((sp.optInTimePeriod) as f64);
+            // Re-anchor: rebuild both totals from the window itself.
+            //
+            // periodSum and periodSub were running totals that were never
+            // recomputed, so each bar's rounding joined a residue no later bar
+            // could subtract, and its size was set by the largest value the totals
+            // had ever held rather than by the current window. That is the defect
+            // #254 fixed in the LINEARREG family, and `periodSum -= periodSub`
+            // below is the same weight-shifting identity as that family's
+            // `SumXY = SumXY + SumY - period*trailingValue` -- which is why WMA has
+            // it and TA_SMA, whose output lives at its own sum's scale, does not.
+            // Measured before the fix: worst range disagreement 1.41e-08 at 200000
+            // bars against a 1e-10 tier, over the tier from ~10000 bars on ordinary
+            // closes or ~1000 with one large print. After: 1.79e-12, flat in call
+            // length.
+            //
+            // ONE TRIGGER, NOT TWO, AND THE INTERVAL IS 8*period NOT 32. The
+            // LINEARREG family also carries an OUTLIER trigger (rebuild when the
+            // departing value outweighs the window) because for a slope the
+            // interval alone FAILS the tier outright, at 2.38e-10. WMA is not in
+            // that position: its weights are bounded by `period` and its divider is
+            // period*(period+1)/2, which dilutes the residue enough that the
+            // interval alone holds. Swept over periods 2, 3, 4, 14, 50, 200, 1000,
+            // 5000 and 20000 on 60000 bars, clean and with a 1000x print, the worst
+            // is 2.2e-11 -- 4.6x inside the band, and the margin does not thin at
+            // either end of the period range. Measured, the trigger bought 1.4e-11 -> 7e-12 and cost 1.17x
+            // here and 1.65x in TA_HMA, whose three fused stages each pay it. The
+            // shorter interval buys most of the accuracy for ~1.1x instead.
+            //
+            // The rebuild walks the window OLDEST FIRST with the weight counting UP
+            // from 1 -- the priming scan's own order and weighting -- so a
+            // re-anchored bar is bit-identical to the same bar computed by a call
+            // that started there. That identity is what the range-stability
+            // contract measures, and what test_wma.c W2/W3 assert.
+            //
+            // The loop start is written INLINE rather than through a `windowStart`
+            // local: only that form is recognised as a rescan window, which is what
+            // keeps this on the stream classifier's primary path. See
+            // docs/ta_codegen_input_code.md.
+            //
+            // Reading the window is safe when outReal aliases inReal: the outputs
+            // written so far occupy [0, outIdx-1], and the window starts at
+            // startIdx-lookbackTotal+outIdx, which is >= outIdx.
+            barsSinceReseed -= 1;
+            if barsSinceReseed <= 0 {
+                barsSinceReseed = (8 * sp.optInTimePeriod) as usize;
+                periodSub = 0.0 as f64;
+                periodSum = 0.0 as f64;
+                rw = 1;
+                // for( j = sp.lookbackWin; j >= 0; j -= 1 )
+                j = sp.lookbackWin;
+                loop {
+                    tempReal = (if ((if winPos_j + sp.winCap_j - j >= sp.winCap_j { winPos_j + sp.winCap_j - j - sp.winCap_j } else { winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if winPos_j + sp.winCap_j - j >= sp.winCap_j { winPos_j + sp.winCap_j - j - sp.winCap_j } else { winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 });
+                    periodSub += tempReal;
+                    periodSum += tempReal * ((rw) as f64);
+                    rw += 1;
+                    if j == 0 { break; }
+                    j -= 1;
+                }
+            }
+            // Save the trailing value for being substract at
+            // the next iteration.
+            // (must be saved here just in case outReal and
+            //  inReal are the same buffer).
+            trailingValue = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 });
+            // Calculate the WMA for this price bar.
+            (*outReal) = periodSum / sp.divider;
+            // Prepare the periodSum for the next iteration.
+            periodSum -= periodSub;
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
+                ringPos_trailingIdx = 0;
+            }
+            winPos_j = winPos_j + 1;
+            if winPos_j >= sp.winCap_j {
+                winPos_j = 0;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -880,6 +880,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl T3Stream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -954,8 +957,29 @@ impl T3Stream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut e1 = sp.e1;
+            let mut e2 = sp.e2;
+            let mut e3 = sp.e3;
+            let mut e4 = sp.e4;
+            let mut e5 = sp.e5;
+            let mut e6 = sp.e6;
+            if sp.optInTimePeriod == 1 {
+                (*outReal) = inReal;
+                return Ok((*outReal));
+            }
+            e1 = (sp.one_minus_k as f64).mul_add(e1, sp.k * inReal);
+            e2 = (sp.one_minus_k as f64).mul_add(e2, sp.k * e1);
+            e3 = (sp.one_minus_k as f64).mul_add(e3, sp.k * e2);
+            e4 = (sp.one_minus_k as f64).mul_add(e4, sp.k * e3);
+            e5 = (sp.one_minus_k as f64).mul_add(e5, sp.k * e4);
+            e6 = (sp.one_minus_k as f64).mul_add(e6, sp.k * e5);
+            (*outReal) = (sp.c4 as f64).mul_add(e3, (sp.c3 as f64).mul_add(e4, (sp.c1 as f64).mul_add(e6, sp.c2 * e5)));
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

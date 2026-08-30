@@ -542,6 +542,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl Cdl3outsideStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -616,8 +619,29 @@ impl Cdl3outsideStream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inOpen, inHigh, inLow, inClose)
+        let mut outInteger: i32 = 0_i32;
+        {
+            let sp = &self.state;
+            let outInteger = &mut outInteger;
+            let mut lag1_inClose = sp.lag1_inClose;
+            let mut lag1_inOpen = sp.lag1_inOpen;
+            let mut lag2_inClose = sp.lag2_inClose;
+            let mut lag2_inOpen = sp.lag2_inOpen;
+            if (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (((if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && lag1_inClose > lag2_inOpen && lag1_inOpen < lag2_inClose && inClose > lag1_inClose || (((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 }) == 1 && lag1_inOpen > lag2_inClose && lag1_inClose < lag2_inOpen && inClose < lag1_inClose {
+                // white engulfs black
+                // third candle higher
+                // black engulfs white
+                // third candle lower
+                (*outInteger) = ((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+            } else {
+                (*outInteger) = 0;
+            }
+            lag2_inOpen = lag1_inOpen;
+            lag1_inOpen = inOpen;
+            lag2_inClose = lag1_inClose;
+            lag1_inClose = inClose;
+        }
+        Ok(outInteger)
     }
 
     /// The bars this stream has produced a value for, in the input series'

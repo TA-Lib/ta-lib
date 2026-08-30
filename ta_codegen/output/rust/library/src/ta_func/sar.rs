@@ -1055,6 +1055,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl SarStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -1129,8 +1132,127 @@ impl SarStream {
         if !inHigh.is_finite() || !inLow.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut prevHigh: f64 = 0.0_f64;
+            let mut prevLow: f64 = 0.0_f64;
+            let mut af = sp.af;
+            let mut ep = sp.ep;
+            let mut isLong = sp.isLong;
+            let mut newHigh = sp.newHigh;
+            let mut newLow = sp.newLow;
+            let mut sar = sp.sar;
+            prevLow = newLow;
+            prevHigh = newHigh;
+            newLow = inLow;
+            newHigh = inHigh;
+            if isLong == 1 {
+                // Switch to short if the low penetrates the SAR value.
+                if newLow <= sar {
+                    // Switch and Overide the SAR with the ep
+                    isLong = 0;
+                    sar = ep;
+                    // Make sure the overide SAR is within
+                    // yesterday's and today's range.
+                    if sar < prevHigh {
+                        sar = prevHigh;
+                    }
+                    if sar < newHigh {
+                        sar = newHigh;
+                    }
+                    // Output the overide SAR
+                    (*outReal) = sar;
+                    // Adjust af and ep
+                    af = sp.optInAcceleration;
+                    ep = newLow;
+                    // Calculate the new SAR
+                    sar = (af as f64).mul_add(ep - sar, sar);
+                    // Make sure the new SAR is within
+                    // yesterday's and today's range.
+                    if sar < prevHigh {
+                        sar = prevHigh;
+                    }
+                    if sar < newHigh {
+                        sar = newHigh;
+                    }
+                } else {
+                    // No switch
+                    // Output the SAR (was calculated in the previous iteration)
+                    (*outReal) = sar;
+                    // Adjust af and ep.
+                    if newHigh > ep {
+                        ep = newHigh;
+                        af += sp.optInAcceleration;
+                        if af > sp.optInMaximum {
+                            af = sp.optInMaximum;
+                        }
+                    }
+                    // Calculate the new SAR
+                    sar = (af as f64).mul_add(ep - sar, sar);
+                    // Make sure the new SAR is within
+                    // yesterday's and today's range.
+                    if sar > prevLow {
+                        sar = prevLow;
+                    }
+                    if sar > newLow {
+                        sar = newLow;
+                    }
+                }
+            // Switch to long if the high penetrates the SAR value.
+            } else if newHigh >= sar {
+                // Switch and Overide the SAR with the ep
+                isLong = 1;
+                sar = ep;
+                // Make sure the overide SAR is within
+                // yesterday's and today's range.
+                if sar > prevLow {
+                    sar = prevLow;
+                }
+                if sar > newLow {
+                    sar = newLow;
+                }
+                // Output the overide SAR
+                (*outReal) = sar;
+                // Adjust af and ep
+                af = sp.optInAcceleration;
+                ep = newHigh;
+                // Calculate the new SAR
+                sar = (af as f64).mul_add(ep - sar, sar);
+                // Make sure the new SAR is within
+                // yesterday's and today's range.
+                if sar > prevLow {
+                    sar = prevLow;
+                }
+                if sar > newLow {
+                    sar = newLow;
+                }
+            } else {
+                // No switch
+                // Output the SAR (was calculated in the previous iteration)
+                (*outReal) = sar;
+                // Adjust af and ep.
+                if newLow < ep {
+                    ep = newLow;
+                    af += sp.optInAcceleration;
+                    if af > sp.optInMaximum {
+                        af = sp.optInMaximum;
+                    }
+                }
+                // Calculate the new SAR
+                sar = (af as f64).mul_add(ep - sar, sar);
+                // Make sure the new SAR is within
+                // yesterday's and today's range.
+                if sar < prevHigh {
+                    sar = prevHigh;
+                }
+                if sar < newHigh {
+                    sar = newHigh;
+                }
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

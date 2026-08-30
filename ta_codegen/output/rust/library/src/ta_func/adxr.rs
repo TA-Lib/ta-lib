@@ -599,6 +599,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl AdxrStream {
     /// Commit one closed bar. Never allocates.
     ///

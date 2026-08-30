@@ -417,6 +417,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl MedpriceStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -491,8 +494,13 @@ impl MedpriceStream {
         if !inHigh.is_finite() || !inLow.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            (*outReal) = (inHigh + inLow) / 2.0;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

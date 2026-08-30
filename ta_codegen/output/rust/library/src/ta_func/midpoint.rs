@@ -787,6 +787,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl MidpointStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -863,8 +866,68 @@ impl MidpointStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tmpLow: f64 = 0.0_f64;
+            let mut tmpHigh: f64 = 0.0_f64;
+            let mut highest = sp.highest;
+            let mut highestIdx = sp.highestIdx;
+            let mut i = sp.i;
+            let mut lowest = sp.lowest;
+            let mut lowestIdx = sp.lowestIdx;
+            let mut today = sp.today;
+            let mut trailingIdx = sp.trailingIdx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            if today >= 1073741824 {
+                let rebaseShift: i32 = trailingIdx & !sp.xMask;
+                today -= rebaseShift;
+                trailingIdx -= rebaseShift;
+                highestIdx -= rebaseShift;
+                i -= rebaseShift;
+                lowestIdx -= rebaseShift;
+            }
+            pkSlot0 = (today & sp.xMask) as usize;
+            pkVal0 = inReal;
+            tmpHigh = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(today & sp.xMask) as usize] } else { pkVal0 });
+            tmpLow = tmpHigh;
+            if highestIdx < trailingIdx {
+                highestIdx = trailingIdx;
+                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                i = highestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmpHigh = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 });
+                    if tmpHigh > highest {
+                        highestIdx = i;
+                        highest = tmpHigh;
+                    }
+                }
+            } else if tmpHigh >= highest {
+                highestIdx = today;
+                highest = tmpHigh;
+            }
+            if lowestIdx < trailingIdx {
+                lowestIdx = trailingIdx;
+                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(lowestIdx & sp.xMask) as usize] } else { pkVal0 });
+                i = lowestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmpLow = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 });
+                    if tmpLow < lowest {
+                        lowestIdx = i;
+                        lowest = tmpLow;
+                    }
+                }
+            } else if tmpLow <= lowest {
+                lowestIdx = today;
+                lowest = tmpLow;
+            }
+            (*outReal) = (highest + lowest) / 2.0;
+            trailingIdx += 1;
+            today += 1;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -598,6 +598,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl WadStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -672,8 +675,32 @@ impl WadStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut close: f64 = 0.0_f64;
+            let mut trueExtreme: f64 = 0.0_f64;
+            let mut prevClose = sp.prevClose;
+            let mut sum = sp.sum;
+            close = inClose;
+            if close > prevClose {
+                trueExtreme = inLow;
+                if prevClose < trueExtreme {
+                    trueExtreme = prevClose;
+                }
+                sum += close - trueExtreme;
+            } else if close < prevClose {
+                trueExtreme = inHigh;
+                if prevClose > trueExtreme {
+                    trueExtreme = prevClose;
+                }
+                sum += close - trueExtreme;
+            }
+            (*outReal) = sum;
+            prevClose = close;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

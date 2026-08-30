@@ -475,6 +475,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl BopStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -549,8 +552,24 @@ impl BopStream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inOpen, inHigh, inLow, inClose)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut tempReal: f64 = 0.0_f64;
+            // BOP is a fraction of the bar's own range, so it is scale-free and the
+            // divisor only has to be positive. An exact test, not the fixed
+            // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+            // and that band zeroed the output for any instrument quoted below it
+            // (issue #253).
+            tempReal = inHigh - inLow;
+            if tempReal <= 0.0 {
+                (*outReal) = 0.0;
+            } else {
+                (*outReal) = (inClose - inOpen) / tempReal;
+            }
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

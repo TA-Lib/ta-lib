@@ -655,6 +655,9 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
 impl CdlhikkakeStream {
     /// Commit one closed bar. Never allocates.
     ///
@@ -729,8 +732,44 @@ impl CdlhikkakeStream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inOpen, inHigh, inLow, inClose)
+        let mut outInteger: i32 = 0_i32;
+        {
+            let sp = &self.state;
+            let outInteger = &mut outInteger;
+            let mut cd = sp.cd;
+            let mut lag1_inHigh = sp.lag1_inHigh;
+            let mut lag1_inLow = sp.lag1_inLow;
+            let mut lag2_inHigh = sp.lag2_inHigh;
+            let mut lag2_inLow = sp.lag2_inLow;
+            let mut patternResult = sp.patternResult;
+            let mut savedHigh = sp.savedHigh;
+            let mut savedLow = sp.savedLow;
+            if lag1_inHigh < lag2_inHigh &&
+               lag1_inLow > lag2_inLow &&   // 1st + 2nd: lower high and higher low
+               (inHigh < lag1_inHigh && inLow < lag1_inLow || inHigh > lag1_inHigh && inLow > lag1_inLow) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+            {
+                patternResult = 100 * (if inHigh < lag1_inHigh { 1 } else { 0 - 1 });
+                savedHigh = lag1_inHigh;
+                savedLow = lag1_inLow;
+                cd = 4;
+                (*outInteger) = (patternResult) as i32;
+            } else if cd > 0 &&
+               (patternResult > 0 && inClose > savedHigh || patternResult < 0 && inClose < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+            {
+                (*outInteger) = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                cd = 0;
+            } else {
+                (*outInteger) = 0;
+            }
+            if cd > 0 {
+                cd -= 1;
+            }
+            lag2_inHigh = lag1_inHigh;
+            lag1_inHigh = inHigh;
+            lag2_inLow = lag1_inLow;
+            lag1_inLow = inLow;
+        }
+        Ok(outInteger)
     }
 
     /// The bars this stream has produced a value for, in the input series'
