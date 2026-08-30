@@ -246,35 +246,13 @@ jobs:
         shell: bash
         run: python3 scripts/build.py xlang-hash
 
-  # Rust on the release branch (#179 E5). dev-nightly lints, documents, tests and
-  # packages the crate on dev; main had none of it -- of the three jobs above, one
-  # builds the C dist assets, one fuzzes C against v0.6.4 and one diffs the language
-  # servers, so nothing on this branch ever compiled the crate, ran a doctest or
-  # built a .crate.
-  #
-  # main is where a release is cut FROM: release-step-1/2 check out main, and the
-  # only thing they run before tagging and publishing is scripts/pre-release-checks.py
-  # -- versions, the CHANGELOG entry, the pom's indicator count and the dist digests.
-  # It compiles no Rust and executes no test. So between "main is tagged" and "the
-  # crate is published" there was no step that had ever built what gets published.
-  #
-  # Honest about the overlap: main's tip is normally an ancestor of dev, so its
-  # content has usually already been through dev-nightly. What this adds is the
-  # window where it has not -- the dist bot commits land on main first (they also
-  # rewrite include/ta_common.h's digest) and reach dev only on the next
-  # "Merged main into dev" -- plus any hotfix pushed straight to main, plus the
-  # release cut itself. It is coverage of the branch that publishes, not of a
-  # defect known to be there today: every step below passes on main as of
-  # 12987063d.
-  #
-  # A mirror of dev-nightly's `clippy` job with `ref: main`. The MSRV floor is
-  # deliberately not duplicated (it is its own job there, and it reads the floor
-  # out of the manifests, which regen-check below already pins).
-  #
-  # Rust-only and self-contained: no C build, no dist asset, no JDK/.NET -- and,
-  # like its dev twin, deliberately NOT gated on the C hero 'test' job, so an
-  # unrelated Windows or dist-pool failure cannot skip the release branch's only
-  # Rust coverage.
+  # Rust on the release branch (#179 E5): dev-nightly's `clippy` job with
+  # `ref: main`, plus rust_package_check.py because main is the branch a .crate
+  # publishes from and nothing here ever compiled the crate. Content merged from
+  # dev has already been through dev-nightly; what this covers is the commits
+  # only main sees -- the dist bot's, hotfixes, and the release cut itself.
+  # Not gated on 'test': no C build is needed, so a dist-pool failure must not
+  # skip the release branch's only Rust coverage. MSRV stays dev-only.
   rust:
     name: Rust clippy + docs + tests (release branch)
     runs-on: ubuntu-latest
@@ -286,8 +264,6 @@ jobs:
         with:
           ref: main
 
-      # Rust is preinstalled on ubuntu-latest; add the component defensively
-      # (idempotent — a no-op when clippy is already present).
       - name: Ensure clippy component
         shell: bash
         run: rustup component add clippy
@@ -296,63 +272,36 @@ jobs:
         shell: bash
         run: cargo clippy --all-targets --manifest-path ta_codegen/generator/Cargo.toml -- -D warnings
 
-      # `-D warnings` is load-bearing beyond clippy's own lints: the crate sets
-      # #![warn(missing_docs)] (#179 D7), so this is what turns an undocumented
-      # public item into a failure rather than a warning nobody reads.
       - name: Clippy the generated crate
         shell: bash
         run: cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings
 
-      # Rustdoc's own lints are a set clippy never reaches, and docs.rs is the
-      # first place rustdoc runs on a release: a broken intra-doc link renders
-      # there as literal text (#179 E4).
       - name: Rustdoc the generated crate
         shell: bash
         env:
           RUSTDOCFLAGS: "-D warnings"
         run: cargo doc --no-deps -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
-      # --no-fail-fast: cargo stops at the first failing test binary, which once
-      # hid a second real failure (#238).
       - name: Test the generator tool
         shell: bash
         run: cargo test --no-fail-fast --manifest-path ta_codegen/generator/Cargo.toml
 
-      # clippy --all-targets does not build doctests, so without this step the
-      # crate's public-facing examples are compiled by nothing on this branch.
       - name: Run the generated crate's doctests
         shell: bash
         run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
-      # `--tests`, not `--lib`: the latter excludes tests/, and --all-targets
-      # above only COMPILES the test target while --doc skips it.
       - name: Run the generated crate's unit and integration tests
         shell: bash
         run: cargo test --tests -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
-      # Beyond E5's list, and the one step here that is about publishing rather
-      # than about parity with dev: every step above compiles the crate IN the
-      # workspace, where a file on disk is reachable whether or not it would
-      # ship. This builds the actual .crate tarball and verification-builds it
-      # (#179 E1). main is the branch that tarball would be published from.
       - name: Package the publishable crates and check what ships
         shell: bash
         run: python3 scripts/rust_package_check.py
 
-  # regen-check on the release branch (#179 E5). Same command the PR gate and
-  # dev-nightly run: the ta_regtest source lists agree, ta_codegen/input is
-  # formatted, and regenerating every backend changes nothing committed.
-  #
-  # The weakest of the two jobs added here, and stated as such: content that
-  # arrives on main by merging dev has already been regen-checked there. It earns
-  # its place on the branch that ships for the same reason the dev copy earns its
-  # place next to the PR gate -- main also takes commits that no pull_request
-  # trigger and no dev-nightly run ever saw (the dist bot's, which rewrite a
-  # tracked header, and hotfixes pushed straight to main).
-  #
-  # Not gated on 'test': that job builds the C dist assets, and a source-level
-  # check that regenerates the tree needs nothing from it. Making it wait would
-  # only let a dist-pool failure skip it.
+  # regen-check on the release branch (#179 E5): the same command the PR gate and
+  # dev-nightly run, here for the commits only main sees (the dist bot's, which
+  # rewrite a tracked header, and hotfixes). Not gated on 'test' -- it regenerates
+  # source and needs nothing the C build produces.
   regen-check:
     name: ta_codegen output up-to-date (release branch)
     runs-on: ubuntu-latest
@@ -377,8 +326,6 @@ jobs:
             exit 1
           fi
 
-      # Static text check, sub-second, so it is free next to the regenerate
-      # above — the same pairing dev-nightly uses.
       - name: Candle trailing-total wiring (read AND write side)
         shell: bash
         run: |
