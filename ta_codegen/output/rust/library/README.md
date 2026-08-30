@@ -56,11 +56,16 @@ period and candlestick thresholds — are chosen up front with a builder and the
 frozen:
 
 ```rust
-use ta_lib::{Core, FuncUnstId};
+use ta_lib::{Core, FuncUnstId, RetCode};
 
-let core = Core::builder()
-    .unstable_period(FuncUnstId::EMA, 10)
-    .build()?;
+fn main() -> Result<(), RetCode> {
+    let core = Core::builder()
+        .unstable_period(FuncUnstId::EMA, 10)
+        .build()?;
+
+    assert_eq!(core.get_unstable_period(FuncUnstId::EMA)?, 10);
+    Ok(())
+}
 ```
 
 The setters are infallible so that they chain; a rejected argument is reported
