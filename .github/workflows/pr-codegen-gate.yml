@@ -114,14 +114,6 @@ jobs:
             exit 1
           fi
 
-      - name: Clippy the generated crate
-        shell: bash
-        run: |
-          if ! cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings; then
-            echo "::error::Clippy failed on the generated crate. Its scaffolding emits a crate-level #![allow(clippy::all, clippy::pedantic)], so a failure here is the emitter's, not the emitted code's — fix the backend, never the generated file."
-            exit 1
-          fi
-
       # Rustdoc's lints are a set no other step on this gate can reach, and
       # `rustdoc::broken_intra_doc_links` is the one that matters: only rustdoc
       # resolves a `[`Core::<F>`]` link, so only rustdoc can report that one
@@ -133,9 +125,17 @@ jobs:
       #
       # It belongs here, not only in the 5AM nightly, for the reason the whole
       # file exists: the nightly reports after merge, one branch too late. And
-      # it is free — the step re-documents a crate this job has already
-      # compiled (~4s locally), inside a job that finishes ~50s against
-      # regen-check's ~4m, so the PR waits no longer than it does today.
+      # it is free — it documents a crate this job compiles anyway (~3s
+      # locally), inside a job that finishes ~50s against regen-check's ~4m,
+      # so the PR waits no longer than it does today.
+      #
+      # It sits ahead of the generated-crate clippy step rather than at the end
+      # of the job so that it and the `cargo test --tests` step proposed for
+      # this same job in #211 do not both append at the file's end, where
+      # whichever lands second would conflict on nothing but position. The
+      # ordering itself is free: doc-then-clippy and clippy-then-doc totalled
+      # 17.3s/18.2s against 17.8s/18.0s locally, two runs each from a clean
+      # target — indistinguishable.
       #
       # The blast radius is real and growing: the registry alone carries 176
       # generated links, and docs.rs is the first place rustdoc runs on a
@@ -147,5 +147,13 @@ jobs:
         run: |
           if ! cargo doc --no-deps -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml; then
             echo "::error::Rustdoc failed on the generated crate. An 'unresolved link' names a [\`Core::<item>\`] that does not exist — fix the doc backend that emits it (ta_codegen/generator/src/backends/rust_doc.rs), never the generated file. Reproduce locally with RUSTDOCFLAGS='-D warnings' cargo doc --no-deps -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml"
+            exit 1
+          fi
+
+      - name: Clippy the generated crate
+        shell: bash
+        run: |
+          if ! cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings; then
+            echo "::error::Clippy failed on the generated crate. Its scaffolding emits a crate-level #![allow(clippy::all, clippy::pedantic)], so a failure here is the emitter's, not the emitted code's — fix the backend, never the generated file."
             exit 1
           fi
