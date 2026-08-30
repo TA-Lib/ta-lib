@@ -438,33 +438,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdlsticksandwichStream other )
-      {
-         this.core = other.core;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived.Length != other.ring_EqualTrailingIdx_derived.Length ) {
-            this.ring_EqualTrailingIdx_derived = new double[other.ring_EqualTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_EqualTrailingIdx_derived, this.ring_EqualTrailingIdx_derived, other.ring_EqualTrailingIdx_derived.Length );
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

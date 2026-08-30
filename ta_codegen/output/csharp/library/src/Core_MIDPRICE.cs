@@ -630,31 +630,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MidpriceStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh.Length != other.x_inHigh.Length ) {
-            this.x_inHigh = new double[other.x_inHigh.Length];
-         }
-         Array.Copy( other.x_inHigh, this.x_inHigh, other.x_inHigh.Length );
-         if( this.x_inLow.Length != other.x_inLow.Length ) {
-            this.x_inLow = new double[other.x_inLow.Length];
-         }
-         Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

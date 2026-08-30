@@ -771,27 +771,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MavpStream other )
-      {
-         this.core = other.core;
-         this.optInMinPeriod = other.optInMinPeriod;
-         this.optInMaxPeriod = other.optInMaxPeriod;
-         this.optInMAType = other.optInMAType;
-         this.cur_outReal = other.cur_outReal;
-         if( this.bank.Length == other.bank.Length ) {
-            for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
-               this.bank[bankIdx].CopyFrom(other.bank[bankIdx]);
-            }
-         } else {
-            this.bank = new MaStream[other.bank.Length];
-            for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
-               this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
-            }
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

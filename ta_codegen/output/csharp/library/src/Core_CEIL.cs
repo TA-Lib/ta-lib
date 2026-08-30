@@ -284,14 +284,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CeilStream other )
-      {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

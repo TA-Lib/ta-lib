@@ -378,18 +378,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( Cdl3outsideStream other )
-      {
-         this.core = other.core;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

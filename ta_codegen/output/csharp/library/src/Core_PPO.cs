@@ -479,27 +479,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( PpoStream other )
-      {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInMAType = other.optInMAType;
-         this.cur_outReal = other.cur_outReal;
-         if( this.sub0 is null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.CopyFrom(other.sub0);
-         }
-         if( this.sub1 is null ) {
-            this.sub1 = new MaStream(other.sub1);
-         } else {
-            this.sub1.CopyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

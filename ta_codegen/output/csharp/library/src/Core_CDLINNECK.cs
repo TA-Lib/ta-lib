@@ -487,40 +487,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdlinneckStream other )
-      {
-         this.core = other.core;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived.Length != other.ring_BodyLongTrailingIdx_derived.Length ) {
-            this.ring_BodyLongTrailingIdx_derived = new double[other.ring_BodyLongTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyLongTrailingIdx_derived, this.ring_BodyLongTrailingIdx_derived, other.ring_BodyLongTrailingIdx_derived.Length );
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived.Length != other.ring_EqualTrailingIdx_derived.Length ) {
-            this.ring_EqualTrailingIdx_derived = new double[other.ring_EqualTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_EqualTrailingIdx_derived, this.ring_EqualTrailingIdx_derived, other.ring_EqualTrailingIdx_derived.Length );
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

@@ -580,28 +580,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CmfStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.sumMFV = other.sumMFV;
-         this.sumVol = other.sumVol;
-         this.mfv_Idx = other.mfv_Idx;
-         this.maxIdx_mfv = other.maxIdx_mfv;
-         this.cbSize_mfv = other.cbSize_mfv;
-         if( this.cb_mfv_flow.Length != other.cb_mfv_flow.Length ) {
-            this.cb_mfv_flow = new double[other.cb_mfv_flow.Length];
-         }
-         Array.Copy( other.cb_mfv_flow, this.cb_mfv_flow, other.cb_mfv_flow.Length );
-         if( this.cb_mfv_volume.Length != other.cb_mfv_volume.Length ) {
-            this.cb_mfv_volume = new double[other.cb_mfv_volume.Length];
-         }
-         Array.Copy( other.cb_mfv_volume, this.cb_mfv_volume, other.cb_mfv_volume.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

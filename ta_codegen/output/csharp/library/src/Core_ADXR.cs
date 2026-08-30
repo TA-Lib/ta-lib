@@ -418,26 +418,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( AdxrStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.cur_outReal = other.cur_outReal;
-         this.lagRingPos_adx = other.lagRingPos_adx;
-         this.lagRingCap_adx = other.lagRingCap_adx;
-         if( this.lagRing_adx.Length != other.lagRing_adx.Length ) {
-            this.lagRing_adx = new double[other.lagRing_adx.Length];
-         }
-         Array.Copy( other.lagRing_adx, this.lagRing_adx, other.lagRing_adx.Length );
-         if( this.sub0 is null ) {
-            this.sub0 = new AdxStream(other.sub0);
-         } else {
-            this.sub0.CopyFrom(other.sub0);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

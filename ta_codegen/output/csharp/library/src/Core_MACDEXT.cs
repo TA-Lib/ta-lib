@@ -719,37 +719,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MacdextStream other )
-      {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInFastMAType = other.optInFastMAType;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInSlowMAType = other.optInSlowMAType;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.optInSignalMAType = other.optInSignalMAType;
-         this.cur_outMACD = other.cur_outMACD;
-         this.cur_outMACDSignal = other.cur_outMACDSignal;
-         this.cur_outMACDHist = other.cur_outMACDHist;
-         if( this.sub0 is null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.CopyFrom(other.sub0);
-         }
-         if( this.sub1 is null ) {
-            this.sub1 = new MaStream(other.sub1);
-         } else {
-            this.sub1.CopyFrom(other.sub1);
-         }
-         if( this.sub2 is null ) {
-            this.sub2 = new MaStream(other.sub2);
-         } else {
-            this.sub2.CopyFrom(other.sub2);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

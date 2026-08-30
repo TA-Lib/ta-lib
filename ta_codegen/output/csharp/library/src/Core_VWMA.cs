@@ -491,27 +491,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( VwmaStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.sumPV = other.sumPV;
-         this.sumV = other.sumV;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal.Length != other.ring_trailingIdx_inReal.Length ) {
-            this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
-         }
-         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
-         if( this.ring_trailingIdx_inVolume.Length != other.ring_trailingIdx_inVolume.Length ) {
-            this.ring_trailingIdx_inVolume = new double[other.ring_trailingIdx_inVolume.Length];
-         }
-         Array.Copy( other.ring_trailingIdx_inVolume, this.ring_trailingIdx_inVolume, other.ring_trailingIdx_inVolume.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

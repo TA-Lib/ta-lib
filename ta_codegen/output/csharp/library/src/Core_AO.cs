@@ -535,30 +535,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( AoStream other )
-      {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.sumFast = other.sumFast;
-         this.sumSlow = other.sumSlow;
-         this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
-         this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-         if( this.ring_trailingFastIdx_derived.Length != other.ring_trailingFastIdx_derived.Length ) {
-            this.ring_trailingFastIdx_derived = new double[other.ring_trailingFastIdx_derived.Length];
-         }
-         Array.Copy( other.ring_trailingFastIdx_derived, this.ring_trailingFastIdx_derived, other.ring_trailingFastIdx_derived.Length );
-         this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
-         this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-         if( this.ring_trailingSlowIdx_derived.Length != other.ring_trailingSlowIdx_derived.Length ) {
-            this.ring_trailingSlowIdx_derived = new double[other.ring_trailingSlowIdx_derived.Length];
-         }
-         Array.Copy( other.ring_trailingSlowIdx_derived, this.ring_trailingSlowIdx_derived, other.ring_trailingSlowIdx_derived.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

@@ -450,32 +450,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdltristarStream other )
-      {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived.Length != other.ring_BodyTrailingIdx_derived.Length ) {
-            this.ring_BodyTrailingIdx_derived = new double[other.ring_BodyTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyTrailingIdx_derived, this.ring_BodyTrailingIdx_derived, other.ring_BodyTrailingIdx_derived.Length );
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

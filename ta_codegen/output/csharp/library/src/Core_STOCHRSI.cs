@@ -551,29 +551,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( StochrsiStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInFastK_Period = other.optInFastK_Period;
-         this.optInFastD_Period = other.optInFastD_Period;
-         this.optInFastD_MAType = other.optInFastD_MAType;
-         this.cur_outFastK = other.cur_outFastK;
-         this.cur_outFastD = other.cur_outFastD;
-         if( this.sub0 is null ) {
-            this.sub0 = new RsiStream(other.sub0);
-         } else {
-            this.sub0.CopyFrom(other.sub0);
-         }
-         if( this.sub1 is null ) {
-            this.sub1 = new StochfStream(other.sub1);
-         } else {
-            this.sub1.CopyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

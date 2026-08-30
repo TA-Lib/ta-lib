@@ -513,46 +513,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdlinvertedhammerStream other )
-      {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived.Length != other.ring_BodyTrailingIdx_derived.Length ) {
-            this.ring_BodyTrailingIdx_derived = new double[other.ring_BodyTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyTrailingIdx_derived, this.ring_BodyTrailingIdx_derived, other.ring_BodyTrailingIdx_derived.Length );
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived.Length != other.ring_ShadowLongTrailingIdx_derived.Length ) {
-            this.ring_ShadowLongTrailingIdx_derived = new double[other.ring_ShadowLongTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_ShadowLongTrailingIdx_derived, this.ring_ShadowLongTrailingIdx_derived, other.ring_ShadowLongTrailingIdx_derived.Length );
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived.Length != other.ring_ShadowVeryShortTrailingIdx_derived.Length ) {
-            this.ring_ShadowVeryShortTrailingIdx_derived = new double[other.ring_ShadowVeryShortTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_ShadowVeryShortTrailingIdx_derived, this.ring_ShadowVeryShortTrailingIdx_derived, other.ring_ShadowVeryShortTrailingIdx_derived.Length );
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

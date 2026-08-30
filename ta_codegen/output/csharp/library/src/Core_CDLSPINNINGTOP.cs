@@ -410,24 +410,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdlspinningtopStream other )
-      {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived.Length != other.ring_BodyTrailingIdx_derived.Length ) {
-            this.ring_BodyTrailingIdx_derived = new double[other.ring_BodyTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyTrailingIdx_derived, this.ring_BodyTrailingIdx_derived, other.ring_BodyTrailingIdx_derived.Length );
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

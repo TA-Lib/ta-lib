@@ -570,23 +570,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( AdoscStream other )
-      {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.slowEMA = other.slowEMA;
-         this.slowk = other.slowk;
-         this.one_minus_slowk = other.one_minus_slowk;
-         this.fastEMA = other.fastEMA;
-         this.fastk = other.fastk;
-         this.one_minus_fastk = other.one_minus_fastk;
-         this.ad = other.ad;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

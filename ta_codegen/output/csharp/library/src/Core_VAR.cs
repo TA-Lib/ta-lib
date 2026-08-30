@@ -609,31 +609,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( VarStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInNbDev = other.optInNbDev;
-         this.shift = other.shift;
-         this.periodTotal1 = other.periodTotal1;
-         this.periodTotal2 = other.periodTotal2;
-         this.invPeriod = other.invPeriod;
-         this.trailingIdx = other.trailingIdx;
-         this.nbInitialElementNeeded = other.nbInitialElementNeeded;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
-         this.i = other.i;
-         this.xMask = other.xMask;
-         if( this.x_inReal.Length != other.x_inReal.Length ) {
-            this.x_inReal = new double[other.x_inReal.Length];
-         }
-         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

@@ -633,28 +633,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( T3Stream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInVFactor = other.optInVFactor;
-         this.k = other.k;
-         this.one_minus_k = other.one_minus_k;
-         this.e1 = other.e1;
-         this.e2 = other.e2;
-         this.e3 = other.e3;
-         this.e4 = other.e4;
-         this.e5 = other.e5;
-         this.e6 = other.e6;
-         this.c1 = other.c1;
-         this.c2 = other.c2;
-         this.c3 = other.c3;
-         this.c4 = other.c4;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

@@ -466,34 +466,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdlhighwaveStream other )
-      {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowPeriodTotal = other.ShadowPeriodTotal;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived.Length != other.ring_BodyTrailingIdx_derived.Length ) {
-            this.ring_BodyTrailingIdx_derived = new double[other.ring_BodyTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyTrailingIdx_derived, this.ring_BodyTrailingIdx_derived, other.ring_BodyTrailingIdx_derived.Length );
-         this.ringPos_ShadowTrailingIdx = other.ringPos_ShadowTrailingIdx;
-         this.ringCap_ShadowTrailingIdx = other.ringCap_ShadowTrailingIdx;
-         if( this.ring_ShadowTrailingIdx_derived.Length != other.ring_ShadowTrailingIdx_derived.Length ) {
-            this.ring_ShadowTrailingIdx_derived = new double[other.ring_ShadowTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_ShadowTrailingIdx_derived, this.ring_ShadowTrailingIdx_derived, other.ring_ShadowTrailingIdx_derived.Length );
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowVeryLong_rangeType = other.cs_ShadowVeryLong_rangeType;
-         this.cs_ShadowVeryLong_avgPeriod = other.cs_ShadowVeryLong_avgPeriod;
-         this.cs_ShadowVeryLong_factor = other.cs_ShadowVeryLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

@@ -818,20 +818,11 @@ fn opt_param_desc(base: &str, opt: &OptInput) -> String {
 struct SubMembers {
     /// Deep-copy statements for the copy constructor.
     copy: String,
-    /// In-place overwrite statements for `CopyFrom`.
-    restore: String,
-    /// How many sub-streams the handle owns. Each is a fresh object with its
-    /// own arrays and recursively its own subs.
-    subs: usize,
-    /// Whether what the subs own is unknown at generation time: the dispatch
-    /// arm is picked by an `MAType` at run time, and a period bank's width by
-    /// an argument. Neither can be counted here, and both are deep.
-    unbounded: bool,
 }
 
 impl SubMembers {
     fn none() -> Self {
-        Self { copy: String::new(), restore: String::new(), subs: 0, unbounded: false }
+        Self { copy: String::new() }
     }
 }
 
@@ -910,8 +901,6 @@ fn emit_handle_class_with_members(
 
     let _ = writeln!(o, "   public sealed class {class}");
     let _ = writeln!(o, "   {{");
-    // Not readonly: `CopyFrom` retargets the peek scratch, which is one instance
-    // per thread per class and so outlives any one handle's Core.
     let _ = writeln!(o, "      internal Core core;");
     for (name, cty, _) in fields {
         // `= []` on every array field is mandatory, not tidiness: CS8618
@@ -971,31 +960,6 @@ fn emit_handle_class_with_members(
     }
     o.push_str(&subs.copy);
     // The fork starts from the same produced range and diverges from there.
-    let _ = writeln!(o, "         this.outRangeBegIdx = other.outRangeBegIdx;");
-    let _ = writeln!(o, "         this.outRangeCount = other.outRangeCount;");
-    let _ = writeln!(o, "      }}");
-
-    // The copy constructor's in-place twin: same result, but it overwrites
-    // whatever this instance already owns instead of allocating a peer for it.
-    // Only `Peek`'s scratch calls it, and only where there is an allocation to
-    // save (#201). No `!= null` test on the way in — every array field carries
-    // an `= []` initialiser, so under `Nullable=enable` the length branch is
-    // both sufficient and the only check the compiler accepts without a
-    // diagnostic.
-    let _ = writeln!(o, "\n      internal void CopyFrom( {class} other )");
-    let _ = writeln!(o, "      {{");
-    let _ = writeln!(o, "         this.core = other.core;");
-    for (name, cty, _) in fields {
-        if let Some(elem) = cty.strip_suffix("[]") {
-            let _ = writeln!(o, "         if( this.{name}.Length != other.{name}.Length ) {{");
-            let _ = writeln!(o, "            this.{name} = new {elem}[other.{name}.Length];");
-            let _ = writeln!(o, "         }}");
-            let _ = writeln!(o, "         Array.Copy( other.{name}, this.{name}, other.{name}.Length );");
-        } else {
-            let _ = writeln!(o, "         this.{name} = other.{name};");
-        }
-    }
-    o.push_str(&subs.restore);
     let _ = writeln!(o, "         this.outRangeBegIdx = other.outRangeBegIdx;");
     let _ = writeln!(o, "         this.outRangeCount = other.outRangeCount;");
     let _ = writeln!(o, "      }}");
@@ -3427,9 +3391,9 @@ fn emit_dispatch(
         dp.param
     );
     // Deep copy of the tagged sub: switch on the stored enum param, invoke the
-    // callee's copy constructor. All three tables below — this one, CopyFrom's
-    // and the step's — walk the SAME `dp.arms`, so a new MAType cannot be
-    // handled in one and missed in another.
+    // callee's copy constructor. This table, the step's and the peek frame's
+    // walk the SAME `dp.arms`, so a new MAType cannot be handled in one and
+    // missed in another.
     let mut copy_extra = String::new();
     let _ = writeln!(copy_extra, "         if( other.sub is null ) {{");
     let _ = writeln!(copy_extra, "            this.sub = null;");
@@ -3461,39 +3425,7 @@ fn emit_dispatch(
     // the arm matches. It is only the same arm when the source handle's param is
     // the same, which is why the tag is read off `this` after the field copy,
     // exactly as the copy constructor reads it after its own.
-    let mut restore_extra = String::new();
-    let _ = writeln!(restore_extra, "         if( other.sub is null ) {{");
-    let _ = writeln!(restore_extra, "            this.sub = null;");
-    let _ = writeln!(restore_extra, "         }} else {{");
-    let _ = writeln!(restore_extra, "            switch( this.{} )", dp.param);
-    let _ = writeln!(restore_extra, "            {{");
-    for arm in dp.arms.iter().filter(|a| a.supported) {
-        let label = render_csharp_switch_label(&arm.label, enums);
-        let cls = callee_stream_class(registry, &arm.callee);
-        let _ = writeln!(restore_extra, "            case {label}:");
-        let _ = writeln!(restore_extra, "               if( this.sub is {cls} ) {{");
-        let _ = writeln!(
-            restore_extra,
-            "                  (({cls}) this.sub!).CopyFrom(({cls}) other.sub!);"
-        );
-        let _ = writeln!(restore_extra, "               }} else {{");
-        let _ = writeln!(
-            restore_extra,
-            "                  this.sub = new {cls}(({cls}) other.sub!);"
-        );
-        let _ = writeln!(restore_extra, "               }}");
-        let _ = writeln!(restore_extra, "               break;");
-    }
-    let _ = writeln!(restore_extra, "            default:");
-    let _ = writeln!(
-        restore_extra,
-        "               throw new InvalidOperationException(\"unreachable: open rejects arms without a sub-stream\");"
-    );
-    let _ = writeln!(restore_extra, "            }}");
-    let _ = writeln!(restore_extra, "         }}");
-    // The dispatch arm is an enum value chosen at run time, so what the sub owns
-    // is not knowable here.
-    let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
+    let subs = SubMembers { copy: copy_extra };
     // The peek frame: the same routing, into each callee's PUBLIC `Peek`.
     // Nothing here commits, so the dispatch tier needs no copy of the handle it
     // delegates to.
@@ -3785,25 +3717,7 @@ fn emit_period_bank(
     let _ = writeln!(copy_extra, "         for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {{");
     let _ = writeln!(copy_extra, "            this.bank[bankIdx] = new {subty}(other.bank[bankIdx]);");
     let _ = writeln!(copy_extra, "         }}");
-    // Same shape, in place: the bank a scratch already holds is the right
-    // length unless a differently-parameterised handle borrowed it, in which
-    // case it is rebuilt exactly as the copy constructor builds one. The branch
-    // is on LENGTH alone — the field is a non-nullable array initialised to
-    // `[]`, so Java's `!= null` test would be a nullable-analysis diagnostic
-    // here, and the zero length it starts at already takes the rebuild arm.
-    let mut restore_extra = String::new();
-    let _ = writeln!(restore_extra, "         if( this.bank.Length == other.bank.Length ) {{");
-    let _ = writeln!(restore_extra, "            for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {{");
-    let _ = writeln!(restore_extra, "               this.bank[bankIdx].CopyFrom(other.bank[bankIdx]);");
-    let _ = writeln!(restore_extra, "            }}");
-    let _ = writeln!(restore_extra, "         }} else {{");
-    let _ = writeln!(restore_extra, "            this.bank = new {subty}[other.bank.Length];");
-    let _ = writeln!(restore_extra, "            for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {{");
-    let _ = writeln!(restore_extra, "               this.bank[bankIdx] = new {subty}(other.bank[bankIdx]);");
-    let _ = writeln!(restore_extra, "            }}");
-    let _ = writeln!(restore_extra, "         }}");
-    // A bank is one handle per period in the span: unbounded by construction.
-    let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
+    let subs = SubMembers { copy: copy_extra };
     // The peek frame: only the SELECTED slot is peeked. The other slots' next
     // values are not this bar's answer and peeking is non-committing per
     // handle, so advancing them would be work thrown away — which is why the
@@ -4725,7 +4639,6 @@ fn emit_composed(
     }
     let mut extra_members = String::new();
     let mut copy_extra = String::new();
-    let mut restore_extra = String::new();
     for (si, sub) in cp.subs.iter().enumerate() {
         let callee_key = sub.callee.to_lowercase();
         let cls = callee_stream_class(registry, &callee_key);
@@ -4734,21 +4647,8 @@ fn emit_composed(
         // before the handle escapes and every constructor is internal.
         let _ = writeln!(extra_members, "      internal {cls} sub{si} = null!;");
         let _ = writeln!(copy_extra, "         this.sub{si} = new {cls}(other.sub{si});");
-        // A sub's class is fixed by the plan, so a scratch always has one to
-        // overwrite; the null arm covers a scratch built by the bare `(Core)`
-        // constructor, which no path takes today.
-        let _ = writeln!(restore_extra, "         if( this.sub{si} is null ) {{");
-        let _ = writeln!(restore_extra, "            this.sub{si} = new {cls}(other.sub{si});");
-        let _ = writeln!(restore_extra, "         }} else {{");
-        let _ = writeln!(restore_extra, "            this.sub{si}.CopyFrom(other.sub{si});");
-        let _ = writeln!(restore_extra, "         }}");
     }
-    let subs = SubMembers {
-        copy: copy_extra,
-        restore: restore_extra,
-        subs: cp.subs.len(),
-        unbounded: false,
-    };
+    let subs = SubMembers { copy: copy_extra };
     let frame = {
         let mut sink = String::new();
         emit_composed_step(

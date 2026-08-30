@@ -966,47 +966,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( SmiStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.kSlow = other.kSlow;
-         this.kFast = other.kFast;
-         this.kSignal = other.kSignal;
-         this.highest = other.highest;
-         this.lowest = other.lowest;
-         this.emaSlowNum = other.emaSlowNum;
-         this.emaSlowDen = other.emaSlowDen;
-         this.emaFastNum = other.emaFastNum;
-         this.emaFastDen = other.emaFastDen;
-         this.prevSignal = other.prevSignal;
-         this.trailingIdx = other.trailingIdx;
-         this.highestIdx = other.highestIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh.Length != other.x_inHigh.Length ) {
-            this.x_inHigh = new double[other.x_inHigh.Length];
-         }
-         Array.Copy( other.x_inHigh, this.x_inHigh, other.x_inHigh.Length );
-         if( this.x_inLow.Length != other.x_inLow.Length ) {
-            this.x_inLow = new double[other.x_inLow.Length];
-         }
-         Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
-         if( this.x_inClose.Length != other.x_inClose.Length ) {
-            this.x_inClose = new double[other.x_inClose.Length];
-         }
-         Array.Copy( other.x_inClose, this.x_inClose, other.x_inClose.Length );
-         this.cur_outSMI = other.cur_outSMI;
-         this.cur_outSMISignal = other.cur_outSMISignal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

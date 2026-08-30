@@ -584,33 +584,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( WmaStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lookbackWin = other.lookbackWin;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.periodSum = other.periodSum;
-         this.periodSub = other.periodSub;
-         this.trailingValue = other.trailingValue;
-         this.divider = other.divider;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal.Length != other.ring_trailingIdx_inReal.Length ) {
-            this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
-         }
-         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
-         this.winPos_j = other.winPos_j;
-         this.winCap_j = other.winCap_j;
-         if( this.win_j_inReal.Length != other.win_j_inReal.Length ) {
-            this.win_j_inReal = new double[other.win_j_inReal.Length];
-         }
-         Array.Copy( other.win_j_inReal, this.win_j_inReal, other.win_j_inReal.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

@@ -375,21 +375,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( AvgdevStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.winPos_i = other.winPos_i;
-         this.winCap_i = other.winCap_i;
-         if( this.win_i_inReal.Length != other.win_i_inReal.Length ) {
-            this.win_i_inReal = new double[other.win_i_inReal.Length];
-         }
-         Array.Copy( other.win_i_inReal, this.win_i_inReal, other.win_i_inReal.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

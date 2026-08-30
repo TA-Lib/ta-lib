@@ -580,31 +580,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( LinearregStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.SumX = other.SumX;
-         this.SumXY = other.SumXY;
-         this.SumY = other.SumY;
-         this.Divisor = other.Divisor;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.trailingValue = other.trailingValue;
-         this.sumAbs = other.sumAbs;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal.Length != other.x_inReal.Length ) {
-            this.x_inReal = new double[other.x_inReal.Length];
-         }
-         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

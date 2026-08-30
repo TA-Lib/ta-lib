@@ -875,38 +875,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( UltoscStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod1 = other.optInTimePeriod1;
-         this.optInTimePeriod2 = other.optInTimePeriod2;
-         this.optInTimePeriod3 = other.optInTimePeriod3;
-         this.a1Total = other.a1Total;
-         this.a2Total = other.a2Total;
-         this.a3Total = other.a3Total;
-         this.b1Total = other.b1Total;
-         this.b2Total = other.b2Total;
-         this.b3Total = other.b3Total;
-         this.trailingPos1 = other.trailingPos1;
-         this.trailingPos2 = other.trailingPos2;
-         this.nullRun = other.nullRun;
-         this.term_Idx = other.term_Idx;
-         this.maxIdx_term = other.maxIdx_term;
-         this.lag1_inClose = other.lag1_inClose;
-         this.cbSize_term = other.cbSize_term;
-         if( this.cb_term_closeMinusTrueLow.Length != other.cb_term_closeMinusTrueLow.Length ) {
-            this.cb_term_closeMinusTrueLow = new double[other.cb_term_closeMinusTrueLow.Length];
-         }
-         Array.Copy( other.cb_term_closeMinusTrueLow, this.cb_term_closeMinusTrueLow, other.cb_term_closeMinusTrueLow.Length );
-         if( this.cb_term_trueRange.Length != other.cb_term_trueRange.Length ) {
-            this.cb_term_trueRange = new double[other.cb_term_trueRange.Length];
-         }
-         Array.Copy( other.cb_term_trueRange, this.cb_term_trueRange, other.cb_term_trueRange.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

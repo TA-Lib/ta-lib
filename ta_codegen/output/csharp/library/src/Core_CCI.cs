@@ -504,22 +504,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CciStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.circBuffer_Idx = other.circBuffer_Idx;
-         this.maxIdx_circBuffer = other.maxIdx_circBuffer;
-         this.cbSize_circBuffer = other.cbSize_circBuffer;
-         if( this.cb_circBuffer.Length != other.cb_circBuffer.Length ) {
-            this.cb_circBuffer = new double[other.cb_circBuffer.Length];
-         }
-         Array.Copy( other.cb_circBuffer, this.cb_circBuffer, other.cb_circBuffer.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

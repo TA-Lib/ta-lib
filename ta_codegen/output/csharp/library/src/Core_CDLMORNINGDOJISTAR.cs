@@ -564,53 +564,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdlmorningdojistarStream other )
-      {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived.Length != other.ring_BodyDojiTrailingIdx_derived.Length ) {
-            this.ring_BodyDojiTrailingIdx_derived = new double[other.ring_BodyDojiTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_derived, this.ring_BodyDojiTrailingIdx_derived, other.ring_BodyDojiTrailingIdx_derived.Length );
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived.Length != other.ring_BodyLongTrailingIdx_derived.Length ) {
-            this.ring_BodyLongTrailingIdx_derived = new double[other.ring_BodyLongTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyLongTrailingIdx_derived, this.ring_BodyLongTrailingIdx_derived, other.ring_BodyLongTrailingIdx_derived.Length );
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived.Length != other.ring_BodyShortTrailingIdx_derived.Length ) {
-            this.ring_BodyShortTrailingIdx_derived = new double[other.ring_BodyShortTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyShortTrailingIdx_derived, this.ring_BodyShortTrailingIdx_derived, other.ring_BodyShortTrailingIdx_derived.Length );
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

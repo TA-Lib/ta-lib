@@ -394,25 +394,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( ImiStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.winPos_i = other.winPos_i;
-         this.winCap_i = other.winCap_i;
-         if( this.win_i_inOpen.Length != other.win_i_inOpen.Length ) {
-            this.win_i_inOpen = new double[other.win_i_inOpen.Length];
-         }
-         Array.Copy( other.win_i_inOpen, this.win_i_inOpen, other.win_i_inOpen.Length );
-         if( this.win_i_inClose.Length != other.win_i_inClose.Length ) {
-            this.win_i_inClose = new double[other.win_i_inClose.Length];
-         }
-         Array.Copy( other.win_i_inClose, this.win_i_inClose, other.win_i_inClose.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

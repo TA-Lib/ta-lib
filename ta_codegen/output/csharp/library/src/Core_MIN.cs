@@ -529,25 +529,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MinStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal.Length != other.x_inReal.Length ) {
-            this.x_inReal = new double[other.x_inReal.Length];
-         }
-         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

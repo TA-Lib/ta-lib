@@ -971,29 +971,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( SarextStream other )
-      {
-         this.core = other.core;
-         this.optInStartValue = other.optInStartValue;
-         this.optInOffsetOnReverse = other.optInOffsetOnReverse;
-         this.optInAccelerationInitLong = other.optInAccelerationInitLong;
-         this.optInAccelerationLong = other.optInAccelerationLong;
-         this.optInAccelerationMaxLong = other.optInAccelerationMaxLong;
-         this.optInAccelerationInitShort = other.optInAccelerationInitShort;
-         this.optInAccelerationShort = other.optInAccelerationShort;
-         this.optInAccelerationMaxShort = other.optInAccelerationMaxShort;
-         this.isLong = other.isLong;
-         this.newHigh = other.newHigh;
-         this.newLow = other.newLow;
-         this.afLong = other.afLong;
-         this.afShort = other.afShort;
-         this.ep = other.ep;
-         this.sar = other.sar;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

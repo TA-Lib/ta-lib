@@ -506,44 +506,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdltakuriStream other )
-      {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.ShadowVeryLongPeriodTotal = other.ShadowVeryLongPeriodTotal;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived.Length != other.ring_BodyDojiTrailingIdx_derived.Length ) {
-            this.ring_BodyDojiTrailingIdx_derived = new double[other.ring_BodyDojiTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_derived, this.ring_BodyDojiTrailingIdx_derived, other.ring_BodyDojiTrailingIdx_derived.Length );
-         this.ringPos_ShadowVeryLongTrailingIdx = other.ringPos_ShadowVeryLongTrailingIdx;
-         this.ringCap_ShadowVeryLongTrailingIdx = other.ringCap_ShadowVeryLongTrailingIdx;
-         if( this.ring_ShadowVeryLongTrailingIdx_derived.Length != other.ring_ShadowVeryLongTrailingIdx_derived.Length ) {
-            this.ring_ShadowVeryLongTrailingIdx_derived = new double[other.ring_ShadowVeryLongTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_ShadowVeryLongTrailingIdx_derived, this.ring_ShadowVeryLongTrailingIdx_derived, other.ring_ShadowVeryLongTrailingIdx_derived.Length );
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived.Length != other.ring_ShadowVeryShortTrailingIdx_derived.Length ) {
-            this.ring_ShadowVeryShortTrailingIdx_derived = new double[other.ring_ShadowVeryShortTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_ShadowVeryShortTrailingIdx_derived, this.ring_ShadowVeryShortTrailingIdx_derived, other.ring_ShadowVeryShortTrailingIdx_derived.Length );
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_ShadowVeryLong_rangeType = other.cs_ShadowVeryLong_rangeType;
-         this.cs_ShadowVeryLong_avgPeriod = other.cs_ShadowVeryLong_avgPeriod;
-         this.cs_ShadowVeryLong_factor = other.cs_ShadowVeryLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

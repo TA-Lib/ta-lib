@@ -466,22 +466,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdlhikkakeStream other )
-      {
-         this.core = other.core;
-         this.patternResult = other.patternResult;
-         this.cd = other.cd;
-         this.savedHigh = other.savedHigh;
-         this.savedLow = other.savedLow;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

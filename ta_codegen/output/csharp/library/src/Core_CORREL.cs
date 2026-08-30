@@ -718,39 +718,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CorrelStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.sumXY = other.sumXY;
-         this.sumX = other.sumX;
-         this.sumY = other.sumY;
-         this.sumX2 = other.sumX2;
-         this.sumY2 = other.sumY2;
-         this.shiftX = other.shiftX;
-         this.shiftY = other.shiftY;
-         this.leavingX = other.leavingX;
-         this.leavingY = other.leavingY;
-         this.invPeriod = other.invPeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal0.Length != other.x_inReal0.Length ) {
-            this.x_inReal0 = new double[other.x_inReal0.Length];
-         }
-         Array.Copy( other.x_inReal0, this.x_inReal0, other.x_inReal0.Length );
-         if( this.x_inReal1.Length != other.x_inReal1.Length ) {
-            this.x_inReal1 = new double[other.x_inReal1.Length];
-         }
-         Array.Copy( other.x_inReal1, this.x_inReal1, other.x_inReal1.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

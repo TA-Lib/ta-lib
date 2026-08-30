@@ -404,21 +404,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( StddevStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInNbDev = other.optInNbDev;
-         this.cur_outReal = other.cur_outReal;
-         if( this.sub0 is null ) {
-            this.sub0 = new VarStream(other.sub0);
-         } else {
-            this.sub0.CopyFrom(other.sub0);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

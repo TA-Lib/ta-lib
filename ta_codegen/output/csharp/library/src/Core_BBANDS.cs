@@ -907,30 +907,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( BbandsStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInNbDevUp = other.optInNbDevUp;
-         this.optInNbDevDn = other.optInNbDevDn;
-         this.optInMAType = other.optInMAType;
-         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
-         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
-         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         if( this.sub0 is null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.CopyFrom(other.sub0);
-         }
-         if( this.sub1 is null ) {
-            this.sub1 = new StddevStream(other.sub1);
-         } else {
-            this.sub1.CopyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

@@ -628,30 +628,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MfiStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.posSumMF = other.posSumMF;
-         this.negSumMF = other.negSumMF;
-         this.prevValue = other.prevValue;
-         this.nullRun = other.nullRun;
-         this.mflow_Idx = other.mflow_Idx;
-         this.maxIdx_mflow = other.maxIdx_mflow;
-         this.cbSize_mflow = other.cbSize_mflow;
-         if( this.cb_mflow_positive.Length != other.cb_mflow_positive.Length ) {
-            this.cb_mflow_positive = new double[other.cb_mflow_positive.Length];
-         }
-         Array.Copy( other.cb_mflow_positive, this.cb_mflow_positive, other.cb_mflow_positive.Length );
-         if( this.cb_mflow_negative.Length != other.cb_mflow_negative.Length ) {
-            this.cb_mflow_negative = new double[other.cb_mflow_negative.Length];
-         }
-         Array.Copy( other.cb_mflow_negative, this.cb_mflow_negative, other.cb_mflow_negative.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

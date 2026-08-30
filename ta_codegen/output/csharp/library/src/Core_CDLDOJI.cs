@@ -408,24 +408,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( CdldojiStream other )
-      {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived.Length != other.ring_BodyDojiTrailingIdx_derived.Length ) {
-            this.ring_BodyDojiTrailingIdx_derived = new double[other.ring_BodyDojiTrailingIdx_derived.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_derived, this.ring_BodyDojiTrailingIdx_derived, other.ring_BodyDojiTrailingIdx_derived.Length );
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

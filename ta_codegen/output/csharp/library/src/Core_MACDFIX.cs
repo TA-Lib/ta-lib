@@ -623,23 +623,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( MacdfixStream other )
-      {
-         this.core = other.core;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.prevFast = other.prevFast;
-         this.prevSlow = other.prevSlow;
-         this.prevSignal = other.prevSignal;
-         this.slowK = other.slowK;
-         this.fastK = other.fastK;
-         this.signalK = other.signalK;
-         this.cur_outMACD = other.cur_outMACD;
-         this.cur_outMACDSignal = other.cur_outMACDSignal;
-         this.cur_outMACDHist = other.cur_outMACDHist;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

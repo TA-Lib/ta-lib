@@ -1006,66 +1006,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( HmaStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.dividerFull = other.dividerFull;
-         this.periodSubFull = other.periodSubFull;
-         this.periodSumFull = other.periodSumFull;
-         this.trailingFull = other.trailingFull;
-         this.lookbackFull = other.lookbackFull;
-         this.barsSinceReseedFull = other.barsSinceReseedFull;
-         this.halfPeriod = other.halfPeriod;
-         this.sqrtPeriod = other.sqrtPeriod;
-         this.ringSize = other.ringSize;
-         this.dividerHalf = other.dividerHalf;
-         this.dividerSqrt = other.dividerSqrt;
-         this.periodSubHalf = other.periodSubHalf;
-         this.periodSumHalf = other.periodSumHalf;
-         this.trailingHalf = other.trailingHalf;
-         this.periodSubSqrt = other.periodSubSqrt;
-         this.periodSumSqrt = other.periodSumSqrt;
-         this.trailingSqrt = other.trailingSqrt;
-         this.lookbackHalf = other.lookbackHalf;
-         this.barsSinceReseedHalf = other.barsSinceReseedHalf;
-         this.barsSinceReseedSqrt = other.barsSinceReseedSqrt;
-         this.dRing_Idx = other.dRing_Idx;
-         this.maxIdx_dRing = other.maxIdx_dRing;
-         this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
-         this.ringCap_trailingIdxFull = other.ringCap_trailingIdxFull;
-         if( this.ring_trailingIdxFull_inReal.Length != other.ring_trailingIdxFull_inReal.Length ) {
-            this.ring_trailingIdxFull_inReal = new double[other.ring_trailingIdxFull_inReal.Length];
-         }
-         Array.Copy( other.ring_trailingIdxFull_inReal, this.ring_trailingIdxFull_inReal, other.ring_trailingIdxFull_inReal.Length );
-         this.winPos_jFull = other.winPos_jFull;
-         this.winCap_jFull = other.winCap_jFull;
-         if( this.win_jFull_inReal.Length != other.win_jFull_inReal.Length ) {
-            this.win_jFull_inReal = new double[other.win_jFull_inReal.Length];
-         }
-         Array.Copy( other.win_jFull_inReal, this.win_jFull_inReal, other.win_jFull_inReal.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.ringPos_trailingIdxHalf = other.ringPos_trailingIdxHalf;
-         this.ringCap_trailingIdxHalf = other.ringCap_trailingIdxHalf;
-         if( this.ring_trailingIdxHalf_inReal.Length != other.ring_trailingIdxHalf_inReal.Length ) {
-            this.ring_trailingIdxHalf_inReal = new double[other.ring_trailingIdxHalf_inReal.Length];
-         }
-         Array.Copy( other.ring_trailingIdxHalf_inReal, this.ring_trailingIdxHalf_inReal, other.ring_trailingIdxHalf_inReal.Length );
-         this.winPos_jHalf = other.winPos_jHalf;
-         this.winCap_jHalf = other.winCap_jHalf;
-         if( this.win_jHalf_inReal.Length != other.win_jHalf_inReal.Length ) {
-            this.win_jHalf_inReal = new double[other.win_jHalf_inReal.Length];
-         }
-         Array.Copy( other.win_jHalf_inReal, this.win_jHalf_inReal, other.win_jHalf_inReal.Length );
-         this.cbSize_dRing = other.cbSize_dRing;
-         if( this.cb_dRing.Length != other.cb_dRing.Length ) {
-            this.cb_dRing = new double[other.cb_dRing.Length];
-         }
-         Array.Copy( other.cb_dRing, this.cb_dRing, other.cb_dRing.Length );
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

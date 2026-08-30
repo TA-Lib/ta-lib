@@ -893,42 +893,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( BetaStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.S_xx = other.S_xx;
-         this.S_xy = other.S_xy;
-         this.S_x = other.S_x;
-         this.S_y = other.S_y;
-         this.last_price_x = other.last_price_x;
-         this.last_price_y = other.last_price_y;
-         this.trailing_last_price_x = other.trailing_last_price_x;
-         this.trailing_last_price_y = other.trailing_last_price_y;
-         this.shift_x = other.shift_x;
-         this.shift_y = other.shift_y;
-         this.leaving_xx = other.leaving_xx;
-         this.leaving_yy = other.leaving_yy;
-         this.S_yy = other.S_yy;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.n = other.n;
-         this.trailingIdx = other.trailingIdx;
-         this.j = other.j;
-         this.i = other.i;
-         this.xMask = other.xMask;
-         if( this.x_inReal0.Length != other.x_inReal0.Length ) {
-            this.x_inReal0 = new double[other.x_inReal0.Length];
-         }
-         Array.Copy( other.x_inReal0, this.x_inReal0, other.x_inReal0.Length );
-         if( this.x_inReal1.Length != other.x_inReal1.Length ) {
-            this.x_inReal1 = new double[other.x_inReal1.Length];
-         }
-         Array.Copy( other.x_inReal1, this.x_inReal1, other.x_inReal1.Length );
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>

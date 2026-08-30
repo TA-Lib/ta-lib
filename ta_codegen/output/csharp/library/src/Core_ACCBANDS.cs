@@ -577,34 +577,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      internal void CopyFrom( AccbandsStream other )
-      {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.periodTotalUpper = other.periodTotalUpper;
-         this.periodTotalMiddle = other.periodTotalMiddle;
-         this.periodTotalLower = other.periodTotalLower;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inHigh.Length != other.ring_trailingIdx_inHigh.Length ) {
-            this.ring_trailingIdx_inHigh = new double[other.ring_trailingIdx_inHigh.Length];
-         }
-         Array.Copy( other.ring_trailingIdx_inHigh, this.ring_trailingIdx_inHigh, other.ring_trailingIdx_inHigh.Length );
-         if( this.ring_trailingIdx_inLow.Length != other.ring_trailingIdx_inLow.Length ) {
-            this.ring_trailingIdx_inLow = new double[other.ring_trailingIdx_inLow.Length];
-         }
-         Array.Copy( other.ring_trailingIdx_inLow, this.ring_trailingIdx_inLow, other.ring_trailingIdx_inLow.Length );
-         if( this.ring_trailingIdx_inClose.Length != other.ring_trailingIdx_inClose.Length ) {
-            this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
-         }
-         Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
-         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
-         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
-         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
