@@ -121,3 +121,71 @@ jobs:
             echo "::error::Clippy failed on the generated crate. Its scaffolding emits a crate-level #![allow(clippy::all, clippy::pedantic)], so a failure here is the emitter's, not the emitted code's — fix the backend, never the generated file."
             exit 1
           fi
+
+  # The two publishable crates declare `rust-version = "1.86"`, and until now
+  # nothing in this repo had ever compiled them with it (#179 E2). Every other
+  # Rust step here and in the nightly runs on the pinned toolchain from
+  # rust-toolchain.toml — 1.97.0 — so a post-1.86 API or syntax reaching the
+  # generated crate is green everywhere and breaks only for the consumer whose
+  # toolchain is older than ours. That consumer is exactly who the declared
+  # floor is a promise to, and after publish the promise is in a released
+  # version that cannot be edited.
+  #
+  # This job is where that promise is compiled. It runs concurrently with
+  # regen-check (~4m), and the crates have no external dependencies at all —
+  # ta-lib's only dep is the sibling dispatch macro by path — so it is a
+  # toolchain download plus a cold check of two crates, well inside that
+  # window and costing the PR no wall-clock.
+  #
+  # The version is READ from the manifests, not written here: bumping the floor
+  # in ta_codegen/generator/src/main.rs moves this gate with it, and cannot
+  # leave the gate testing a floor the crates no longer declare. The two reads
+  # are also the job's non-vacuity guard — a missing or disagreeing
+  # rust-version fails before any toolchain is installed, rather than quietly
+  # compiling nothing.
+  #
+  # What this does NOT cover: the direct-push path. dev takes pushes that
+  # `on: pull_request` never sees, and the nightly has no MSRV counterpart —
+  # see the PR discussion. It also only proves the floor is high ENOUGH; that
+  # 1.86 is the LOWEST version that works is still the hand comment in
+  # main.rs (safe `#[target_feature]`, stabilized 1.86), unverified.
+  msrv:
+    name: Rust MSRV floor
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Read the declared floor from the two publishable manifests
+        id: floor
+        shell: bash
+        run: |
+          read_msrv() { sed -n 's/^rust-version *= *"\([^"]*\)".*/\1/p' "$1" | head -n 1; }
+          lib=$(read_msrv ta_codegen/output/rust/library/Cargo.toml)
+          dispatch=$(read_msrv ta_codegen/output/rust/dispatch/Cargo.toml)
+          if [ -z "$lib" ] || [ -z "$dispatch" ]; then
+            echo "::error::A publishable crate declares no rust-version (ta-lib='$lib', ta-lib-dispatch='$dispatch'), so this job has no floor to compile against. Both manifests are generated — restore the literal in ta_codegen/generator/src/main.rs and re-run 'scripts/build.py generate'."
+            exit 1
+          fi
+          if [ "$lib" != "$dispatch" ]; then
+            echo "::error::The publishable crates declare different floors (ta-lib='$lib', ta-lib-dispatch='$dispatch'). ta-lib pins ta-lib-dispatch with '=', so the two ship as a pair and only one floor is meaningful. Both literals live in ta_codegen/generator/src/main.rs."
+            exit 1
+          fi
+          echo "Declared MSRV: $lib"
+          echo "msrv=$lib" >> "$GITHUB_OUTPUT"
+
+      # rustup is preinstalled on ubuntu-latest. `+<version>` overrides
+      # rust-toolchain.toml for this one invocation, so the pin stays the
+      # default for every other step and job.
+      - name: Install the declared floor toolchain
+        shell: bash
+        run: rustup toolchain install "${{ steps.floor.outputs.msrv }}" --profile minimal --no-self-update
+
+      - name: Compile the publishable crates on the declared floor
+        shell: bash
+        run: |
+          if ! cargo "+${{ steps.floor.outputs.msrv }}" check -p ta-lib -p ta-lib-dispatch --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml; then
+            echo "::error::The publishable crates do not compile on their own declared MSRV (${{ steps.floor.outputs.msrv }}). Either the code reached for something newer -- a 'use of unstable library feature' or 'stable since 1.NN' note names it -- in which case fix the generator that emits it, or the floor genuinely has to rise, in which case raise rust-version in ta_codegen/generator/src/main.rs (both crates) and say why in the commit. Reproduce locally: rustup toolchain install ${{ steps.floor.outputs.msrv }} && cargo +${{ steps.floor.outputs.msrv }} check -p ta-lib -p ta-lib-dispatch --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml"
+            exit 1
+          fi
