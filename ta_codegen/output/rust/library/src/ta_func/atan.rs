@@ -222,27 +222,9 @@ pub struct AtanStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl AtanStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `AtanStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct AtanStreamState {
-}
-
-#[allow(non_snake_case, dead_code)]
-impl AtanStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-    }
 }
 
 #[allow(unused_variables)]
@@ -463,10 +445,11 @@ impl AtanStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. This handle holds only scalars, so the copy is a
-    /// few machine words and `peek` never allocates.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

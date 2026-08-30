@@ -608,16 +608,6 @@ pub struct HmaStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl HmaStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `HmaStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct HmaStreamState {
@@ -658,51 +648,6 @@ struct HmaStreamState {
     win_jHalf_inReal: Vec<f64>,
     cbSize_dRing: usize,
     cb_dRing: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl HmaStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.dividerFull = src.dividerFull;
-        self.periodSubFull = src.periodSubFull;
-        self.periodSumFull = src.periodSumFull;
-        self.trailingFull = src.trailingFull;
-        self.lookbackFull = src.lookbackFull;
-        self.barsSinceReseedFull = src.barsSinceReseedFull;
-        self.halfPeriod = src.halfPeriod;
-        self.sqrtPeriod = src.sqrtPeriod;
-        self.ringSize = src.ringSize;
-        self.dividerHalf = src.dividerHalf;
-        self.dividerSqrt = src.dividerSqrt;
-        self.periodSubHalf = src.periodSubHalf;
-        self.periodSumHalf = src.periodSumHalf;
-        self.trailingHalf = src.trailingHalf;
-        self.periodSubSqrt = src.periodSubSqrt;
-        self.periodSumSqrt = src.periodSumSqrt;
-        self.trailingSqrt = src.trailingSqrt;
-        self.lookbackHalf = src.lookbackHalf;
-        self.barsSinceReseedHalf = src.barsSinceReseedHalf;
-        self.barsSinceReseedSqrt = src.barsSinceReseedSqrt;
-        self.dRing_Idx = src.dRing_Idx;
-        self.maxIdx_dRing = src.maxIdx_dRing;
-        self.ringPos_trailingIdxFull = src.ringPos_trailingIdxFull;
-        self.ringCap_trailingIdxFull = src.ringCap_trailingIdxFull;
-        self.ring_trailingIdxFull_inReal.clone_from(&src.ring_trailingIdxFull_inReal);
-        self.winPos_jFull = src.winPos_jFull;
-        self.winCap_jFull = src.winCap_jFull;
-        self.win_jFull_inReal.clone_from(&src.win_jFull_inReal);
-        self.ringPos_trailingIdxHalf = src.ringPos_trailingIdxHalf;
-        self.ringCap_trailingIdxHalf = src.ringCap_trailingIdxHalf;
-        self.ring_trailingIdxHalf_inReal.clone_from(&src.ring_trailingIdxHalf_inReal);
-        self.winPos_jHalf = src.winPos_jHalf;
-        self.winCap_jHalf = src.winCap_jHalf;
-        self.win_jHalf_inReal.clone_from(&src.win_jHalf_inReal);
-        self.cbSize_dRing = src.cbSize_dRing;
-        self.cb_dRing.clone_from(&src.cb_dRing);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1686,12 +1631,11 @@ impl HmaStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

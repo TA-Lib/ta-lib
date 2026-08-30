@@ -452,18 +452,6 @@ pub struct CdlharamicrossStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl CdlharamicrossStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CdlharamicrossStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_doji = src.cs_body_doji;
-        self.cs_body_long = src.cs_body_long;
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CdlharamicrossStreamState {
@@ -479,26 +467,6 @@ struct CdlharamicrossStreamState {
     ringPos_BodyLongTrailingIdx: usize,
     ringCap_BodyLongTrailingIdx: usize,
     ring_BodyLongTrailingIdx_derived: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl CdlharamicrossStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.BodyDojiPeriodTotal = src.BodyDojiPeriodTotal;
-        self.BodyLongPeriodTotal = src.BodyLongPeriodTotal;
-        self.lag1_inOpen = src.lag1_inOpen;
-        self.lag1_inHigh = src.lag1_inHigh;
-        self.lag1_inLow = src.lag1_inLow;
-        self.lag1_inClose = src.lag1_inClose;
-        self.ringPos_BodyDojiTrailingIdx = src.ringPos_BodyDojiTrailingIdx;
-        self.ringCap_BodyDojiTrailingIdx = src.ringCap_BodyDojiTrailingIdx;
-        self.ring_BodyDojiTrailingIdx_derived.clone_from(&src.ring_BodyDojiTrailingIdx_derived);
-        self.ringPos_BodyLongTrailingIdx = src.ringPos_BodyLongTrailingIdx;
-        self.ringCap_BodyLongTrailingIdx = src.ringCap_BodyLongTrailingIdx;
-        self.ring_BodyLongTrailingIdx_derived.clone_from(&src.ring_BodyLongTrailingIdx_derived);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1094,12 +1062,11 @@ impl CdlharamicrossStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

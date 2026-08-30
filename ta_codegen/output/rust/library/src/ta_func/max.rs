@@ -374,16 +374,6 @@ pub struct MaxStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl MaxStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MaxStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MaxStreamState {
@@ -395,22 +385,6 @@ struct MaxStreamState {
     today: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl MaxStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.highest = src.highest;
-        self.trailingIdx = src.trailingIdx;
-        self.highestIdx = src.highestIdx;
-        self.i = src.i;
-        self.today = src.today;
-        self.xMask = src.xMask;
-        self.x_inReal.clone_from(&src.x_inReal);
-    }
 }
 
 #[allow(unused_variables)]
@@ -740,12 +714,11 @@ impl MaxStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

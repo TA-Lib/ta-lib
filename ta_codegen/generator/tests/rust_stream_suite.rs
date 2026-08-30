@@ -108,7 +108,6 @@ fn test_rust_sma_ring_stream_section() {
     // other handle's sub — but SMA's own peek does not use it: the loop tier
     // peeks a FRAME, the transition rewritten to commit nothing, so it copies
     // neither the handle nor a scratch.
-    assert!(s.contains("self.ring_trailingIdx_inReal.clone_from(&src.ring_trailingIdx_inReal);"));
     assert!(s.contains("pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {"));
     assert!(s.contains("let sp = &self.state;"));
     assert!(!s.contains("let mut scratch = self.clone();"));
@@ -135,9 +134,8 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
     assert!(s.contains("let sp = &self.state;"));
     assert!(!s.contains("let mut scratch = self.clone();"));
     assert!(!s.contains("PEEK_SCRATCH"), "a scalar state needs no scratch buffer");
-    // The restore is still emitted: EMA is a sub-stream of several composed
-    // handles, whose own scratch restores through it.
-    assert!(s.contains("fn restore_from(&mut self, src: &Self) {"));
+    // Nothing restores a scratch any more — no tier copies a handle to peek it.
+    assert!(!s.contains("fn restore_from(&mut self, src: &Self) {"));
 }
 
 #[test]

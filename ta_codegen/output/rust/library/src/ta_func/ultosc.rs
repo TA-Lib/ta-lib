@@ -571,16 +571,6 @@ pub struct UltoscStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl UltoscStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `UltoscStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct UltoscStreamState {
@@ -602,32 +592,6 @@ struct UltoscStreamState {
     cbSize_term: usize,
     cb_term_closeMinusTrueLow: Vec<f64>,
     cb_term_trueRange: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl UltoscStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod1 = src.optInTimePeriod1;
-        self.optInTimePeriod2 = src.optInTimePeriod2;
-        self.optInTimePeriod3 = src.optInTimePeriod3;
-        self.a1Total = src.a1Total;
-        self.a2Total = src.a2Total;
-        self.a3Total = src.a3Total;
-        self.b1Total = src.b1Total;
-        self.b2Total = src.b2Total;
-        self.b3Total = src.b3Total;
-        self.trailingPos1 = src.trailingPos1;
-        self.trailingPos2 = src.trailingPos2;
-        self.nullRun = src.nullRun;
-        self.term_Idx = src.term_Idx;
-        self.maxIdx_term = src.maxIdx_term;
-        self.lag1_inClose = src.lag1_inClose;
-        self.cbSize_term = src.cbSize_term;
-        self.cb_term_closeMinusTrueLow.clone_from(&src.cb_term_closeMinusTrueLow);
-        self.cb_term_trueRange.clone_from(&src.cb_term_trueRange);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1231,12 +1195,11 @@ impl UltoscStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

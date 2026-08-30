@@ -579,16 +579,6 @@ pub struct HtPhasorStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl HtPhasorStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `HtPhasorStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct HtPhasorStreamState {
@@ -636,58 +626,6 @@ struct HtPhasorStreamState {
     ringPos_trailingWMAIdx: usize,
     ringCap_trailingWMAIdx: usize,
     ring_trailingWMAIdx_inReal: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl HtPhasorStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.period = src.period;
-        self.periodWMASum = src.periodWMASum;
-        self.periodWMASub = src.periodWMASub;
-        self.trailingWMAValue = src.trailingWMAValue;
-        self.a = src.a;
-        self.b = src.b;
-        self.hilbertIdx = src.hilbertIdx;
-        self.detrender_Odd = src.detrender_Odd;
-        self.detrender_Even = src.detrender_Even;
-        self.prev_detrender_Odd = src.prev_detrender_Odd;
-        self.prev_detrender_Even = src.prev_detrender_Even;
-        self.prev_detrender_input_Odd = src.prev_detrender_input_Odd;
-        self.prev_detrender_input_Even = src.prev_detrender_input_Even;
-        self.Q1_Odd = src.Q1_Odd;
-        self.Q1_Even = src.Q1_Even;
-        self.prev_Q1_Odd = src.prev_Q1_Odd;
-        self.prev_Q1_Even = src.prev_Q1_Even;
-        self.prev_Q1_input_Odd = src.prev_Q1_input_Odd;
-        self.prev_Q1_input_Even = src.prev_Q1_input_Even;
-        self.jI_Odd = src.jI_Odd;
-        self.jI_Even = src.jI_Even;
-        self.prev_jI_Odd = src.prev_jI_Odd;
-        self.prev_jI_Even = src.prev_jI_Even;
-        self.prev_jI_input_Odd = src.prev_jI_input_Odd;
-        self.prev_jI_input_Even = src.prev_jI_input_Even;
-        self.jQ_Odd = src.jQ_Odd;
-        self.jQ_Even = src.jQ_Even;
-        self.prev_jQ_Odd = src.prev_jQ_Odd;
-        self.prev_jQ_Even = src.prev_jQ_Even;
-        self.prev_jQ_input_Odd = src.prev_jQ_input_Odd;
-        self.prev_jQ_input_Even = src.prev_jQ_input_Even;
-        self.prevQ2 = src.prevQ2;
-        self.prevI2 = src.prevI2;
-        self.Re = src.Re;
-        self.Im = src.Im;
-        self.I1ForOddPrev2 = src.I1ForOddPrev2;
-        self.I1ForOddPrev3 = src.I1ForOddPrev3;
-        self.I1ForEvenPrev2 = src.I1ForEvenPrev2;
-        self.I1ForEvenPrev3 = src.I1ForEvenPrev3;
-        self.rad2Deg = src.rad2Deg;
-        self.streamParity = src.streamParity;
-        self.ringPos_trailingWMAIdx = src.ringPos_trailingWMAIdx;
-        self.ringCap_trailingWMAIdx = src.ringCap_trailingWMAIdx;
-        self.ring_trailingWMAIdx_inReal.clone_from(&src.ring_trailingWMAIdx_inReal);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1434,12 +1372,11 @@ impl HtPhasorStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

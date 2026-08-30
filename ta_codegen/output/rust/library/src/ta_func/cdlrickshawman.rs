@@ -499,19 +499,6 @@ pub struct CdlrickshawmanStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl CdlrickshawmanStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CdlrickshawmanStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_doji = src.cs_body_doji;
-        self.cs_near = src.cs_near;
-        self.cs_shadow_long = src.cs_shadow_long;
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CdlrickshawmanStreamState {
@@ -527,26 +514,6 @@ struct CdlrickshawmanStreamState {
     ringPos_ShadowLongTrailingIdx: usize,
     ringCap_ShadowLongTrailingIdx: usize,
     ring_ShadowLongTrailingIdx_derived: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl CdlrickshawmanStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.BodyDojiPeriodTotal = src.BodyDojiPeriodTotal;
-        self.ShadowLongPeriodTotal = src.ShadowLongPeriodTotal;
-        self.NearPeriodTotal = src.NearPeriodTotal;
-        self.ringPos_BodyDojiTrailingIdx = src.ringPos_BodyDojiTrailingIdx;
-        self.ringCap_BodyDojiTrailingIdx = src.ringCap_BodyDojiTrailingIdx;
-        self.ring_BodyDojiTrailingIdx_derived.clone_from(&src.ring_BodyDojiTrailingIdx_derived);
-        self.ringPos_NearTrailingIdx = src.ringPos_NearTrailingIdx;
-        self.ringCap_NearTrailingIdx = src.ringCap_NearTrailingIdx;
-        self.ring_NearTrailingIdx_derived.clone_from(&src.ring_NearTrailingIdx_derived);
-        self.ringPos_ShadowLongTrailingIdx = src.ringPos_ShadowLongTrailingIdx;
-        self.ringCap_ShadowLongTrailingIdx = src.ringCap_ShadowLongTrailingIdx;
-        self.ring_ShadowLongTrailingIdx_derived.clone_from(&src.ring_ShadowLongTrailingIdx_derived);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1246,12 +1213,11 @@ impl CdlrickshawmanStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

@@ -650,16 +650,6 @@ pub struct SmiStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl SmiStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `SmiStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SmiStreamState {
@@ -686,37 +676,6 @@ struct SmiStreamState {
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
     x_inClose: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl SmiStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInFastPeriod = src.optInFastPeriod;
-        self.optInSlowPeriod = src.optInSlowPeriod;
-        self.optInSignalPeriod = src.optInSignalPeriod;
-        self.kSlow = src.kSlow;
-        self.kFast = src.kFast;
-        self.kSignal = src.kSignal;
-        self.highest = src.highest;
-        self.lowest = src.lowest;
-        self.emaSlowNum = src.emaSlowNum;
-        self.emaSlowDen = src.emaSlowDen;
-        self.emaFastNum = src.emaFastNum;
-        self.emaFastDen = src.emaFastDen;
-        self.prevSignal = src.prevSignal;
-        self.trailingIdx = src.trailingIdx;
-        self.highestIdx = src.highestIdx;
-        self.lowestIdx = src.lowestIdx;
-        self.i = src.i;
-        self.today = src.today;
-        self.xMask = src.xMask;
-        self.x_inHigh.clone_from(&src.x_inHigh);
-        self.x_inLow.clone_from(&src.x_inLow);
-        self.x_inClose.clone_from(&src.x_inClose);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1342,12 +1301,11 @@ impl SmiStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

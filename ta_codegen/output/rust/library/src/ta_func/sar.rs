@@ -526,16 +526,6 @@ pub struct SarStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl SarStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `SarStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct SarStreamState {
@@ -547,22 +537,6 @@ struct SarStreamState {
     af: f64,
     ep: f64,
     sar: f64,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl SarStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInAcceleration = src.optInAcceleration;
-        self.optInMaximum = src.optInMaximum;
-        self.isLong = src.isLong;
-        self.newHigh = src.newHigh;
-        self.newLow = src.newLow;
-        self.af = src.af;
-        self.ep = src.ep;
-        self.sar = src.sar;
-    }
 }
 
 #[allow(unused_variables)]
@@ -1118,10 +1092,11 @@ impl SarStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. This handle holds only scalars, so the copy is a
-    /// few machine words and `peek` never allocates.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

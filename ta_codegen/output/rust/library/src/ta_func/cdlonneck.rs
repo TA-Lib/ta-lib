@@ -435,18 +435,6 @@ pub struct CdlonneckStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl CdlonneckStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CdlonneckStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_equal = src.cs_equal;
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CdlonneckStreamState {
@@ -464,28 +452,6 @@ struct CdlonneckStreamState {
     ringCap_EqualTrailingIdx: usize,
     ringLag_EqualTrailingIdx: usize,
     ring_EqualTrailingIdx_derived: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl CdlonneckStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.EqualPeriodTotal = src.EqualPeriodTotal;
-        self.BodyLongPeriodTotal = src.BodyLongPeriodTotal;
-        self.lag1_inOpen = src.lag1_inOpen;
-        self.lag1_inHigh = src.lag1_inHigh;
-        self.lag1_inLow = src.lag1_inLow;
-        self.lag1_inClose = src.lag1_inClose;
-        self.ringPos_BodyLongTrailingIdx = src.ringPos_BodyLongTrailingIdx;
-        self.ringCap_BodyLongTrailingIdx = src.ringCap_BodyLongTrailingIdx;
-        self.ringLag_BodyLongTrailingIdx = src.ringLag_BodyLongTrailingIdx;
-        self.ring_BodyLongTrailingIdx_derived.clone_from(&src.ring_BodyLongTrailingIdx_derived);
-        self.ringPos_EqualTrailingIdx = src.ringPos_EqualTrailingIdx;
-        self.ringCap_EqualTrailingIdx = src.ringCap_EqualTrailingIdx;
-        self.ringLag_EqualTrailingIdx = src.ringLag_EqualTrailingIdx;
-        self.ring_EqualTrailingIdx_derived.clone_from(&src.ring_EqualTrailingIdx_derived);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1027,12 +993,11 @@ impl CdlonneckStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

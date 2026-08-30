@@ -758,21 +758,6 @@ pub struct CdladvanceblockStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl CdladvanceblockStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CdladvanceblockStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.cs_far = src.cs_far;
-        self.cs_near = src.cs_near;
-        self.cs_shadow_long = src.cs_shadow_long;
-        self.cs_shadow_short = src.cs_shadow_short;
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CdladvanceblockStreamState {
@@ -809,47 +794,6 @@ struct CdladvanceblockStreamState {
     ringCap_ShadowShortTrailingIdx: usize,
     ringLag_ShadowShortTrailingIdx: usize,
     ring_ShadowShortTrailingIdx_derived: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl CdladvanceblockStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.ShadowShortPeriodTotal = src.ShadowShortPeriodTotal;
-        self.ShadowLongPeriodTotal = src.ShadowLongPeriodTotal;
-        self.NearPeriodTotal = src.NearPeriodTotal;
-        self.FarPeriodTotal = src.FarPeriodTotal;
-        self.BodyLongPeriodTotal = src.BodyLongPeriodTotal;
-        self.lag1_inOpen = src.lag1_inOpen;
-        self.lag2_inOpen = src.lag2_inOpen;
-        self.lag1_inHigh = src.lag1_inHigh;
-        self.lag2_inHigh = src.lag2_inHigh;
-        self.lag1_inLow = src.lag1_inLow;
-        self.lag2_inLow = src.lag2_inLow;
-        self.lag1_inClose = src.lag1_inClose;
-        self.lag2_inClose = src.lag2_inClose;
-        self.ringPos_BodyLongTrailingIdx = src.ringPos_BodyLongTrailingIdx;
-        self.ringCap_BodyLongTrailingIdx = src.ringCap_BodyLongTrailingIdx;
-        self.ringLag_BodyLongTrailingIdx = src.ringLag_BodyLongTrailingIdx;
-        self.ring_BodyLongTrailingIdx_derived.clone_from(&src.ring_BodyLongTrailingIdx_derived);
-        self.ringPos_FarTrailingIdx = src.ringPos_FarTrailingIdx;
-        self.ringCap_FarTrailingIdx = src.ringCap_FarTrailingIdx;
-        self.ringLag_FarTrailingIdx = src.ringLag_FarTrailingIdx;
-        self.ring_FarTrailingIdx_derived.clone_from(&src.ring_FarTrailingIdx_derived);
-        self.ringPos_NearTrailingIdx = src.ringPos_NearTrailingIdx;
-        self.ringCap_NearTrailingIdx = src.ringCap_NearTrailingIdx;
-        self.ringLag_NearTrailingIdx = src.ringLag_NearTrailingIdx;
-        self.ring_NearTrailingIdx_derived.clone_from(&src.ring_NearTrailingIdx_derived);
-        self.ringPos_ShadowLongTrailingIdx = src.ringPos_ShadowLongTrailingIdx;
-        self.ringCap_ShadowLongTrailingIdx = src.ringCap_ShadowLongTrailingIdx;
-        self.ringLag_ShadowLongTrailingIdx = src.ringLag_ShadowLongTrailingIdx;
-        self.ring_ShadowLongTrailingIdx_derived.clone_from(&src.ring_ShadowLongTrailingIdx_derived);
-        self.ringPos_ShadowShortTrailingIdx = src.ringPos_ShadowShortTrailingIdx;
-        self.ringCap_ShadowShortTrailingIdx = src.ringCap_ShadowShortTrailingIdx;
-        self.ringLag_ShadowShortTrailingIdx = src.ringLag_ShadowShortTrailingIdx;
-        self.ring_ShadowShortTrailingIdx_derived.clone_from(&src.ring_ShadowShortTrailingIdx_derived);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1848,12 +1792,11 @@ impl CdladvanceblockStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

@@ -339,16 +339,6 @@ pub struct ApoStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl ApoStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `ApoStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct ApoStreamState {
@@ -357,19 +347,6 @@ struct ApoStreamState {
     optInMAType: MAType,
     sub0: MaStream,
     sub1: MaStream,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl ApoStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInFastPeriod = src.optInFastPeriod;
-        self.optInSlowPeriod = src.optInSlowPeriod;
-        self.optInMAType = src.optInMAType;
-        self.sub0.restore_from(&src.sub0);
-        self.sub1.restore_from(&src.sub1);
-    }
 }
 
 #[allow(unused_variables)]
@@ -604,14 +581,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `ApoStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static APO_PEEK_SCRATCH: std::cell::Cell<Option<Box<ApoStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(unused_mut)]
@@ -677,10 +646,11 @@ impl ApoStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///
@@ -691,15 +661,21 @@ impl ApoStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        APO_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outReal: f64 = 0.0_f64;
-            let stepped = Core::apo_step_impl(&mut scratch, inReal, &mut outReal);
-            cell.set(Some(scratch));
-            stepped?;
-            Ok(outReal)
-        })
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut cur_tempBuffer: f64 = 0.0_f64;
+            let mut cur_outReal: f64 = 0.0_f64;
+
+            // Pipeline the new bar through the sub-streams (batch tail order).
+            cur_tempBuffer = sp.sub0.peek(inReal)?;
+            cur_outReal = sp.sub1.peek(inReal)?;
+            // Combine map (batch tail, per bar).
+            cur_outReal = cur_tempBuffer - cur_outReal;
+            (*outReal) = cur_outReal;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'

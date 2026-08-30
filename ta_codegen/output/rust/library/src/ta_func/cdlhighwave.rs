@@ -430,18 +430,6 @@ pub struct CdlhighwaveStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl CdlhighwaveStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CdlhighwaveStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_short = src.cs_body_short;
-        self.cs_shadow_very_long = src.cs_shadow_very_long;
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CdlhighwaveStreamState {
@@ -453,22 +441,6 @@ struct CdlhighwaveStreamState {
     ringPos_ShadowTrailingIdx: usize,
     ringCap_ShadowTrailingIdx: usize,
     ring_ShadowTrailingIdx_derived: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl CdlhighwaveStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.BodyPeriodTotal = src.BodyPeriodTotal;
-        self.ShadowPeriodTotal = src.ShadowPeriodTotal;
-        self.ringPos_BodyTrailingIdx = src.ringPos_BodyTrailingIdx;
-        self.ringCap_BodyTrailingIdx = src.ringCap_BodyTrailingIdx;
-        self.ring_BodyTrailingIdx_derived.clone_from(&src.ring_BodyTrailingIdx_derived);
-        self.ringPos_ShadowTrailingIdx = src.ringPos_ShadowTrailingIdx;
-        self.ringCap_ShadowTrailingIdx = src.ringCap_ShadowTrailingIdx;
-        self.ring_ShadowTrailingIdx_derived.clone_from(&src.ring_ShadowTrailingIdx_derived);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1020,12 +992,11 @@ impl CdlhighwaveStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

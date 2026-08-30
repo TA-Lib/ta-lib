@@ -670,20 +670,6 @@ pub struct Cdl3whitesoldiersStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl Cdl3whitesoldiersStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `Cdl3whitesoldiersStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_short = src.cs_body_short;
-        self.cs_far = src.cs_far;
-        self.cs_near = src.cs_near;
-        self.cs_shadow_very_short = src.cs_shadow_very_short;
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct Cdl3whitesoldiersStreamState {
@@ -714,41 +700,6 @@ struct Cdl3whitesoldiersStreamState {
     ringCap_ShadowVeryShortTrailingIdx: usize,
     ringLag_ShadowVeryShortTrailingIdx: usize,
     ring_ShadowVeryShortTrailingIdx_derived: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl Cdl3whitesoldiersStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.ShadowVeryShortPeriodTotal = src.ShadowVeryShortPeriodTotal;
-        self.NearPeriodTotal = src.NearPeriodTotal;
-        self.FarPeriodTotal = src.FarPeriodTotal;
-        self.BodyShortPeriodTotal = src.BodyShortPeriodTotal;
-        self.lag1_inOpen = src.lag1_inOpen;
-        self.lag2_inOpen = src.lag2_inOpen;
-        self.lag1_inHigh = src.lag1_inHigh;
-        self.lag2_inHigh = src.lag2_inHigh;
-        self.lag1_inLow = src.lag1_inLow;
-        self.lag2_inLow = src.lag2_inLow;
-        self.lag1_inClose = src.lag1_inClose;
-        self.lag2_inClose = src.lag2_inClose;
-        self.ringPos_BodyShortTrailingIdx = src.ringPos_BodyShortTrailingIdx;
-        self.ringCap_BodyShortTrailingIdx = src.ringCap_BodyShortTrailingIdx;
-        self.ring_BodyShortTrailingIdx_derived.clone_from(&src.ring_BodyShortTrailingIdx_derived);
-        self.ringPos_FarTrailingIdx = src.ringPos_FarTrailingIdx;
-        self.ringCap_FarTrailingIdx = src.ringCap_FarTrailingIdx;
-        self.ringLag_FarTrailingIdx = src.ringLag_FarTrailingIdx;
-        self.ring_FarTrailingIdx_derived.clone_from(&src.ring_FarTrailingIdx_derived);
-        self.ringPos_NearTrailingIdx = src.ringPos_NearTrailingIdx;
-        self.ringCap_NearTrailingIdx = src.ringCap_NearTrailingIdx;
-        self.ringLag_NearTrailingIdx = src.ringLag_NearTrailingIdx;
-        self.ring_NearTrailingIdx_derived.clone_from(&src.ring_NearTrailingIdx_derived);
-        self.ringPos_ShadowVeryShortTrailingIdx = src.ringPos_ShadowVeryShortTrailingIdx;
-        self.ringCap_ShadowVeryShortTrailingIdx = src.ringCap_ShadowVeryShortTrailingIdx;
-        self.ringLag_ShadowVeryShortTrailingIdx = src.ringLag_ShadowVeryShortTrailingIdx;
-        self.ring_ShadowVeryShortTrailingIdx_derived.clone_from(&src.ring_ShadowVeryShortTrailingIdx_derived);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1633,12 +1584,11 @@ impl Cdl3whitesoldiersStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

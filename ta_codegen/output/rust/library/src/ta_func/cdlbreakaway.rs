@@ -364,17 +364,6 @@ pub struct CdlbreakawayStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl CdlbreakawayStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `CdlbreakawayStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.cs_body_long = src.cs_body_long;
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CdlbreakawayStreamState {
@@ -399,35 +388,6 @@ struct CdlbreakawayStreamState {
     ringCap_BodyLongTrailingIdx: usize,
     ringLag_BodyLongTrailingIdx: usize,
     ring_BodyLongTrailingIdx_derived: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl CdlbreakawayStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.BodyLongPeriodTotal = src.BodyLongPeriodTotal;
-        self.lag1_inOpen = src.lag1_inOpen;
-        self.lag2_inOpen = src.lag2_inOpen;
-        self.lag3_inOpen = src.lag3_inOpen;
-        self.lag4_inOpen = src.lag4_inOpen;
-        self.lag1_inHigh = src.lag1_inHigh;
-        self.lag2_inHigh = src.lag2_inHigh;
-        self.lag3_inHigh = src.lag3_inHigh;
-        self.lag4_inHigh = src.lag4_inHigh;
-        self.lag1_inLow = src.lag1_inLow;
-        self.lag2_inLow = src.lag2_inLow;
-        self.lag3_inLow = src.lag3_inLow;
-        self.lag4_inLow = src.lag4_inLow;
-        self.lag1_inClose = src.lag1_inClose;
-        self.lag2_inClose = src.lag2_inClose;
-        self.lag3_inClose = src.lag3_inClose;
-        self.lag4_inClose = src.lag4_inClose;
-        self.ringPos_BodyLongTrailingIdx = src.ringPos_BodyLongTrailingIdx;
-        self.ringCap_BodyLongTrailingIdx = src.ringCap_BodyLongTrailingIdx;
-        self.ringLag_BodyLongTrailingIdx = src.ringLag_BodyLongTrailingIdx;
-        self.ring_BodyLongTrailingIdx_derived.clone_from(&src.ring_BodyLongTrailingIdx_derived);
-    }
 }
 
 #[allow(unused_variables)]
@@ -871,12 +831,11 @@ impl CdlbreakawayStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

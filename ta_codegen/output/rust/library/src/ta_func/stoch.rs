@@ -552,16 +552,6 @@ pub struct StochStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl StochStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `StochStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct StochStreamState {
@@ -584,33 +574,6 @@ struct StochStreamState {
     x_inClose: Vec<f64>,
     sub0: MaStream,
     sub1: MaStream,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl StochStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInFastK_Period = src.optInFastK_Period;
-        self.optInSlowK_Period = src.optInSlowK_Period;
-        self.optInSlowK_MAType = src.optInSlowK_MAType;
-        self.optInSlowD_Period = src.optInSlowD_Period;
-        self.optInSlowD_MAType = src.optInSlowD_MAType;
-        self.lowest = src.lowest;
-        self.highest = src.highest;
-        self.diff = src.diff;
-        self.lowestIdx = src.lowestIdx;
-        self.highestIdx = src.highestIdx;
-        self.trailingIdx = src.trailingIdx;
-        self.i = src.i;
-        self.today = src.today;
-        self.xMask = src.xMask;
-        self.x_inHigh.clone_from(&src.x_inHigh);
-        self.x_inLow.clone_from(&src.x_inLow);
-        self.x_inClose.clone_from(&src.x_inClose);
-        self.sub0.restore_from(&src.sub0);
-        self.sub1.restore_from(&src.sub1);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1125,14 +1088,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `StochStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static STOCH_PEEK_SCRATCH: std::cell::Cell<Option<Box<StochStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(unused_mut)]
@@ -1199,10 +1154,11 @@ impl StochStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///
@@ -1213,16 +1169,103 @@ impl StochStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        STOCH_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outSlowK: f64 = 0.0_f64;
-            let mut outSlowD: f64 = 0.0_f64;
-            let stepped = Core::stoch_step_impl(&mut scratch, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD);
-            cell.set(Some(scratch));
-            stepped?;
-            Ok((outSlowK, outSlowD))
-        })
+        let mut outSlowK: f64 = 0.0_f64;
+        let mut outSlowD: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outSlowK = &mut outSlowK;
+            let outSlowD = &mut outSlowD;
+            let mut cur_tempBuffer: f64 = 0.0_f64;
+            let mut cur_outSlowD: f64 = 0.0_f64;
+            let mut tmp: f64 = 0.0_f64;
+            let mut diff = sp.diff;
+            let mut highest = sp.highest;
+            let mut highestIdx = sp.highestIdx;
+            let mut i = sp.i;
+            let mut lowest = sp.lowest;
+            let mut lowestIdx = sp.lowestIdx;
+            let mut today = sp.today;
+            let mut trailingIdx = sp.trailingIdx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            let mut pkSlot2: usize = usize::MAX;
+            let mut pkVal2: f64 = 0.0_f64;
+            if today >= 1073741824 {
+                let rebaseShift: i32 = trailingIdx & !sp.xMask;
+                today -= rebaseShift;
+                trailingIdx -= rebaseShift;
+                highestIdx -= rebaseShift;
+                i -= rebaseShift;
+                lowestIdx -= rebaseShift;
+            }
+            pkSlot0 = (today & sp.xMask) as usize;
+            pkVal0 = inHigh;
+            pkSlot1 = (today & sp.xMask) as usize;
+            pkVal1 = inLow;
+            pkSlot2 = (today & sp.xMask) as usize;
+            pkVal2 = inClose;
+            // Set the lowest low
+            tmp = (if ((today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(today & sp.xMask) as usize] } else { pkVal1 });
+            if lowestIdx < trailingIdx {
+                lowestIdx = trailingIdx;
+                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                i = lowestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmp = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    if tmp < lowest {
+                        lowestIdx = i;
+                        lowest = tmp;
+                    }
+                }
+                diff = (highest - lowest) / 100.0;
+            } else if tmp <= lowest {
+                lowestIdx = today;
+                lowest = tmp;
+                diff = (highest - lowest) / 100.0;
+            }
+            // Set the highest high
+            tmp = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(today & sp.xMask) as usize] } else { pkVal0 });
+            if highestIdx < trailingIdx {
+                highestIdx = trailingIdx;
+                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                i = highestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
+                    if tmp > highest {
+                        highestIdx = i;
+                        highest = tmp;
+                    }
+                }
+                diff = (highest - lowest) / 100.0;
+            } else if tmp >= highest {
+                highestIdx = today;
+                highest = tmp;
+                diff = (highest - lowest) / 100.0;
+            }
+            // Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+            // machine-flat window leaves a sub-epsilon residue that an exact check
+            // would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+            // range against ITS OWN two extremes, not against a fixed band: the range
+            // carries the quote unit, so a constant put against it answers "flat" for
+            // every window of an instrument quoted below it and zeroed the whole
+            // output (issue #253).
+            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                cur_tempBuffer = ((if ((today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(today & sp.xMask) as usize] } else { pkVal2 }) - lowest) / diff;
+            } else {
+                cur_tempBuffer = 0.0;
+            }
+            trailingIdx += 1;
+            today += 1;
+
+            // Pipeline the new bar through the sub-streams (batch tail order).
+            cur_tempBuffer = sp.sub0.peek(cur_tempBuffer)?;
+            cur_outSlowD = sp.sub1.peek(cur_tempBuffer)?;
+            (*outSlowK) = cur_tempBuffer;
+            (*outSlowD) = cur_outSlowD;
+        }
+        Ok((outSlowK, outSlowD))
     }
 
     /// The bars this stream has produced a value for, in the input series'

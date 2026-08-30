@@ -478,16 +478,6 @@ pub struct MacdextStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl MacdextStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MacdextStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MacdextStreamState {
@@ -500,23 +490,6 @@ struct MacdextStreamState {
     sub0: MaStream,
     sub1: MaStream,
     sub2: MaStream,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl MacdextStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInFastPeriod = src.optInFastPeriod;
-        self.optInFastMAType = src.optInFastMAType;
-        self.optInSlowPeriod = src.optInSlowPeriod;
-        self.optInSlowMAType = src.optInSlowMAType;
-        self.optInSignalPeriod = src.optInSignalPeriod;
-        self.optInSignalMAType = src.optInSignalMAType;
-        self.sub0.restore_from(&src.sub0);
-        self.sub1.restore_from(&src.sub1);
-        self.sub2.restore_from(&src.sub2);
-    }
 }
 
 #[allow(unused_variables)]
@@ -864,14 +837,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `MacdextStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static MACDEXT_PEEK_SCRATCH: std::cell::Cell<Option<Box<MacdextStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(unused_mut)]
@@ -939,10 +904,11 @@ impl MacdextStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///
@@ -953,17 +919,32 @@ impl MacdextStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        MACDEXT_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outMACD: f64 = 0.0_f64;
-            let mut outMACDSignal: f64 = 0.0_f64;
-            let mut outMACDHist: f64 = 0.0_f64;
-            let stepped = Core::macdext_step_impl(&mut scratch, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
-            cell.set(Some(scratch));
-            stepped?;
-            Ok((outMACD, outMACDSignal, outMACDHist))
-        })
+        let mut outMACD: f64 = 0.0_f64;
+        let mut outMACDSignal: f64 = 0.0_f64;
+        let mut outMACDHist: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outMACD = &mut outMACD;
+            let outMACDSignal = &mut outMACDSignal;
+            let outMACDHist = &mut outMACDHist;
+            let mut cur_slowMABuffer: f64 = 0.0_f64;
+            let mut cur_fastMABuffer: f64 = 0.0_f64;
+            let mut cur_outMACDSignal: f64 = 0.0_f64;
+            let mut cur_outMACDHist: f64 = 0.0_f64;
+
+            // Pipeline the new bar through the sub-streams (batch tail order).
+            cur_slowMABuffer = sp.sub0.peek(inReal)?;
+            cur_fastMABuffer = sp.sub1.peek(inReal)?;
+            // Combine map (batch tail, per bar).
+            cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
+            cur_outMACDSignal = sp.sub2.peek(cur_fastMABuffer)?;
+            // Combine map (batch tail, per bar).
+            cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
+            (*outMACD) = cur_fastMABuffer;
+            (*outMACDSignal) = cur_outMACDSignal;
+            (*outMACDHist) = cur_outMACDHist;
+        }
+        Ok((outMACD, outMACDSignal, outMACDHist))
     }
 
     /// The bars this stream has produced a value for, in the input series'

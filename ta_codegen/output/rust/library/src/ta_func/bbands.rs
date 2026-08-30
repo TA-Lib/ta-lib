@@ -648,16 +648,6 @@ pub struct BbandsStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl BbandsStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `BbandsStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct BbandsStreamState {
@@ -667,20 +657,6 @@ struct BbandsStreamState {
     optInMAType: MAType,
     sub0: MaStream,
     sub1: StddevStream,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl BbandsStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInNbDevUp = src.optInNbDevUp;
-        self.optInNbDevDn = src.optInNbDevDn;
-        self.optInMAType = src.optInMAType;
-        self.sub0.restore_from(&src.sub0);
-        self.sub1.restore_from(&src.sub1);
-    }
 }
 
 #[allow(unused_variables)]
@@ -1014,14 +990,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch state (see `BbandsStreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static BBANDS_PEEK_SCRATCH: std::cell::Cell<Option<Box<BbandsStreamState>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 #[allow(unused_mut)]
@@ -1089,10 +1057,11 @@ impl BbandsStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///
@@ -1103,17 +1072,40 @@ impl BbandsStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        BBANDS_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.state.clone()));
-            scratch.restore_from(&self.state);
-            let mut outRealUpperBand: f64 = 0.0_f64;
-            let mut outRealMiddleBand: f64 = 0.0_f64;
-            let mut outRealLowerBand: f64 = 0.0_f64;
-            let stepped = Core::bbands_step_impl(&mut scratch, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
-            cell.set(Some(scratch));
-            stepped?;
-            Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
-        })
+        let mut outRealUpperBand: f64 = 0.0_f64;
+        let mut outRealMiddleBand: f64 = 0.0_f64;
+        let mut outRealLowerBand: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outRealUpperBand = &mut outRealUpperBand;
+            let outRealMiddleBand = &mut outRealMiddleBand;
+            let outRealLowerBand = &mut outRealLowerBand;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut tempReal2: f64 = 0.0_f64;
+            let mut cur_tempBuffer1: f64 = 0.0_f64;
+            let mut cur_tempBuffer2: f64 = 0.0_f64;
+            let mut cur_outRealUpperBand: f64 = 0.0_f64;
+            let mut cur_outRealLowerBand: f64 = 0.0_f64;
+
+            // Pipeline the new bar through the sub-streams (batch tail order).
+            cur_tempBuffer1 = sp.sub0.peek(inReal)?;
+            cur_tempBuffer2 = sp.sub1.peek(inReal)?;
+            // Combine map (batch tail, per bar).
+            if sp.optInNbDevUp == sp.optInNbDevDn {
+                tempReal = cur_tempBuffer2 * sp.optInNbDevUp;
+                tempReal2 = cur_tempBuffer1;
+                cur_outRealUpperBand = tempReal2 + tempReal;
+                cur_outRealLowerBand = tempReal2 - tempReal;
+            } else {
+                tempReal2 = cur_tempBuffer1;
+                cur_outRealUpperBand = (cur_tempBuffer2 as f64).mul_add(sp.optInNbDevUp, tempReal2);
+                cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
+            }
+            (*outRealUpperBand) = cur_outRealUpperBand;
+            (*outRealMiddleBand) = cur_tempBuffer1;
+            (*outRealLowerBand) = cur_outRealLowerBand;
+        }
+        Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
     }
 
     /// The bars this stream has produced a value for, in the input series'

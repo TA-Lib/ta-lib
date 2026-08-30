@@ -420,16 +420,6 @@ pub struct MaStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl MaStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `MaStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MaStreamState {
@@ -437,17 +427,6 @@ struct MaStreamState {
     optInMAType: MAType,
     // Sub-stream, tagged by optInMAType; `MaSub::Identity` on the identity path.
     sub: MaSub,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl MaStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInMAType = src.optInMAType;
-        self.sub.restore_from(&src.sub);
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -463,30 +442,6 @@ enum MaSub {
     Mama(MamaStream),
     T3(T3Stream),
     Hma(HmaStream),
-}
-
-#[allow(dead_code)]
-impl MaSub {
-    /// Overwrite from `src`, reusing the sub-handle's buffers.
-    fn restore_from(&mut self, src: &Self) {
-        if std::mem::discriminant(&*self) != std::mem::discriminant(src) {
-            self.clone_from(src);
-            return;
-        }
-        match (self, src) {
-            (MaSub::Sma(dst), MaSub::Sma(s)) => dst.restore_from(s),
-            (MaSub::Ema(dst), MaSub::Ema(s)) => dst.restore_from(s),
-            (MaSub::Wma(dst), MaSub::Wma(s)) => dst.restore_from(s),
-            (MaSub::Dema(dst), MaSub::Dema(s)) => dst.restore_from(s),
-            (MaSub::Tema(dst), MaSub::Tema(s)) => dst.restore_from(s),
-            (MaSub::Trima(dst), MaSub::Trima(s)) => dst.restore_from(s),
-            (MaSub::Kama(dst), MaSub::Kama(s)) => dst.restore_from(s),
-            (MaSub::Mama(dst), MaSub::Mama(s)) => dst.restore_from(s),
-            (MaSub::T3(dst), MaSub::T3(s)) => dst.restore_from(s),
-            (MaSub::Hma(dst), MaSub::Hma(s)) => dst.restore_from(s),
-            _ => {}
-        }
-    }
 }
 
 #[allow(unused_variables)]
@@ -914,12 +869,11 @@ impl MaStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

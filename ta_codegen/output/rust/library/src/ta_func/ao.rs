@@ -384,16 +384,6 @@ pub struct AoStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl AoStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `AoStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct AoStreamState {
@@ -407,24 +397,6 @@ struct AoStreamState {
     ringPos_trailingSlowIdx: usize,
     ringCap_trailingSlowIdx: usize,
     ring_trailingSlowIdx_derived: Vec<f64>,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl AoStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInFastPeriod = src.optInFastPeriod;
-        self.optInSlowPeriod = src.optInSlowPeriod;
-        self.sumFast = src.sumFast;
-        self.sumSlow = src.sumSlow;
-        self.ringPos_trailingFastIdx = src.ringPos_trailingFastIdx;
-        self.ringCap_trailingFastIdx = src.ringCap_trailingFastIdx;
-        self.ring_trailingFastIdx_derived.clone_from(&src.ring_trailingFastIdx_derived);
-        self.ringPos_trailingSlowIdx = src.ringPos_trailingSlowIdx;
-        self.ringCap_trailingSlowIdx = src.ringCap_trailingSlowIdx;
-        self.ring_trailingSlowIdx_derived.clone_from(&src.ring_trailingSlowIdx_derived);
-    }
 }
 
 #[allow(unused_variables)]
@@ -815,12 +787,11 @@ impl AoStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///

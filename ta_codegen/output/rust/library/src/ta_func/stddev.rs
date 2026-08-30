@@ -309,33 +309,12 @@ pub struct StddevStream {
     out: OutRange,
 }
 
-#[allow(dead_code)]
-impl StddevStream {
-    /// Overwrite from `src`, reusing this handle's buffers instead of
-    /// allocating new ones. See `StddevStreamState::restore_from`.
-    pub(crate) fn restore_from(&mut self, src: &Self) {
-        self.state.restore_from(&src.state);
-        self.out = src.out;
-    }
-}
-
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct StddevStreamState {
     optInTimePeriod: i32,
     optInNbDev: f64,
     sub0: VarStream,
-}
-
-#[allow(non_snake_case, dead_code)]
-impl StddevStreamState {
-    /// Overwrite every field from `src`, reusing this value's buffers
-    /// instead of allocating new ones — `peek`'s scratch restore.
-    fn restore_from(&mut self, src: &Self) {
-        self.optInTimePeriod = src.optInTimePeriod;
-        self.optInNbDev = src.optInNbDev;
-        self.sub0.restore_from(&src.sub0);
-    }
 }
 
 #[allow(unused_variables)]
@@ -627,12 +606,11 @@ impl StddevStream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run
-    /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
-    /// often removed outright by the optimizer, which is why nothing is
-    /// reused here, but that is not a guarantee: budget for a clone of the
-    /// buffers it does own and prefer `update` on a `clone()` in a hot loop.
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// copies nothing and never allocates, so its cost does not grow with the
+    /// period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
     ///
     /// # Errors
     ///
@@ -643,8 +621,23 @@ impl StddevStream {
         if !inReal.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        let mut outReal: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outReal = &mut outReal;
+            let mut cur_outReal: f64 = 0.0_f64;
+
+            // Pipeline the new bar through the sub-streams (batch tail order).
+            cur_outReal = sp.sub0.peek(inReal)?;
+            // Combine map (batch tail, per bar).
+            if sp.optInNbDev != 1.0 {
+                cur_outReal = (cur_outReal).sqrt() * sp.optInNbDev;
+            } else {
+                cur_outReal = (cur_outReal).sqrt();
+            }
+            (*outReal) = cur_outReal;
+        }
+        Ok(outReal)
     }
 
     /// The bars this stream has produced a value for, in the input series'
