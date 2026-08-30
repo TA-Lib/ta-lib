@@ -405,30 +405,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdldarkcloudcoverStream other ) {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -484,9 +460,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

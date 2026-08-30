@@ -612,41 +612,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AcStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.sumFast = other.sumFast;
-         this.sumSlow = other.sumSlow;
-         this.sumSignal = other.sumSignal;
-         this.oscBuffer_Idx = other.oscBuffer_Idx;
-         this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
-         this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
-         this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-         if( this.ring_trailingFastIdx_derived != null && this.ring_trailingFastIdx_derived.length == other.ring_trailingFastIdx_derived.length ) {
-            System.arraycopy( other.ring_trailingFastIdx_derived, 0, this.ring_trailingFastIdx_derived, 0, other.ring_trailingFastIdx_derived.length );
-         } else {
-            this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
-         }
-         this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
-         this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-         if( this.ring_trailingSlowIdx_derived != null && this.ring_trailingSlowIdx_derived.length == other.ring_trailingSlowIdx_derived.length ) {
-            System.arraycopy( other.ring_trailingSlowIdx_derived, 0, this.ring_trailingSlowIdx_derived, 0, other.ring_trailingSlowIdx_derived.length );
-         } else {
-            this.ring_trailingSlowIdx_derived = other.ring_trailingSlowIdx_derived.clone();
-         }
-         this.cbSize_oscBuffer = other.cbSize_oscBuffer;
-         if( this.cb_oscBuffer != null && this.cb_oscBuffer.length == other.cb_oscBuffer.length ) {
-            System.arraycopy( other.cb_oscBuffer, 0, this.cb_oscBuffer, 0, other.cb_oscBuffer.length );
-         } else {
-            this.cb_oscBuffer = other.cb_oscBuffer.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -700,9 +665,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )

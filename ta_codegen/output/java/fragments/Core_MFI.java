@@ -571,31 +571,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MfiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.posSumMF = other.posSumMF;
-         this.negSumMF = other.negSumMF;
-         this.prevValue = other.prevValue;
-         this.nullRun = other.nullRun;
-         this.mflow_Idx = other.mflow_Idx;
-         this.maxIdx_mflow = other.maxIdx_mflow;
-         this.cbSize_mflow = other.cbSize_mflow;
-         if( this.cb_mflow_positive != null && this.cb_mflow_positive.length == other.cb_mflow_positive.length ) {
-            System.arraycopy( other.cb_mflow_positive, 0, this.cb_mflow_positive, 0, other.cb_mflow_positive.length );
-         } else {
-            this.cb_mflow_positive = other.cb_mflow_positive.clone();
-         }
-         if( this.cb_mflow_negative != null && this.cb_mflow_negative.length == other.cb_mflow_negative.length ) {
-            System.arraycopy( other.cb_mflow_negative, 0, this.cb_mflow_negative, 0, other.cb_mflow_negative.length );
-         } else {
-            this.cb_mflow_negative = other.cb_mflow_negative.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -651,9 +626,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )

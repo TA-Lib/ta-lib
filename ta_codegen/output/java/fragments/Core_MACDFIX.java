@@ -557,23 +557,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MacdfixStream other ) {
-         this.core = other.core;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.prevFast = other.prevFast;
-         this.prevSlow = other.prevSlow;
-         this.prevSignal = other.prevSignal;
-         this.slowK = other.slowK;
-         this.fastK = other.fastK;
-         this.signalK = other.signalK;
-         this.cur_outMACD = other.cur_outMACD;
-         this.cur_outMACDSignal = other.cur_outMACDSignal;
-         this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -651,9 +634,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )

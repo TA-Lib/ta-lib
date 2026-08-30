@@ -483,56 +483,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdlrisefall3methodsStream other ) {
-         this.core = other.core;
-         if( this.BodyPeriodTotal != null && this.BodyPeriodTotal.length == other.BodyPeriodTotal.length ) {
-            System.arraycopy( other.BodyPeriodTotal, 0, this.BodyPeriodTotal, 0, other.BodyPeriodTotal.length );
-         } else {
-            this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag3_inOpen = other.lag3_inOpen;
-         this.lag4_inOpen = other.lag4_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag3_inHigh = other.lag3_inHigh;
-         this.lag4_inHigh = other.lag4_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag3_inLow = other.lag3_inLow;
-         this.lag4_inLow = other.lag4_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.lag3_inClose = other.lag3_inClose;
-         this.lag4_inClose = other.lag4_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         this.ringLag_BodyShortTrailingIdx = other.ringLag_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -588,9 +538,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

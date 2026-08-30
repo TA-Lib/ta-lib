@@ -29,6 +29,25 @@ fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
     (func, enums)
 }
 
+/// Every indicator directory whose YAML declares a stream.
+fn streaming_indicators() -> Vec<String> {
+    let mut v: Vec<String> = std::fs::read_dir(input_dir())
+        .expect("input dir")
+        .filter_map(Result::ok)
+        .filter(|e| e.path().is_dir())
+        .filter_map(|e| {
+            let name = e.file_name().to_string_lossy().to_string();
+            let yaml = e.path().join(format!("{name}.yaml"));
+            yaml.exists()
+                .then(|| parser::yaml::parse_yaml(&yaml))
+                .filter(|f| f.streaming)
+                .map(|_| name)
+        })
+        .collect();
+    v.sort();
+    v
+}
+
 fn java_stream_section(name: &str) -> String {
     let (func, enums) = load_indicator(name);
     assert!(func.streaming, "{name}: yaml must carry the stream flag");
@@ -56,10 +75,9 @@ fn test_java_sma_ring_stream_section() {
     assert!(!s.contains("public SmaStream("), "handle ctors stay non-public");
     // Deep-copy constructor clones the ring array.
     assert!(s.contains("this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();"));
-    // ...and every class gets its in-place twin (#201), because any of them can
-    // be some other handle's sub-stream.
-    assert!(s.contains("void copyFrom( SmaStream other ) {"));
-    assert!(s.contains("System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );"));
+    // ...and nothing else copies a handle: the in-place twin `copyFrom` existed
+    // only to refresh peek's scratch, and there are no scratches.
+    assert!(!s.contains("copyFrom"));
     // Peek copies nothing: it runs a frame against this handle, storing what
     // the step would commit in locals instead.
     assert!(!s.contains("PEEK_SCRATCH"));
@@ -123,9 +141,10 @@ fn test_java_sma_ring_stream_section() {
         s.contains("if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;"),
         "update advances the count, saturating"
     );
-    // Both copy paths carry it: the copy constructor and peek's in-place restore.
-    assert_eq!(s.matches("this.outRangeBegIdx = other.outRangeBegIdx;").count(), 2);
-    assert_eq!(s.matches("this.outRangeCount = other.outRangeCount;").count(), 2);
+    // The copy constructor carries it — the one path left that copies a handle,
+    // now that peek runs a frame instead of restoring a scratch.
+    assert_eq!(s.matches("this.outRangeBegIdx = other.outRangeBegIdx;").count(), 1);
+    assert_eq!(s.matches("this.outRangeCount = other.outRangeCount;").count(), 1);
     // Composition seam is package-private with a startIdx anchor.
     assert!(s.contains("SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )"));
 }
@@ -601,6 +620,46 @@ fn java_composed_copy_out_is_stride_guarded() {
         !s.contains("System.arraycopy(sc_outReal, 0, outReal,"),
         "no copy-back survives: the scratch already IS outReal at stride 1"
     );
+}
+
+/// No tier copies a handle to peek it — swept over the whole corpus.
+///
+/// Structural, because no value gate can see it: a peek that copied and then
+/// wrote the copy would still answer correctly. What it costs is the
+/// flat-in-period cost the frame is for.
+#[test]
+fn no_java_peek_copies_the_handle() {
+    let mut swept = 0usize;
+    let mut frames = 0usize;
+    let mut offenders: Vec<String> = Vec::new();
+    for name in streaming_indicators() {
+        let s = java_stream_section(&name);
+        let Some(at) = s.find(" peek( ") else { continue };
+        let start = s[..at].rfind("      public ").expect("a peek signature");
+        let end = s[start..].find("\n      }").map_or(s.len(), |k| start + k);
+        let peek = &s[start..end];
+        swept += 1;
+        if peek.contains(" sp = this;") {
+            frames += 1;
+        }
+        for line in peek.lines() {
+            let l = line.trim();
+            // Comments carry the word too, and `throw new
+            // TaLibArgumentException` is the bar rejection while `new Value(`
+            // packs the answer — none of the three copies a handle.
+            let code = l.starts_with("//") || l.starts_with("/*") || l.starts_with("*");
+            let allocates_handle = !code
+                && l.contains("new ")
+                && !l.starts_with("throw new")
+                && !l.contains("new Value(");
+            if allocates_handle || l.contains("copyFrom") || l.contains("PEEK_SCRATCH") {
+                offenders.push(format!("{name}: {l}"));
+            }
+        }
+    }
+    assert!(swept > 170, "only {swept} peek(s) swept");
+    assert_eq!(frames, swept, "{frames} of {swept} peek(s) run a frame");
+    assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));
 }
 
 #[test]

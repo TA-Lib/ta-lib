@@ -625,26 +625,16 @@ fn render_predicate(
 // ---------------------------------------------------------------------------
 
 /// The tier-owned members of a handle beyond `fields`: the statements that
-/// deep-copy them into a fresh handle, and the statements that overwrite them
-/// in an existing one without allocating. Both are raw Java; the loop tier
-/// owns none and passes [`SubMembers::none`].
+/// deep-copy them into a fresh handle. Raw Java; the loop tier owns none and
+/// passes [`SubMembers::none`].
 struct SubMembers {
     /// Deep-copy statements for the copy constructor.
     copy: String,
-    /// In-place overwrite statements for `copyFrom`.
-    restore: String,
-    /// How many sub-streams the handle owns. Each is a fresh object with its
-    /// own arrays and recursively its own subs.
-    subs: usize,
-    /// Whether what the subs own is unknown at generation time: the dispatch
-    /// arm is picked by an `MAType` at run time, and a period bank's width by
-    /// an argument. Neither can be counted here, and both are deep.
-    unbounded: bool,
 }
 
 impl SubMembers {
     fn none() -> Self {
-        Self { copy: String::new(), restore: String::new(), subs: 0, unbounded: false }
+        Self { copy: String::new() }
     }
 }
 
@@ -656,7 +646,7 @@ fn emit_handle_class(
     fields: &[Field],
     subs: &SubMembers,
     frame: Option<&str>,
-) -> bool {
+) {
     emit_handle_class_with_members(o, func, fields, subs, "", frame)
 }
 
@@ -671,7 +661,7 @@ fn emit_handle_class_with_members(
     subs: &SubMembers,
     extra_members: &str,
     frame: Option<&str>,
-) -> bool {
+) {
     let class = stream_class_name(func);
     let base = base_name(func);
     let jbase = method_base(func);
@@ -743,74 +733,10 @@ fn emit_handle_class_with_members(
     let _ = writeln!(o, "         this.outRangeCount = other.outRangeCount;");
     let _ = writeln!(o, "      }}");
 
-    // The copy constructor's in-place twin: same result, but it overwrites
-    // whatever this instance already owns instead of allocating a peer for it.
-    // Only `peek`'s scratch calls it, and only where there is an allocation to
-    // save (#201) — a handle whose fields are all scalars is cheaper to
-    // allocate outright than to look a scratch up.
-    let mut arrays = 0;
-    let _ = writeln!(o, "\n      void copyFrom( {class} other ) {{");
-    let _ = writeln!(o, "         this.core = other.core;");
-    for (name, jty, _) in fields {
-        if jty.ends_with("[]") {
-            arrays += 1;
-            let _ = writeln!(
-                o,
-                "         if( this.{name} != null && this.{name}.length == other.{name}.length ) {{\n\
-                 \x20           System.arraycopy( other.{name}, 0, this.{name}, 0, other.{name}.length );\n\
-                 \x20        }} else {{\n\
-                 \x20           this.{name} = other.{name}.clone();\n\
-                 \x20        }}"
-            );
-        } else {
-            let _ = writeln!(o, "         this.{name} = other.{name};");
-        }
-    }
-    o.push_str(&subs.restore);
-    let _ = writeln!(o, "         this.outRangeBegIdx = other.outRangeBegIdx;");
-    let _ = writeln!(o, "         this.outRangeCount = other.outRangeCount;");
-    let _ = writeln!(o, "      }}");
-
-    // What `peek` trades away by reusing a scratch is a `ThreadLocal.get()`,
-    // and what it buys back is the allocation of a peer handle. For one small
-    // array that is a wash — measured, it is a slight loss — so the reuse is
-    // for the shapes where the copy is several arrays or a sub-stream tree
-    // (#201). Everything else keeps the plain copy constructor.
-    //
-    // Two shapes look like oversights and are not. A single sub-handle
-    // (`STDDEV` over `VAR`), and one array plus a single sub-handle (`ADXR`
-    // over `ADX`), are both declined although each copy is two or three
-    // allocations deep. Measured on both, reusing the scratch is the slower
-    // arm: de-selecting them ran −7.6% / −6.2% (`STDDEV`) and −4.1% / −13.8%
-    // (`ADXR`) over two A/Bs against 167 unchanged controls, and `ADXR` cost
-    // +7.6% / +9.3% selected on a second box and JDK. Taking any sub-handle
-    // as sufficient — which is what this tested before — reinstates both.
-    // The predicate is now Rust's [`StateShape::scratch_pays`], reached there
-    // by the same measurement on the same shape.
-    //
-    // Java has no counterpart to Rust's elision signal (`peek` under its own
-    // `update` names the copies the optimizer already deletes). The ratio is
-    // not readable here: `peek` is timed as independent calls the CPU
-    // overlaps, `update` as a serial dependency chain, so on this tier
-    // `IMI`, `AROON` and the `HT_*` trio read under their own `update` while
-    // owning arrays nobody claims are free. Settle a Java row with an A/B.
-    let reuse = (subs.unbounded || subs.subs >= 2 || arrays >= 2) && frame.is_none();
-    if reuse {
-        let _ = writeln!(
-            o,
-            "\n      /** {{@code peek}}'s reusable scratch — one per thread, see {{@code copyFrom}}. */"
-        );
-        let _ = writeln!(
-            o,
-            "      private static final ThreadLocal<{class}> PEEK_SCRATCH = new ThreadLocal<>();"
-        );
-    }
-
     emit_value_class(o, func);
-    emit_update_peek_value_copy(o, func, reuse, frame);
+    emit_update_peek_value_copy(o, func, frame);
 
     let _ = writeln!(o, "   }}");
-    reuse
 }
 
 /// The immutable multi-output value record (batch output order, components
@@ -915,27 +841,22 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
 }
 
 
-fn emit_update_peek_value_copy(
-    o: &mut String,
-    func: &FuncDef,
-    reuse: bool,
-    frame: Option<&str>,
-) {
+fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     emit_update_method(o, func);
     emit_update_and_fill_method(o, func);
-    emit_peek_method(o, func, reuse, frame);
+    emit_peek_method(o, func, frame);
     emit_value_method(o, func);
     emit_copy_method(o, func);
 }
 
 // --- update --------------------------------------------------------------------
 fn emit_update_method(o: &mut String, func: &FuncDef) {
-    let base = method_base(func);
     let vt = if has_value_class(func) {
         "Value".to_string()
     } else {
         out_java_type(func, &func.outputs[0].name).to_string()
     };
+    let base = method_base(func);
     let (sig_bars, fwd_bars) = bar_params(func);
 
     let _ = writeln!(
@@ -1131,29 +1052,15 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
 }
 
 // --- peek ------------------------------------------------------------------------
-fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool, frame: Option<&str>) {
+fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     let class = stream_class_name(func);
-    let base = method_base(func);
     let vt = if has_value_class(func) {
         "Value".to_string()
     } else {
         out_java_type(func, &func.outputs[0].name).to_string()
     };
-    let (sig_bars, fwd_bars) = bar_params(func);
+    let (sig_bars, _) = bar_params(func);
 
-    let alloc_note = if frame.is_some() {
-        "It copies nothing: the frame runs against this\n\
-         \x20      * handle, reading its buffers and storing into locals, so the cost does\n\
-         \x20      * not grow with the period and `peek` never allocates."
-    } else if reuse {
-        "It runs on a scratch handle held per thread and\n\
-         \x20      * reused, so the copy allocates nothing after the first peek of this\n\
-         \x20      * indicator on this thread. That scratch is retained for the life of\n\
-         \x20      * the thread."
-    } else {
-        "It runs on a throwaway copy, which for this\n\
-         \x20      * handle's shape is cheaper than reusing one."
-    };
     let _ = writeln!(
         o,
         "\n      /**\n\
@@ -1161,44 +1068,20 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool, frame: Option<&
          \x20      * next {{@code update}} with the same bar would return — the same\n\
          \x20      * transition, with every store it would make carried in a local instead.\n\
          \x20      * Never writes this handle, so peeks may\n\
-         \x20      * run concurrently with each other. {alloc_note}\n\
+         \x20      * run concurrently with each other. It copies nothing: the frame runs against\n\
+         \x20      * this handle, reading its buffers and storing what the step would\n\
+         \x20      * commit into locals, so the cost does not grow with the period and\n\
+         \x20      * {{@code peek}} never allocates.\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} peek( {sig_bars} ) {{");
-    // Ahead of the scratch copy, not left to the step: a rejected bar must not
-    // pay for a handle copy.
+    // Ahead of the frame, not left to the transition: a rejected bar must not
+    // run any of it.
     o.push_str(&finite_bar_check(func, "         ", "peek"));
-    if let Some(body) = frame {
-        let _ = writeln!(o, "         {class} sp = this;");
-        o.push_str(body);
-        let _ = writeln!(o, "         return {};", fresh_value_expr_local(func));
-        let _ = writeln!(o, "      }}");
-        return;
-    }
-    if reuse {
-        // Per thread, not per handle: `peek` must not write the handle (two
-        // threads may peek the same one), and a static ThreadLocal keeps the
-        // reuse bounded — one scratch per thread per indicator, whatever the
-        // number of live handles. `copyFrom` retargets it, Core included.
-        //
-        // What it retains: one handle copy per (thread, indicator peeked),
-        // living as long as the thread and keeping that handle's Core and
-        // arrays reachable — releasing every stream handle does not free it.
-        // In a container this is the usual static-ThreadLocal shape, where a
-        // pooled thread outliving a deployment pins the value and its
-        // classloader; the streaming page says so.
-        let _ = writeln!(o, "         {class} scratch = PEEK_SCRATCH.get();");
-        let _ = writeln!(o, "         if( scratch == null ) {{");
-        let _ = writeln!(o, "            scratch = new {class}(this);");
-        let _ = writeln!(o, "            PEEK_SCRATCH.set(scratch);");
-        let _ = writeln!(o, "         }} else {{");
-        let _ = writeln!(o, "            scratch.copyFrom(this);");
-        let _ = writeln!(o, "         }}");
-    } else {
-        let _ = writeln!(o, "         {class} scratch = new {class}(this);");
-    }
-    let _ = writeln!(o, "         core.{base}StepImpl(scratch, {fwd_bars});");
-    let _ = writeln!(o, "         return {};", fresh_value_expr(func, "scratch"));
+    let body = frame.expect("every tier emits a peek frame");
+    let _ = writeln!(o, "         {class} sp = this;");
+    o.push_str(body);
+    let _ = writeln!(o, "         return {};", fresh_value_expr_local(func));
     let _ = writeln!(o, "      }}");
 }
 
@@ -3121,43 +3004,9 @@ fn emit_dispatch(
     );
     let _ = writeln!(copy_extra, "            }}");
     let _ = writeln!(copy_extra, "         }}");
-    // The same switch in place: the scratch keeps the sub it already holds when
-    // the arm matches. It is only the same arm when the source handle's param
-    // is the same, which is why the tag is read off `this` after the field
-    // copy, exactly as the copy constructor reads it after its own.
-    let mut restore_extra = String::new();
-    let _ = writeln!(restore_extra, "         if( other.sub == null ) {{");
-    let _ = writeln!(restore_extra, "            this.sub = null;");
-    let _ = writeln!(restore_extra, "         }} else {{");
-    let _ = writeln!(restore_extra, "            switch( this.{} )", dp.param);
-    let _ = writeln!(restore_extra, "            {{");
-    for arm in dp.arms.iter().filter(|a| a.supported) {
-        let label = super::java::render_java_switch_label(&arm.label, enums);
-        let cls = callee_stream_class(registry, &arm.callee);
-        let _ = writeln!(restore_extra, "            case {label}:");
-        let _ = writeln!(restore_extra, "               if( this.sub instanceof {cls} ) {{");
-        let _ = writeln!(
-            restore_extra,
-            "                  (({cls}) this.sub).copyFrom(({cls}) other.sub);"
-        );
-        let _ = writeln!(restore_extra, "               }} else {{");
-        let _ = writeln!(
-            restore_extra,
-            "                  this.sub = new {cls}(({cls}) other.sub);"
-        );
-        let _ = writeln!(restore_extra, "               }}");
-        let _ = writeln!(restore_extra, "               break;");
-    }
-    let _ = writeln!(restore_extra, "            default:");
-    let _ = writeln!(
-        restore_extra,
-        "               throw new IllegalStateException(\"unreachable: open rejects arms without a sub-stream\");"
-    );
-    let _ = writeln!(restore_extra, "            }}");
-    let _ = writeln!(restore_extra, "         }}");
     // The dispatch arm is an `MAType` chosen at run time, so what the sub owns
     // is not knowable here.
-    let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
+    let subs = SubMembers { copy: copy_extra };
     // The peek frame: the same routing, into each callee's PUBLIC peek. Nothing
     // here commits, so the dispatch tier needs no copy of the handle it
     // delegates to.
@@ -3457,19 +3306,8 @@ fn emit_period_bank(
     // Same shape, in place: the bank a scratch already holds is the right
     // length unless a differently-parameterised handle borrowed it, in which
     // case it is rebuilt exactly as the copy constructor builds one.
-    let mut restore_extra = String::new();
-    let _ = writeln!(restore_extra, "         if( this.bank != null && this.bank.length == other.bank.length ) {{");
-    let _ = writeln!(restore_extra, "            for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {{");
-    let _ = writeln!(restore_extra, "               this.bank[bankIdx].copyFrom(other.bank[bankIdx]);");
-    let _ = writeln!(restore_extra, "            }}");
-    let _ = writeln!(restore_extra, "         }} else {{");
-    let _ = writeln!(restore_extra, "            this.bank = new {subty}[other.bank.length];");
-    let _ = writeln!(restore_extra, "            for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {{");
-    let _ = writeln!(restore_extra, "               this.bank[bankIdx] = new {subty}(other.bank[bankIdx]);");
-    let _ = writeln!(restore_extra, "            }}");
-    let _ = writeln!(restore_extra, "         }}");
     // A bank is one handle per period in the span: unbounded by construction.
-    let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
+    let subs = SubMembers { copy: copy_extra };
     // The peek frame: only the SELECTED slot is peeked. The other slots' next
     // values are not this bar's answer and peeking is non-committing per
     // handle, so advancing them would be work thrown away — which is why the
@@ -4303,7 +4141,6 @@ fn emit_composed(
     }
     let mut extra_members = String::new();
     let mut copy_extra = String::new();
-    let mut restore_extra = String::new();
     for (si, sub) in cp.subs.iter().enumerate() {
         let callee_key = sub.callee.to_lowercase();
         let cls = callee_stream_class(registry, &callee_key);
@@ -4312,18 +4149,8 @@ fn emit_composed(
         // A sub's class is fixed by the plan, so a scratch always has one to
         // overwrite; the null arm covers a scratch built by the bare
         // `(Core)` constructor, which no path takes today.
-        let _ = writeln!(restore_extra, "         if( this.sub{si} == null ) {{");
-        let _ = writeln!(restore_extra, "            this.sub{si} = new {cls}(other.sub{si});");
-        let _ = writeln!(restore_extra, "         }} else {{");
-        let _ = writeln!(restore_extra, "            this.sub{si}.copyFrom(other.sub{si});");
-        let _ = writeln!(restore_extra, "         }}");
     }
-    let subs = SubMembers {
-        copy: copy_extra,
-        restore: restore_extra,
-        subs: cp.subs.len(),
-        unbounded: false,
-    };
+    let subs = SubMembers { copy: copy_extra };
     let frame = {
         let mut sink = String::new();
         emit_composed_step(

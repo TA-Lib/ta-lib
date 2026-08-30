@@ -658,40 +658,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CorrelStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.sumXY = other.sumXY;
-         this.sumX = other.sumX;
-         this.sumY = other.sumY;
-         this.sumX2 = other.sumX2;
-         this.sumY2 = other.sumY2;
-         this.shiftX = other.shiftX;
-         this.shiftY = other.shiftY;
-         this.leavingX = other.leavingX;
-         this.leavingY = other.leavingY;
-         this.invPeriod = other.invPeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal0 != null && this.x_inReal0.length == other.x_inReal0.length ) {
-            System.arraycopy( other.x_inReal0, 0, this.x_inReal0, 0, other.x_inReal0.length );
-         } else {
-            this.x_inReal0 = other.x_inReal0.clone();
-         }
-         if( this.x_inReal1 != null && this.x_inReal1.length == other.x_inReal1.length ) {
-            System.arraycopy( other.x_inReal1, 0, this.x_inReal1, 0, other.x_inReal1.length );
-         } else {
-            this.x_inReal1 = other.x_inReal1.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -745,9 +711,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )

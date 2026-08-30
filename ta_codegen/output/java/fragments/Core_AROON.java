@@ -459,35 +459,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AroonStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.factor = other.factor;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
-            System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
-         } else {
-            this.x_inHigh = other.x_inHigh.clone();
-         }
-         if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
-            System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
-         } else {
-            this.x_inLow = other.x_inLow.clone();
-         }
-         this.cur_outAroonDown = other.cur_outAroonDown;
-         this.cur_outAroonUp = other.cur_outAroonUp;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -563,9 +534,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )

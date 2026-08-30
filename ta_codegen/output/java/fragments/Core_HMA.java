@@ -946,70 +946,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HmaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.dividerFull = other.dividerFull;
-         this.periodSubFull = other.periodSubFull;
-         this.periodSumFull = other.periodSumFull;
-         this.trailingFull = other.trailingFull;
-         this.lookbackFull = other.lookbackFull;
-         this.barsSinceReseedFull = other.barsSinceReseedFull;
-         this.halfPeriod = other.halfPeriod;
-         this.sqrtPeriod = other.sqrtPeriod;
-         this.ringSize = other.ringSize;
-         this.dividerHalf = other.dividerHalf;
-         this.dividerSqrt = other.dividerSqrt;
-         this.periodSubHalf = other.periodSubHalf;
-         this.periodSumHalf = other.periodSumHalf;
-         this.trailingHalf = other.trailingHalf;
-         this.periodSubSqrt = other.periodSubSqrt;
-         this.periodSumSqrt = other.periodSumSqrt;
-         this.trailingSqrt = other.trailingSqrt;
-         this.lookbackHalf = other.lookbackHalf;
-         this.barsSinceReseedHalf = other.barsSinceReseedHalf;
-         this.barsSinceReseedSqrt = other.barsSinceReseedSqrt;
-         this.dRing_Idx = other.dRing_Idx;
-         this.maxIdx_dRing = other.maxIdx_dRing;
-         this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
-         this.ringCap_trailingIdxFull = other.ringCap_trailingIdxFull;
-         if( this.ring_trailingIdxFull_inReal != null && this.ring_trailingIdxFull_inReal.length == other.ring_trailingIdxFull_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdxFull_inReal, 0, this.ring_trailingIdxFull_inReal, 0, other.ring_trailingIdxFull_inReal.length );
-         } else {
-            this.ring_trailingIdxFull_inReal = other.ring_trailingIdxFull_inReal.clone();
-         }
-         this.winPos_jFull = other.winPos_jFull;
-         this.winCap_jFull = other.winCap_jFull;
-         if( this.win_jFull_inReal != null && this.win_jFull_inReal.length == other.win_jFull_inReal.length ) {
-            System.arraycopy( other.win_jFull_inReal, 0, this.win_jFull_inReal, 0, other.win_jFull_inReal.length );
-         } else {
-            this.win_jFull_inReal = other.win_jFull_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.ringPos_trailingIdxHalf = other.ringPos_trailingIdxHalf;
-         this.ringCap_trailingIdxHalf = other.ringCap_trailingIdxHalf;
-         if( this.ring_trailingIdxHalf_inReal != null && this.ring_trailingIdxHalf_inReal.length == other.ring_trailingIdxHalf_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdxHalf_inReal, 0, this.ring_trailingIdxHalf_inReal, 0, other.ring_trailingIdxHalf_inReal.length );
-         } else {
-            this.ring_trailingIdxHalf_inReal = other.ring_trailingIdxHalf_inReal.clone();
-         }
-         this.winPos_jHalf = other.winPos_jHalf;
-         this.winCap_jHalf = other.winCap_jHalf;
-         if( this.win_jHalf_inReal != null && this.win_jHalf_inReal.length == other.win_jHalf_inReal.length ) {
-            System.arraycopy( other.win_jHalf_inReal, 0, this.win_jHalf_inReal, 0, other.win_jHalf_inReal.length );
-         } else {
-            this.win_jHalf_inReal = other.win_jHalf_inReal.clone();
-         }
-         this.cbSize_dRing = other.cbSize_dRing;
-         if( this.cb_dRing != null && this.cb_dRing.length == other.cb_dRing.length ) {
-            System.arraycopy( other.cb_dRing, 0, this.cb_dRing, 0, other.cb_dRing.length );
-         } else {
-            this.cb_dRing = other.cb_dRing.clone();
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -1062,9 +998,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )

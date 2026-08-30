@@ -346,20 +346,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( StddevStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInNbDev = other.optInNbDev;
-         this.cur_outReal = other.cur_outReal;
-         if( this.sub0 == null ) {
-            this.sub0 = new VarStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -412,9 +398,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )

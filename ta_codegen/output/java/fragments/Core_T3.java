@@ -579,27 +579,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( T3Stream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInVFactor = other.optInVFactor;
-         this.k = other.k;
-         this.one_minus_k = other.one_minus_k;
-         this.e1 = other.e1;
-         this.e2 = other.e2;
-         this.e3 = other.e3;
-         this.e4 = other.e4;
-         this.e5 = other.e5;
-         this.e6 = other.e6;
-         this.c1 = other.c1;
-         this.c2 = other.c2;
-         this.c3 = other.c3;
-         this.c4 = other.c4;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -652,9 +631,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )

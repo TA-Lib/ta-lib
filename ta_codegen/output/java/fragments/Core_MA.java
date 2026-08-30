@@ -584,94 +584,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInMAType = other.optInMAType;
-         this.cur_outReal = other.cur_outReal;
-         if( other.sub == null ) {
-            this.sub = null;
-         } else {
-            switch( this.optInMAType )
-            {
-            case SMA:
-               if( this.sub instanceof SmaStream ) {
-                  ((SmaStream) this.sub).copyFrom((SmaStream) other.sub);
-               } else {
-                  this.sub = new SmaStream((SmaStream) other.sub);
-               }
-               break;
-            case EMA:
-               if( this.sub instanceof EmaStream ) {
-                  ((EmaStream) this.sub).copyFrom((EmaStream) other.sub);
-               } else {
-                  this.sub = new EmaStream((EmaStream) other.sub);
-               }
-               break;
-            case WMA:
-               if( this.sub instanceof WmaStream ) {
-                  ((WmaStream) this.sub).copyFrom((WmaStream) other.sub);
-               } else {
-                  this.sub = new WmaStream((WmaStream) other.sub);
-               }
-               break;
-            case DEMA:
-               if( this.sub instanceof DemaStream ) {
-                  ((DemaStream) this.sub).copyFrom((DemaStream) other.sub);
-               } else {
-                  this.sub = new DemaStream((DemaStream) other.sub);
-               }
-               break;
-            case TEMA:
-               if( this.sub instanceof TemaStream ) {
-                  ((TemaStream) this.sub).copyFrom((TemaStream) other.sub);
-               } else {
-                  this.sub = new TemaStream((TemaStream) other.sub);
-               }
-               break;
-            case TRIMA:
-               if( this.sub instanceof TrimaStream ) {
-                  ((TrimaStream) this.sub).copyFrom((TrimaStream) other.sub);
-               } else {
-                  this.sub = new TrimaStream((TrimaStream) other.sub);
-               }
-               break;
-            case KAMA:
-               if( this.sub instanceof KamaStream ) {
-                  ((KamaStream) this.sub).copyFrom((KamaStream) other.sub);
-               } else {
-                  this.sub = new KamaStream((KamaStream) other.sub);
-               }
-               break;
-            case MAMA:
-               if( this.sub instanceof MamaStream ) {
-                  ((MamaStream) this.sub).copyFrom((MamaStream) other.sub);
-               } else {
-                  this.sub = new MamaStream((MamaStream) other.sub);
-               }
-               break;
-            case T3:
-               if( this.sub instanceof T3Stream ) {
-                  ((T3Stream) this.sub).copyFrom((T3Stream) other.sub);
-               } else {
-                  this.sub = new T3Stream((T3Stream) other.sub);
-               }
-               break;
-            case HMA:
-               if( this.sub instanceof HmaStream ) {
-                  ((HmaStream) this.sub).copyFrom((HmaStream) other.sub);
-               } else {
-                  this.sub = new HmaStream((HmaStream) other.sub);
-               }
-               break;
-            default:
-               throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
-            }
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -724,9 +636,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )

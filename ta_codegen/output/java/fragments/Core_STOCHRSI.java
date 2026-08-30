@@ -483,29 +483,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( StochrsiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInFastK_Period = other.optInFastK_Period;
-         this.optInFastD_Period = other.optInFastD_Period;
-         this.optInFastD_MAType = other.optInFastD_MAType;
-         this.cur_outFastK = other.cur_outFastK;
-         this.cur_outFastD = other.cur_outFastD;
-         this.cachedValue = other.cachedValue;
-         if( this.sub0 == null ) {
-            this.sub0 = new RsiStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new StochfStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -580,9 +557,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )

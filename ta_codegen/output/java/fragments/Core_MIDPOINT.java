@@ -551,27 +551,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MidpointStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -624,9 +603,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )

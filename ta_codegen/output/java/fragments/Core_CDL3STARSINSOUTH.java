@@ -548,72 +548,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdl3starsinsouthStream other ) {
-         this.core = other.core;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
-         } else {
-            this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         this.ringLag_ShadowLongTrailingIdx = other.ringLag_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -669,9 +603,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

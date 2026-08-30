@@ -459,48 +459,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlshootingstarStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -556,9 +514,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

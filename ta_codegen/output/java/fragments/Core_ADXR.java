@@ -365,26 +365,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AdxrStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.cur_outReal = other.cur_outReal;
-         this.lagRingPos_adx = other.lagRingPos_adx;
-         this.lagRingCap_adx = other.lagRingCap_adx;
-         if( this.lagRing_adx != null && this.lagRing_adx.length == other.lagRing_adx.length ) {
-            System.arraycopy( other.lagRing_adx, 0, this.lagRing_adx, 0, other.lagRing_adx.length );
-         } else {
-            this.lagRing_adx = other.lagRing_adx.clone();
-         }
-         if( this.sub0 == null ) {
-            this.sub0 = new AdxStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -439,9 +419,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

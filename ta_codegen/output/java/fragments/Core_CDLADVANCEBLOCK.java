@@ -618,97 +618,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdladvanceblockStream other ) {
-         this.core = other.core;
-         if( this.ShadowShortPeriodTotal != null && this.ShadowShortPeriodTotal.length == other.ShadowShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowShortPeriodTotal, 0, this.ShadowShortPeriodTotal, 0, other.ShadowShortPeriodTotal.length );
-         } else {
-            this.ShadowShortPeriodTotal = other.ShadowShortPeriodTotal.clone();
-         }
-         if( this.ShadowLongPeriodTotal != null && this.ShadowLongPeriodTotal.length == other.ShadowLongPeriodTotal.length ) {
-            System.arraycopy( other.ShadowLongPeriodTotal, 0, this.ShadowLongPeriodTotal, 0, other.ShadowLongPeriodTotal.length );
-         } else {
-            this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal.clone();
-         }
-         if( this.NearPeriodTotal != null && this.NearPeriodTotal.length == other.NearPeriodTotal.length ) {
-            System.arraycopy( other.NearPeriodTotal, 0, this.NearPeriodTotal, 0, other.NearPeriodTotal.length );
-         } else {
-            this.NearPeriodTotal = other.NearPeriodTotal.clone();
-         }
-         if( this.FarPeriodTotal != null && this.FarPeriodTotal.length == other.FarPeriodTotal.length ) {
-            System.arraycopy( other.FarPeriodTotal, 0, this.FarPeriodTotal, 0, other.FarPeriodTotal.length );
-         } else {
-            this.FarPeriodTotal = other.FarPeriodTotal.clone();
-         }
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_FarTrailingIdx = other.ringPos_FarTrailingIdx;
-         this.ringCap_FarTrailingIdx = other.ringCap_FarTrailingIdx;
-         this.ringLag_FarTrailingIdx = other.ringLag_FarTrailingIdx;
-         if( this.ring_FarTrailingIdx_derived != null && this.ring_FarTrailingIdx_derived.length == other.ring_FarTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_FarTrailingIdx_derived, 0, this.ring_FarTrailingIdx_derived, 0, other.ring_FarTrailingIdx_derived.length );
-         } else {
-            this.ring_FarTrailingIdx_derived = other.ring_FarTrailingIdx_derived.clone();
-         }
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         this.ringLag_ShadowLongTrailingIdx = other.ringLag_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowShortTrailingIdx = other.ringPos_ShadowShortTrailingIdx;
-         this.ringCap_ShadowShortTrailingIdx = other.ringCap_ShadowShortTrailingIdx;
-         this.ringLag_ShadowShortTrailingIdx = other.ringLag_ShadowShortTrailingIdx;
-         if( this.ring_ShadowShortTrailingIdx_derived != null && this.ring_ShadowShortTrailingIdx_derived.length == other.ring_ShadowShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowShortTrailingIdx_derived, 0, this.ring_ShadowShortTrailingIdx_derived, 0, other.ring_ShadowShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowShortTrailingIdx_derived = other.ring_ShadowShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_Far_rangeType = other.cs_Far_rangeType;
-         this.cs_Far_avgPeriod = other.cs_Far_avgPeriod;
-         this.cs_Far_factor = other.cs_Far_factor;
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowShort_rangeType = other.cs_ShadowShort_rangeType;
-         this.cs_ShadowShort_avgPeriod = other.cs_ShadowShort_avgPeriod;
-         this.cs_ShadowShort_factor = other.cs_ShadowShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -764,9 +673,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

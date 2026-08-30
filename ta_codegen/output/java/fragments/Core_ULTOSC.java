@@ -815,39 +815,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( UltoscStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod1 = other.optInTimePeriod1;
-         this.optInTimePeriod2 = other.optInTimePeriod2;
-         this.optInTimePeriod3 = other.optInTimePeriod3;
-         this.a1Total = other.a1Total;
-         this.a2Total = other.a2Total;
-         this.a3Total = other.a3Total;
-         this.b1Total = other.b1Total;
-         this.b2Total = other.b2Total;
-         this.b3Total = other.b3Total;
-         this.trailingPos1 = other.trailingPos1;
-         this.trailingPos2 = other.trailingPos2;
-         this.nullRun = other.nullRun;
-         this.term_Idx = other.term_Idx;
-         this.maxIdx_term = other.maxIdx_term;
-         this.lag1_inClose = other.lag1_inClose;
-         this.cbSize_term = other.cbSize_term;
-         if( this.cb_term_closeMinusTrueLow != null && this.cb_term_closeMinusTrueLow.length == other.cb_term_closeMinusTrueLow.length ) {
-            System.arraycopy( other.cb_term_closeMinusTrueLow, 0, this.cb_term_closeMinusTrueLow, 0, other.cb_term_closeMinusTrueLow.length );
-         } else {
-            this.cb_term_closeMinusTrueLow = other.cb_term_closeMinusTrueLow.clone();
-         }
-         if( this.cb_term_trueRange != null && this.cb_term_trueRange.length == other.cb_term_trueRange.length ) {
-            System.arraycopy( other.cb_term_trueRange, 0, this.cb_term_trueRange, 0, other.cb_term_trueRange.length );
-         } else {
-            this.cb_term_trueRange = other.cb_term_trueRange.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -902,9 +869,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

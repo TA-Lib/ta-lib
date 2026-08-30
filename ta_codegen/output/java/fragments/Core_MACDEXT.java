@@ -637,37 +637,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MacdextStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInFastMAType = other.optInFastMAType;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInSlowMAType = other.optInSlowMAType;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.optInSignalMAType = other.optInSignalMAType;
-         this.cur_outMACD = other.cur_outMACD;
-         this.cur_outMACDSignal = other.cur_outMACDSignal;
-         this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
-         if( this.sub0 == null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new MaStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         if( this.sub2 == null ) {
-            this.sub2 = new MaStream(other.sub2);
-         } else {
-            this.sub2.copyFrom(other.sub2);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -745,9 +714,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )

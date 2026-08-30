@@ -502,37 +502,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AccbandsStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.periodTotalUpper = other.periodTotalUpper;
-         this.periodTotalMiddle = other.periodTotalMiddle;
-         this.periodTotalLower = other.periodTotalLower;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inHigh != null && this.ring_trailingIdx_inHigh.length == other.ring_trailingIdx_inHigh.length ) {
-            System.arraycopy( other.ring_trailingIdx_inHigh, 0, this.ring_trailingIdx_inHigh, 0, other.ring_trailingIdx_inHigh.length );
-         } else {
-            this.ring_trailingIdx_inHigh = other.ring_trailingIdx_inHigh.clone();
-         }
-         if( this.ring_trailingIdx_inLow != null && this.ring_trailingIdx_inLow.length == other.ring_trailingIdx_inLow.length ) {
-            System.arraycopy( other.ring_trailingIdx_inLow, 0, this.ring_trailingIdx_inLow, 0, other.ring_trailingIdx_inLow.length );
-         } else {
-            this.ring_trailingIdx_inLow = other.ring_trailingIdx_inLow.clone();
-         }
-         if( this.ring_trailingIdx_inClose != null && this.ring_trailingIdx_inClose.length == other.ring_trailingIdx_inClose.length ) {
-            System.arraycopy( other.ring_trailingIdx_inClose, 0, this.ring_trailingIdx_inClose, 0, other.ring_trailingIdx_inClose.length );
-         } else {
-            this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
-         }
-         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
-         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
-         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -612,9 +581,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

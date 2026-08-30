@@ -447,22 +447,6 @@
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CciStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.circBuffer_Idx = other.circBuffer_Idx;
-         this.maxIdx_circBuffer = other.maxIdx_circBuffer;
-         this.cbSize_circBuffer = other.cbSize_circBuffer;
-         if( this.cb_circBuffer != null && this.cb_circBuffer.length == other.cb_circBuffer.length ) {
-            System.arraycopy( other.cb_circBuffer, 0, this.cb_circBuffer, 0, other.cb_circBuffer.length );
-         } else {
-            this.cb_circBuffer = other.cb_circBuffer.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -517,9 +501,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

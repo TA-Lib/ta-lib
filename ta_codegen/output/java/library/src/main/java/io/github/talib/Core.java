@@ -1097,41 +1097,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AcStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.sumFast = other.sumFast;
-         this.sumSlow = other.sumSlow;
-         this.sumSignal = other.sumSignal;
-         this.oscBuffer_Idx = other.oscBuffer_Idx;
-         this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
-         this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
-         this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-         if( this.ring_trailingFastIdx_derived != null && this.ring_trailingFastIdx_derived.length == other.ring_trailingFastIdx_derived.length ) {
-            System.arraycopy( other.ring_trailingFastIdx_derived, 0, this.ring_trailingFastIdx_derived, 0, other.ring_trailingFastIdx_derived.length );
-         } else {
-            this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
-         }
-         this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
-         this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-         if( this.ring_trailingSlowIdx_derived != null && this.ring_trailingSlowIdx_derived.length == other.ring_trailingSlowIdx_derived.length ) {
-            System.arraycopy( other.ring_trailingSlowIdx_derived, 0, this.ring_trailingSlowIdx_derived, 0, other.ring_trailingSlowIdx_derived.length );
-         } else {
-            this.ring_trailingSlowIdx_derived = other.ring_trailingSlowIdx_derived.clone();
-         }
-         this.cbSize_oscBuffer = other.cbSize_oscBuffer;
-         if( this.cb_oscBuffer != null && this.cb_oscBuffer.length == other.cb_oscBuffer.length ) {
-            System.arraycopy( other.cb_oscBuffer, 0, this.cb_oscBuffer, 0, other.cb_oscBuffer.length );
-         } else {
-            this.cb_oscBuffer = other.cb_oscBuffer.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -1185,9 +1150,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -2149,37 +2115,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AccbandsStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.periodTotalUpper = other.periodTotalUpper;
-         this.periodTotalMiddle = other.periodTotalMiddle;
-         this.periodTotalLower = other.periodTotalLower;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inHigh != null && this.ring_trailingIdx_inHigh.length == other.ring_trailingIdx_inHigh.length ) {
-            System.arraycopy( other.ring_trailingIdx_inHigh, 0, this.ring_trailingIdx_inHigh, 0, other.ring_trailingIdx_inHigh.length );
-         } else {
-            this.ring_trailingIdx_inHigh = other.ring_trailingIdx_inHigh.clone();
-         }
-         if( this.ring_trailingIdx_inLow != null && this.ring_trailingIdx_inLow.length == other.ring_trailingIdx_inLow.length ) {
-            System.arraycopy( other.ring_trailingIdx_inLow, 0, this.ring_trailingIdx_inLow, 0, other.ring_trailingIdx_inLow.length );
-         } else {
-            this.ring_trailingIdx_inLow = other.ring_trailingIdx_inLow.clone();
-         }
-         if( this.ring_trailingIdx_inClose != null && this.ring_trailingIdx_inClose.length == other.ring_trailingIdx_inClose.length ) {
-            System.arraycopy( other.ring_trailingIdx_inClose, 0, this.ring_trailingIdx_inClose, 0, other.ring_trailingIdx_inClose.length );
-         } else {
-            this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
-         }
-         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
-         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
-         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -2259,9 +2194,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -2883,13 +2819,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AcosStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -2942,9 +2871,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -3396,14 +3326,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AdStream other ) {
-         this.core = other.core;
-         this.ad = other.ad;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -3459,9 +3381,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -3907,13 +3830,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AddStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -3967,9 +3883,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -4626,22 +4543,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AdoscStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.slowEMA = other.slowEMA;
-         this.slowk = other.slowk;
-         this.one_minus_slowk = other.one_minus_slowk;
-         this.fastEMA = other.fastEMA;
-         this.fastk = other.fastk;
-         this.one_minus_fastk = other.one_minus_fastk;
-         this.ad = other.ad;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -4697,9 +4598,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -5862,21 +5764,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AdxStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevHigh = other.prevHigh;
-         this.prevLow = other.prevLow;
-         this.prevClose = other.prevClose;
-         this.prevMinusDM = other.prevMinusDM;
-         this.prevPlusDM = other.prevPlusDM;
-         this.prevTR = other.prevTR;
-         this.prevADX = other.prevADX;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -5931,9 +5818,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -6918,26 +6806,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AdxrStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.cur_outReal = other.cur_outReal;
-         this.lagRingPos_adx = other.lagRingPos_adx;
-         this.lagRingCap_adx = other.lagRingCap_adx;
-         if( this.lagRing_adx != null && this.lagRing_adx.length == other.lagRing_adx.length ) {
-            System.arraycopy( other.lagRing_adx, 0, this.lagRing_adx, 0, other.lagRing_adx.length );
-         } else {
-            this.lagRing_adx = other.lagRing_adx.clone();
-         }
-         if( this.sub0 == null ) {
-            this.sub0 = new AdxStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -6992,9 +6860,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -7702,31 +7571,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AoStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.sumFast = other.sumFast;
-         this.sumSlow = other.sumSlow;
-         this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
-         this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-         if( this.ring_trailingFastIdx_derived != null && this.ring_trailingFastIdx_derived.length == other.ring_trailingFastIdx_derived.length ) {
-            System.arraycopy( other.ring_trailingFastIdx_derived, 0, this.ring_trailingFastIdx_derived, 0, other.ring_trailingFastIdx_derived.length );
-         } else {
-            this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
-         }
-         this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
-         this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-         if( this.ring_trailingSlowIdx_derived != null && this.ring_trailingSlowIdx_derived.length == other.ring_trailingSlowIdx_derived.length ) {
-            System.arraycopy( other.ring_trailingSlowIdx_derived, 0, this.ring_trailingSlowIdx_derived, 0, other.ring_trailingSlowIdx_derived.length );
-         } else {
-            this.ring_trailingSlowIdx_derived = other.ring_trailingSlowIdx_derived.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -7780,9 +7624,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -8550,26 +8395,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ApoStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInMAType = other.optInMAType;
-         this.cur_outReal = other.cur_outReal;
-         if( this.sub0 == null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new MaStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -8622,9 +8447,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -9312,35 +9138,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AroonStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.factor = other.factor;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
-            System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
-         } else {
-            this.x_inHigh = other.x_inHigh.clone();
-         }
-         if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
-            System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
-         } else {
-            this.x_inLow = other.x_inLow.clone();
-         }
-         this.cur_outAroonDown = other.cur_outAroonDown;
-         this.cur_outAroonUp = other.cur_outAroonUp;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -9416,9 +9213,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -10257,33 +10055,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AroonoscStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.factor = other.factor;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
-            System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
-         } else {
-            this.x_inHigh = other.x_inHigh.clone();
-         }
-         if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
-            System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
-         } else {
-            this.x_inLow = other.x_inLow.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -10337,9 +10108,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -10982,13 +10754,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AsinStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -11041,9 +10806,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -11409,13 +11175,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AtanStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -11468,9 +11227,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -12122,16 +11882,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AtrStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevATR = other.prevATR;
-         this.lag1_inClose = other.lag1_inClose;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -12186,9 +11936,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -12849,21 +12600,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AvgdevStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.winPos_i = other.winPos_i;
-         this.winCap_i = other.winCap_i;
-         if( this.win_i_inReal != null && this.win_i_inReal.length == other.win_i_inReal.length ) {
-            System.arraycopy( other.win_i_inReal, 0, this.win_i_inReal, 0, other.win_i_inReal.length );
-         } else {
-            this.win_i_inReal = other.win_i_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -12916,9 +12652,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -13396,13 +13133,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( AvgpriceStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -13458,9 +13188,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -14466,30 +14197,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( BbandsStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInNbDevUp = other.optInNbDevUp;
-         this.optInNbDevDn = other.optInNbDevDn;
-         this.optInMAType = other.optInMAType;
-         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
-         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
-         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.cachedValue = other.cachedValue;
-         if( this.sub0 == null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new StddevStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -14567,9 +14274,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -15707,43 +15415,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( BetaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.S_xx = other.S_xx;
-         this.S_xy = other.S_xy;
-         this.S_x = other.S_x;
-         this.S_y = other.S_y;
-         this.last_price_x = other.last_price_x;
-         this.last_price_y = other.last_price_y;
-         this.trailing_last_price_x = other.trailing_last_price_x;
-         this.trailing_last_price_y = other.trailing_last_price_y;
-         this.shift_x = other.shift_x;
-         this.shift_y = other.shift_y;
-         this.leaving_xx = other.leaving_xx;
-         this.leaving_yy = other.leaving_yy;
-         this.S_yy = other.S_yy;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.n = other.n;
-         this.trailingIdx = other.trailingIdx;
-         this.j = other.j;
-         this.i = other.i;
-         this.xMask = other.xMask;
-         if( this.x_inReal0 != null && this.x_inReal0.length == other.x_inReal0.length ) {
-            System.arraycopy( other.x_inReal0, 0, this.x_inReal0, 0, other.x_inReal0.length );
-         } else {
-            this.x_inReal0 = other.x_inReal0.clone();
-         }
-         if( this.x_inReal1 != null && this.x_inReal1.length == other.x_inReal1.length ) {
-            System.arraycopy( other.x_inReal1, 0, this.x_inReal1, 0, other.x_inReal1.length );
-         } else {
-            this.x_inReal1 = other.x_inReal1.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -15797,9 +15468,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -16981,13 +16653,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( BopStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -17043,9 +16708,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -17687,22 +17353,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CciStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.circBuffer_Idx = other.circBuffer_Idx;
-         this.maxIdx_circBuffer = other.maxIdx_circBuffer;
-         this.cbSize_circBuffer = other.cbSize_circBuffer;
-         if( this.cb_circBuffer != null && this.cb_circBuffer.length == other.cb_circBuffer.length ) {
-            System.arraycopy( other.cb_circBuffer, 0, this.cb_circBuffer, 0, other.cb_circBuffer.length );
-         } else {
-            this.cb_circBuffer = other.cb_circBuffer.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -17757,9 +17407,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -18494,32 +18145,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdl2crowsStream other ) {
-         this.core = other.core;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -18575,9 +18200,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -19315,40 +18941,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdl3blackcrowsStream other ) {
-         this.core = other.core;
-         if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
-         } else {
-            this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag3_inOpen = other.lag3_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag3_inHigh = other.lag3_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.lag3_inClose = other.lag3_inClose;
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -19404,9 +18996,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -20202,43 +19795,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdl3insideStream other ) {
-         this.core = other.core;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -20294,9 +19850,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -21079,41 +20636,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdl3linestrikeStream other ) {
-         this.core = other.core;
-         if( this.NearPeriodTotal != null && this.NearPeriodTotal.length == other.NearPeriodTotal.length ) {
-            System.arraycopy( other.NearPeriodTotal, 0, this.NearPeriodTotal, 0, other.NearPeriodTotal.length );
-         } else {
-            this.NearPeriodTotal = other.NearPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag3_inOpen = other.lag3_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag3_inHigh = other.lag3_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag3_inLow = other.lag3_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.lag3_inClose = other.lag3_inClose;
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -21169,9 +20691,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -21846,17 +21369,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdl3outsideStream other ) {
-         this.core = other.core;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -21912,9 +21424,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -22691,72 +22204,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdl3starsinsouthStream other ) {
-         this.core = other.core;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
-         } else {
-            this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         this.ringLag_ShadowLongTrailingIdx = other.ringLag_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -22812,9 +22259,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -23905,80 +23353,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdl3whitesoldiersStream other ) {
-         this.core = other.core;
-         if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
-         } else {
-            this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         }
-         if( this.NearPeriodTotal != null && this.NearPeriodTotal.length == other.NearPeriodTotal.length ) {
-            System.arraycopy( other.NearPeriodTotal, 0, this.NearPeriodTotal, 0, other.NearPeriodTotal.length );
-         } else {
-            this.NearPeriodTotal = other.NearPeriodTotal.clone();
-         }
-         if( this.FarPeriodTotal != null && this.FarPeriodTotal.length == other.FarPeriodTotal.length ) {
-            System.arraycopy( other.FarPeriodTotal, 0, this.FarPeriodTotal, 0, other.FarPeriodTotal.length );
-         } else {
-            this.FarPeriodTotal = other.FarPeriodTotal.clone();
-         }
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.ringPos_FarTrailingIdx = other.ringPos_FarTrailingIdx;
-         this.ringCap_FarTrailingIdx = other.ringCap_FarTrailingIdx;
-         this.ringLag_FarTrailingIdx = other.ringLag_FarTrailingIdx;
-         if( this.ring_FarTrailingIdx_derived != null && this.ring_FarTrailingIdx_derived.length == other.ring_FarTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_FarTrailingIdx_derived, 0, this.ring_FarTrailingIdx_derived, 0, other.ring_FarTrailingIdx_derived.length );
-         } else {
-            this.ring_FarTrailingIdx_derived = other.ring_FarTrailingIdx_derived.clone();
-         }
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_Far_rangeType = other.cs_Far_rangeType;
-         this.cs_Far_avgPeriod = other.cs_Far_avgPeriod;
-         this.cs_Far_factor = other.cs_Far_factor;
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -24034,9 +23408,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -25082,55 +24457,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlabandonedbabyStream other ) {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -25186,9 +24512,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -26246,97 +25573,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdladvanceblockStream other ) {
-         this.core = other.core;
-         if( this.ShadowShortPeriodTotal != null && this.ShadowShortPeriodTotal.length == other.ShadowShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowShortPeriodTotal, 0, this.ShadowShortPeriodTotal, 0, other.ShadowShortPeriodTotal.length );
-         } else {
-            this.ShadowShortPeriodTotal = other.ShadowShortPeriodTotal.clone();
-         }
-         if( this.ShadowLongPeriodTotal != null && this.ShadowLongPeriodTotal.length == other.ShadowLongPeriodTotal.length ) {
-            System.arraycopy( other.ShadowLongPeriodTotal, 0, this.ShadowLongPeriodTotal, 0, other.ShadowLongPeriodTotal.length );
-         } else {
-            this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal.clone();
-         }
-         if( this.NearPeriodTotal != null && this.NearPeriodTotal.length == other.NearPeriodTotal.length ) {
-            System.arraycopy( other.NearPeriodTotal, 0, this.NearPeriodTotal, 0, other.NearPeriodTotal.length );
-         } else {
-            this.NearPeriodTotal = other.NearPeriodTotal.clone();
-         }
-         if( this.FarPeriodTotal != null && this.FarPeriodTotal.length == other.FarPeriodTotal.length ) {
-            System.arraycopy( other.FarPeriodTotal, 0, this.FarPeriodTotal, 0, other.FarPeriodTotal.length );
-         } else {
-            this.FarPeriodTotal = other.FarPeriodTotal.clone();
-         }
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_FarTrailingIdx = other.ringPos_FarTrailingIdx;
-         this.ringCap_FarTrailingIdx = other.ringCap_FarTrailingIdx;
-         this.ringLag_FarTrailingIdx = other.ringLag_FarTrailingIdx;
-         if( this.ring_FarTrailingIdx_derived != null && this.ring_FarTrailingIdx_derived.length == other.ring_FarTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_FarTrailingIdx_derived, 0, this.ring_FarTrailingIdx_derived, 0, other.ring_FarTrailingIdx_derived.length );
-         } else {
-            this.ring_FarTrailingIdx_derived = other.ring_FarTrailingIdx_derived.clone();
-         }
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         this.ringLag_ShadowLongTrailingIdx = other.ringLag_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowShortTrailingIdx = other.ringPos_ShadowShortTrailingIdx;
-         this.ringCap_ShadowShortTrailingIdx = other.ringCap_ShadowShortTrailingIdx;
-         this.ringLag_ShadowShortTrailingIdx = other.ringLag_ShadowShortTrailingIdx;
-         if( this.ring_ShadowShortTrailingIdx_derived != null && this.ring_ShadowShortTrailingIdx_derived.length == other.ring_ShadowShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowShortTrailingIdx_derived, 0, this.ring_ShadowShortTrailingIdx_derived, 0, other.ring_ShadowShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowShortTrailingIdx_derived = other.ring_ShadowShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_Far_rangeType = other.cs_Far_rangeType;
-         this.cs_Far_avgPeriod = other.cs_Far_avgPeriod;
-         this.cs_Far_factor = other.cs_Far_factor;
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowShort_rangeType = other.cs_ShadowShort_rangeType;
-         this.cs_ShadowShort_avgPeriod = other.cs_ShadowShort_avgPeriod;
-         this.cs_ShadowShort_factor = other.cs_ShadowShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -26392,9 +25628,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -27395,35 +26632,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlbeltholdStream other ) {
-         this.core = other.core;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -27479,9 +26687,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -28213,41 +27422,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlbreakawayStream other ) {
-         this.core = other.core;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag3_inOpen = other.lag3_inOpen;
-         this.lag4_inOpen = other.lag4_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag3_inHigh = other.lag3_inHigh;
-         this.lag4_inHigh = other.lag4_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag3_inLow = other.lag3_inLow;
-         this.lag4_inLow = other.lag4_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.lag3_inClose = other.lag3_inClose;
-         this.lag4_inClose = other.lag4_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -28303,9 +27477,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -29060,35 +28235,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlclosingmarubozuStream other ) {
-         this.core = other.core;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -29144,9 +28290,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -29885,41 +29032,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlconcealbabyswallStream other ) {
-         this.core = other.core;
-         if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
-         } else {
-            this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag3_inOpen = other.lag3_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag3_inHigh = other.lag3_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag3_inLow = other.lag3_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.lag3_inClose = other.lag3_inClose;
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -29975,9 +29087,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -30774,45 +29887,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlcounterattackStream other ) {
-         this.core = other.core;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         if( this.BodyLongPeriodTotal != null && this.BodyLongPeriodTotal.length == other.BodyLongPeriodTotal.length ) {
-            System.arraycopy( other.BodyLongPeriodTotal, 0, this.BodyLongPeriodTotal, 0, other.BodyLongPeriodTotal.length );
-         } else {
-            this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -30868,9 +29942,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -31636,30 +30711,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdldarkcloudcoverStream other ) {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -31715,9 +30766,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -32376,24 +31428,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdldojiStream other ) {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -32449,9 +31483,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -33150,39 +32185,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdldojistarStream other ) {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -33238,9 +32240,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -34009,35 +33012,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdldragonflydojiStream other ) {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -34093,9 +33067,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -34754,15 +33729,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlengulfingStream other ) {
-         this.core = other.core;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inClose = other.lag1_inClose;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -34818,9 +33784,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -35555,55 +34522,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdleveningdojistarStream other ) {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -35659,9 +34577,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -36579,46 +35498,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdleveningstarStream other ) {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.BodyShortPeriodTotal2 = other.BodyShortPeriodTotal2;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         this.ringLag_BodyShortTrailingIdx = other.ringLag_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -36674,9 +35553,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -37502,43 +36382,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlgapsidesidewhiteStream other ) {
-         this.core = other.core;
-         this.NearPeriodTotal = other.NearPeriodTotal;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -37594,9 +36437,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -38381,35 +37225,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlgravestonedojiStream other ) {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -38465,9 +37280,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -39298,61 +38114,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlhammerStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.NearPeriodTotal = other.NearPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -39408,9 +38169,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -40388,61 +39150,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlhangingmanStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.NearPeriodTotal = other.NearPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -40498,9 +39205,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -41413,39 +40121,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlharamiStream other ) {
-         this.core = other.core;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -41501,9 +40176,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -42340,39 +41016,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlharamicrossStream other ) {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -42428,9 +41071,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -43236,35 +41880,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlhighwaveStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowPeriodTotal = other.ShadowPeriodTotal;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowTrailingIdx = other.ringPos_ShadowTrailingIdx;
-         this.ringCap_ShadowTrailingIdx = other.ringCap_ShadowTrailingIdx;
-         if( this.ring_ShadowTrailingIdx_derived != null && this.ring_ShadowTrailingIdx_derived.length == other.ring_ShadowTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowTrailingIdx_derived, 0, this.ring_ShadowTrailingIdx_derived, 0, other.ring_ShadowTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowTrailingIdx_derived = other.ring_ShadowTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowVeryLong_rangeType = other.cs_ShadowVeryLong_rangeType;
-         this.cs_ShadowVeryLong_avgPeriod = other.cs_ShadowVeryLong_avgPeriod;
-         this.cs_ShadowVeryLong_factor = other.cs_ShadowVeryLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -43320,9 +41935,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -44055,21 +42671,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlhikkakeStream other ) {
-         this.core = other.core;
-         this.patternResult = other.patternResult;
-         this.cd = other.cd;
-         this.savedHigh = other.savedHigh;
-         this.savedLow = other.savedLow;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -44125,9 +42726,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -44913,39 +43515,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlhikkakemodStream other ) {
-         this.core = other.core;
-         this.NearPeriodTotal = other.NearPeriodTotal;
-         this.patternResult = other.patternResult;
-         this.patternCount = other.patternCount;
-         this.patternHigh = other.patternHigh;
-         this.patternLow = other.patternLow;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag3_inHigh = other.lag3_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag3_inLow = other.lag3_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -45001,9 +43570,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -45826,40 +44396,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlhomingpigeonStream other ) {
-         this.core = other.core;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -45915,9 +44451,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -46734,53 +45271,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdlidentical3crowsStream other ) {
-         this.core = other.core;
-         if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
-         } else {
-            this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         }
-         if( this.EqualPeriodTotal != null && this.EqualPeriodTotal.length == other.EqualPeriodTotal.length ) {
-            System.arraycopy( other.EqualPeriodTotal, 0, this.EqualPeriodTotal, 0, other.EqualPeriodTotal.length );
-         } else {
-            this.EqualPeriodTotal = other.EqualPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -46836,9 +45326,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -47680,41 +46171,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlinneckStream other ) {
-         this.core = other.core;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -47770,9 +46226,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -48581,48 +47038,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlinvertedhammerStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -48678,9 +47093,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -49520,49 +47936,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlkickingStream other ) {
-         this.core = other.core;
-         if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
-         } else {
-            this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         }
-         if( this.BodyLongPeriodTotal != null && this.BodyLongPeriodTotal.length == other.BodyLongPeriodTotal.length ) {
-            System.arraycopy( other.BodyLongPeriodTotal, 0, this.BodyLongPeriodTotal, 0, other.BodyLongPeriodTotal.length );
-         } else {
-            this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -49618,9 +47991,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -50420,49 +48794,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlkickingbylengthStream other ) {
-         this.core = other.core;
-         if( this.ShadowVeryShortPeriodTotal != null && this.ShadowVeryShortPeriodTotal.length == other.ShadowVeryShortPeriodTotal.length ) {
-            System.arraycopy( other.ShadowVeryShortPeriodTotal, 0, this.ShadowVeryShortPeriodTotal, 0, other.ShadowVeryShortPeriodTotal.length );
-         } else {
-            this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
-         }
-         if( this.BodyLongPeriodTotal != null && this.BodyLongPeriodTotal.length == other.BodyLongPeriodTotal.length ) {
-            System.arraycopy( other.BodyLongPeriodTotal, 0, this.BodyLongPeriodTotal, 0, other.BodyLongPeriodTotal.length );
-         } else {
-            this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -50518,9 +48849,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -51290,35 +49622,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlladderbottomStream other ) {
-         this.core = other.core;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag3_inOpen = other.lag3_inOpen;
-         this.lag4_inOpen = other.lag4_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.lag3_inClose = other.lag3_inClose;
-         this.lag4_inClose = other.lag4_inClose;
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -51374,9 +49677,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -52127,35 +50431,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdllongleggeddojiStream other ) {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -52211,9 +50486,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -52929,35 +51205,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdllonglineStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowPeriodTotal = other.ShadowPeriodTotal;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowTrailingIdx = other.ringPos_ShadowTrailingIdx;
-         this.ringCap_ShadowTrailingIdx = other.ringCap_ShadowTrailingIdx;
-         if( this.ring_ShadowTrailingIdx_derived != null && this.ring_ShadowTrailingIdx_derived.length == other.ring_ShadowTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowTrailingIdx_derived, 0, this.ring_ShadowTrailingIdx_derived, 0, other.ring_ShadowTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowTrailingIdx_derived = other.ring_ShadowTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_ShadowShort_rangeType = other.cs_ShadowShort_rangeType;
-         this.cs_ShadowShort_avgPeriod = other.cs_ShadowShort_avgPeriod;
-         this.cs_ShadowShort_factor = other.cs_ShadowShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -53013,9 +51260,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -53742,35 +51990,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlmarubozuStream other ) {
-         this.core = other.core;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -53826,9 +52045,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -54526,29 +52746,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlmatchinglowStream other ) {
-         this.core = other.core;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -54604,9 +52801,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -55401,57 +53599,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlmatholdStream other ) {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         if( this.BodyPeriodTotal != null && this.BodyPeriodTotal.length == other.BodyPeriodTotal.length ) {
-            System.arraycopy( other.BodyPeriodTotal, 0, this.BodyPeriodTotal, 0, other.BodyPeriodTotal.length );
-         } else {
-            this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag3_inOpen = other.lag3_inOpen;
-         this.lag4_inOpen = other.lag4_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag3_inHigh = other.lag3_inHigh;
-         this.lag4_inHigh = other.lag4_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag3_inLow = other.lag3_inLow;
-         this.lag4_inLow = other.lag4_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.lag3_inClose = other.lag3_inClose;
-         this.lag4_inClose = other.lag4_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         this.ringLag_BodyShortTrailingIdx = other.ringLag_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -55507,9 +53654,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -56477,55 +54625,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlmorningdojistarStream other ) {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -56581,9 +54680,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -57509,46 +55609,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlmorningstarStream other ) {
-         this.core = other.core;
-         this.optInPenetration = other.optInPenetration;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.BodyShortPeriodTotal2 = other.BodyShortPeriodTotal2;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         this.ringLag_BodyShortTrailingIdx = other.ringLag_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -57604,9 +55664,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -58428,41 +56489,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlonneckStream other ) {
-         this.core = other.core;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -58518,9 +56544,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -59259,33 +57286,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlpiercingStream other ) {
-         this.core = other.core;
-         if( this.BodyLongPeriodTotal != null && this.BodyLongPeriodTotal.length == other.BodyLongPeriodTotal.length ) {
-            System.arraycopy( other.BodyLongPeriodTotal, 0, this.BodyLongPeriodTotal, 0, other.BodyLongPeriodTotal.length );
-         } else {
-            this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -59341,9 +57341,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -60106,46 +58107,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlrickshawmanStream other ) {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         this.NearPeriodTotal = other.NearPeriodTotal;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -60201,9 +58162,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -61081,56 +59043,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdlrisefall3methodsStream other ) {
-         this.core = other.core;
-         if( this.BodyPeriodTotal != null && this.BodyPeriodTotal.length == other.BodyPeriodTotal.length ) {
-            System.arraycopy( other.BodyPeriodTotal, 0, this.BodyPeriodTotal, 0, other.BodyPeriodTotal.length );
-         } else {
-            this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
-         }
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag3_inOpen = other.lag3_inOpen;
-         this.lag4_inOpen = other.lag4_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag3_inHigh = other.lag3_inHigh;
-         this.lag4_inHigh = other.lag4_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag3_inLow = other.lag3_inLow;
-         this.lag4_inLow = other.lag4_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.lag3_inClose = other.lag3_inClose;
-         this.lag4_inClose = other.lag4_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         this.ringLag_BodyShortTrailingIdx = other.ringLag_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -61186,9 +59098,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -62112,51 +60025,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlseparatinglinesStream other ) {
-         this.core = other.core;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -62212,9 +60080,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -63085,48 +60954,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlshootingstarStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowLongTrailingIdx = other.ringPos_ShadowLongTrailingIdx;
-         this.ringCap_ShadowLongTrailingIdx = other.ringCap_ShadowLongTrailingIdx;
-         if( this.ring_ShadowLongTrailingIdx_derived != null && this.ring_ShadowLongTrailingIdx_derived.length == other.ring_ShadowLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowLongTrailingIdx_derived, 0, this.ring_ShadowLongTrailingIdx_derived, 0, other.ring_ShadowLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowLongTrailingIdx_derived = other.ring_ShadowLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowLong_rangeType = other.cs_ShadowLong_rangeType;
-         this.cs_ShadowLong_avgPeriod = other.cs_ShadowLong_avgPeriod;
-         this.cs_ShadowLong_factor = other.cs_ShadowLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -63182,9 +61009,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -63998,35 +61826,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlshortlineStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ShadowPeriodTotal = other.ShadowPeriodTotal;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowTrailingIdx = other.ringPos_ShadowTrailingIdx;
-         this.ringCap_ShadowTrailingIdx = other.ringCap_ShadowTrailingIdx;
-         if( this.ring_ShadowTrailingIdx_derived != null && this.ring_ShadowTrailingIdx_derived.length == other.ring_ShadowTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowTrailingIdx_derived, 0, this.ring_ShadowTrailingIdx_derived, 0, other.ring_ShadowTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowTrailingIdx_derived = other.ring_ShadowTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_ShadowShort_rangeType = other.cs_ShadowShort_rangeType;
-         this.cs_ShadowShort_avgPeriod = other.cs_ShadowShort_avgPeriod;
-         this.cs_ShadowShort_factor = other.cs_ShadowShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -64082,9 +61881,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -64760,24 +62560,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlspinningtopStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -64833,9 +62615,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -65651,76 +63434,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlstalledpatternStream other ) {
-         this.core = other.core;
-         if( this.BodyLongPeriodTotal != null && this.BodyLongPeriodTotal.length == other.BodyLongPeriodTotal.length ) {
-            System.arraycopy( other.BodyLongPeriodTotal, 0, this.BodyLongPeriodTotal, 0, other.BodyLongPeriodTotal.length );
-         } else {
-            this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
-         }
-         if( this.NearPeriodTotal != null && this.NearPeriodTotal.length == other.NearPeriodTotal.length ) {
-            System.arraycopy( other.NearPeriodTotal, 0, this.NearPeriodTotal, 0, other.NearPeriodTotal.length );
-         } else {
-            this.NearPeriodTotal = other.NearPeriodTotal.clone();
-         }
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -65776,9 +63489,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -66680,33 +64394,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlsticksandwichStream other ) {
-         this.core = other.core;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -66762,9 +64449,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -67530,46 +65218,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdltakuriStream other ) {
-         this.core = other.core;
-         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
-         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
-         this.ShadowVeryLongPeriodTotal = other.ShadowVeryLongPeriodTotal;
-         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
-         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryLongTrailingIdx = other.ringPos_ShadowVeryLongTrailingIdx;
-         this.ringCap_ShadowVeryLongTrailingIdx = other.ringCap_ShadowVeryLongTrailingIdx;
-         if( this.ring_ShadowVeryLongTrailingIdx_derived != null && this.ring_ShadowVeryLongTrailingIdx_derived.length == other.ring_ShadowVeryLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryLongTrailingIdx_derived, 0, this.ring_ShadowVeryLongTrailingIdx_derived, 0, other.ring_ShadowVeryLongTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryLongTrailingIdx_derived = other.ring_ShadowVeryLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
-         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cs_ShadowVeryLong_rangeType = other.cs_ShadowVeryLong_rangeType;
-         this.cs_ShadowVeryLong_avgPeriod = other.cs_ShadowVeryLong_avgPeriod;
-         this.cs_ShadowVeryLong_factor = other.cs_ShadowVeryLong_factor;
-         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
-         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
-         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -67625,9 +65273,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -68401,31 +66050,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdltasukigapStream other ) {
-         this.core = other.core;
-         this.NearPeriodTotal = other.NearPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
-         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
-         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
-         } else {
-            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
-         }
-         this.cs_Near_rangeType = other.cs_Near_rangeType;
-         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
-         this.cs_Near_factor = other.cs_Near_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -68481,9 +66105,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -69245,41 +66870,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdlthrustingStream other ) {
-         this.core = other.core;
-         this.EqualPeriodTotal = other.EqualPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
-         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
-         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
-         } else {
-            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
-         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
-         this.cs_Equal_factor = other.cs_Equal_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -69335,9 +66925,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -70089,32 +67680,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CdltristarStream other ) {
-         this.core = other.core;
-         this.BodyPeriodTotal = other.BodyPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
-         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
-         if( this.ring_BodyTrailingIdx_derived != null && this.ring_BodyTrailingIdx_derived.length == other.ring_BodyTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyTrailingIdx_derived, 0, this.ring_BodyTrailingIdx_derived, 0, other.ring_BodyTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyTrailingIdx_derived = other.ring_BodyTrailingIdx_derived.clone();
-         }
-         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
-         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
-         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -70170,9 +67735,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -70943,43 +68509,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdlunique3riverStream other ) {
-         this.core = other.core;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -71035,9 +68564,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -71855,43 +69385,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdlupsidegap2crowsStream other ) {
-         this.core = other.core;
-         this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
-         this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inHigh = other.lag1_inHigh;
-         this.lag2_inHigh = other.lag2_inHigh;
-         this.lag1_inLow = other.lag1_inLow;
-         this.lag2_inLow = other.lag2_inLow;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
-         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_derived != null && this.ring_BodyLongTrailingIdx_derived.length == other.ring_BodyLongTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyLongTrailingIdx_derived, 0, this.ring_BodyLongTrailingIdx_derived, 0, other.ring_BodyLongTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyLongTrailingIdx_derived = other.ring_BodyLongTrailingIdx_derived.clone();
-         }
-         this.ringPos_BodyShortTrailingIdx = other.ringPos_BodyShortTrailingIdx;
-         this.ringCap_BodyShortTrailingIdx = other.ringCap_BodyShortTrailingIdx;
-         if( this.ring_BodyShortTrailingIdx_derived != null && this.ring_BodyShortTrailingIdx_derived.length == other.ring_BodyShortTrailingIdx_derived.length ) {
-            System.arraycopy( other.ring_BodyShortTrailingIdx_derived, 0, this.ring_BodyShortTrailingIdx_derived, 0, other.ring_BodyShortTrailingIdx_derived.length );
-         } else {
-            this.ring_BodyShortTrailingIdx_derived = other.ring_BodyShortTrailingIdx_derived.clone();
-         }
-         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
-         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
-         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
-         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
-         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
-         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -71947,9 +69440,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -72669,17 +70163,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Cdlxsidegap3methodsStream other ) {
-         this.core = other.core;
-         this.lag1_inOpen = other.lag1_inOpen;
-         this.lag2_inOpen = other.lag2_inOpen;
-         this.lag1_inClose = other.lag1_inClose;
-         this.lag2_inClose = other.lag2_inClose;
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -72735,9 +70218,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -73206,13 +70690,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CeilStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -73265,9 +70742,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -73932,29 +71410,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CmfStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.sumMFV = other.sumMFV;
-         this.sumVol = other.sumVol;
-         this.mfv_Idx = other.mfv_Idx;
-         this.maxIdx_mfv = other.maxIdx_mfv;
-         this.cbSize_mfv = other.cbSize_mfv;
-         if( this.cb_mfv_flow != null && this.cb_mfv_flow.length == other.cb_mfv_flow.length ) {
-            System.arraycopy( other.cb_mfv_flow, 0, this.cb_mfv_flow, 0, other.cb_mfv_flow.length );
-         } else {
-            this.cb_mfv_flow = other.cb_mfv_flow.clone();
-         }
-         if( this.cb_mfv_volume != null && this.cb_mfv_volume.length == other.cb_mfv_volume.length ) {
-            System.arraycopy( other.cb_mfv_volume, 0, this.cb_mfv_volume, 0, other.cb_mfv_volume.length );
-         } else {
-            this.cb_mfv_volume = other.cb_mfv_volume.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -74010,9 +71465,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -74857,17 +72313,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CmoStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevGain = other.prevGain;
-         this.prevLoss = other.prevLoss;
-         this.prevValue = other.prevValue;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -74920,9 +72365,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -75775,26 +73221,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CmouStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.nullRun = other.nullRun;
-         this.upSum = other.upSum;
-         this.downSum = other.downSum;
-         this.prevValue = other.prevValue;
-         this.trailingValue = other.trailingValue;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -75847,9 +73273,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -76912,40 +74339,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CorrelStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.sumXY = other.sumXY;
-         this.sumX = other.sumX;
-         this.sumY = other.sumY;
-         this.sumX2 = other.sumX2;
-         this.sumY2 = other.sumY2;
-         this.shiftX = other.shiftX;
-         this.shiftY = other.shiftY;
-         this.leavingX = other.leavingX;
-         this.leavingY = other.leavingY;
-         this.invPeriod = other.invPeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal0 != null && this.x_inReal0.length == other.x_inReal0.length ) {
-            System.arraycopy( other.x_inReal0, 0, this.x_inReal0, 0, other.x_inReal0.length );
-         } else {
-            this.x_inReal0 = other.x_inReal0.clone();
-         }
-         if( this.x_inReal1 != null && this.x_inReal1.length == other.x_inReal1.length ) {
-            System.arraycopy( other.x_inReal1, 0, this.x_inReal1, 0, other.x_inReal1.length );
-         } else {
-            this.x_inReal1 = other.x_inReal1.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -76999,9 +74392,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -77980,13 +75374,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CosStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -78039,9 +75426,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -78406,13 +75794,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( CoshStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -78465,9 +75846,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -79064,17 +76446,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( DemaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevEMA1 = other.prevEMA1;
-         this.prevEMA2 = other.prevEMA2;
-         this.optInK_1 = other.optInK_1;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -79127,9 +76498,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -79662,13 +77034,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( DivStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -79722,9 +77087,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -80628,21 +77994,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( DxStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevHigh = other.prevHigh;
-         this.prevLow = other.prevLow;
-         this.prevClose = other.prevClose;
-         this.prevMinusDM = other.prevMinusDM;
-         this.prevPlusDM = other.prevPlusDM;
-         this.prevTR = other.prevTR;
-         this.lastOut_outReal = other.lastOut_outReal;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -80697,9 +78048,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -81725,17 +79077,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( EfiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevClose = other.prevClose;
-         this.optInK_1 = other.optInK_1;
-         this.prevMA = other.prevMA;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -81789,9 +79130,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -82539,16 +79881,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( EmaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInK_1 = other.optInK_1;
-         this.prevMA = other.prevMA;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -82601,9 +79933,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -83062,13 +80395,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ExpStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -83121,9 +80447,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -83486,13 +80813,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( FloorStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -83545,9 +80865,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -84635,70 +81956,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HmaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.dividerFull = other.dividerFull;
-         this.periodSubFull = other.periodSubFull;
-         this.periodSumFull = other.periodSumFull;
-         this.trailingFull = other.trailingFull;
-         this.lookbackFull = other.lookbackFull;
-         this.barsSinceReseedFull = other.barsSinceReseedFull;
-         this.halfPeriod = other.halfPeriod;
-         this.sqrtPeriod = other.sqrtPeriod;
-         this.ringSize = other.ringSize;
-         this.dividerHalf = other.dividerHalf;
-         this.dividerSqrt = other.dividerSqrt;
-         this.periodSubHalf = other.periodSubHalf;
-         this.periodSumHalf = other.periodSumHalf;
-         this.trailingHalf = other.trailingHalf;
-         this.periodSubSqrt = other.periodSubSqrt;
-         this.periodSumSqrt = other.periodSumSqrt;
-         this.trailingSqrt = other.trailingSqrt;
-         this.lookbackHalf = other.lookbackHalf;
-         this.barsSinceReseedHalf = other.barsSinceReseedHalf;
-         this.barsSinceReseedSqrt = other.barsSinceReseedSqrt;
-         this.dRing_Idx = other.dRing_Idx;
-         this.maxIdx_dRing = other.maxIdx_dRing;
-         this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
-         this.ringCap_trailingIdxFull = other.ringCap_trailingIdxFull;
-         if( this.ring_trailingIdxFull_inReal != null && this.ring_trailingIdxFull_inReal.length == other.ring_trailingIdxFull_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdxFull_inReal, 0, this.ring_trailingIdxFull_inReal, 0, other.ring_trailingIdxFull_inReal.length );
-         } else {
-            this.ring_trailingIdxFull_inReal = other.ring_trailingIdxFull_inReal.clone();
-         }
-         this.winPos_jFull = other.winPos_jFull;
-         this.winCap_jFull = other.winCap_jFull;
-         if( this.win_jFull_inReal != null && this.win_jFull_inReal.length == other.win_jFull_inReal.length ) {
-            System.arraycopy( other.win_jFull_inReal, 0, this.win_jFull_inReal, 0, other.win_jFull_inReal.length );
-         } else {
-            this.win_jFull_inReal = other.win_jFull_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.ringPos_trailingIdxHalf = other.ringPos_trailingIdxHalf;
-         this.ringCap_trailingIdxHalf = other.ringCap_trailingIdxHalf;
-         if( this.ring_trailingIdxHalf_inReal != null && this.ring_trailingIdxHalf_inReal.length == other.ring_trailingIdxHalf_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdxHalf_inReal, 0, this.ring_trailingIdxHalf_inReal, 0, other.ring_trailingIdxHalf_inReal.length );
-         } else {
-            this.ring_trailingIdxHalf_inReal = other.ring_trailingIdxHalf_inReal.clone();
-         }
-         this.winPos_jHalf = other.winPos_jHalf;
-         this.winCap_jHalf = other.winCap_jHalf;
-         if( this.win_jHalf_inReal != null && this.win_jHalf_inReal.length == other.win_jHalf_inReal.length ) {
-            System.arraycopy( other.win_jHalf_inReal, 0, this.win_jHalf_inReal, 0, other.win_jHalf_inReal.length );
-         } else {
-            this.win_jHalf_inReal = other.win_jHalf_inReal.clone();
-         }
-         this.cbSize_dRing = other.cbSize_dRing;
-         if( this.cb_dRing != null && this.cb_dRing.length == other.cb_dRing.length ) {
-            System.arraycopy( other.cb_dRing, 0, this.cb_dRing, 0, other.cb_dRing.length );
-         } else {
-            this.cb_dRing = other.cb_dRing.clone();
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -84751,9 +82008,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -86737,94 +83995,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HtDcperiodStream other ) {
-         this.core = other.core;
-         this.period = other.period;
-         this.periodWMASum = other.periodWMASum;
-         this.periodWMASub = other.periodWMASub;
-         this.trailingWMAValue = other.trailingWMAValue;
-         this.a = other.a;
-         this.b = other.b;
-         this.hilbertIdx = other.hilbertIdx;
-         if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
-            System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
-         } else {
-            this.detrender_Odd = other.detrender_Odd.clone();
-         }
-         if( this.detrender_Even != null && this.detrender_Even.length == other.detrender_Even.length ) {
-            System.arraycopy( other.detrender_Even, 0, this.detrender_Even, 0, other.detrender_Even.length );
-         } else {
-            this.detrender_Even = other.detrender_Even.clone();
-         }
-         this.prev_detrender_Odd = other.prev_detrender_Odd;
-         this.prev_detrender_Even = other.prev_detrender_Even;
-         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
-         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
-         if( this.Q1_Odd != null && this.Q1_Odd.length == other.Q1_Odd.length ) {
-            System.arraycopy( other.Q1_Odd, 0, this.Q1_Odd, 0, other.Q1_Odd.length );
-         } else {
-            this.Q1_Odd = other.Q1_Odd.clone();
-         }
-         if( this.Q1_Even != null && this.Q1_Even.length == other.Q1_Even.length ) {
-            System.arraycopy( other.Q1_Even, 0, this.Q1_Even, 0, other.Q1_Even.length );
-         } else {
-            this.Q1_Even = other.Q1_Even.clone();
-         }
-         this.prev_Q1_Odd = other.prev_Q1_Odd;
-         this.prev_Q1_Even = other.prev_Q1_Even;
-         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
-         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
-         if( this.jI_Odd != null && this.jI_Odd.length == other.jI_Odd.length ) {
-            System.arraycopy( other.jI_Odd, 0, this.jI_Odd, 0, other.jI_Odd.length );
-         } else {
-            this.jI_Odd = other.jI_Odd.clone();
-         }
-         if( this.jI_Even != null && this.jI_Even.length == other.jI_Even.length ) {
-            System.arraycopy( other.jI_Even, 0, this.jI_Even, 0, other.jI_Even.length );
-         } else {
-            this.jI_Even = other.jI_Even.clone();
-         }
-         this.prev_jI_Odd = other.prev_jI_Odd;
-         this.prev_jI_Even = other.prev_jI_Even;
-         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
-         this.prev_jI_input_Even = other.prev_jI_input_Even;
-         if( this.jQ_Odd != null && this.jQ_Odd.length == other.jQ_Odd.length ) {
-            System.arraycopy( other.jQ_Odd, 0, this.jQ_Odd, 0, other.jQ_Odd.length );
-         } else {
-            this.jQ_Odd = other.jQ_Odd.clone();
-         }
-         if( this.jQ_Even != null && this.jQ_Even.length == other.jQ_Even.length ) {
-            System.arraycopy( other.jQ_Even, 0, this.jQ_Even, 0, other.jQ_Even.length );
-         } else {
-            this.jQ_Even = other.jQ_Even.clone();
-         }
-         this.prev_jQ_Odd = other.prev_jQ_Odd;
-         this.prev_jQ_Even = other.prev_jQ_Even;
-         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
-         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.prevQ2 = other.prevQ2;
-         this.prevI2 = other.prevI2;
-         this.Re = other.Re;
-         this.Im = other.Im;
-         this.I1ForOddPrev2 = other.I1ForOddPrev2;
-         this.I1ForOddPrev3 = other.I1ForOddPrev3;
-         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
-         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
-         this.rad2Deg = other.rad2Deg;
-         this.smoothPeriod = other.smoothPeriod;
-         this.streamParity = other.streamParity;
-         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
-         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
-         if( this.ring_trailingWMAIdx_inReal != null && this.ring_trailingWMAIdx_inReal.length == other.ring_trailingWMAIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingWMAIdx_inReal, 0, this.ring_trailingWMAIdx_inReal, 0, other.ring_trailingWMAIdx_inReal.length );
-         } else {
-            this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -86877,9 +84047,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -88791,104 +85962,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HtDcphaseStream other ) {
-         this.core = other.core;
-         this.period = other.period;
-         this.periodWMASum = other.periodWMASum;
-         this.periodWMASub = other.periodWMASub;
-         this.trailingWMAValue = other.trailingWMAValue;
-         this.a = other.a;
-         this.b = other.b;
-         this.hilbertIdx = other.hilbertIdx;
-         if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
-            System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
-         } else {
-            this.detrender_Odd = other.detrender_Odd.clone();
-         }
-         if( this.detrender_Even != null && this.detrender_Even.length == other.detrender_Even.length ) {
-            System.arraycopy( other.detrender_Even, 0, this.detrender_Even, 0, other.detrender_Even.length );
-         } else {
-            this.detrender_Even = other.detrender_Even.clone();
-         }
-         this.prev_detrender_Odd = other.prev_detrender_Odd;
-         this.prev_detrender_Even = other.prev_detrender_Even;
-         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
-         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
-         if( this.Q1_Odd != null && this.Q1_Odd.length == other.Q1_Odd.length ) {
-            System.arraycopy( other.Q1_Odd, 0, this.Q1_Odd, 0, other.Q1_Odd.length );
-         } else {
-            this.Q1_Odd = other.Q1_Odd.clone();
-         }
-         if( this.Q1_Even != null && this.Q1_Even.length == other.Q1_Even.length ) {
-            System.arraycopy( other.Q1_Even, 0, this.Q1_Even, 0, other.Q1_Even.length );
-         } else {
-            this.Q1_Even = other.Q1_Even.clone();
-         }
-         this.prev_Q1_Odd = other.prev_Q1_Odd;
-         this.prev_Q1_Even = other.prev_Q1_Even;
-         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
-         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
-         if( this.jI_Odd != null && this.jI_Odd.length == other.jI_Odd.length ) {
-            System.arraycopy( other.jI_Odd, 0, this.jI_Odd, 0, other.jI_Odd.length );
-         } else {
-            this.jI_Odd = other.jI_Odd.clone();
-         }
-         if( this.jI_Even != null && this.jI_Even.length == other.jI_Even.length ) {
-            System.arraycopy( other.jI_Even, 0, this.jI_Even, 0, other.jI_Even.length );
-         } else {
-            this.jI_Even = other.jI_Even.clone();
-         }
-         this.prev_jI_Odd = other.prev_jI_Odd;
-         this.prev_jI_Even = other.prev_jI_Even;
-         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
-         this.prev_jI_input_Even = other.prev_jI_input_Even;
-         if( this.jQ_Odd != null && this.jQ_Odd.length == other.jQ_Odd.length ) {
-            System.arraycopy( other.jQ_Odd, 0, this.jQ_Odd, 0, other.jQ_Odd.length );
-         } else {
-            this.jQ_Odd = other.jQ_Odd.clone();
-         }
-         if( this.jQ_Even != null && this.jQ_Even.length == other.jQ_Even.length ) {
-            System.arraycopy( other.jQ_Even, 0, this.jQ_Even, 0, other.jQ_Even.length );
-         } else {
-            this.jQ_Even = other.jQ_Even.clone();
-         }
-         this.prev_jQ_Odd = other.prev_jQ_Odd;
-         this.prev_jQ_Even = other.prev_jQ_Even;
-         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
-         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.prevQ2 = other.prevQ2;
-         this.prevI2 = other.prevI2;
-         this.Re = other.Re;
-         this.Im = other.Im;
-         this.I1ForOddPrev2 = other.I1ForOddPrev2;
-         this.I1ForOddPrev3 = other.I1ForOddPrev3;
-         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
-         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
-         this.rad2Deg = other.rad2Deg;
-         this.constDeg2RadBy360 = other.constDeg2RadBy360;
-         this.smoothPeriod = other.smoothPeriod;
-         this.DCPhase = other.DCPhase;
-         this.smoothPrice_Idx = other.smoothPrice_Idx;
-         this.maxIdx_smoothPrice = other.maxIdx_smoothPrice;
-         this.streamParity = other.streamParity;
-         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
-         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
-         if( this.ring_trailingWMAIdx_inReal != null && this.ring_trailingWMAIdx_inReal.length == other.ring_trailingWMAIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingWMAIdx_inReal, 0, this.ring_trailingWMAIdx_inReal, 0, other.ring_trailingWMAIdx_inReal.length );
-         } else {
-            this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
-         }
-         this.cbSize_smoothPrice = other.cbSize_smoothPrice;
-         if( this.cb_smoothPrice != null && this.cb_smoothPrice.length == other.cb_smoothPrice.length ) {
-            System.arraycopy( other.cb_smoothPrice, 0, this.cb_smoothPrice, 0, other.cb_smoothPrice.length );
-         } else {
-            this.cb_smoothPrice = other.cb_smoothPrice.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -88941,9 +86014,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -90934,95 +88008,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HtPhasorStream other ) {
-         this.core = other.core;
-         this.period = other.period;
-         this.periodWMASum = other.periodWMASum;
-         this.periodWMASub = other.periodWMASub;
-         this.trailingWMAValue = other.trailingWMAValue;
-         this.a = other.a;
-         this.b = other.b;
-         this.hilbertIdx = other.hilbertIdx;
-         if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
-            System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
-         } else {
-            this.detrender_Odd = other.detrender_Odd.clone();
-         }
-         if( this.detrender_Even != null && this.detrender_Even.length == other.detrender_Even.length ) {
-            System.arraycopy( other.detrender_Even, 0, this.detrender_Even, 0, other.detrender_Even.length );
-         } else {
-            this.detrender_Even = other.detrender_Even.clone();
-         }
-         this.prev_detrender_Odd = other.prev_detrender_Odd;
-         this.prev_detrender_Even = other.prev_detrender_Even;
-         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
-         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
-         if( this.Q1_Odd != null && this.Q1_Odd.length == other.Q1_Odd.length ) {
-            System.arraycopy( other.Q1_Odd, 0, this.Q1_Odd, 0, other.Q1_Odd.length );
-         } else {
-            this.Q1_Odd = other.Q1_Odd.clone();
-         }
-         if( this.Q1_Even != null && this.Q1_Even.length == other.Q1_Even.length ) {
-            System.arraycopy( other.Q1_Even, 0, this.Q1_Even, 0, other.Q1_Even.length );
-         } else {
-            this.Q1_Even = other.Q1_Even.clone();
-         }
-         this.prev_Q1_Odd = other.prev_Q1_Odd;
-         this.prev_Q1_Even = other.prev_Q1_Even;
-         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
-         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
-         if( this.jI_Odd != null && this.jI_Odd.length == other.jI_Odd.length ) {
-            System.arraycopy( other.jI_Odd, 0, this.jI_Odd, 0, other.jI_Odd.length );
-         } else {
-            this.jI_Odd = other.jI_Odd.clone();
-         }
-         if( this.jI_Even != null && this.jI_Even.length == other.jI_Even.length ) {
-            System.arraycopy( other.jI_Even, 0, this.jI_Even, 0, other.jI_Even.length );
-         } else {
-            this.jI_Even = other.jI_Even.clone();
-         }
-         this.prev_jI_Odd = other.prev_jI_Odd;
-         this.prev_jI_Even = other.prev_jI_Even;
-         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
-         this.prev_jI_input_Even = other.prev_jI_input_Even;
-         if( this.jQ_Odd != null && this.jQ_Odd.length == other.jQ_Odd.length ) {
-            System.arraycopy( other.jQ_Odd, 0, this.jQ_Odd, 0, other.jQ_Odd.length );
-         } else {
-            this.jQ_Odd = other.jQ_Odd.clone();
-         }
-         if( this.jQ_Even != null && this.jQ_Even.length == other.jQ_Even.length ) {
-            System.arraycopy( other.jQ_Even, 0, this.jQ_Even, 0, other.jQ_Even.length );
-         } else {
-            this.jQ_Even = other.jQ_Even.clone();
-         }
-         this.prev_jQ_Odd = other.prev_jQ_Odd;
-         this.prev_jQ_Even = other.prev_jQ_Even;
-         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
-         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.prevQ2 = other.prevQ2;
-         this.prevI2 = other.prevI2;
-         this.Re = other.Re;
-         this.Im = other.Im;
-         this.I1ForOddPrev2 = other.I1ForOddPrev2;
-         this.I1ForOddPrev3 = other.I1ForOddPrev3;
-         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
-         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
-         this.rad2Deg = other.rad2Deg;
-         this.streamParity = other.streamParity;
-         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
-         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
-         if( this.ring_trailingWMAIdx_inReal != null && this.ring_trailingWMAIdx_inReal.length == other.ring_trailingWMAIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingWMAIdx_inReal, 0, this.ring_trailingWMAIdx_inReal, 0, other.ring_trailingWMAIdx_inReal.length );
-         } else {
-            this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
-         }
-         this.cur_outInPhase = other.cur_outInPhase;
-         this.cur_outQuadrature = other.cur_outQuadrature;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -91097,9 +88082,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -93045,107 +90031,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HtSineStream other ) {
-         this.core = other.core;
-         this.period = other.period;
-         this.periodWMASum = other.periodWMASum;
-         this.periodWMASub = other.periodWMASub;
-         this.trailingWMAValue = other.trailingWMAValue;
-         this.a = other.a;
-         this.b = other.b;
-         this.hilbertIdx = other.hilbertIdx;
-         if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
-            System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
-         } else {
-            this.detrender_Odd = other.detrender_Odd.clone();
-         }
-         if( this.detrender_Even != null && this.detrender_Even.length == other.detrender_Even.length ) {
-            System.arraycopy( other.detrender_Even, 0, this.detrender_Even, 0, other.detrender_Even.length );
-         } else {
-            this.detrender_Even = other.detrender_Even.clone();
-         }
-         this.prev_detrender_Odd = other.prev_detrender_Odd;
-         this.prev_detrender_Even = other.prev_detrender_Even;
-         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
-         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
-         if( this.Q1_Odd != null && this.Q1_Odd.length == other.Q1_Odd.length ) {
-            System.arraycopy( other.Q1_Odd, 0, this.Q1_Odd, 0, other.Q1_Odd.length );
-         } else {
-            this.Q1_Odd = other.Q1_Odd.clone();
-         }
-         if( this.Q1_Even != null && this.Q1_Even.length == other.Q1_Even.length ) {
-            System.arraycopy( other.Q1_Even, 0, this.Q1_Even, 0, other.Q1_Even.length );
-         } else {
-            this.Q1_Even = other.Q1_Even.clone();
-         }
-         this.prev_Q1_Odd = other.prev_Q1_Odd;
-         this.prev_Q1_Even = other.prev_Q1_Even;
-         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
-         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
-         if( this.jI_Odd != null && this.jI_Odd.length == other.jI_Odd.length ) {
-            System.arraycopy( other.jI_Odd, 0, this.jI_Odd, 0, other.jI_Odd.length );
-         } else {
-            this.jI_Odd = other.jI_Odd.clone();
-         }
-         if( this.jI_Even != null && this.jI_Even.length == other.jI_Even.length ) {
-            System.arraycopy( other.jI_Even, 0, this.jI_Even, 0, other.jI_Even.length );
-         } else {
-            this.jI_Even = other.jI_Even.clone();
-         }
-         this.prev_jI_Odd = other.prev_jI_Odd;
-         this.prev_jI_Even = other.prev_jI_Even;
-         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
-         this.prev_jI_input_Even = other.prev_jI_input_Even;
-         if( this.jQ_Odd != null && this.jQ_Odd.length == other.jQ_Odd.length ) {
-            System.arraycopy( other.jQ_Odd, 0, this.jQ_Odd, 0, other.jQ_Odd.length );
-         } else {
-            this.jQ_Odd = other.jQ_Odd.clone();
-         }
-         if( this.jQ_Even != null && this.jQ_Even.length == other.jQ_Even.length ) {
-            System.arraycopy( other.jQ_Even, 0, this.jQ_Even, 0, other.jQ_Even.length );
-         } else {
-            this.jQ_Even = other.jQ_Even.clone();
-         }
-         this.prev_jQ_Odd = other.prev_jQ_Odd;
-         this.prev_jQ_Even = other.prev_jQ_Even;
-         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
-         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.prevQ2 = other.prevQ2;
-         this.prevI2 = other.prevI2;
-         this.Re = other.Re;
-         this.Im = other.Im;
-         this.I1ForOddPrev2 = other.I1ForOddPrev2;
-         this.I1ForOddPrev3 = other.I1ForOddPrev3;
-         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
-         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
-         this.rad2Deg = other.rad2Deg;
-         this.deg2Rad = other.deg2Rad;
-         this.constDeg2RadBy360 = other.constDeg2RadBy360;
-         this.smoothPeriod = other.smoothPeriod;
-         this.DCPhase = other.DCPhase;
-         this.smoothPrice_Idx = other.smoothPrice_Idx;
-         this.maxIdx_smoothPrice = other.maxIdx_smoothPrice;
-         this.streamParity = other.streamParity;
-         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
-         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
-         if( this.ring_trailingWMAIdx_inReal != null && this.ring_trailingWMAIdx_inReal.length == other.ring_trailingWMAIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingWMAIdx_inReal, 0, this.ring_trailingWMAIdx_inReal, 0, other.ring_trailingWMAIdx_inReal.length );
-         } else {
-            this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
-         }
-         this.cbSize_smoothPrice = other.cbSize_smoothPrice;
-         if( this.cb_smoothPrice != null && this.cb_smoothPrice.length == other.cb_smoothPrice.length ) {
-            System.arraycopy( other.cb_smoothPrice, 0, this.cb_smoothPrice, 0, other.cb_smoothPrice.length );
-         } else {
-            this.cb_smoothPrice = other.cb_smoothPrice.clone();
-         }
-         this.cur_outSine = other.cur_outSine;
-         this.cur_outLeadSine = other.cur_outLeadSine;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -93220,9 +90105,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -95279,104 +92165,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HtTrendlineStream other ) {
-         this.core = other.core;
-         this.period = other.period;
-         this.periodWMASum = other.periodWMASum;
-         this.periodWMASub = other.periodWMASub;
-         this.trailingWMAValue = other.trailingWMAValue;
-         this.iTrend1 = other.iTrend1;
-         this.iTrend2 = other.iTrend2;
-         this.iTrend3 = other.iTrend3;
-         this.a = other.a;
-         this.b = other.b;
-         this.hilbertIdx = other.hilbertIdx;
-         if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
-            System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
-         } else {
-            this.detrender_Odd = other.detrender_Odd.clone();
-         }
-         if( this.detrender_Even != null && this.detrender_Even.length == other.detrender_Even.length ) {
-            System.arraycopy( other.detrender_Even, 0, this.detrender_Even, 0, other.detrender_Even.length );
-         } else {
-            this.detrender_Even = other.detrender_Even.clone();
-         }
-         this.prev_detrender_Odd = other.prev_detrender_Odd;
-         this.prev_detrender_Even = other.prev_detrender_Even;
-         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
-         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
-         if( this.Q1_Odd != null && this.Q1_Odd.length == other.Q1_Odd.length ) {
-            System.arraycopy( other.Q1_Odd, 0, this.Q1_Odd, 0, other.Q1_Odd.length );
-         } else {
-            this.Q1_Odd = other.Q1_Odd.clone();
-         }
-         if( this.Q1_Even != null && this.Q1_Even.length == other.Q1_Even.length ) {
-            System.arraycopy( other.Q1_Even, 0, this.Q1_Even, 0, other.Q1_Even.length );
-         } else {
-            this.Q1_Even = other.Q1_Even.clone();
-         }
-         this.prev_Q1_Odd = other.prev_Q1_Odd;
-         this.prev_Q1_Even = other.prev_Q1_Even;
-         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
-         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
-         if( this.jI_Odd != null && this.jI_Odd.length == other.jI_Odd.length ) {
-            System.arraycopy( other.jI_Odd, 0, this.jI_Odd, 0, other.jI_Odd.length );
-         } else {
-            this.jI_Odd = other.jI_Odd.clone();
-         }
-         if( this.jI_Even != null && this.jI_Even.length == other.jI_Even.length ) {
-            System.arraycopy( other.jI_Even, 0, this.jI_Even, 0, other.jI_Even.length );
-         } else {
-            this.jI_Even = other.jI_Even.clone();
-         }
-         this.prev_jI_Odd = other.prev_jI_Odd;
-         this.prev_jI_Even = other.prev_jI_Even;
-         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
-         this.prev_jI_input_Even = other.prev_jI_input_Even;
-         if( this.jQ_Odd != null && this.jQ_Odd.length == other.jQ_Odd.length ) {
-            System.arraycopy( other.jQ_Odd, 0, this.jQ_Odd, 0, other.jQ_Odd.length );
-         } else {
-            this.jQ_Odd = other.jQ_Odd.clone();
-         }
-         if( this.jQ_Even != null && this.jQ_Even.length == other.jQ_Even.length ) {
-            System.arraycopy( other.jQ_Even, 0, this.jQ_Even, 0, other.jQ_Even.length );
-         } else {
-            this.jQ_Even = other.jQ_Even.clone();
-         }
-         this.prev_jQ_Odd = other.prev_jQ_Odd;
-         this.prev_jQ_Even = other.prev_jQ_Even;
-         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
-         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.prevQ2 = other.prevQ2;
-         this.prevI2 = other.prevI2;
-         this.Re = other.Re;
-         this.Im = other.Im;
-         this.I1ForOddPrev2 = other.I1ForOddPrev2;
-         this.I1ForOddPrev3 = other.I1ForOddPrev3;
-         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
-         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
-         this.rad2Deg = other.rad2Deg;
-         this.smoothPeriod = other.smoothPeriod;
-         this.streamParity = other.streamParity;
-         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
-         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
-         if( this.ring_trailingWMAIdx_inReal != null && this.ring_trailingWMAIdx_inReal.length == other.ring_trailingWMAIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingWMAIdx_inReal, 0, this.ring_trailingWMAIdx_inReal, 0, other.ring_trailingWMAIdx_inReal.length );
-         } else {
-            this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
-         }
-         this.winPos_i = other.winPos_i;
-         this.winCap_i = other.winCap_i;
-         if( this.win_i_inReal != null && this.win_i_inReal.length == other.win_i_inReal.length ) {
-            System.arraycopy( other.win_i_inReal, 0, this.win_i_inReal, 0, other.win_i_inReal.length );
-         } else {
-            this.win_i_inReal = other.win_i_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -95429,9 +92217,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -97638,118 +94427,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( HtTrendmodeStream other ) {
-         this.core = other.core;
-         this.period = other.period;
-         this.periodWMASum = other.periodWMASum;
-         this.periodWMASub = other.periodWMASub;
-         this.trailingWMAValue = other.trailingWMAValue;
-         this.iTrend1 = other.iTrend1;
-         this.iTrend2 = other.iTrend2;
-         this.iTrend3 = other.iTrend3;
-         this.a = other.a;
-         this.b = other.b;
-         this.hilbertIdx = other.hilbertIdx;
-         if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
-            System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
-         } else {
-            this.detrender_Odd = other.detrender_Odd.clone();
-         }
-         if( this.detrender_Even != null && this.detrender_Even.length == other.detrender_Even.length ) {
-            System.arraycopy( other.detrender_Even, 0, this.detrender_Even, 0, other.detrender_Even.length );
-         } else {
-            this.detrender_Even = other.detrender_Even.clone();
-         }
-         this.prev_detrender_Odd = other.prev_detrender_Odd;
-         this.prev_detrender_Even = other.prev_detrender_Even;
-         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
-         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
-         if( this.Q1_Odd != null && this.Q1_Odd.length == other.Q1_Odd.length ) {
-            System.arraycopy( other.Q1_Odd, 0, this.Q1_Odd, 0, other.Q1_Odd.length );
-         } else {
-            this.Q1_Odd = other.Q1_Odd.clone();
-         }
-         if( this.Q1_Even != null && this.Q1_Even.length == other.Q1_Even.length ) {
-            System.arraycopy( other.Q1_Even, 0, this.Q1_Even, 0, other.Q1_Even.length );
-         } else {
-            this.Q1_Even = other.Q1_Even.clone();
-         }
-         this.prev_Q1_Odd = other.prev_Q1_Odd;
-         this.prev_Q1_Even = other.prev_Q1_Even;
-         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
-         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
-         if( this.jI_Odd != null && this.jI_Odd.length == other.jI_Odd.length ) {
-            System.arraycopy( other.jI_Odd, 0, this.jI_Odd, 0, other.jI_Odd.length );
-         } else {
-            this.jI_Odd = other.jI_Odd.clone();
-         }
-         if( this.jI_Even != null && this.jI_Even.length == other.jI_Even.length ) {
-            System.arraycopy( other.jI_Even, 0, this.jI_Even, 0, other.jI_Even.length );
-         } else {
-            this.jI_Even = other.jI_Even.clone();
-         }
-         this.prev_jI_Odd = other.prev_jI_Odd;
-         this.prev_jI_Even = other.prev_jI_Even;
-         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
-         this.prev_jI_input_Even = other.prev_jI_input_Even;
-         if( this.jQ_Odd != null && this.jQ_Odd.length == other.jQ_Odd.length ) {
-            System.arraycopy( other.jQ_Odd, 0, this.jQ_Odd, 0, other.jQ_Odd.length );
-         } else {
-            this.jQ_Odd = other.jQ_Odd.clone();
-         }
-         if( this.jQ_Even != null && this.jQ_Even.length == other.jQ_Even.length ) {
-            System.arraycopy( other.jQ_Even, 0, this.jQ_Even, 0, other.jQ_Even.length );
-         } else {
-            this.jQ_Even = other.jQ_Even.clone();
-         }
-         this.prev_jQ_Odd = other.prev_jQ_Odd;
-         this.prev_jQ_Even = other.prev_jQ_Even;
-         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
-         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.prevQ2 = other.prevQ2;
-         this.prevI2 = other.prevI2;
-         this.Re = other.Re;
-         this.Im = other.Im;
-         this.I1ForOddPrev2 = other.I1ForOddPrev2;
-         this.I1ForOddPrev3 = other.I1ForOddPrev3;
-         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
-         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
-         this.rad2Deg = other.rad2Deg;
-         this.deg2Rad = other.deg2Rad;
-         this.constDeg2RadBy360 = other.constDeg2RadBy360;
-         this.smoothPeriod = other.smoothPeriod;
-         this.DCPhase = other.DCPhase;
-         this.daysInTrend = other.daysInTrend;
-         this.sine = other.sine;
-         this.leadSine = other.leadSine;
-         this.smoothPrice_Idx = other.smoothPrice_Idx;
-         this.maxIdx_smoothPrice = other.maxIdx_smoothPrice;
-         this.streamParity = other.streamParity;
-         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
-         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
-         if( this.ring_trailingWMAIdx_inReal != null && this.ring_trailingWMAIdx_inReal.length == other.ring_trailingWMAIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingWMAIdx_inReal, 0, this.ring_trailingWMAIdx_inReal, 0, other.ring_trailingWMAIdx_inReal.length );
-         } else {
-            this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
-         }
-         this.winPos_j = other.winPos_j;
-         this.winCap_j = other.winCap_j;
-         if( this.win_j_inReal != null && this.win_j_inReal.length == other.win_j_inReal.length ) {
-            System.arraycopy( other.win_j_inReal, 0, this.win_j_inReal, 0, other.win_j_inReal.length );
-         } else {
-            this.win_j_inReal = other.win_j_inReal.clone();
-         }
-         this.cbSize_smoothPrice = other.cbSize_smoothPrice;
-         if( this.cb_smoothPrice != null && this.cb_smoothPrice.length == other.cb_smoothPrice.length ) {
-            System.arraycopy( other.cb_smoothPrice, 0, this.cb_smoothPrice, 0, other.cb_smoothPrice.length );
-         } else {
-            this.cb_smoothPrice = other.cb_smoothPrice.clone();
-         }
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -97802,9 +94479,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -99420,26 +96098,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ImiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.winPos_i = other.winPos_i;
-         this.winCap_i = other.winCap_i;
-         if( this.win_i_inOpen != null && this.win_i_inOpen.length == other.win_i_inOpen.length ) {
-            System.arraycopy( other.win_i_inOpen, 0, this.win_i_inOpen, 0, other.win_i_inOpen.length );
-         } else {
-            this.win_i_inOpen = other.win_i_inOpen.clone();
-         }
-         if( this.win_i_inClose != null && this.win_i_inClose.length == other.win_i_inClose.length ) {
-            System.arraycopy( other.win_i_inClose, 0, this.win_i_inClose, 0, other.win_i_inClose.length );
-         } else {
-            this.win_i_inClose = other.win_i_inClose.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -99493,9 +96151,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
@@ -100388,28 +97047,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( KamaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.constMax = other.constMax;
-         this.constDiff = other.constDiff;
-         this.sumROC1 = other.sumROC1;
-         this.prevKAMA = other.prevKAMA;
-         this.nullRun = other.nullRun;
-         this.trailingValue = other.trailingValue;
-         this.lag1_inReal = other.lag1_inReal;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -100462,9 +97099,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -101488,31 +98126,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( LinearregStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.SumX = other.SumX;
-         this.SumXY = other.SumXY;
-         this.SumY = other.SumY;
-         this.Divisor = other.Divisor;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.trailingValue = other.trailingValue;
-         this.sumAbs = other.sumAbs;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -101565,9 +98178,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -102639,31 +99253,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( LinearregAngleStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.SumX = other.SumX;
-         this.SumXY = other.SumXY;
-         this.SumY = other.SumY;
-         this.Divisor = other.Divisor;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.trailingValue = other.trailingValue;
-         this.sumAbs = other.sumAbs;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -102716,9 +99305,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -103782,31 +100372,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( LinearregInterceptStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.SumX = other.SumX;
-         this.SumXY = other.SumXY;
-         this.SumY = other.SumY;
-         this.Divisor = other.Divisor;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.trailingValue = other.trailingValue;
-         this.sumAbs = other.sumAbs;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -103859,9 +100424,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -104921,31 +101487,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( LinearregSlopeStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.SumX = other.SumX;
-         this.SumXY = other.SumXY;
-         this.SumY = other.SumY;
-         this.Divisor = other.Divisor;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.trailingValue = other.trailingValue;
-         this.sumAbs = other.sumAbs;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -104998,9 +101539,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -105761,13 +102303,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( LnStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -105820,9 +102355,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -106193,13 +102729,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Log10Stream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -106252,9 +102781,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -106980,94 +103510,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInMAType = other.optInMAType;
-         this.cur_outReal = other.cur_outReal;
-         if( other.sub == null ) {
-            this.sub = null;
-         } else {
-            switch( this.optInMAType )
-            {
-            case SMA:
-               if( this.sub instanceof SmaStream ) {
-                  ((SmaStream) this.sub).copyFrom((SmaStream) other.sub);
-               } else {
-                  this.sub = new SmaStream((SmaStream) other.sub);
-               }
-               break;
-            case EMA:
-               if( this.sub instanceof EmaStream ) {
-                  ((EmaStream) this.sub).copyFrom((EmaStream) other.sub);
-               } else {
-                  this.sub = new EmaStream((EmaStream) other.sub);
-               }
-               break;
-            case WMA:
-               if( this.sub instanceof WmaStream ) {
-                  ((WmaStream) this.sub).copyFrom((WmaStream) other.sub);
-               } else {
-                  this.sub = new WmaStream((WmaStream) other.sub);
-               }
-               break;
-            case DEMA:
-               if( this.sub instanceof DemaStream ) {
-                  ((DemaStream) this.sub).copyFrom((DemaStream) other.sub);
-               } else {
-                  this.sub = new DemaStream((DemaStream) other.sub);
-               }
-               break;
-            case TEMA:
-               if( this.sub instanceof TemaStream ) {
-                  ((TemaStream) this.sub).copyFrom((TemaStream) other.sub);
-               } else {
-                  this.sub = new TemaStream((TemaStream) other.sub);
-               }
-               break;
-            case TRIMA:
-               if( this.sub instanceof TrimaStream ) {
-                  ((TrimaStream) this.sub).copyFrom((TrimaStream) other.sub);
-               } else {
-                  this.sub = new TrimaStream((TrimaStream) other.sub);
-               }
-               break;
-            case KAMA:
-               if( this.sub instanceof KamaStream ) {
-                  ((KamaStream) this.sub).copyFrom((KamaStream) other.sub);
-               } else {
-                  this.sub = new KamaStream((KamaStream) other.sub);
-               }
-               break;
-            case MAMA:
-               if( this.sub instanceof MamaStream ) {
-                  ((MamaStream) this.sub).copyFrom((MamaStream) other.sub);
-               } else {
-                  this.sub = new MamaStream((MamaStream) other.sub);
-               }
-               break;
-            case T3:
-               if( this.sub instanceof T3Stream ) {
-                  ((T3Stream) this.sub).copyFrom((T3Stream) other.sub);
-               } else {
-                  this.sub = new T3Stream((T3Stream) other.sub);
-               }
-               break;
-            case HMA:
-               if( this.sub instanceof HmaStream ) {
-                  ((HmaStream) this.sub).copyFrom((HmaStream) other.sub);
-               } else {
-                  this.sub = new HmaStream((HmaStream) other.sub);
-               }
-               break;
-            default:
-               throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
-            }
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -107120,9 +103562,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -108355,25 +104798,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MacdStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.prevFast = other.prevFast;
-         this.prevSlow = other.prevSlow;
-         this.prevSignal = other.prevSignal;
-         this.slowK = other.slowK;
-         this.fastK = other.fastK;
-         this.signalK = other.signalK;
-         this.cur_outMACD = other.cur_outMACD;
-         this.cur_outMACDSignal = other.cur_outMACDSignal;
-         this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -108451,9 +104875,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -109455,37 +105880,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MacdextStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInFastMAType = other.optInFastMAType;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInSlowMAType = other.optInSlowMAType;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.optInSignalMAType = other.optInSignalMAType;
-         this.cur_outMACD = other.cur_outMACD;
-         this.cur_outMACDSignal = other.cur_outMACDSignal;
-         this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
-         if( this.sub0 == null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new MaStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         if( this.sub2 == null ) {
-            this.sub2 = new MaStream(other.sub2);
-         } else {
-            this.sub2.copyFrom(other.sub2);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -109563,9 +105957,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -110434,23 +106829,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MacdfixStream other ) {
-         this.core = other.core;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.prevFast = other.prevFast;
-         this.prevSlow = other.prevSlow;
-         this.prevSignal = other.prevSignal;
-         this.slowK = other.slowK;
-         this.fastK = other.fastK;
-         this.signalK = other.signalK;
-         this.cur_outMACD = other.cur_outMACD;
-         this.cur_outMACDSignal = other.cur_outMACDSignal;
-         this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -110528,9 +106906,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -111958,100 +108337,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MamaStream other ) {
-         this.core = other.core;
-         this.optInFastLimit = other.optInFastLimit;
-         this.optInSlowLimit = other.optInSlowLimit;
-         this.period = other.period;
-         this.periodWMASum = other.periodWMASum;
-         this.periodWMASub = other.periodWMASub;
-         this.trailingWMAValue = other.trailingWMAValue;
-         this.a = other.a;
-         this.b = other.b;
-         this.hilbertIdx = other.hilbertIdx;
-         if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
-            System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
-         } else {
-            this.detrender_Odd = other.detrender_Odd.clone();
-         }
-         if( this.detrender_Even != null && this.detrender_Even.length == other.detrender_Even.length ) {
-            System.arraycopy( other.detrender_Even, 0, this.detrender_Even, 0, other.detrender_Even.length );
-         } else {
-            this.detrender_Even = other.detrender_Even.clone();
-         }
-         this.prev_detrender_Odd = other.prev_detrender_Odd;
-         this.prev_detrender_Even = other.prev_detrender_Even;
-         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
-         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
-         if( this.Q1_Odd != null && this.Q1_Odd.length == other.Q1_Odd.length ) {
-            System.arraycopy( other.Q1_Odd, 0, this.Q1_Odd, 0, other.Q1_Odd.length );
-         } else {
-            this.Q1_Odd = other.Q1_Odd.clone();
-         }
-         if( this.Q1_Even != null && this.Q1_Even.length == other.Q1_Even.length ) {
-            System.arraycopy( other.Q1_Even, 0, this.Q1_Even, 0, other.Q1_Even.length );
-         } else {
-            this.Q1_Even = other.Q1_Even.clone();
-         }
-         this.prev_Q1_Odd = other.prev_Q1_Odd;
-         this.prev_Q1_Even = other.prev_Q1_Even;
-         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
-         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
-         if( this.jI_Odd != null && this.jI_Odd.length == other.jI_Odd.length ) {
-            System.arraycopy( other.jI_Odd, 0, this.jI_Odd, 0, other.jI_Odd.length );
-         } else {
-            this.jI_Odd = other.jI_Odd.clone();
-         }
-         if( this.jI_Even != null && this.jI_Even.length == other.jI_Even.length ) {
-            System.arraycopy( other.jI_Even, 0, this.jI_Even, 0, other.jI_Even.length );
-         } else {
-            this.jI_Even = other.jI_Even.clone();
-         }
-         this.prev_jI_Odd = other.prev_jI_Odd;
-         this.prev_jI_Even = other.prev_jI_Even;
-         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
-         this.prev_jI_input_Even = other.prev_jI_input_Even;
-         if( this.jQ_Odd != null && this.jQ_Odd.length == other.jQ_Odd.length ) {
-            System.arraycopy( other.jQ_Odd, 0, this.jQ_Odd, 0, other.jQ_Odd.length );
-         } else {
-            this.jQ_Odd = other.jQ_Odd.clone();
-         }
-         if( this.jQ_Even != null && this.jQ_Even.length == other.jQ_Even.length ) {
-            System.arraycopy( other.jQ_Even, 0, this.jQ_Even, 0, other.jQ_Even.length );
-         } else {
-            this.jQ_Even = other.jQ_Even.clone();
-         }
-         this.prev_jQ_Odd = other.prev_jQ_Odd;
-         this.prev_jQ_Even = other.prev_jQ_Even;
-         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
-         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
-         this.prevQ2 = other.prevQ2;
-         this.prevI2 = other.prevI2;
-         this.Re = other.Re;
-         this.Im = other.Im;
-         this.I1ForOddPrev2 = other.I1ForOddPrev2;
-         this.I1ForOddPrev3 = other.I1ForOddPrev3;
-         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
-         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
-         this.rad2Deg = other.rad2Deg;
-         this.mama = other.mama;
-         this.fama = other.fama;
-         this.prevPhase = other.prevPhase;
-         this.streamParity = other.streamParity;
-         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
-         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
-         if( this.ring_trailingWMAIdx_inReal != null && this.ring_trailingWMAIdx_inReal.length == other.ring_trailingWMAIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingWMAIdx_inReal, 0, this.ring_trailingWMAIdx_inReal, 0, other.ring_trailingWMAIdx_inReal.length );
-         } else {
-            this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
-         }
-         this.cur_outMAMA = other.cur_outMAMA;
-         this.cur_outFAMA = other.cur_outFAMA;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -112128,9 +108413,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -113427,13 +109713,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MarketfiStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -113488,9 +109767,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
@@ -114414,26 +110694,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MavpStream other ) {
-         this.core = other.core;
-         this.optInMinPeriod = other.optInMinPeriod;
-         this.optInMaxPeriod = other.optInMaxPeriod;
-         this.optInMAType = other.optInMAType;
-         this.cur_outReal = other.cur_outReal;
-         if( this.bank != null && this.bank.length == other.bank.length ) {
-            for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
-               this.bank[bankIdx].copyFrom(other.bank[bankIdx]);
-            }
-         } else {
-            this.bank = new MaStream[other.bank.length];
-            for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
-               this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);
-            }
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -114487,9 +110747,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
@@ -115225,25 +111486,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MaxStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.highest = other.highest;
-         this.trailingIdx = other.trailingIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -115296,9 +111538,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -115962,25 +112205,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MaxindexStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.highest = other.highest;
-         this.trailingIdx = other.trailingIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -116033,9 +112257,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -116564,13 +112789,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MedpriceStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -116624,9 +112842,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -117353,31 +113572,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MfiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.posSumMF = other.posSumMF;
-         this.negSumMF = other.negSumMF;
-         this.prevValue = other.prevValue;
-         this.nullRun = other.nullRun;
-         this.mflow_Idx = other.mflow_Idx;
-         this.maxIdx_mflow = other.maxIdx_mflow;
-         this.cbSize_mflow = other.cbSize_mflow;
-         if( this.cb_mflow_positive != null && this.cb_mflow_positive.length == other.cb_mflow_positive.length ) {
-            System.arraycopy( other.cb_mflow_positive, 0, this.cb_mflow_positive, 0, other.cb_mflow_positive.length );
-         } else {
-            this.cb_mflow_positive = other.cb_mflow_positive.clone();
-         }
-         if( this.cb_mflow_negative != null && this.cb_mflow_negative.length == other.cb_mflow_negative.length ) {
-            System.arraycopy( other.cb_mflow_negative, 0, this.cb_mflow_negative, 0, other.cb_mflow_negative.length );
-         } else {
-            this.cb_mflow_negative = other.cb_mflow_negative.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -117433,9 +113627,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -118399,27 +114594,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MidpointStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -118472,9 +114646,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -119410,32 +115585,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MidpriceStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
-            System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
-         } else {
-            this.x_inHigh = other.x_inHigh.clone();
-         }
-         if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
-            System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
-         } else {
-            this.x_inLow = other.x_inLow.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -119489,9 +115638,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -120340,25 +116490,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MinStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -120411,9 +116542,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -121075,25 +117207,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MinindexStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outInteger = other.cur_outInteger;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -121146,9 +117259,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -122003,29 +118117,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MinmaxStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.highest = other.highest;
-         this.lowest = other.lowest;
-         this.trailingIdx = other.trailingIdx;
-         this.highestIdx = other.highestIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outMin = other.cur_outMin;
-         this.cur_outMax = other.cur_outMax;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -122100,9 +118191,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -122912,29 +119004,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MinmaxindexStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.highest = other.highest;
-         this.lowest = other.lowest;
-         this.trailingIdx = other.trailingIdx;
-         this.highestIdx = other.highestIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outMinIdx = other.cur_outMinIdx;
-         this.cur_outMaxIdx = other.cur_outMaxIdx;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -123009,9 +119078,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -124143,19 +120213,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MinusDiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevHigh = other.prevHigh;
-         this.prevLow = other.prevLow;
-         this.prevClose = other.prevClose;
-         this.prevMinusDM = other.prevMinusDM;
-         this.prevTR = other.prevTR;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -124210,9 +120267,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -125532,17 +121590,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MinusDmStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevHigh = other.prevHigh;
-         this.prevLow = other.prevLow;
-         this.prevMinusDM = other.prevMinusDM;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -125596,9 +121643,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -126446,21 +122494,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MomStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -126513,9 +122546,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -126983,13 +123017,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( MultStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -127043,9 +123070,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -127779,16 +123807,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( NatrStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevATR = other.prevATR;
-         this.lag1_inClose = other.lag1_inClose;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -127843,9 +123861,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -128581,16 +124600,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( NviStream other ) {
-         this.core = other.core;
-         this.prevNVI = other.prevNVI;
-         this.prevClose = other.prevClose;
-         this.prevVolume = other.prevVolume;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -128644,9 +124653,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -129160,15 +125170,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( ObvStream other ) {
-         this.core = other.core;
-         this.prevReal = other.prevReal;
-         this.prevOBV = other.prevOBV;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -129222,9 +125223,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
@@ -130194,19 +126196,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PlusDiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevHigh = other.prevHigh;
-         this.prevLow = other.prevLow;
-         this.prevClose = other.prevClose;
-         this.prevPlusDM = other.prevPlusDM;
-         this.prevTR = other.prevTR;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -130261,9 +126250,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -131582,17 +127572,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PlusDmStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevHigh = other.prevHigh;
-         this.prevLow = other.prevLow;
-         this.prevPlusDM = other.prevPlusDM;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -131646,9 +127625,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -132586,26 +128566,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PpoStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInMAType = other.optInMAType;
-         this.cur_outReal = other.cur_outReal;
-         if( this.sub0 == null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new MaStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -132658,9 +128618,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -133227,16 +129188,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PviStream other ) {
-         this.core = other.core;
-         this.prevPVI = other.prevPVI;
-         this.prevClose = other.prevClose;
-         this.prevVolume = other.prevVolume;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -133290,9 +129241,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -133960,26 +129912,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( PvoStream other ) {
-         this.core = other.core;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInMAType = other.optInMAType;
-         this.cur_outReal = other.cur_outReal;
-         if( this.sub0 == null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new MaStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -134032,9 +129964,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inVolume ) {
          if( !Double.isFinite(inVolume) )
@@ -134655,22 +130588,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( QstickStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.periodTotal = other.periodTotal;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_derived != null && this.ring_trailingIdx_derived.length == other.ring_trailingIdx_derived.length ) {
-            System.arraycopy( other.ring_trailingIdx_derived, 0, this.ring_trailingIdx_derived, 0, other.ring_trailingIdx_derived.length );
-         } else {
-            this.ring_trailingIdx_derived = other.ring_trailingIdx_derived.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -134724,9 +130641,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
@@ -135324,21 +131242,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( RocStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -135391,9 +131294,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -135977,21 +131881,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( RocpStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -136044,9 +131933,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -136633,21 +132523,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( RocrStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -136700,9 +132575,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -137291,21 +133167,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( Rocr100Stream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -137358,9 +133219,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -138152,17 +134014,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( RsiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevGain = other.prevGain;
-         this.prevLoss = other.prevLoss;
-         this.prevValue = other.prevValue;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -138215,9 +134066,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -139232,21 +135084,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SarStream other ) {
-         this.core = other.core;
-         this.optInAcceleration = other.optInAcceleration;
-         this.optInMaximum = other.optInMaximum;
-         this.isLong = other.isLong;
-         this.newHigh = other.newHigh;
-         this.newLow = other.newLow;
-         this.af = other.af;
-         this.ep = other.ep;
-         this.sar = other.sar;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -139300,9 +135137,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -140833,28 +136671,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SarextStream other ) {
-         this.core = other.core;
-         this.optInStartValue = other.optInStartValue;
-         this.optInOffsetOnReverse = other.optInOffsetOnReverse;
-         this.optInAccelerationInitLong = other.optInAccelerationInitLong;
-         this.optInAccelerationLong = other.optInAccelerationLong;
-         this.optInAccelerationMaxLong = other.optInAccelerationMaxLong;
-         this.optInAccelerationInitShort = other.optInAccelerationInitShort;
-         this.optInAccelerationShort = other.optInAccelerationShort;
-         this.optInAccelerationMaxShort = other.optInAccelerationMaxShort;
-         this.isLong = other.isLong;
-         this.newHigh = other.newHigh;
-         this.newLow = other.newLow;
-         this.afLong = other.afLong;
-         this.afShort = other.afShort;
-         this.ep = other.ep;
-         this.sar = other.sar;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -140908,9 +136724,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -141860,13 +137677,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SinStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -141919,9 +137729,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -142284,13 +138095,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SinhStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -142343,9 +138147,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -142833,22 +138638,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SmaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.periodTotal = other.periodTotal;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -142901,9 +138690,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -144036,50 +139826,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SmiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInFastPeriod = other.optInFastPeriod;
-         this.optInSlowPeriod = other.optInSlowPeriod;
-         this.optInSignalPeriod = other.optInSignalPeriod;
-         this.kSlow = other.kSlow;
-         this.kFast = other.kFast;
-         this.kSignal = other.kSignal;
-         this.highest = other.highest;
-         this.lowest = other.lowest;
-         this.emaSlowNum = other.emaSlowNum;
-         this.emaSlowDen = other.emaSlowDen;
-         this.emaFastNum = other.emaFastNum;
-         this.emaFastDen = other.emaFastDen;
-         this.prevSignal = other.prevSignal;
-         this.trailingIdx = other.trailingIdx;
-         this.highestIdx = other.highestIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
-            System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
-         } else {
-            this.x_inHigh = other.x_inHigh.clone();
-         }
-         if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
-            System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
-         } else {
-            this.x_inLow = other.x_inLow.clone();
-         }
-         if( this.x_inClose != null && this.x_inClose.length == other.x_inClose.length ) {
-            System.arraycopy( other.x_inClose, 0, this.x_inClose, 0, other.x_inClose.length );
-         } else {
-            this.x_inClose = other.x_inClose.clone();
-         }
-         this.cur_outSMI = other.cur_outSMI;
-         this.cur_outSMISignal = other.cur_outSMISignal;
-         this.cachedValue = other.cachedValue;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -144156,9 +139902,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -145022,13 +140769,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SqrtStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -145081,9 +140821,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -145571,20 +141312,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( StddevStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInNbDev = other.optInNbDev;
-         this.cur_outReal = other.cur_outReal;
-         if( this.sub0 == null ) {
-            this.sub0 = new VarStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -145637,9 +141364,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -146615,54 +142343,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( StochStream other ) {
-         this.core = other.core;
-         this.optInFastK_Period = other.optInFastK_Period;
-         this.optInSlowK_Period = other.optInSlowK_Period;
-         this.optInSlowK_MAType = other.optInSlowK_MAType;
-         this.optInSlowD_Period = other.optInSlowD_Period;
-         this.optInSlowD_MAType = other.optInSlowD_MAType;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.diff = other.diff;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
-            System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
-         } else {
-            this.x_inHigh = other.x_inHigh.clone();
-         }
-         if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
-            System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
-         } else {
-            this.x_inLow = other.x_inLow.clone();
-         }
-         if( this.x_inClose != null && this.x_inClose.length == other.x_inClose.length ) {
-            System.arraycopy( other.x_inClose, 0, this.x_inClose, 0, other.x_inClose.length );
-         } else {
-            this.x_inClose = other.x_inClose.clone();
-         }
-         this.cur_outSlowK = other.cur_outSlowK;
-         this.cur_outSlowD = other.cur_outSlowD;
-         this.cachedValue = other.cachedValue;
-         if( this.sub0 == null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new MaStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -146739,9 +142419,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -147994,47 +143675,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( StochfStream other ) {
-         this.core = other.core;
-         this.optInFastK_Period = other.optInFastK_Period;
-         this.optInFastD_Period = other.optInFastD_Period;
-         this.optInFastD_MAType = other.optInFastD_MAType;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.diff = other.diff;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.trailingIdx = other.trailingIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
-            System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
-         } else {
-            this.x_inHigh = other.x_inHigh.clone();
-         }
-         if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
-            System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
-         } else {
-            this.x_inLow = other.x_inLow.clone();
-         }
-         if( this.x_inClose != null && this.x_inClose.length == other.x_inClose.length ) {
-            System.arraycopy( other.x_inClose, 0, this.x_inClose, 0, other.x_inClose.length );
-         } else {
-            this.x_inClose = other.x_inClose.clone();
-         }
-         this.cur_outFastK = other.cur_outFastK;
-         this.cur_outFastD = other.cur_outFastD;
-         this.cachedValue = other.cachedValue;
-         if( this.sub0 == null ) {
-            this.sub0 = new MaStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -148111,9 +143751,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -149144,29 +144785,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( StochrsiStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInFastK_Period = other.optInFastK_Period;
-         this.optInFastD_Period = other.optInFastD_Period;
-         this.optInFastD_MAType = other.optInFastD_MAType;
-         this.cur_outFastK = other.cur_outFastK;
-         this.cur_outFastD = other.cur_outFastD;
-         this.cachedValue = other.cachedValue;
-         if( this.sub0 == null ) {
-            this.sub0 = new RsiStream(other.sub0);
-         } else {
-            this.sub0.copyFrom(other.sub0);
-         }
-         if( this.sub1 == null ) {
-            this.sub1 = new StochfStream(other.sub1);
-         } else {
-            this.sub1.copyFrom(other.sub1);
-         }
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -149241,9 +144859,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -149736,13 +145355,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SubStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -149796,9 +145408,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -150269,22 +145882,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( SumStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.periodTotal = other.periodTotal;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -150337,9 +145934,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -151144,27 +146742,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( T3Stream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInVFactor = other.optInVFactor;
-         this.k = other.k;
-         this.one_minus_k = other.one_minus_k;
-         this.e1 = other.e1;
-         this.e2 = other.e2;
-         this.e3 = other.e3;
-         this.e4 = other.e4;
-         this.e5 = other.e5;
-         this.e6 = other.e6;
-         this.c1 = other.c1;
-         this.c2 = other.c2;
-         this.c3 = other.c3;
-         this.c4 = other.c4;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -151217,9 +146794,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -151792,13 +147370,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TanStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -151851,9 +147422,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -152218,13 +147790,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TanhStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -152277,9 +147842,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -152918,18 +148484,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TemaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevEMA1 = other.prevEMA1;
-         this.prevEMA2 = other.prevEMA2;
-         this.prevEMA3 = other.prevEMA3;
-         this.optInK_1 = other.optInK_1;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -152982,9 +148536,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -153640,14 +149195,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TrangeStream other ) {
-         this.core = other.core;
-         this.lag1_inClose = other.lag1_inClose;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -153702,9 +149249,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -154592,33 +150140,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TrimaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.numerator = other.numerator;
-         this.numeratorSub = other.numeratorSub;
-         this.numeratorAdd = other.numeratorAdd;
-         this.factor = other.factor;
-         this.tempReal = other.tempReal;
-         this.ringPos_middleIdx = other.ringPos_middleIdx;
-         this.ringCap_middleIdx = other.ringCap_middleIdx;
-         if( this.ring_middleIdx_inReal != null && this.ring_middleIdx_inReal.length == other.ring_middleIdx_inReal.length ) {
-            System.arraycopy( other.ring_middleIdx_inReal, 0, this.ring_middleIdx_inReal, 0, other.ring_middleIdx_inReal.length );
-         } else {
-            this.ring_middleIdx_inReal = other.ring_middleIdx_inReal.clone();
-         }
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -154671,9 +150192,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -155836,18 +151358,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TrixStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.prevEMA1 = other.prevEMA1;
-         this.prevEMA2 = other.prevEMA2;
-         this.prevEMA3 = other.prevEMA3;
-         this.optInK_1 = other.optInK_1;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -155900,9 +151410,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -156704,31 +152215,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TsfStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lookbackTotal = other.lookbackTotal;
-         this.trailingIdx = other.trailingIdx;
-         this.SumX = other.SumX;
-         this.SumXY = other.SumXY;
-         this.SumY = other.SumY;
-         this.Divisor = other.Divisor;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.trailingValue = other.trailingValue;
-         this.sumAbs = other.sumAbs;
-         this.j = other.j;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -156781,9 +152267,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -157575,13 +153062,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( TyppriceStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -157636,9 +153116,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -158608,39 +154089,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( UltoscStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod1 = other.optInTimePeriod1;
-         this.optInTimePeriod2 = other.optInTimePeriod2;
-         this.optInTimePeriod3 = other.optInTimePeriod3;
-         this.a1Total = other.a1Total;
-         this.a2Total = other.a2Total;
-         this.a3Total = other.a3Total;
-         this.b1Total = other.b1Total;
-         this.b2Total = other.b2Total;
-         this.b3Total = other.b3Total;
-         this.trailingPos1 = other.trailingPos1;
-         this.trailingPos2 = other.trailingPos2;
-         this.nullRun = other.nullRun;
-         this.term_Idx = other.term_Idx;
-         this.maxIdx_term = other.maxIdx_term;
-         this.lag1_inClose = other.lag1_inClose;
-         this.cbSize_term = other.cbSize_term;
-         if( this.cb_term_closeMinusTrueLow != null && this.cb_term_closeMinusTrueLow.length == other.cb_term_closeMinusTrueLow.length ) {
-            System.arraycopy( other.cb_term_closeMinusTrueLow, 0, this.cb_term_closeMinusTrueLow, 0, other.cb_term_closeMinusTrueLow.length );
-         } else {
-            this.cb_term_closeMinusTrueLow = other.cb_term_closeMinusTrueLow.clone();
-         }
-         if( this.cb_term_trueRange != null && this.cb_term_trueRange.length == other.cb_term_trueRange.length ) {
-            System.arraycopy( other.cb_term_trueRange, 0, this.cb_term_trueRange, 0, other.cb_term_trueRange.length );
-         } else {
-            this.cb_term_trueRange = other.cb_term_trueRange.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -158695,9 +154143,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -159892,31 +155341,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( VarStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.optInNbDev = other.optInNbDev;
-         this.shift = other.shift;
-         this.periodTotal1 = other.periodTotal1;
-         this.periodTotal2 = other.periodTotal2;
-         this.invPeriod = other.invPeriod;
-         this.trailingIdx = other.trailingIdx;
-         this.nbInitialElementNeeded = other.nbInitialElementNeeded;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.j = other.j;
-         this.windowStart = other.windowStart;
-         this.i = other.i;
-         this.xMask = other.xMask;
-         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
-            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
-         } else {
-            this.x_inReal = other.x_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -159969,9 +155393,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -160970,16 +156395,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( VwapStream other ) {
-         this.core = other.core;
-         this.sumPV = other.sumPV;
-         this.sumV = other.sumV;
-         this.vwap = other.vwap;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -161035,9 +156450,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -161914,28 +157330,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( VwmaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.sumPV = other.sumPV;
-         this.sumV = other.sumV;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         if( this.ring_trailingIdx_inVolume != null && this.ring_trailingIdx_inVolume.length == other.ring_trailingIdx_inVolume.length ) {
-            System.arraycopy( other.ring_trailingIdx_inVolume, 0, this.ring_trailingIdx_inVolume, 0, other.ring_trailingIdx_inVolume.length );
-         } else {
-            this.ring_trailingIdx_inVolume = other.ring_trailingIdx_inVolume.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -161989,9 +157383,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
@@ -162702,15 +158097,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( WadStream other ) {
-         this.core = other.core;
-         this.sum = other.sum;
-         this.prevClose = other.prevClose;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -162765,9 +158151,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -163267,13 +158654,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( WclpriceStream other ) {
-         this.core = other.core;
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -163328,9 +158708,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -164085,38 +159466,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( WillrStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lowest = other.lowest;
-         this.highest = other.highest;
-         this.diff = other.diff;
-         this.trailingIdx = other.trailingIdx;
-         this.lowestIdx = other.lowestIdx;
-         this.highestIdx = other.highestIdx;
-         this.i = other.i;
-         this.today = other.today;
-         this.xMask = other.xMask;
-         if( this.x_inHigh != null && this.x_inHigh.length == other.x_inHigh.length ) {
-            System.arraycopy( other.x_inHigh, 0, this.x_inHigh, 0, other.x_inHigh.length );
-         } else {
-            this.x_inHigh = other.x_inHigh.clone();
-         }
-         if( this.x_inLow != null && this.x_inLow.length == other.x_inLow.length ) {
-            System.arraycopy( other.x_inLow, 0, this.x_inLow, 0, other.x_inLow.length );
-         } else {
-            this.x_inLow = other.x_inLow.clone();
-         }
-         if( this.x_inClose != null && this.x_inClose.length == other.x_inClose.length ) {
-            System.arraycopy( other.x_inClose, 0, this.x_inClose, 0, other.x_inClose.length );
-         } else {
-            this.x_inClose = other.x_inClose.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -164171,9 +159520,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -165122,34 +160472,6 @@ public final class Core {
          this.outRangeCount = other.outRangeCount;
       }
 
-      void copyFrom( WmaStream other ) {
-         this.core = other.core;
-         this.optInTimePeriod = other.optInTimePeriod;
-         this.lookbackWin = other.lookbackWin;
-         this.barsSinceReseed = other.barsSinceReseed;
-         this.periodSum = other.periodSum;
-         this.periodSub = other.periodSub;
-         this.trailingValue = other.trailingValue;
-         this.divider = other.divider;
-         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
-         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
-            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
-         } else {
-            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
-         }
-         this.winPos_j = other.winPos_j;
-         this.winCap_j = other.winCap_j;
-         if( this.win_j_inReal != null && this.win_j_inReal.length == other.win_j_inReal.length ) {
-            System.arraycopy( other.win_j_inReal, 0, this.win_j_inReal, 0, other.win_j_inReal.length );
-         } else {
-            this.win_j_inReal = other.win_j_inReal.clone();
-         }
-         this.cur_outReal = other.cur_outReal;
-         this.outRangeBegIdx = other.outRangeBegIdx;
-         this.outRangeCount = other.outRangeCount;
-      }
-
       /**
        * Commit one closed bar, returning the new current value.
        * Never allocates handle state.
@@ -165202,9 +160524,10 @@ public final class Core {
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this
-       * handle, reading its buffers and storing into locals, so the cost does
-       * not grow with the period and `peek` never allocates.
+       * run concurrently with each other. It copies nothing: the frame runs against
+       * this handle, reading its buffers and storing what the step would
+       * commit into locals, so the cost does not grow with the period and
+       * {@code peek} never allocates.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
