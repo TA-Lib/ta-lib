@@ -70,6 +70,221 @@
 //!
 //! The full function reference, grouped by category, is at
 //! [ta-lib.org/functions](https://ta-lib.org/functions/).
+//!
+//! # Indicators by category
+//!
+//! Every indicator is a method on [`Core`], and the methods are one flat
+//! alphabetical list — so this is where the grouping lives. It is the same
+//! grouping the registry answers at run time ([`abstract_api::Group`], reported
+//! per function as [`FuncInfo::group`](abstract_api::FuncInfo::group)), and each
+//! entry carries that row's own one-line hint. Follow a link for the function's
+//! formula, arguments, ranges and a runnable example.
+//!
+//! ## Cycle Indicators (5)
+//!
+//! * [`HT_DCPERIOD`](Core::HT_DCPERIOD) — Hilbert Transform - Dominant Cycle Period
+//! * [`HT_DCPHASE`](Core::HT_DCPHASE) — Hilbert Transform - Dominant Cycle Phase
+//! * [`HT_PHASOR`](Core::HT_PHASOR) — Hilbert Transform - Phasor Components
+//! * [`HT_SINE`](Core::HT_SINE) — Hilbert Transform - SineWave
+//! * [`HT_TRENDMODE`](Core::HT_TRENDMODE) — Hilbert Transform - Trend vs Cycle Mode
+//!
+//! ## Math Operators (11)
+//!
+//! * [`ADD`](Core::ADD) — Vector Arithmetic Add
+//! * [`DIV`](Core::DIV) — Vector Arithmetic Div
+//! * [`MAX`](Core::MAX) — Highest value over a specified period
+//! * [`MAXINDEX`](Core::MAXINDEX) — Index of highest value over a specified period
+//! * [`MIN`](Core::MIN) — Lowest value over a specified period
+//! * [`MININDEX`](Core::MININDEX) — Index of lowest value over a specified period
+//! * [`MINMAX`](Core::MINMAX) — Lowest and highest values over a specified period
+//! * [`MINMAXINDEX`](Core::MINMAXINDEX) — Indexes of lowest and highest values over a specified period
+//! * [`MULT`](Core::MULT) — Vector Arithmetic Mult
+//! * [`SUB`](Core::SUB) — Vector Arithmetic Subtraction
+//! * [`SUM`](Core::SUM) — Summation
+//!
+//! ## Math Transform (15)
+//!
+//! * [`ACOS`](Core::ACOS) — Vector Trigonometric ACos
+//! * [`ASIN`](Core::ASIN) — Vector Trigonometric ASin
+//! * [`ATAN`](Core::ATAN) — Vector Trigonometric ATan
+//! * [`CEIL`](Core::CEIL) — Vector Ceil
+//! * [`COS`](Core::COS) — Vector Trigonometric Cos
+//! * [`COSH`](Core::COSH) — Vector Trigonometric Cosh
+//! * [`EXP`](Core::EXP) — Vector Arithmetic Exp
+//! * [`FLOOR`](Core::FLOOR) — Vector Floor
+//! * [`LN`](Core::LN) — Vector Log Natural
+//! * [`LOG10`](Core::LOG10) — Vector Log10
+//! * [`SIN`](Core::SIN) — Vector Trigonometric Sin
+//! * [`SINH`](Core::SINH) — Vector Trigonometric Sinh
+//! * [`SQRT`](Core::SQRT) — Vector Square Root
+//! * [`TAN`](Core::TAN) — Vector Trigonometric Tan
+//! * [`TANH`](Core::TANH) — Vector Trigonometric Tanh
+//!
+//! ## Momentum Indicators (37)
+//!
+//! * [`AC`](Core::AC) — Accelerator/Decelerator Oscillator
+//! * [`ADX`](Core::ADX) — Average Directional Movement Index
+//! * [`ADXR`](Core::ADXR) — Average Directional Movement Index Rating
+//! * [`AO`](Core::AO) — Awesome Oscillator
+//! * [`APO`](Core::APO) — Absolute Price Oscillator
+//! * [`AROON`](Core::AROON) — Aroon
+//! * [`AROONOSC`](Core::AROONOSC) — Aroon Oscillator
+//! * [`BOP`](Core::BOP) — Balance Of Power
+//! * [`CCI`](Core::CCI) — Commodity Channel Index
+//! * [`CMO`](Core::CMO) — Chande Momentum Oscillator
+//! * [`CMOU`](Core::CMOU) — Chande Momentum Oscillator (Unsmoothed)
+//! * [`DX`](Core::DX) — Directional Movement Index
+//! * [`IMI`](Core::IMI) — Intraday Momentum Index
+//! * [`MACD`](Core::MACD) — Moving Average Convergence/Divergence
+//! * [`MACDEXT`](Core::MACDEXT) — MACD with controllable MA type
+//! * [`MACDFIX`](Core::MACDFIX) — Moving Average Convergence/Divergence Fix 12/26
+//! * [`MFI`](Core::MFI) — Money Flow Index
+//! * [`MINUS_DI`](Core::MINUS_DI) — Minus Directional Indicator
+//! * [`MINUS_DM`](Core::MINUS_DM) — Minus Directional Movement
+//! * [`MOM`](Core::MOM) — Momentum
+//! * [`PLUS_DI`](Core::PLUS_DI) — Plus Directional Indicator
+//! * [`PLUS_DM`](Core::PLUS_DM) — Plus Directional Movement
+//! * [`PPO`](Core::PPO) — Percentage Price Oscillator
+//! * [`QSTICK`](Core::QSTICK) — Qstick
+//! * [`ROC`](Core::ROC) — Rate of change : ((price/prevPrice)-1)*100
+//! * [`ROCP`](Core::ROCP) — Rate of change Percentage: (price-prevPrice)/prevPrice
+//! * [`ROCR`](Core::ROCR) — Rate of change ratio: (price/prevPrice)
+//! * [`ROCR100`](Core::ROCR100) — Rate of change ratio 100 scale: (price/prevPrice)*100
+//! * [`RSI`](Core::RSI) — Relative Strength Index
+//! * [`SMI`](Core::SMI) — Stochastic Momentum Index
+//! * [`STOCH`](Core::STOCH) — Stochastic
+//! * [`STOCHF`](Core::STOCHF) — Stochastic Fast
+//! * [`STOCHRSI`](Core::STOCHRSI) — Stochastic Relative Strength Index
+//! * [`TRIX`](Core::TRIX) — 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
+//! * [`ULTOSC`](Core::ULTOSC) — Ultimate Oscillator
+//! * [`WAD`](Core::WAD) — Williams' Accumulation/Distribution
+//! * [`WILLR`](Core::WILLR) — Williams' %R
+//!
+//! ## Overlap Studies (20)
+//!
+//! * [`ACCBANDS`](Core::ACCBANDS) — Acceleration Bands
+//! * [`BBANDS`](Core::BBANDS) — Bollinger Bands
+//! * [`DEMA`](Core::DEMA) — Double Exponential Moving Average
+//! * [`EMA`](Core::EMA) — Exponential Moving Average
+//! * [`HMA`](Core::HMA) — Hull Moving Average
+//! * [`HT_TRENDLINE`](Core::HT_TRENDLINE) — Hilbert Transform - Instantaneous Trendline
+//! * [`KAMA`](Core::KAMA) — Kaufman Adaptive Moving Average
+//! * [`MA`](Core::MA) — Moving average
+//! * [`MAMA`](Core::MAMA) — MESA Adaptive Moving Average
+//! * [`MAVP`](Core::MAVP) — Moving average with variable period
+//! * [`MIDPOINT`](Core::MIDPOINT) — MidPoint over period
+//! * [`MIDPRICE`](Core::MIDPRICE) — Midpoint Price over period
+//! * [`SAR`](Core::SAR) — Parabolic SAR
+//! * [`SAREXT`](Core::SAREXT) — Parabolic SAR - Extended
+//! * [`SMA`](Core::SMA) — Simple Moving Average
+//! * [`T3`](Core::T3) — Triple Exponential Moving Average (T3)
+//! * [`TEMA`](Core::TEMA) — Triple Exponential Moving Average
+//! * [`TRIMA`](Core::TRIMA) — Triangular Moving Average
+//! * [`VWMA`](Core::VWMA) — Volume Weighted Moving Average
+//! * [`WMA`](Core::WMA) — Weighted Moving Average
+//!
+//! ## Pattern Recognition (61)
+//!
+//! * [`CDL2CROWS`](Core::CDL2CROWS) — Two Crows
+//! * [`CDL3BLACKCROWS`](Core::CDL3BLACKCROWS) — Three Black Crows
+//! * [`CDL3INSIDE`](Core::CDL3INSIDE) — Three Inside Up/Down
+//! * [`CDL3LINESTRIKE`](Core::CDL3LINESTRIKE) — Three-Line Strike
+//! * [`CDL3OUTSIDE`](Core::CDL3OUTSIDE) — Three Outside Up/Down
+//! * [`CDL3STARSINSOUTH`](Core::CDL3STARSINSOUTH) — Three Stars In The South
+//! * [`CDL3WHITESOLDIERS`](Core::CDL3WHITESOLDIERS) — Three Advancing White Soldiers
+//! * [`CDLABANDONEDBABY`](Core::CDLABANDONEDBABY) — Abandoned Baby
+//! * [`CDLADVANCEBLOCK`](Core::CDLADVANCEBLOCK) — Advance Block
+//! * [`CDLBELTHOLD`](Core::CDLBELTHOLD) — Belt-hold
+//! * [`CDLBREAKAWAY`](Core::CDLBREAKAWAY) — Breakaway
+//! * [`CDLCLOSINGMARUBOZU`](Core::CDLCLOSINGMARUBOZU) — Closing Marubozu
+//! * [`CDLCONCEALBABYSWALL`](Core::CDLCONCEALBABYSWALL) — Concealing Baby Swallow
+//! * [`CDLCOUNTERATTACK`](Core::CDLCOUNTERATTACK) — Counterattack
+//! * [`CDLDARKCLOUDCOVER`](Core::CDLDARKCLOUDCOVER) — Dark Cloud Cover
+//! * [`CDLDOJI`](Core::CDLDOJI) — Doji
+//! * [`CDLDOJISTAR`](Core::CDLDOJISTAR) — Doji Star
+//! * [`CDLDRAGONFLYDOJI`](Core::CDLDRAGONFLYDOJI) — Dragonfly Doji
+//! * [`CDLENGULFING`](Core::CDLENGULFING) — Engulfing Pattern
+//! * [`CDLEVENINGDOJISTAR`](Core::CDLEVENINGDOJISTAR) — Evening Doji Star
+//! * [`CDLEVENINGSTAR`](Core::CDLEVENINGSTAR) — Evening Star
+//! * [`CDLGAPSIDESIDEWHITE`](Core::CDLGAPSIDESIDEWHITE) — Up/Down-gap side-by-side white lines
+//! * [`CDLGRAVESTONEDOJI`](Core::CDLGRAVESTONEDOJI) — Gravestone Doji
+//! * [`CDLHAMMER`](Core::CDLHAMMER) — Hammer
+//! * [`CDLHANGINGMAN`](Core::CDLHANGINGMAN) — Hanging Man
+//! * [`CDLHARAMI`](Core::CDLHARAMI) — Harami Pattern
+//! * [`CDLHARAMICROSS`](Core::CDLHARAMICROSS) — Harami Cross Pattern
+//! * [`CDLHIGHWAVE`](Core::CDLHIGHWAVE) — High-Wave Candle
+//! * [`CDLHIKKAKE`](Core::CDLHIKKAKE) — Hikkake Pattern
+//! * [`CDLHIKKAKEMOD`](Core::CDLHIKKAKEMOD) — Modified Hikkake Pattern
+//! * [`CDLHOMINGPIGEON`](Core::CDLHOMINGPIGEON) — Homing Pigeon
+//! * [`CDLIDENTICAL3CROWS`](Core::CDLIDENTICAL3CROWS) — Identical Three Crows
+//! * [`CDLINNECK`](Core::CDLINNECK) — In-Neck Pattern
+//! * [`CDLINVERTEDHAMMER`](Core::CDLINVERTEDHAMMER) — Inverted Hammer
+//! * [`CDLKICKING`](Core::CDLKICKING) — Kicking
+//! * [`CDLKICKINGBYLENGTH`](Core::CDLKICKINGBYLENGTH) — Kicking - bull/bear determined by the longer marubozu
+//! * [`CDLLADDERBOTTOM`](Core::CDLLADDERBOTTOM) — Ladder Bottom
+//! * [`CDLLONGLEGGEDDOJI`](Core::CDLLONGLEGGEDDOJI) — Long Legged Doji
+//! * [`CDLLONGLINE`](Core::CDLLONGLINE) — Long Line Candle
+//! * [`CDLMARUBOZU`](Core::CDLMARUBOZU) — Marubozu
+//! * [`CDLMATCHINGLOW`](Core::CDLMATCHINGLOW) — Matching Low
+//! * [`CDLMATHOLD`](Core::CDLMATHOLD) — Mat Hold
+//! * [`CDLMORNINGDOJISTAR`](Core::CDLMORNINGDOJISTAR) — Morning Doji Star
+//! * [`CDLMORNINGSTAR`](Core::CDLMORNINGSTAR) — Morning Star
+//! * [`CDLONNECK`](Core::CDLONNECK) — On-Neck Pattern
+//! * [`CDLPIERCING`](Core::CDLPIERCING) — Piercing Pattern
+//! * [`CDLRICKSHAWMAN`](Core::CDLRICKSHAWMAN) — Rickshaw Man
+//! * [`CDLRISEFALL3METHODS`](Core::CDLRISEFALL3METHODS) — Rising/Falling Three Methods
+//! * [`CDLSEPARATINGLINES`](Core::CDLSEPARATINGLINES) — Separating Lines
+//! * [`CDLSHOOTINGSTAR`](Core::CDLSHOOTINGSTAR) — Shooting Star
+//! * [`CDLSHORTLINE`](Core::CDLSHORTLINE) — Short Line Candle
+//! * [`CDLSPINNINGTOP`](Core::CDLSPINNINGTOP) — Spinning Top
+//! * [`CDLSTALLEDPATTERN`](Core::CDLSTALLEDPATTERN) — Stalled Pattern
+//! * [`CDLSTICKSANDWICH`](Core::CDLSTICKSANDWICH) — Stick Sandwich
+//! * [`CDLTAKURI`](Core::CDLTAKURI) — Takuri (Dragonfly Doji with very long lower shadow)
+//! * [`CDLTASUKIGAP`](Core::CDLTASUKIGAP) — Tasuki Gap
+//! * [`CDLTHRUSTING`](Core::CDLTHRUSTING) — Thrusting Pattern
+//! * [`CDLTRISTAR`](Core::CDLTRISTAR) — Tristar Pattern
+//! * [`CDLUNIQUE3RIVER`](Core::CDLUNIQUE3RIVER) — Unique 3 River
+//! * [`CDLUPSIDEGAP2CROWS`](Core::CDLUPSIDEGAP2CROWS) — Upside Gap Two Crows
+//! * [`CDLXSIDEGAP3METHODS`](Core::CDLXSIDEGAP3METHODS) — Upside/Downside Gap Three Methods
+//!
+//! ## Price Transform (5)
+//!
+//! * [`AVGDEV`](Core::AVGDEV) — Average Deviation
+//! * [`AVGPRICE`](Core::AVGPRICE) — Average Price
+//! * [`MEDPRICE`](Core::MEDPRICE) — Median Price
+//! * [`TYPPRICE`](Core::TYPPRICE) — Typical Price
+//! * [`WCLPRICE`](Core::WCLPRICE) — Weighted Close Price
+//!
+//! ## Statistic Functions (9)
+//!
+//! * [`BETA`](Core::BETA) — Beta
+//! * [`CORREL`](Core::CORREL) — Pearson's Correlation Coefficient (r)
+//! * [`LINEARREG`](Core::LINEARREG) — Linear Regression
+//! * [`LINEARREG_ANGLE`](Core::LINEARREG_ANGLE) — Linear Regression Angle
+//! * [`LINEARREG_INTERCEPT`](Core::LINEARREG_INTERCEPT) — Linear Regression Intercept
+//! * [`LINEARREG_SLOPE`](Core::LINEARREG_SLOPE) — Linear Regression Slope
+//! * [`STDDEV`](Core::STDDEV) — Standard Deviation
+//! * [`TSF`](Core::TSF) — Time Series Forecast
+//! * [`VAR`](Core::VAR) — Variance
+//!
+//! ## Volatility Indicators (3)
+//!
+//! * [`ATR`](Core::ATR) — Average True Range
+//! * [`NATR`](Core::NATR) — Normalized Average True Range
+//! * [`TRANGE`](Core::TRANGE) — True Range
+//!
+//! ## Volume Indicators (10)
+//!
+//! * [`AD`](Core::AD) — Chaikin A/D Line
+//! * [`ADOSC`](Core::ADOSC) — Chaikin A/D Oscillator
+//! * [`CMF`](Core::CMF) — Chaikin Money Flow
+//! * [`EFI`](Core::EFI) — Elder's Force Index
+//! * [`MARKETFI`](Core::MARKETFI) — Market Facilitation Index
+//! * [`NVI`](Core::NVI) — Negative Volume Index
+//! * [`OBV`](Core::OBV) — On Balance Volume
+//! * [`PVI`](Core::PVI) — Positive Volume Index
+//! * [`PVO`](Core::PVO) — Percentage Volume Oscillator
+//! * [`VWAP`](Core::VWAP) — Volume Weighted Average Price
 
 #![forbid(unsafe_code)]
 // Every public item, and every public enum variant and struct field, carries its

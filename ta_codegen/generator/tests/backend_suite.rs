@@ -13400,3 +13400,56 @@ fn no_csharp_peek_copies_the_handle() {
     assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
     assert!(offenders.is_empty(), "a Peek copies:\n{}", offenders.join("\n"));
 }
+
+/// The crate front page's category index (#179 D6) must list every indicator in
+/// the corpus exactly once, under the group its own definition names.
+///
+/// Rustdoc gates the *links* — a `[`X`](Core::X)` naming a method that does not
+/// exist is `rustdoc::broken_intra_doc_links`, and the nightly runs rustdoc with
+/// `-D warnings`. Nothing gates an *omission*: a filter that quietly drops a
+/// function leaves a page that still builds clean and simply never mentions it.
+/// That is the failure this test exists for, so it counts rather than samples.
+#[test]
+fn rust_category_index_lists_every_function_once() {
+    let funcs: Vec<ir::FuncDef> = discover_indicators()
+        .iter()
+        .map(|name| load_indicator(name).0)
+        .collect();
+    assert!(funcs.len() >= 176, "only {} indicators in the corpus", funcs.len());
+
+    let index = backends::rust_doc::category_index(&funcs);
+
+    // One bullet per function, spelled as the link rustdoc will resolve.
+    for f in &funcs {
+        let line = format!("//! * [`{0}`](Core::{0})", f.name);
+        assert_eq!(
+            index.matches(&line).count(),
+            1,
+            "{} must appear exactly once in the category index",
+            f.name
+        );
+    }
+    assert_eq!(
+        index.matches("//! * [`").count(),
+        funcs.len(),
+        "the index must carry no entry beyond the corpus"
+    );
+
+    // Each heading's count is the number of bullets that follow it, so a reader
+    // can trust "Pattern Recognition (61)" without counting the list.
+    let mut heading_total = 0;
+    for section in index.split("//! ## ").skip(1) {
+        let (heading, body) = section.split_once('\n').expect("a heading ends its line");
+        let (group, count) = heading.rsplit_once(" (").expect("a heading carries its count");
+        let count: usize = count.trim_end_matches(')').parse().expect("a decimal count");
+        let bullets = body.matches("//! * [`").count();
+        assert_eq!(count, bullets, "{group} says {count} but lists {bullets}");
+        assert_eq!(
+            bullets,
+            funcs.iter().filter(|f| f.group == group).count(),
+            "{group} must list every function filed under it"
+        );
+        heading_total += bullets;
+    }
+    assert_eq!(heading_total, funcs.len(), "every function must land under a heading");
+}

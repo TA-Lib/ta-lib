@@ -15,7 +15,7 @@
 use super::doc_meta::{self, ensure_period, RangeMeta};
 use crate::ir::{DocDef, EnumDef, FuncDef, OptInput, Output, ParamType};
 use crate::registry::Registry;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 /// Content width for wrapped doc lines: rustfmt max_width 100 minus `    /// `.
 const WRAP: usize = 92;
@@ -180,6 +180,53 @@ pub fn guarded_docs(
         out.push_str(&format!("    #[doc(alias = \"{alias}\")]\n"));
     }
     out
+}
+
+/// The crate-docs category index (#179 D6): every indicator, under the group the
+/// registry files it in, as `//!` lines for the `lib.rs` scaffolding.
+///
+/// The registry already knew the grouping — `FuncInfo::group`, a closed `Group`
+/// enum — but no doc page said it. `Core` carries its methods in one flat
+/// alphabetical list, so "which ones are the candlestick recognizers?" was
+/// answerable only by noticing that they all happen to start with `CDL`.
+///
+/// Rendered from the two fields the registry row itself carries and from nothing
+/// else: the `name`, which is also the method's name, and the `hint`, which
+/// becomes `FuncInfo::hint` and the `FuncId` variant's own doc line. So the index
+/// cannot say something about a function that the registry does not — including
+/// the missing-hint case, where the registry stores `""` and this writes no
+/// description rather than inventing one from another field.
+///
+/// Every definition is walked and its group decides only where it lands, never
+/// whether it appears; `rust_category_index_lists_every_function_once` in
+/// `tests/backend_suite.rs` is what keeps that true. The links themselves are
+/// gated by the nightly's `RUSTDOCFLAGS=-D warnings` rustdoc step: a name that is
+/// not a `Core` method is `rustdoc::broken_intra_doc_links`.
+///
+/// `BTreeMap` orders the groups by their display string, which is the order
+/// `Group::ALL` declares them in, so the front page and the registry enumerate
+/// categories the same way.
+pub fn category_index(funcs: &[FuncDef]) -> String {
+    let mut by_group: BTreeMap<&str, Vec<&FuncDef>> = BTreeMap::new();
+    for f in funcs {
+        by_group.entry(f.group.as_str()).or_default().push(f);
+    }
+    let mut s = String::new();
+    for (group, mut members) in by_group {
+        members.sort_by(|a, b| a.name.cmp(&b.name));
+        s.push_str(&format!("//! ## {group} ({})\n//!\n", members.len()));
+        for f in members {
+            let hint = f.hint.as_deref().unwrap_or_default();
+            let dash = if hint.is_empty() { "" } else { " — " };
+            s.push_str(&format!("//! * [`{0}`](Core::{0}){dash}{hint}\n", f.name));
+        }
+        s.push_str("//!\n");
+    }
+    // The blank line before the scaffolding's first inner attribute is the
+    // template's own; drop the trailing `//!` separator this loop leaves behind,
+    // and the newline with it — the placeholder sits on a line of its own.
+    s.truncate(s.trim_end_matches("//!\n").trim_end().len());
+    s
 }
 
 /// Rustdoc block for the `<snake>_lookback` function.
