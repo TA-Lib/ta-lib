@@ -328,11 +328,7 @@ impl Core {
     /// where the current close sits relative to the high-low range of the last N bars. Near 0 =
     /// close at period high (overbought); near -100 = close at period low (oversold).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// %R = -100 * (highestHigh - close) / (highestHigh - lowestLow) over the trailing optInTimePeriod bars; if highestHigh == lowestLow, output 0.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/willr](https://ta-lib.org/functions/willr).
     ///
     /// # Arguments
     ///
@@ -387,8 +383,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::STOCH`] · [`Core::STOCHF`] · [`Core::MINMAX`]
-    ///
-    /// Further reading: [ta-lib.org/functions/willr](https://ta-lib.org/functions/willr)
     #[doc(alias = "WilliamsR")]
     #[doc(alias = "WilliamsPercentR")]
     #[doc(alias = "R")]

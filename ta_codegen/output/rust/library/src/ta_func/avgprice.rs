@@ -117,11 +117,8 @@ impl Core {
     /// Average Price: the arithmetic mean of each bar's open, high, low, and close. A
     /// price-transform overlap condensing OHLC into a single representative price.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = (High[i] + Low[i] + Close[i] + Open[i]) / 4
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/avgprice](https://ta-lib.org/functions/avgprice).
     ///
     /// # Arguments
     ///
@@ -176,8 +173,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MEDPRICE`] · [`Core::TYPPRICE`] · [`Core::WCLPRICE`]
-    ///
-    /// Further reading: [ta-lib.org/functions/avgprice](https://ta-lib.org/functions/avgprice)
     #[doc(alias = "AveragePrice")]
     pub fn AVGPRICE(
         &self,

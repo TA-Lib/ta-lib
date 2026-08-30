@@ -283,20 +283,8 @@ impl Core {
     /// not a directional bias. Marks indecision/uncertainty; not inherently bullish or bearish
     /// despite the positive sign.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shadow > ShadowLong average OR upper shadow > ShadowLong average), i.e. at least one long shadow.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Only one long shadow (upper or lower) is required, whereas the classic pattern shows both
-    ///   long upper and lower shadows.
-    /// * Bulkowski's testing found this continues in the direction of the prior trend only 51% of
-    ///   the time — statistically random — and ranks 37th of 103 patterns overall; in his
-    ///   words, "it means nothing."
-    ///   ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdllongleggeddoji](https://ta-lib.org/functions/cdllongleggeddoji).
     ///
     /// # Arguments
     ///
@@ -355,9 +343,6 @@ impl Core {
     ///
     /// [`Core::CDLDOJI`] · [`Core::CDLGRAVESTONEDOJI`] · [`Core::CDLDRAGONFLYDOJI`] ·
     /// [`Core::CDLRICKSHAWMAN`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdllongleggeddoji](https://ta-lib.org/functions/cdllongleggeddoji)
     #[doc(alias = "LongLeggedDoji")]
     pub fn CDLLONGLEGGEDDOJI(
         &self,

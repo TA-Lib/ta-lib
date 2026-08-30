@@ -311,13 +311,7 @@ impl Core {
     /// alongside the Awesome Oscillator ([`AO`](https://ta-lib.org/functions/ao)) and the
     /// Alligator.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// median_t = ( high_t + low_t ) / 2  
-    /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t  
-    /// AC_t = AO_t − SMA(AO, signal)_t
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/ac](https://ta-lib.org/functions/ac).
     ///
     /// # Arguments
     ///
@@ -385,8 +379,6 @@ impl Core {
     ///   reports its first value at the same bar. Its moving average re-sums the stored window on
     ///   every bar where TA-Lib rolls a running total, so the two agree to rounding rather than to
     ///   the bit.
-    ///
-    /// Further reading: [ta-lib.org/functions/ac](https://ta-lib.org/functions/ac)
     #[doc(alias = "AcceleratorOscillator")]
     #[doc(alias = "DeceleratorOscillator")]
     #[doc(alias = "AcceleratorDecelerator")]

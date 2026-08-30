@@ -284,17 +284,8 @@ impl Core {
     /// the close sits at the candle's extreme. A strong directional bar, not a defined
     /// reversal/continuation signal — white is bullish, black is bearish.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle. Requires: (1) long real body: real body > the BodyLong average; AND (2) very short shadow at the closing end: if white (close>=open) upper shadow < the ShadowVeryShort average [close at/near high]; if black (close<open) lower shadow < the ShadowVeryShort average [close at/near low].
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Bulkowski's testing found Closing Marubozu continues in its expected direction only
-    ///   marginally more than chance — 52% for the black variant — which he calls "near
-    ///   random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlclosingmarubozu](https://ta-lib.org/functions/cdlclosingmarubozu).
     ///
     /// # Arguments
     ///
@@ -352,9 +343,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLMARUBOZU`] · [`Core::CDLLONGLINE`] · [`Core::CDLBELTHOLD`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlclosingmarubozu](https://ta-lib.org/functions/cdlclosingmarubozu)
     #[doc(alias = "ClosingMarubozu")]
     pub fn CDLCLOSINGMARUBOZU(
         &self,

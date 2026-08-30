@@ -147,11 +147,8 @@ impl Core {
     /// Weighted Close Price: a per-bar price average giving the close double weight relative to
     /// high and low.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/wclprice](https://ta-lib.org/functions/wclprice).
     ///
     /// # Arguments
     ///
@@ -202,8 +199,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::TYPPRICE`] · [`Core::MEDPRICE`] · [`Core::AVGPRICE`]
-    ///
-    /// Further reading: [ta-lib.org/functions/wclprice](https://ta-lib.org/functions/wclprice)
     #[doc(alias = "WeightedClosePrice")]
     #[doc(alias = "WeightedClose")]
     pub fn WCLPRICE(

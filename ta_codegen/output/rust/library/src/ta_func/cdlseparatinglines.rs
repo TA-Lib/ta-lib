@@ -358,15 +358,8 @@ impl Core {
     /// the same price as the first, and is a long-bodied belt hold. Bullish (white second candle)
     /// or bearish (black second candle) continuation signal.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg <= open[i] <= open[i-1]+Equal_avg; (3) long body: realbody(i) > BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) < ShadowVeryShort_avg; if i is black, uppershadow(i) < ShadowVeryShort_avg.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A prior trend is not verified, nor that the pattern aligns with it.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlseparatinglines](https://ta-lib.org/functions/cdlseparatinglines).
     ///
     /// # Arguments
     ///
@@ -424,9 +417,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLBELTHOLD`] · CDLMEETINGLINES
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlseparatinglines](https://ta-lib.org/functions/cdlseparatinglines)
     #[doc(alias = "SeparatingLines")]
     pub fn CDLSEPARATINGLINES(
         &self,

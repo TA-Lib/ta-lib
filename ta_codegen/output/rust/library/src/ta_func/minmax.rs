@@ -308,12 +308,7 @@ impl Core {
     /// optInTimePeriod bars. An overlap-study companion to MIN and MAX that computes both extrema
     /// in one pass.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])  
-    /// outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/minmax](https://ta-lib.org/functions/minmax).
     ///
     /// # Arguments
     ///
@@ -365,8 +360,6 @@ impl Core {
     ///
     /// [`Core::MIN`] · [`Core::MAX`] · [`Core::MINMAXINDEX`] · [`Core::MININDEX`] ·
     /// [`Core::MAXINDEX`]
-    ///
-    /// Further reading: [ta-lib.org/functions/minmax](https://ta-lib.org/functions/minmax)
     #[doc(alias = "HighestLowest")]
     pub fn MINMAX(
         &self,

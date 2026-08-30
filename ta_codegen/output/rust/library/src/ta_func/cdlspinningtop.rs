@@ -214,11 +214,8 @@ impl Core {
     /// Single-candle pattern: a small real body with both an upper and a lower shadow longer than
     /// the body. Signals indecision; the code does not classify it as bullish or bearish.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle where: upper shadow > real body AND lower shadow > real body AND real body < the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlspinningtop](https://ta-lib.org/functions/cdlspinningtop).
     ///
     /// # Arguments
     ///
@@ -276,9 +273,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`] · [`Core::CDLLONGLEGGEDDOJI`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlspinningtop](https://ta-lib.org/functions/cdlspinningtop)
     #[doc(alias = "SpinningTop")]
     pub fn CDLSPINNINGTOP(
         &self,

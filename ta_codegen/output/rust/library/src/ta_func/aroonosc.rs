@@ -222,15 +222,8 @@ impl Core {
     /// and strength on a -100..+100 scale. Positive when the high is more recent than the low
     /// (up-trend); negative when the low is more recent (down-trend).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// factor = 100 / optInTimePeriod
-    /// AroonUp   = factor * (period - (today - highestIdx))
-    /// AroonDown = factor * (period - (today - lowestIdx))
-    /// AroonOsc  = AroonUp - AroonDown = factor * (highestIdx - lowestIdx)
-    /// highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (period+1) bars.
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/aroonosc](https://ta-lib.org/functions/aroonosc).
     ///
     /// # Arguments
     ///
@@ -286,8 +279,6 @@ impl Core {
     /// # References
     ///
     /// * Tushar S. Chande
-    ///
-    /// Further reading: [ta-lib.org/functions/aroonosc](https://ta-lib.org/functions/aroonosc)
     #[doc(alias = "AroonOscillator")]
     pub fn AROONOSC(
         &self,

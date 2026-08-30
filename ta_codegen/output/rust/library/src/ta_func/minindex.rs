@@ -175,16 +175,8 @@ impl Core {
     /// Returns the absolute index of the lowest value within a rolling window of the given period.
     /// Same scan as MIN but outputs the position of the minimum rather than its value.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * When several bars in a window share the lowest value, the index of one of them is returned
-    ///   — not necessarily the first or the last.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/minindex](https://ta-lib.org/functions/minindex).
     ///
     /// # Arguments
     ///
@@ -233,8 +225,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MIN`] · [`Core::MAXINDEX`] · [`Core::MINMAXINDEX`] · [`Core::MINMAX`]
-    ///
-    /// Further reading: [ta-lib.org/functions/minindex](https://ta-lib.org/functions/minindex)
     #[doc(alias = "IndexofLowestValue")]
     #[doc(alias = "LowestValueIndex")]
     #[doc(alias = "RollingArgmin")]

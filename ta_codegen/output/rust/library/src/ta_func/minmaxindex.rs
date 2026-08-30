@@ -201,17 +201,8 @@ impl Core {
     /// Returns the absolute input indices of the lowest and highest values within each rolling
     /// window of optInTimePeriod bars. Index variant of MINMAX.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])  
-    /// outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * When several bars in a window share the extreme value, the index of one of them is
-    ///   returned — not necessarily the first or the last.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/minmaxindex](https://ta-lib.org/functions/minmaxindex).
     ///
     /// # Arguments
     ///
@@ -262,9 +253,6 @@ impl Core {
     ///
     /// [`Core::MINMAX`] · [`Core::MIN`] · [`Core::MAX`] · [`Core::MININDEX`] ·
     /// [`Core::MAXINDEX`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/minmaxindex](https://ta-lib.org/functions/minmaxindex)
     #[doc(alias = "LowestHighestIndex")]
     pub fn MINMAXINDEX(
         &self,

@@ -311,25 +311,8 @@ impl Core {
     /// type. Outputs the MACD line, its signal line, and their difference (histogram). Hist sign
     /// change (MACD crossing its signal line) flags momentum shifts.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// MACD = MA_fast(inReal) - MA_slow(inReal)
-    /// Signal = MA_signal(MACD)
-    /// Hist = MACD - Signal
-    /// (each MA_* uses its own MA type and period)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * If the slow period is set smaller than the fast period, the fast and slow periods and
-    ///   their MA types are swapped so the slow moving average is always the longer one.
-    /// * A signal period of 1 disables signal-line smoothing for every signal MAType: the signal
-    ///   equals the MACD line and the histogram is zero.
-    /// * `TA_MAType_MAMA` ignores its period argument, so it always produces the same series
-    ///   regardless of the period requested. If both `optInFastMAType` and `optInSlowMAType` are
-    ///   set to MAMA, the fast and slow lines are therefore identical and MACD, Signal, and Hist
-    ///   are all zero at every bar. Select MAMA for only one side to get a meaningful spread.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/macdext](https://ta-lib.org/functions/macdext).
     ///
     /// # Arguments
     ///
@@ -397,8 +380,6 @@ impl Core {
     ///
     /// [`Core::MACD`] · [`Core::MACDFIX`] · [`Core::MA`] · [`Core::EMA`] · [`Core::APO`] ·
     /// [`Core::PPO`]
-    ///
-    /// Further reading: [ta-lib.org/functions/macdext](https://ta-lib.org/functions/macdext)
     #[doc(alias = "MACDExtended")]
     #[doc(alias = "MACDwithcontrollableMAtype")]
     pub fn MACDEXT(

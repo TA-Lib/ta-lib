@@ -424,11 +424,8 @@ impl Core {
     /// variant of the morning star. A hit (+100) signals a bullish reversal; most meaningful after
     /// a downtrend, which this function does not verify.
     ///
-    /// # Notes
-    ///
-    /// * The gap-down is measured between the candles' real bodies, not between their high/low
-    ///   ranges.
-    /// * A prior downtrend is not verified.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlmorningdojistar](https://ta-lib.org/functions/cdlmorningdojistar).
     ///
     /// # Arguments
     ///
@@ -493,9 +490,6 @@ impl Core {
     ///
     /// [`Core::CDLMORNINGSTAR`] · [`Core::CDLEVENINGDOJISTAR`] · [`Core::CDLEVENINGSTAR`] ·
     /// [`Core::CDLDOJISTAR`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlmorningdojistar](https://ta-lib.org/functions/cdlmorningdojistar)
     #[doc(alias = "MorningDojiStar")]
     pub fn CDLMORNINGDOJISTAR(
         &self,

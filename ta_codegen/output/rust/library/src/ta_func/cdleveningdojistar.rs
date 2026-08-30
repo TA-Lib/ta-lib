@@ -386,9 +386,8 @@ impl Core {
     /// star), then a black candle closing well down into the first candle's body. A stricter
     /// Evening Star whose middle candle must be a doji. Hit (-100) signals a bearish top reversal.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding uptrend the bearish reversal classically assumes.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdleveningdojistar](https://ta-lib.org/functions/cdleveningdojistar).
     ///
     /// # Arguments
     ///
@@ -452,9 +451,6 @@ impl Core {
     ///
     /// [`Core::CDLEVENINGSTAR`] · [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLDOJISTAR`] ·
     /// [`Core::CDLABANDONEDBABY`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdleveningdojistar](https://ta-lib.org/functions/cdleveningdojistar)
     #[doc(alias = "EveningDojiStar")]
     pub fn CDLEVENINGDOJISTAR(
         &self,

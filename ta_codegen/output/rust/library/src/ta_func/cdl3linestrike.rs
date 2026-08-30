@@ -253,14 +253,8 @@ impl Core {
     /// continuation-style signal keyed to the color of the first three candles, traditionally read
     /// as significant only inside a trend matching those three candles.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the surrounding trend the pattern classically assumes for significance.
-    /// * TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical
-    ///   study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice
-    ///   — it acted as a reversal far more often than a continuation — so traders who follow
-    ///   his research read this pattern's signal in the opposite direction from what its sign here
-    ///   suggests.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdl3linestrike](https://ta-lib.org/functions/cdl3linestrike).
     ///
     /// # Arguments
     ///
@@ -319,9 +313,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3WHITESOLDIERS`] · [`Core::CDL3BLACKCROWS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdl3linestrike](https://ta-lib.org/functions/cdl3linestrike)
     #[doc(alias = "Three-LineStrike")]
     #[doc(alias = "3-LineStrike")]
     pub fn CDL3LINESTRIKE(

@@ -183,11 +183,7 @@ impl Core {
     /// Rate of Change Ratio: the ratio of the current price to the price optInTimePeriod bars ago.
     /// A momentum measure centered at 1. Always positive, centered at 1: >1 rising, \<1 falling.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ROCR = price / price[t - optInTimePeriod]
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/rocr](https://ta-lib.org/functions/rocr).
     ///
     /// # Arguments
     ///
@@ -237,8 +233,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ROC`] · [`Core::ROCP`] · [`Core::ROCR100`] · [`Core::MOM`]
-    ///
-    /// Further reading: [ta-lib.org/functions/rocr](https://ta-lib.org/functions/rocr)
     #[doc(alias = "RateofChangeRatio")]
     pub fn ROCR(
         &self,

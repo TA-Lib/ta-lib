@@ -356,6 +356,9 @@ impl Core {
     /// a potential reversal only when read against the trend (typically a bottom/bullish reversal
     /// after a downtrend), which the code itself does not verify.
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdltakuri](https://ta-lib.org/functions/cdltakuri).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -410,8 +413,6 @@ impl Core {
     ///
     /// [`Core::CDLDRAGONFLYDOJI`] · [`Core::CDLDOJI`] · [`Core::CDLHAMMER`] ·
     /// [`Core::CDLGRAVESTONEDOJI`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdltakuri](https://ta-lib.org/functions/cdltakuri)
     #[doc(alias = "Takuri")]
     #[doc(alias = "Takuriline")]
     pub fn CDLTAKURI(

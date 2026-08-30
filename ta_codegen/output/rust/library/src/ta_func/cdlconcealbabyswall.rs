@@ -273,13 +273,8 @@ impl Core {
     /// upper shadow into the prior body, then a larger black candle fully engulfing the third. A
     /// hit signals a bullish reversal.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding downtrend the pattern classically assumes.
-    /// * Despite the bullish-reversal label, Bulkowski's testing found this pattern actually
-    ///   behaves as a bearish continuation 75% of the time — though the finding rests on just 4
-    ///   occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall.
-    ///   ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlconcealbabyswall](https://ta-lib.org/functions/cdlconcealbabyswall).
     ///
     /// # Arguments
     ///
@@ -337,9 +332,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLMARUBOZU`] · [`Core::CDLENGULFING`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlconcealbabyswall](https://ta-lib.org/functions/cdlconcealbabyswall)
     #[doc(alias = "ConcealingBabySwallow")]
     pub fn CDLCONCEALBABYSWALL(
         &self,

@@ -271,11 +271,7 @@ impl Core {
     /// implementation used by TradingView (`ta.cmo`), QuantConnect and pandas-ta's default. See
     /// [`CMO`](https://ta-lib.org/functions/cmo) for a smoothed variant of CMOU.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum of the positive d, Sd = sum of -d for negative d. CMOU = 100 * (Su-Sd)/(Su+Sd); 0 when Su+Sd == 0 (an exactly flat window). Unlike CMO, the sums are the plain period totals (a moving-window sum), not Wilder-smoothed averages, so there is no unstable period.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/cmou](https://ta-lib.org/functions/cmou).
     ///
     /// # Arguments
     ///
@@ -329,8 +325,6 @@ impl Core {
     /// # References
     ///
     /// * Tushar S. Chande, *The New Technical Trader*, John Wiley & Sons (ISBN 0471597805)
-    ///
-    /// Further reading: [ta-lib.org/functions/cmou](https://ta-lib.org/functions/cmou)
     #[doc(alias = "ChandeMomentumOscillatorUnsmoothed")]
     pub fn CMOU(
         &self,

@@ -107,11 +107,7 @@ impl Core {
     }
     /// Element-wise tangent of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = tan(inReal[i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/tan](https://ta-lib.org/functions/tan).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/tan](https://ta-lib.org/functions/tan)
     #[doc(alias = "tangent")]
     pub fn TAN(
         &self,

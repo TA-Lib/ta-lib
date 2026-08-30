@@ -283,15 +283,8 @@ impl Core {
     /// candle). Not a directional signal — the output sign encodes candle color, not
     /// bullish/bearish sentiment.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle at i, all three:
-    /// - short real body: real body < the BodyShort average
-    /// - short upper shadow: upper shadow < the ShadowShort average
-    /// - short lower shadow: lower shadow < the ShadowShort average
-    /// If matched: output = candle color * 100 (+100 white, -100 black); else 0.
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlshortline](https://ta-lib.org/functions/cdlshortline).
     ///
     /// # Arguments
     ///
@@ -346,9 +339,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLLONGLINE`] · [`Core::CDLSPINNINGTOP`] · [`Core::CDLDOJI`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlshortline](https://ta-lib.org/functions/cdlshortline)
     #[doc(alias = "ShortLineCandle")]
     #[doc(alias = "ShortLine")]
     pub fn CDLSHORTLINE(

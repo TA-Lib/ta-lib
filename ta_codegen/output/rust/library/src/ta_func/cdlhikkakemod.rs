@@ -313,10 +313,8 @@ impl Core {
     /// Bullish (+) or bearish (-) reversal; per the code's note it is significant in a downtrend
     /// (bull) or uptrend (bear), context the code does not verify.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this
-    ///   reversal pattern assumes.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlhikkakemod](https://ta-lib.org/functions/cdlhikkakemod).
     ///
     /// # Arguments
     ///
@@ -374,9 +372,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHIKKAKE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlhikkakemod](https://ta-lib.org/functions/cdlhikkakemod)
     #[doc(alias = "ModifiedHikkake")]
     #[doc(alias = "ModifiedHikkakePattern")]
     pub fn CDLHIKKAKEMOD(

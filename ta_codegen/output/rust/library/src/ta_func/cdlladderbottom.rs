@@ -232,13 +232,8 @@ impl Core {
     /// prior open and closes above the prior high. A hit is a bullish reversal signal, most
     /// meaningful after a downtrend.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding downtrend that this bullish reversal classically assumes.
-    /// * Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random"
-    ///   — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking
-    ///   41st of 103 patterns for overall performance.
-    ///   ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlladderbottom](https://ta-lib.org/functions/cdlladderbottom).
     ///
     /// # Arguments
     ///
@@ -296,9 +291,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLMATCHINGLOW`] · [`Core::CDLBREAKAWAY`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlladderbottom](https://ta-lib.org/functions/cdlladderbottom)
     #[doc(alias = "LadderBottom")]
     pub fn CDLLADDERBOTTOM(
         &self,

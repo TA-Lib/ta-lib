@@ -107,15 +107,7 @@ impl Core {
     }
     /// Element-wise square root of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = sqrt(inReal[i])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A negative input has no real square root, so those elements come out NaN.
+    /// Formula and more info at [ta-lib.org/functions/sqrt](https://ta-lib.org/functions/sqrt).
     ///
     /// # Arguments
     ///
@@ -161,8 +153,6 @@ impl Core {
     ///
     /// * Wikipedia, *Square root*:
     ///   [en.wikipedia.org/wiki/Square_root](https://en.wikipedia.org/wiki/Square_root)
-    ///
-    /// Further reading: [ta-lib.org/functions/sqrt](https://ta-lib.org/functions/sqrt)
     #[doc(alias = "SquareRoot")]
     pub fn SQRT(
         &self,

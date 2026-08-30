@@ -292,18 +292,8 @@ impl Core {
     /// a bearish continuation signal. A hit signals bearish continuation (the down move is expected
     /// to resume).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Two candles. First: black (close1 < open1) with a long real body (realbody > candleaverage(BodyLong)). Second: white (close2 >= open2), opens below the first candle's low (open2 < low1), and closes slightly into the first body: close2 >= close1 AND close2 <= close1 + candleaverage(Equal). No prior-trend check is performed.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding downtrend that this bearish continuation pattern assumes.
-    /// * Bulkowski's testing found the bearish continuation holds only 53% of the time — "near
-    ///   random" — though its overall post-breakout performance still ranks a strong 17th of 103.
-    ///   ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlinneck](https://ta-lib.org/functions/cdlinneck).
     ///
     /// # Arguments
     ///
@@ -358,8 +348,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLONNECK`] · [`Core::CDLTHRUSTING`] · [`Core::CDLMATCHINGLOW`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdlinneck](https://ta-lib.org/functions/cdlinneck)
     #[doc(alias = "In-NeckPattern")]
     #[doc(alias = "In-NeckLine")]
     pub fn CDLINNECK(

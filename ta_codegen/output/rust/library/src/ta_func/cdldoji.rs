@@ -214,11 +214,8 @@ impl Core {
     /// Single-candle Doji recognizer: fires when the real body (|close-open|) is at or below the
     /// BodyDoji threshold. Market indecision; neither bullish nor bearish on its own.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdldoji](https://ta-lib.org/functions/cdldoji).
     ///
     /// # Arguments
     ///
@@ -273,8 +270,6 @@ impl Core {
     ///
     /// [`Core::CDLDOJISTAR`] · [`Core::CDLDRAGONFLYDOJI`] · [`Core::CDLGRAVESTONEDOJI`] ·
     /// [`Core::CDLLONGLEGGEDDOJI`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdldoji](https://ta-lib.org/functions/cdldoji)
     #[doc(alias = "Doji")]
     pub fn CDLDOJI(
         &self,

@@ -295,13 +295,8 @@ impl Core {
     /// Returns the y-intercept (b) of the least-squares regression line fitted over the last
     /// optInTimePeriod values. Part of the linear-regression family (LINEARREG, SLOPE, ANGLE, TSF).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Fit y = b + m·x over the window with x = bars-ago (x=0 is the current bar, x=period-1 the oldest). With SumX = period(period-1)/2, SumXSqr = period(period-1)(2·period-1)/6, Divisor = SumX² − period·SumXSqr:
-    /// m = (period·SumXY − SumX·SumY) / Divisor
-    /// b = (SumY − m·SumX) / period   ← output
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/linearreg_intercept](https://ta-lib.org/functions/linearreg_intercept).
     ///
     /// # Arguments
     ///
@@ -351,9 +346,6 @@ impl Core {
     ///
     /// [`Core::LINEARREG`] · [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_ANGLE`] ·
     /// [`Core::TSF`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/linearreg_intercept](https://ta-lib.org/functions/linearreg_intercept)
     #[doc(alias = "LinearRegressionIntercept")]
     pub fn LINEARREG_INTERCEPT(
         &self,

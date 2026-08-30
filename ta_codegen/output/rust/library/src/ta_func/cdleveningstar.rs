@@ -367,11 +367,8 @@ impl Core {
     /// up, then a black candle closing well down into the first candle's body. A hit signals a
     /// bearish reversal (most significant in an uptrend).
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding uptrend the bearish reversal classically assumes.
-    /// * The third candle only needs a body longer than short, not the full long body some
-    ///   definitions require.
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdleveningstar](https://ta-lib.org/functions/cdleveningstar).
     ///
     /// # Arguments
     ///
@@ -434,9 +431,6 @@ impl Core {
     ///
     /// [`Core::CDLEVENINGDOJISTAR`] · [`Core::CDLMORNINGSTAR`] · [`Core::CDLMORNINGDOJISTAR`] ·
     /// CDLSTARSINSOUTH
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdleveningstar](https://ta-lib.org/functions/cdleveningstar)
     #[doc(alias = "EveningStar")]
     pub fn CDLEVENINGSTAR(
         &self,

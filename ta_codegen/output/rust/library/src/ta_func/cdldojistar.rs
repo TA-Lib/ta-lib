@@ -291,20 +291,8 @@ impl Core {
     /// prevailing trend (bullish in a downtrend, bearish in an uptrend), which the code does not
     /// itself verify.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: doji (realbody <= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend the reversal signal classically assumes.
-    /// * Bulkowski's testing contradicts the classic reading for the bullish case: theory says a
-    ///   bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he
-    ///   found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the
-    ///   opposite of the textbook signal.
-    ///   ([thepatternsite.com](https://thepatternsite.com/DojiStarBull.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdldojistar](https://ta-lib.org/functions/cdldojistar).
     ///
     /// # Arguments
     ///
@@ -361,9 +349,6 @@ impl Core {
     ///
     /// [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLEVENINGDOJISTAR`] · [`Core::CDLDOJI`] ·
     /// [`Core::CDLMORNINGSTAR`] · [`Core::CDLEVENINGSTAR`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdldojistar](https://ta-lib.org/functions/cdldojistar)
     #[doc(alias = "DojiStar")]
     pub fn CDLDOJISTAR(
         &self,

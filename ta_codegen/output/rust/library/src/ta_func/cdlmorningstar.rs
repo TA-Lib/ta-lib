@@ -404,15 +404,8 @@ impl Core {
     /// signal. A hit signals a bullish reversal (most meaningful after a downtrend, which the code
     /// does not check).
     ///
-    /// # Notes
-    ///
-    /// * The gap-down is measured between the candles' real bodies, not between their high/low
-    ///   ranges.
-    /// * A prior downtrend is not verified.
-    /// * Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and
-    ///   12th of 103 for overall post-breakout performance — one of the few classic candle
-    ///   patterns whose textbook reputation his statistics confirm rather than debunk.
-    ///   ([thepatternsite.com](https://thepatternsite.com/MorningStar.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlmorningstar](https://ta-lib.org/functions/cdlmorningstar).
     ///
     /// # Arguments
     ///
@@ -476,9 +469,6 @@ impl Core {
     ///
     /// [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLEVENINGSTAR`] · [`Core::CDLABANDONEDBABY`] ·
     /// [`Core::CDLDOJISTAR`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlmorningstar](https://ta-lib.org/functions/cdlmorningstar)
     #[doc(alias = "MorningStar")]
     pub fn CDLMORNINGSTAR(
         &self,

@@ -316,14 +316,8 @@ impl Core {
     /// Plus Directional Movement: the Wilder-smoothed accumulation of upward directional movement
     /// (+DM1). A component of the Directional Movement System used to build +DI/DX/ADX.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// +DM1 = (high - prevHigh) if (high-prevHigh) > 0 and > (prevLow-low), else 0.
-    /// period<=1: output = +DM1 per bar.
-    /// period>1: seed = sum of first (period-1) +DM1; then Wilder smoothing:
-    /// +DM = prevPlusDM - prevPlusDM/period + +DM1(today)
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/plus_dm](https://ta-lib.org/functions/plus_dm).
     ///
     /// # Arguments
     ///
@@ -380,8 +374,6 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/plus_dm](https://ta-lib.org/functions/plus_dm)
     #[doc(alias = "DM")]
     #[doc(alias = "PlusDirectionalMovement")]
     pub fn PLUS_DM(

@@ -148,11 +148,7 @@ impl Core {
     /// volume-weighted money-flow multiplier per bar to gauge buying vs. selling pressure. Rising
     /// line = accumulation (buying pressure); falling = distribution.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// MFM = ((close-low) - (high-close)) / (high-low); AD_t = AD_{t-1} + MFM_t * volume_t (running sum, seeded at 0)
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/ad](https://ta-lib.org/functions/ad).
     ///
     /// # Arguments
     ///
@@ -207,8 +203,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ADOSC`] · [`Core::OBV`]
-    ///
-    /// Further reading: [ta-lib.org/functions/ad](https://ta-lib.org/functions/ad)
     #[doc(alias = "ChaikinADLine")]
     #[doc(alias = "AccumulationDistributionLine")]
     #[doc(alias = "AccumulationDistribution")]

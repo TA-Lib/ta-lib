@@ -287,18 +287,8 @@ impl Core {
     /// vs bearish reversal meaning must be read against the prevailing trend, which this function
     /// does not check.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle. Detected when all hold: (1) doji body: realbody |close-open| <= BodyDoji average; (2) very short/absent lower shadow: lowerShadow < ShadowVeryShort average; (3) non-short upper shadow: upperShadow > ShadowVeryShort average (open/close at the low with an upper shadow).
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend that determines the pattern's bullish/bearish meaning.
-    /// * Bulkowski's testing found the bearish reversal traders expect actually shows up only 51%
-    ///   of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout
-    ///   performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlgravestonedoji](https://ta-lib.org/functions/cdlgravestonedoji).
     ///
     /// # Arguments
     ///
@@ -357,9 +347,6 @@ impl Core {
     ///
     /// [`Core::CDLDOJI`] · [`Core::CDLDRAGONFLYDOJI`] · [`Core::CDLLONGLEGGEDDOJI`] ·
     /// [`Core::CDLDOJISTAR`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlgravestonedoji](https://ta-lib.org/functions/cdlgravestonedoji)
     #[doc(alias = "GravestoneDoji")]
     pub fn CDLGRAVESTONEDOJI(
         &self,

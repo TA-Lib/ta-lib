@@ -107,11 +107,7 @@ impl Core {
     }
     /// Element-wise hyperbolic cosine of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = cosh(inReal[i]) = (e^{inReal[i]} + e^{-inReal[i]}) / 2
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/cosh](https://ta-lib.org/functions/cosh).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Hyperbolic functions*:
     ///   [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/cosh](https://ta-lib.org/functions/cosh)
     #[doc(alias = "HyperbolicCosine")]
     pub fn COSH(
         &self,

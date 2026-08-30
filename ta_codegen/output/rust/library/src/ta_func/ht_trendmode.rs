@@ -613,6 +613,9 @@ impl Core {
     /// 0 (cycling — favor mean-reversion). Built from the same MAMA dominant-cycle/phase DSP plus
     /// a SineWave/trendline test used across the other HT_* functions.
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/ht_trendmode](https://ta-lib.org/functions/ht_trendmode).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -661,9 +664,6 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/ht_trendmode](https://ta-lib.org/functions/ht_trendmode)
     #[doc(alias = "HilbertTransformTrendvsCycleMode")]
     #[doc(alias = "TrendMode")]
     pub fn HT_TRENDMODE(

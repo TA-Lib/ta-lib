@@ -107,11 +107,7 @@ impl Core {
     }
     /// Element-wise floor (round down to the nearest integer) of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = floor(inReal[i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/floor](https://ta-lib.org/functions/floor).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Floor and ceiling functions*:
     ///   [en.wikipedia.org/wiki/Floor_and_ceiling_functions](https://en.wikipedia.org/wiki/Floor_and_ceiling_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/floor](https://ta-lib.org/functions/floor)
     pub fn FLOOR(
         &self,
         startIdx: usize,

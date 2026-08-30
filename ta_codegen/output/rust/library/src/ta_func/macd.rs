@@ -383,19 +383,7 @@ impl Core {
     /// input, plus an EMA-smoothed signal line and their histogram. MACD crossing its signal line
     /// and histogram sign changes flag momentum shifts.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Signal
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * If the slow period is set smaller than the fast period, the two are swapped so the slow
-    ///   EMA is always the longer one.
-    /// * A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and
-    ///   the histogram is zero. Before 0.6.5 this parameter value produced misaligned output
-    ///   (issues #48/#59).
+    /// Formula and more info at [ta-lib.org/functions/macd](https://ta-lib.org/functions/macd).
     ///
     /// # Arguments
     ///
@@ -457,8 +445,6 @@ impl Core {
     /// # References
     ///
     /// * Gerald Appel, *Stock Market Trading Systems*, Traders Pr (ISBN 0934380163)
-    ///
-    /// Further reading: [ta-lib.org/functions/macd](https://ta-lib.org/functions/macd)
     #[doc(alias = "movingaverageconvergencedivergence")]
     pub fn MACD(
         &self,

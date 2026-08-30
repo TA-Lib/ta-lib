@@ -550,14 +550,7 @@ impl Core {
     /// dominant-cycle phase rate measured with a Hilbert transform. Emits two lines, MAMA and its
     /// slower follower FAMA. MAMA crossing above FAMA is bullish; crossing below is bearish.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-    /// alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
-    /// MAMA = alpha*price + (1-alpha)*MAMA_prev
-    /// FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/mama](https://ta-lib.org/functions/mama).
     ///
     /// # Arguments
     ///
@@ -618,8 +611,6 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
-    ///
-    /// Further reading: [ta-lib.org/functions/mama](https://ta-lib.org/functions/mama)
     #[doc(alias = "MESAAdaptiveMovingAverage")]
     #[doc(alias = "EhlersMAMA")]
     pub fn MAMA(

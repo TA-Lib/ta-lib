@@ -292,14 +292,8 @@ impl Core {
     /// first candle's open. Signals a bullish reversal (three inside up, significant in a
     /// downtrend) or a bearish reversal (three inside down, significant in an uptrend).
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend the pattern classically assumes (three inside up is
-    ///   meaningful in a downtrend, three inside down in an uptrend).
-    /// * Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time
-    ///   (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the
-    ///   time (rank 56 of 103) — both meaningfully better than a coin flip.
-    ///   ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdl3inside](https://ta-lib.org/functions/cdl3inside).
     ///
     /// # Arguments
     ///
@@ -355,8 +349,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDL3OUTSIDE`] · [`Core::CDLENGULFING`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdl3inside](https://ta-lib.org/functions/cdl3inside)
     #[doc(alias = "ThreeInsideUpDown")]
     #[doc(alias = "ThreeInside")]
     #[doc(alias = "ThreeInsideUp")]

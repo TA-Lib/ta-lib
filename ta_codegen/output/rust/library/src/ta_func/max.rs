@@ -257,11 +257,7 @@ impl Core {
     /// Highest input value over a rolling window of the last optInTimePeriod bars. A moving-window
     /// maximum.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = max(inReal[i-optInTimePeriod+1 .. i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/max](https://ta-lib.org/functions/max).
     ///
     /// # Arguments
     ///
@@ -310,8 +306,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MIN`] · [`Core::MAXINDEX`] · [`Core::MINMAX`]
-    ///
-    /// Further reading: [ta-lib.org/functions/max](https://ta-lib.org/functions/max)
     #[doc(alias = "Highest")]
     #[doc(alias = "HighestHigh")]
     #[doc(alias = "RollingMaximum")]

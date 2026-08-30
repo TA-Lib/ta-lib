@@ -473,31 +473,7 @@ impl Core {
     /// below. Extreme readings mark overbought and oversold conditions, and crossings of the signal
     /// line are the usual trade trigger.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-    ///
-    /// num = close - 0.5 * (HH + LL);  den = HH - LL
-    ///
-    /// SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-    ///
-    /// Signal = EMA(SMI, signalPeriod)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A window whose bars are all flat (every high equal to its low) leaves both the numerator
-    ///   and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention
-    ///   as CCI and IMI. Some implementations divide unguarded and return a non-finite value.
-    /// * Each exponential average is seeded with a simple average of its own first inputs, the same
-    ///   seeding TA-Lib's EMA uses, so the first published values converge toward an
-    ///   unlimited-history result rather than reproducing it exactly.
-    ///   `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` discards more of that warm-up.
-    ///   Implementations seeding from a single first sample — Tulip and TradingView among them
-    ///   — differ over the transient and agree once it decays.
-    /// * One output range covers both outputs, so the SMI values consumed by the signal line's own
-    ///   warm-up are not published.
+    /// Formula and more info at [ta-lib.org/functions/smi](https://ta-lib.org/functions/smi).
     ///
     /// # Arguments
     ///
@@ -568,8 +544,6 @@ impl Core {
     /// * William Blau, "Stochastic Momentum", *Technical Analysis of Stocks & Commodities*, v11:1
     ///   (January 1993), pp. 11-18
     /// * William Blau, *Momentum, Direction and Divergence*, Wiley 1995 (ISBN 0471027294)
-    ///
-    /// Further reading: [ta-lib.org/functions/smi](https://ta-lib.org/functions/smi)
     #[doc(alias = "stochasticmomentumindex")]
     #[doc(alias = "Blaustochasticmomentum")]
     pub fn SMI(

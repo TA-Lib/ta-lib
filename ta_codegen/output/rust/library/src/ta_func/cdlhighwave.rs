@@ -284,18 +284,8 @@ impl Core {
     /// bullish/bearish direction. A hit marks indecision (long-legged candle); not directional -
     /// sign encodes only the candle's color.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time —
-    ///   statistically indistinguishable from random — which he notes actually agrees with the
-    ///   pattern's theoretical meaning of pure indecision.
-    ///   ([thepatternsite.com](https://thepatternsite.com/HighWave.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlhighwave](https://ta-lib.org/functions/cdlhighwave).
     ///
     /// # Arguments
     ///
@@ -351,9 +341,6 @@ impl Core {
     ///
     /// [`Core::CDLLONGLEGGEDDOJI`] · [`Core::CDLSPINNINGTOP`] · [`Core::CDLRICKSHAWMAN`] ·
     /// [`Core::CDLDOJI`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlhighwave](https://ta-lib.org/functions/cdlhighwave)
     #[doc(alias = "High-WaveCandle")]
     #[doc(alias = "HighWave")]
     pub fn CDLHIGHWAVE(

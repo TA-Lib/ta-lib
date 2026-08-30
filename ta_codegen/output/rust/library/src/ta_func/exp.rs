@@ -107,11 +107,7 @@ impl Core {
     }
     /// Element-wise base-e exponential of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = exp(inReal[i]) = e^{inReal[i]}
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/exp](https://ta-lib.org/functions/exp).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Exponential function*:
     ///   [en.wikipedia.org/wiki/Exponential_function](https://en.wikipedia.org/wiki/Exponential_function)
-    ///
-    /// Further reading: [ta-lib.org/functions/exp](https://ta-lib.org/functions/exp)
     #[doc(alias = "exponential")]
     #[doc(alias = "ex")]
     pub fn EXP(

@@ -183,11 +183,7 @@ impl Core {
     /// optInTimePeriod bars earlier. Centered at zero with positive and negative values. Positive
     /// when price rose over the period, negative when it fell; magnitude scales the move.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ROC = ((price / prevPrice) - 1) * 100, where prevPrice = inReal[i - optInTimePeriod]
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/roc](https://ta-lib.org/functions/roc).
     ///
     /// # Arguments
     ///
@@ -236,8 +232,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MOM`] · [`Core::ROCP`] · [`Core::ROCR`] · [`Core::ROCR100`]
-    ///
-    /// Further reading: [ta-lib.org/functions/roc](https://ta-lib.org/functions/roc)
     #[doc(alias = "RateofChange")]
     #[doc(alias = "PriceRateofChange")]
     pub fn ROC(

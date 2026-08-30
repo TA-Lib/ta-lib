@@ -287,19 +287,8 @@ impl Core {
     /// hit marks a dragonfly doji; treated as a potential reversal, but direction (bullish/bearish)
     /// must be read from the trend it appears in.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < ShadowVeryShort average (no/very short upper shadow) AND lower shadow > ShadowVeryShort average (lower shadow present, not very short). No color, gap, or trend test.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend that determines the pattern's bullish/bearish meaning.
-    /// * Bulkowski's testing found this reverses the prior trend only about 50% of the time —
-    ///   statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns
-    ///   for post-breakout performance.
-    ///   ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdldragonflydoji](https://ta-lib.org/functions/cdldragonflydoji).
     ///
     /// # Arguments
     ///
@@ -358,9 +347,6 @@ impl Core {
     ///
     /// [`Core::CDLDOJI`] · [`Core::CDLGRAVESTONEDOJI`] · [`Core::CDLLONGLEGGEDDOJI`] ·
     /// [`Core::CDLTAKURI`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdldragonflydoji](https://ta-lib.org/functions/cdldragonflydoji)
     #[doc(alias = "DragonflyDoji")]
     pub fn CDLDRAGONFLYDOJI(
         &self,

@@ -282,17 +282,8 @@ impl Core {
     /// close sit at the range extremes. Bullish (white) or bearish (black) reversal/strength signal
     /// per the body color.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) < ShadowVeryShort average AND lowerShadow(i) < ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close>=open, -100 black when close<open); else 0.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu
-    ///   continues in its expected direction only about 53% (black) to 56% (white) of the time —
-    ///   both "near random." ([thepatternsite.com](https://thepatternsite.com/BlackMarubozu.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlmarubozu](https://ta-lib.org/functions/cdlmarubozu).
     ///
     /// # Arguments
     ///
@@ -347,9 +338,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLCLOSINGMARUBOZU`] · [`Core::CDLLONGLINE`] · [`Core::CDLBELTHOLD`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlmarubozu](https://ta-lib.org/functions/cdlmarubozu)
     #[doc(alias = "Marubozu")]
     #[doc(alias = "ShavenHeadBottom")]
     pub fn CDLMARUBOZU(

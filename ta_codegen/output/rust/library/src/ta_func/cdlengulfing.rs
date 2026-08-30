@@ -159,15 +159,8 @@ impl Core {
     /// reversal signal; ideally after a downtrend (bullish) or uptrend (bearish), which the code
     /// does not verify.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend (down for bullish, up for bearish) the reversal
-    ///   classically assumes.
-    /// * Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of
-    ///   103 patterns by that measure alone) but a weak overall post-breakout performance rank of
-    ///   91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing
-    ///   reverses 63% of the time with a similarly weak overall rank of 84th of 103.
-    ///   ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlengulfing](https://ta-lib.org/functions/cdlengulfing).
     ///
     /// # Arguments
     ///
@@ -223,9 +216,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDLCOUNTERATTACK`] · [`Core::CDLHARAMICROSS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlengulfing](https://ta-lib.org/functions/cdlengulfing)
     #[doc(alias = "EngulfingPattern")]
     #[doc(alias = "Engulfing")]
     #[doc(alias = "BullishBearishEngulfing")]

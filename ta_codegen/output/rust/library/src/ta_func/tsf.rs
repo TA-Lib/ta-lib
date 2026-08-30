@@ -330,11 +330,7 @@ impl Core {
     /// projects it one x-step beyond LINEARREG. Same regression as LINEARREG but evaluated at
     /// x=period instead of x=period-1.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSqr), b = (SumY - m*SumX)/N; output = b + m*N. With SumX=N(N-1)/2, SumXSqr=N(N-1)(2N-1)/6.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/tsf](https://ta-lib.org/functions/tsf).
     ///
     /// # Arguments
     ///
@@ -385,8 +381,6 @@ impl Core {
     ///
     /// [`Core::LINEARREG`] · [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_INTERCEPT`] ·
     /// [`Core::LINEARREG_ANGLE`]
-    ///
-    /// Further reading: [ta-lib.org/functions/tsf](https://ta-lib.org/functions/tsf)
     #[doc(alias = "TimeSeriesForecast")]
     pub fn TSF(
         &self,

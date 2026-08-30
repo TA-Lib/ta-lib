@@ -109,16 +109,7 @@ impl Core {
     }
     /// Element-wise division of two input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = inReal0[i] / inReal1[i]
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Zero divided by zero gives NaN; anything else divided by zero gives positive or negative
-    ///   infinity. Neither is reported as an error.
+    /// Formula and more info at [ta-lib.org/functions/div](https://ta-lib.org/functions/div).
     ///
     /// # Arguments
     ///
@@ -167,8 +158,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MULT`] · [`Core::ADD`] · [`Core::SUB`]
-    ///
-    /// Further reading: [ta-lib.org/functions/div](https://ta-lib.org/functions/div)
     #[doc(alias = "VectorArithmeticDivide")]
     #[doc(alias = "Divide")]
     pub fn DIV(

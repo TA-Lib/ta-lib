@@ -309,14 +309,8 @@ impl Core {
     /// first candle's real body. A reversal signal whose direction is the opposite of the first
     /// candle's color.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the
-    ///   reversal signal assumes.
-    /// * Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53%
-    ///   of the time — more often than it reverses the prior uptrend — rating the pattern "near
-    ///   random" overall (rank 72 of 103).
-    ///   ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlharami](https://ta-lib.org/functions/cdlharami).
     ///
     /// # Arguments
     ///
@@ -372,8 +366,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMICROSS`] · [`Core::CDLENGULFING`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdlharami](https://ta-lib.org/functions/cdlharami)
     #[doc(alias = "Harami")]
     #[doc(alias = "HaramiPattern")]
     pub fn CDLHARAMI(

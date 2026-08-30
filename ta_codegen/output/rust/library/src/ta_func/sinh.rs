@@ -107,11 +107,7 @@ impl Core {
     }
     /// Element-wise hyperbolic sine of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = sinh(inReal[i])
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/sinh](https://ta-lib.org/functions/sinh).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Hyperbolic functions*:
     ///   [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/sinh](https://ta-lib.org/functions/sinh)
     #[doc(alias = "HyperbolicSine")]
     pub fn SINH(
         &self,

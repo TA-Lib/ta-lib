@@ -365,20 +365,7 @@ impl Core {
     /// in ranging markets. Flat KAMA = non-trending/ranging market. KAMA tracking price closely =
     /// efficient trend.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-    /// SC = (ER*(2/3 - 2/31) + 2/31)^2
-    /// KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input, consistent with
-    ///   `MA(period=1)` for every MAType. (The natural KAMA math at period 1 would degenerate to a
-    ///   fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.)
-    ///   Allowed since 0.6.5.
+    /// Formula and more info at [ta-lib.org/functions/kama](https://ta-lib.org/functions/kama).
     ///
     /// # Arguments
     ///
@@ -433,8 +420,6 @@ impl Core {
     ///
     /// * Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*,
     ///   McGraw-Hill (1995)
-    ///
-    /// Further reading: [ta-lib.org/functions/kama](https://ta-lib.org/functions/kama)
     #[doc(alias = "KaufmanAdaptiveMovingAverage")]
     #[doc(alias = "KaufmansAdaptiveMovingAverage")]
     pub fn KAMA(

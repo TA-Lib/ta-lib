@@ -226,14 +226,8 @@ impl Core {
     /// fifth candle that closes back inside the gap. Emits a bullish signal (bottom reversal) or
     /// bearish signal (top reversal).
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend the pattern classically assumes (a breakaway matters most
-    ///   against a preceding move).
-    /// * Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture:
-    ///   bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway
-    ///   reverses 63% of the time overall.
-    ///   ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlbreakaway](https://ta-lib.org/functions/cdlbreakaway).
     ///
     /// # Arguments
     ///
@@ -288,9 +282,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLRISEFALL3METHODS`] · [`Core::CDL3LINESTRIKE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlbreakaway](https://ta-lib.org/functions/cdlbreakaway)
     #[doc(alias = "Breakaway")]
     pub fn CDLBREAKAWAY(
         &self,

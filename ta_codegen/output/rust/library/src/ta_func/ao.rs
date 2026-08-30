@@ -244,14 +244,7 @@ impl Core {
     /// alongside the Alligator and the Accelerator/Decelerator
     /// ([`AC`](https://ta-lib.org/functions/ac)).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// median_t = ( high_t + low_t ) / 2  
-    /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    ///
-    /// An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/ao](https://ta-lib.org/functions/ao).
     ///
     /// # Arguments
     ///
@@ -315,8 +308,6 @@ impl Core {
     ///   inputs, and both report the first value at the same bar.
     /// * pandas-ta-classic swaps an inverted pair before computing, so it answers AO(slow, fast)
     ///   where this answers its negation.
-    ///
-    /// Further reading: [ta-lib.org/functions/ao](https://ta-lib.org/functions/ao)
     #[doc(alias = "AwesomeOscillator")]
     #[doc(alias = "BillWilliamsAwesomeOscillator")]
     #[doc(alias = "BWAO")]

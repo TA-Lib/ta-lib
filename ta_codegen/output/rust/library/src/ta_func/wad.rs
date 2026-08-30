@@ -182,22 +182,7 @@ impl Core {
     /// signed close-to-close move measured on the true range, so it is grouped as a momentum
     /// indicator, not a volume one.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// For each bar t:
-    ///
-    ///     TRH_t = max(close_{t-1}, high_t)
-    ///     TRL_t = min(close_{t-1}, low_t)
-    ///
-    ///     if close_t > close_{t-1} then AD_t = close_t - TRL_t
-    ///     if close_t < close_{t-1} then AD_t = close_t - TRH_t
-    ///     otherwise                     AD_t = 0
-    ///
-    ///     WAD_t = WAD_{t-1} + AD_t
-    ///
-    /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/wad](https://ta-lib.org/functions/wad).
     ///
     /// # Arguments
     ///
@@ -262,8 +247,6 @@ impl Core {
     ///   Distribute*](https://www.incrediblecharts.com/indicators/williams_accumulate_distribute.php)
     ///   — the Achelis form under its disambiguating name, "not a volume indicator despite the
     ///   name".
-    ///
-    /// Further reading: [ta-lib.org/functions/wad](https://ta-lib.org/functions/wad)
     pub fn WAD(
         &self,
         startIdx: usize,

@@ -177,11 +177,7 @@ impl Core {
     /// (unnormalized) rate of change. Positive = price rose over the period, negative = fell;
     /// centered at zero.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// MOM[i] = inReal[i] - inReal[i - optInTimePeriod]
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/mom](https://ta-lib.org/functions/mom).
     ///
     /// # Arguments
     ///
@@ -230,8 +226,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ROC`] · [`Core::ROCP`] · [`Core::ROCR`] · [`Core::ROCR100`]
-    ///
-    /// Further reading: [ta-lib.org/functions/mom](https://ta-lib.org/functions/mom)
     #[doc(alias = "Momentum")]
     pub fn MOM(
         &self,

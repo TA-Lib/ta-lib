@@ -385,18 +385,7 @@ impl Core {
     /// period, then double-smooths it. Returns the Slow-%K and Slow-%D lines. SlowK/SlowD > 80
     /// overbought, \< 20 oversold; %K crossing %D signals momentum shifts.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    /// SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-    /// SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * When the high-low range over the window is zero, the raw stochastic is set to 0 instead of
-    ///   being undefined.
+    /// Formula and more info at [ta-lib.org/functions/stoch](https://ta-lib.org/functions/stoch).
     ///
     /// # Arguments
     ///
@@ -467,8 +456,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::STOCHF`] · [`Core::STOCHRSI`] · [`Core::MA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/stoch](https://ta-lib.org/functions/stoch)
     #[doc(alias = "Stochastic")]
     #[doc(alias = "StochasticOscillator")]
     #[doc(alias = "SlowStochastic")]

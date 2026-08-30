@@ -394,18 +394,8 @@ impl Core {
     /// stay partly within the first candle's high-low range, then a long same-color candle that
     /// resumes the trend. Bullish (rising) or bearish (falling) continuation signal.
     ///
-    /// # Notes
-    ///
-    /// * Only the three-small-candle variant is detected; the classic pattern allowing two or more
-    ///   small candles is not supported.
-    /// * The middle candles need only partially overlap the first candle's range, not be fully
-    ///   contained within it.
-    /// * The prior trend the continuation reading assumes is not verified.
-    /// * Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out
-    ///   of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64
-    ///   examples) — both act as classically labeled, but Bulkowski flags the samples as too thin
-    ///   to trust: Falling Three Methods is so rare he omitted its statistics from his book
-    ///   entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlrisefall3methods](https://ta-lib.org/functions/cdlrisefall3methods).
     ///
     /// # Arguments
     ///
@@ -464,9 +454,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLXSIDEGAP3METHODS`] · [`Core::CDL3INSIDE`] · [`Core::CDL3OUTSIDE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlrisefall3methods](https://ta-lib.org/functions/cdlrisefall3methods)
     #[doc(alias = "RisingFallingThreeMethods")]
     #[doc(alias = "RisingThreeMethods")]
     #[doc(alias = "FallingThreeMethods")]

@@ -611,12 +611,8 @@ impl Core {
     /// Signals that an uptrend's advance is being blocked. A hit (-100) is bearish: the advance is
     /// stalling/blocked; meaningful mainly within an existing uptrend.
     ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior uptrend the pattern classically assumes for significance.
-    /// * Although classically read as a bearish reversal, Bulkowski's testing found the Advance
-    ///   Block actually acts as a bullish continuation 64% of the time.
-    ///   ([thepatternsite.com](https://thepatternsite.com/AdvanceBlock.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdladvanceblock](https://ta-lib.org/functions/cdladvanceblock).
     ///
     /// # Arguments
     ///
@@ -674,9 +670,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3WHITESOLDIERS`] · CDLDELIBERATION · [`Core::CDLSTALLEDPATTERN`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdladvanceblock](https://ta-lib.org/functions/cdladvanceblock)
     #[doc(alias = "AdvanceBlock")]
     pub fn CDLADVANCEBLOCK(
         &self,

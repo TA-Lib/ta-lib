@@ -107,16 +107,7 @@ impl Core {
     }
     /// Element-wise arc cosine of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = acos(inReal[i])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Outside \[-1, 1] there is no angle whose cosine is that value, so those elements come out
-    ///   NaN.
+    /// Formula and more info at [ta-lib.org/functions/acos](https://ta-lib.org/functions/acos).
     ///
     /// # Arguments
     ///
@@ -166,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Inverse trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
-    ///
-    /// Further reading: [ta-lib.org/functions/acos](https://ta-lib.org/functions/acos)
     #[doc(alias = "ArcCosine")]
     #[doc(alias = "InverseCosine")]
     #[doc(alias = "arccos")]

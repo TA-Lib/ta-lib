@@ -504,6 +504,9 @@ impl Core {
     /// averaging window adapts to the dominant cycle period measured via Hilbert-transform
     /// quadrature (I/Q) analysis of price.
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/ht_trendline](https://ta-lib.org/functions/ht_trendline).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -552,9 +555,6 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/ht_trendline](https://ta-lib.org/functions/ht_trendline)
     #[doc(alias = "HilbertTransformInstantaneousTrendline")]
     #[doc(alias = "InstantaneousTrendline")]
     pub fn HT_TRENDLINE(

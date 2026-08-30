@@ -285,20 +285,8 @@ impl Core {
     /// long black candle with no/very short upper shadow. A white hit is bullish (opens at the low,
     /// closes strong); a black hit is bearish (opens at the high, closes weak).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle. Requires real body > BodyLong average (long body), then either: white body (close>=open) AND lower shadow < ShadowVeryShort average -> bullish; OR black body (close<open) AND upper shadow < ShadowVeryShort average -> bearish. No prior-trend or gap conditions are checked.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend that the pattern's bullish/bearish reading classically
-    ///   assumes.
-    /// * Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns
-    ///   for pure reversal reliability (bearish reverses 68% of the time) — though its overall
-    ///   post-breakout performance rank is a more middling 62nd/63rd of 103.
-    ///   ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlbelthold](https://ta-lib.org/functions/cdlbelthold).
     ///
     /// # Arguments
     ///
@@ -353,9 +341,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLCLOSINGMARUBOZU`] · [`Core::CDLMARUBOZU`] · [`Core::CDLLONGLINE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlbelthold](https://ta-lib.org/functions/cdlbelthold)
     #[doc(alias = "Belt-hold")]
     #[doc(alias = "BeltHoldLine")]
     pub fn CDLBELTHOLD(

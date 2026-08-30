@@ -334,6 +334,9 @@ impl Core {
     /// ends) separated by a gap. A strong directional/reversal signal whose bull/bear bias is set
     /// by the longer of the two marubozu.
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlkickingbylength](https://ta-lib.org/functions/cdlkickingbylength).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -391,9 +394,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLKICKING`] · [`Core::CDLMARUBOZU`] · [`Core::CDLGAPSIDESIDEWHITE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlkickingbylength](https://ta-lib.org/functions/cdlkickingbylength)
     #[doc(alias = "KickingbyLength")]
     #[doc(alias = "Kicking-bullbeardecidedbythelongermarubozu")]
     pub fn CDLKICKINGBYLENGTH(

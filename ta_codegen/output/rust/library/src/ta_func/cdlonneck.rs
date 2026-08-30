@@ -291,18 +291,8 @@ impl Core {
     /// below the prior candle's low and closes right at that low. Bearish continuation signal. A
     /// hit is bearish (bearish continuation); the code does not verify the assumed prior downtrend.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Two candles. 1st: black (close<open) with long real body (realbody > BodyLong average). 2nd: white (close>=open); open < prior low; close within the Equal band of the prior low, i.e. (prior_low - EqualAvg) <= close2 <= (prior_low + EqualAvg).
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The bearish-continuation reading assumes a prior downtrend, which is not verified.
-    /// * Bulkowski's testing found the bearish continuation holds only 56% of the time, which he
-    ///   explicitly calls "near random."
-    ///   ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlonneck](https://ta-lib.org/functions/cdlonneck).
     ///
     /// # Arguments
     ///
@@ -357,8 +347,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLINNECK`] · [`Core::CDLTHRUSTING`] · CDLMEETINGLINES
-    ///
-    /// Further reading: [ta-lib.org/functions/cdlonneck](https://ta-lib.org/functions/cdlonneck)
     #[doc(alias = "On-NeckPattern")]
     #[doc(alias = "On-NeckLine")]
     pub fn CDLONNECK(

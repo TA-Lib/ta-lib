@@ -184,11 +184,7 @@ impl Core {
     /// centered at zero (positive or negative). >0 rising vs N bars ago, \<0 falling; equals
     /// ROC/100.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/rocp](https://ta-lib.org/functions/rocp).
     ///
     /// # Arguments
     ///
@@ -238,8 +234,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ROC`] · [`Core::ROCR`] · [`Core::ROCR100`] · [`Core::MOM`]
-    ///
-    /// Further reading: [ta-lib.org/functions/rocp](https://ta-lib.org/functions/rocp)
     #[doc(alias = "RateofChangePercentage")]
     #[doc(alias = "PercentChange")]
     pub fn ROCP(

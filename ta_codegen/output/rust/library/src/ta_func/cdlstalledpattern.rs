@@ -481,14 +481,8 @@ impl Core {
     /// a bearish reversal signal of a stalling advance. A hit (-100) is bearish: the uptrend is
     /// stalling and may reverse.
     ///
-    /// # Notes
-    ///
-    /// * The pattern classically appears in an uptrend, but this function does not verify a prior
-    ///   uptrend; the caller must confirm it.
-    /// * Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish
-    ///   continuation 77% of the time — the reverse of the label — because price tends to close
-    ///   above the pattern's top rather than turning down.
-    ///   ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlstalledpattern](https://ta-lib.org/functions/cdlstalledpattern).
     ///
     /// # Arguments
     ///
@@ -546,9 +540,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLADVANCEBLOCK`] · [`Core::CDL3WHITESOLDIERS`] · [`Core::CDLXSIDEGAP3METHODS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlstalledpattern](https://ta-lib.org/functions/cdlstalledpattern)
     #[doc(alias = "StalledPattern")]
     #[doc(alias = "DeliberationPattern")]
     pub fn CDLSTALLEDPATTERN(

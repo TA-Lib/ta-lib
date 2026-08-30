@@ -107,16 +107,7 @@ impl Core {
     }
     /// Element-wise natural logarithm of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = log(inReal[i])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The logarithm is defined only for positive values: a negative input gives NaN, and a zero
-    ///   input gives negative infinity.
+    /// Formula and more info at [ta-lib.org/functions/ln](https://ta-lib.org/functions/ln).
     ///
     /// # Arguments
     ///
@@ -166,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Natural logarithm*:
     ///   [en.wikipedia.org/wiki/Natural_logarithm](https://en.wikipedia.org/wiki/Natural_logarithm)
-    ///
-    /// Further reading: [ta-lib.org/functions/ln](https://ta-lib.org/functions/ln)
     #[doc(alias = "NaturalLog")]
     #[doc(alias = "VectorLogNatural")]
     #[doc(alias = "Log")]

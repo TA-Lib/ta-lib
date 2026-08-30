@@ -109,11 +109,7 @@ impl Core {
     }
     /// Element-wise addition of two input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = inReal0[i] + inReal1[i]
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/add](https://ta-lib.org/functions/add).
     ///
     /// # Arguments
     ///
@@ -162,8 +158,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SUB`] · [`Core::MULT`] · [`Core::DIV`]
-    ///
-    /// Further reading: [ta-lib.org/functions/add](https://ta-lib.org/functions/add)
     #[doc(alias = "VectorAdd")]
     #[doc(alias = "VectorArithmeticAdd")]
     pub fn ADD(

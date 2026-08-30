@@ -333,12 +333,8 @@ impl Core {
     /// separated by a price gap. A reversal signal whose direction is set by the second candle's
     /// color.
     ///
-    /// # Notes
-    ///
-    /// * Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time
-    ///   — both "near random" — and it's also one of the rarest patterns he tracked (frequency
-    ///   rank 100/103 bullish, 102/103 bearish).
-    ///   ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlkicking](https://ta-lib.org/functions/cdlkicking).
     ///
     /// # Arguments
     ///
@@ -393,8 +389,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLKICKINGBYLENGTH`] · [`Core::CDLMARUBOZU`] · [`Core::CDLGAPSIDESIDEWHITE`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdlkicking](https://ta-lib.org/functions/cdlkicking)
     #[doc(alias = "Kicking")]
     pub fn CDLKICKING(
         &self,

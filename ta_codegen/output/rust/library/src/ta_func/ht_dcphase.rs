@@ -526,6 +526,9 @@ impl Core {
     /// price. One real output per bar. Output is degrees, in the range −45 to 315 (a full 360°
     /// span).
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/ht_dcphase](https://ta-lib.org/functions/ht_dcphase).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -575,8 +578,6 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
-    ///
-    /// Further reading: [ta-lib.org/functions/ht_dcphase](https://ta-lib.org/functions/ht_dcphase)
     #[doc(alias = "HilbertTransformDominantCyclePhase")]
     pub fn HT_DCPHASE(
         &self,

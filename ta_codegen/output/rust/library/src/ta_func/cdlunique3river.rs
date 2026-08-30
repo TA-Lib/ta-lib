@@ -296,12 +296,8 @@ impl Core {
     /// ideally in a downtrend (trend not checked by the code). A hit (+100) marks a bullish
     /// reversal; significant in a downtrend, which the function does not verify.
     ///
-    /// # Notes
-    ///
-    /// * Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing
-    ///   found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103
-    ///   patterns overall.
-    ///   ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlunique3river](https://ta-lib.org/functions/cdlunique3river).
     ///
     /// # Arguments
     ///
@@ -359,9 +355,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDLHOMINGPIGEON`] · [`Core::CDL3INSIDE`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlunique3river](https://ta-lib.org/functions/cdlunique3river)
     #[doc(alias = "Unique3River")]
     #[doc(alias = "UniqueThreeRiverBottom")]
     pub fn CDLUNIQUE3RIVER(

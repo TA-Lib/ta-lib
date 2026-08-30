@@ -108,11 +108,7 @@ impl Core {
     }
     /// Element-wise multiplication of two input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = inReal0[i] * inReal1[i]
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/mult](https://ta-lib.org/functions/mult).
     ///
     /// # Arguments
     ///
@@ -161,8 +157,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ADD`] · [`Core::SUB`] · [`Core::DIV`]
-    ///
-    /// Further reading: [ta-lib.org/functions/mult](https://ta-lib.org/functions/mult)
     #[doc(alias = "VectorMultiply")]
     #[doc(alias = "VectorArithmeticMult")]
     #[doc(alias = "Element-wiseProduct")]

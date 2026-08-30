@@ -300,11 +300,8 @@ impl Core {
     /// LINEARREG_SLOPE value passed through atan and converted to degrees. Positive angle = rising
     /// fit line, negative = falling; magnitude reflects steepness.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// m = (N·SumXY − SumX·SumY) / (SumX² − N·SumXSqr), with SumX=N(N−1)/2, SumXSqr=N(N−1)(2N−1)/6; angle = atan(m)·(180/π)
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/linearreg_angle](https://ta-lib.org/functions/linearreg_angle).
     ///
     /// # Arguments
     ///
@@ -355,9 +352,6 @@ impl Core {
     ///
     /// [`Core::LINEARREG`] · [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_INTERCEPT`] ·
     /// [`Core::TSF`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/linearreg_angle](https://ta-lib.org/functions/linearreg_angle)
     #[doc(alias = "LinearRegressionAngle")]
     #[doc(alias = "LeastSquaresAngle")]
     pub fn LINEARREG_ANGLE(

@@ -371,15 +371,8 @@ impl Core {
     /// final white candle closing above the reaction days' highs. Signals continuation of the prior
     /// uptrend. Hit = bullish continuation of the existing uptrend.
     ///
-    /// # Notes
-    ///
-    /// * The colors of the third and fourth (reaction) candles are not checked, although they are
-    ///   classically black.
-    /// * The continuation reading assumes a prior uptrend, which is not verified.
-    /// * Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle
-    ///   lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or
-    ///   at least subject to large change as additional samples become available."
-    ///   ([thepatternsite.com](https://thepatternsite.com/MatHold.html))
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdlmathold](https://ta-lib.org/functions/cdlmathold).
     ///
     /// # Arguments
     ///
@@ -442,8 +435,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLRISEFALL3METHODS`] · [`Core::CDLXSIDEGAP3METHODS`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdlmathold](https://ta-lib.org/functions/cdlmathold)
     #[doc(alias = "MatHold")]
     pub fn CDLMATHOLD(
         &self,

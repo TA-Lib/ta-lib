@@ -283,6 +283,9 @@ impl Core {
     /// strong directional conviction on the bar. Not intrinsically a reversal or continuation
     /// signal.
     ///
+    /// Formula and more info at
+    /// [ta-lib.org/functions/cdllongline](https://ta-lib.org/functions/cdllongline).
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -337,9 +340,6 @@ impl Core {
     ///
     /// [`Core::CDLSHORTLINE`] · [`Core::CDLCLOSINGMARUBOZU`] · [`Core::CDLMARUBOZU`] ·
     /// [`Core::CDLLONGLEGGEDDOJI`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdllongline](https://ta-lib.org/functions/cdllongline)
     #[doc(alias = "LongLineCandle")]
     #[doc(alias = "LongLine")]
     pub fn CDLLONGLINE(

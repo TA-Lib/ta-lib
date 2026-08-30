@@ -446,16 +446,8 @@ impl Core {
     /// Higher -DI indicates a stronger downtrend; compared against +DI to gauge directional
     /// dominance.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// -DM1 = (prevLow - low) if (prevLow-low)>0 and (high-prevHigh)<(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period<=1: -DI1 = -DM1/TR1 (no ×100).
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Wilder's original integer rounding is not applied (it was removed as unreliable when
-    ///   values are near 1).
+    /// Formula and more info at
+    /// [ta-lib.org/functions/minus_di](https://ta-lib.org/functions/minus_di).
     ///
     /// # Arguments
     ///
@@ -517,8 +509,6 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/minus_di](https://ta-lib.org/functions/minus_di)
     #[doc(alias = "-DI")]
     #[doc(alias = "NegativeDirectionalIndicator")]
     pub fn MINUS_DI(

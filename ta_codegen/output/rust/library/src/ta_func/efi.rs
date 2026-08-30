@@ -274,13 +274,7 @@ impl Core {
     /// the result, so it scales with the instrument's own volume: read its sign and its shape over
     /// time, not its level against another instrument.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-    ///
-    /// The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/efi](https://ta-lib.org/functions/efi).
     ///
     /// # Arguments
     ///
@@ -345,8 +339,6 @@ impl Core {
     ///   `Force Index(13) = 13-period EMA of Force Index(1)`.
     /// * MotiveWave, *Elder's Force Index*: `rawForce = vol * (price - prevP)`, smoothed by a
     ///   moving average whose default method is EMA, at 2 and 13. No competing formula was found.
-    ///
-    /// Further reading: [ta-lib.org/functions/efi](https://ta-lib.org/functions/efi)
     pub fn EFI(
         &self,
         startIdx: usize,

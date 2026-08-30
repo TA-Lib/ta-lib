@@ -247,13 +247,8 @@ impl Core {
     /// Acceleration Bands: three overlap lines around price. The middle band is an SMA of the
     /// close; the upper/lower bands are SMAs of the high/low scaled by an intraday-range factor.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// factor = 4*(H-L)/(H+L)
-    /// upperRaw = H*(1+factor), lowerRaw = L*(1-factor)
-    /// Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
-    /// ```
+    /// Formula and more info at
+    /// [ta-lib.org/functions/accbands](https://ta-lib.org/functions/accbands).
     ///
     /// # Arguments
     ///
@@ -316,8 +311,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SMA`] · [`Core::BBANDS`]
-    ///
-    /// Further reading: [ta-lib.org/functions/accbands](https://ta-lib.org/functions/accbands)
     #[doc(alias = "AccelerationBands")]
     pub fn ACCBANDS(
         &self,

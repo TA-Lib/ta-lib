@@ -542,11 +542,7 @@ impl Core {
     /// negative values while short so reversals are distinguishable. Sign flip of the output marks
     /// a trend reversal (positive=long stop, negative=short stop).
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/sarext](https://ta-lib.org/functions/sarext).
     ///
     /// # Arguments
     ///
@@ -613,8 +609,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SAR`] · [`Core::MINUS_DM`]
-    ///
-    /// Further reading: [ta-lib.org/functions/sarext](https://ta-lib.org/functions/sarext)
     #[doc(alias = "ParabolicSARExtended")]
     #[doc(alias = "ExtendedParabolicStopandReverse")]
     pub fn SAREXT(

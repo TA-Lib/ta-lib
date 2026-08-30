@@ -158,11 +158,7 @@ impl Core {
     /// last N periods. Measures dispersion around the window mean. Higher values indicate greater
     /// spread; zero when all values in the window are equal.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0}^{N-1} |x_{t-i} - mean_t|$ (N = optInTimePeriod)
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/avgdev](https://ta-lib.org/functions/avgdev).
     ///
     /// # Arguments
     ///
@@ -211,8 +207,6 @@ impl Core {
     /// # See also
     ///
     /// [`Core::STDDEV`] · [`Core::VAR`] · [`Core::SMA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/avgdev](https://ta-lib.org/functions/avgdev)
     #[doc(alias = "AverageDeviation")]
     #[doc(alias = "MeanAbsoluteDeviation")]
     #[doc(alias = "MAD")]

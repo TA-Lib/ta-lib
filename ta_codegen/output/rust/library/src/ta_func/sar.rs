@@ -393,13 +393,7 @@ impl Core {
     /// SAR below price = uptrend (long); SAR above price = downtrend (short). Price crossing SAR
     /// flips direction.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// SAR_next = SAR + af * (EP - SAR)
-    /// EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-    /// On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-    /// ```
+    /// Formula and more info at [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar).
     ///
     /// # Arguments
     ///
@@ -457,8 +451,6 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar)
     #[doc(alias = "ParabolicSAR")]
     #[doc(alias = "PSAR")]
     #[doc(alias = "StopandReverse")]

@@ -107,16 +107,7 @@ impl Core {
     }
     /// Element-wise base-10 logarithm of the input series.
     ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal[i] = log10(inReal[i])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * The logarithm is defined only for positive values: a negative input gives NaN, and a zero
-    ///   input gives negative infinity.
+    /// Formula and more info at [ta-lib.org/functions/log10](https://ta-lib.org/functions/log10).
     ///
     /// # Arguments
     ///
@@ -166,8 +157,6 @@ impl Core {
     ///
     /// * Wikipedia, *Common logarithm*:
     ///   [en.wikipedia.org/wiki/Common_logarithm](https://en.wikipedia.org/wiki/Common_logarithm)
-    ///
-    /// Further reading: [ta-lib.org/functions/log10](https://ta-lib.org/functions/log10)
     #[doc(alias = "LogBase10")]
     #[doc(alias = "CommonLogarithm")]
     pub fn LOG10(
