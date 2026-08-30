@@ -507,11 +507,18 @@ TA_LIB_API TA_RetCode TA_EMA_Update( TA_EMA_Stream *stream, double inReal, doubl
 TA_LIB_API TA_RetCode TA_EMA_Peek( const TA_EMA_Stream *stream, double inReal, double *outReal )
 {
    struct TA_EMA_Stream scratch;
+   struct TA_EMA_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_EMA_StepImpl( &scratch, inReal, outReal );
+   if( sp->optInTimePeriod == 1 )
+   {
+      *outReal= inReal;
+      return TA_SUCCESS;
+   }
+   sp->prevMA = fma(inReal - sp->prevMA, sp->optInK_1, sp->prevMA);
+   *outReal= sp->prevMA;
    return TA_SUCCESS;
 }
 

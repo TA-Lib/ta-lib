@@ -737,9 +737,7 @@ struct TA_ULTOSC_Stream {
    double lag1_inClose;
    int cbSize_term;
    double *cb_term_closeMinusTrueLow;
-   double *cbMirror_term_closeMinusTrueLow;
    double *cb_term_trueRange;
-   double *cbMirror_term_trueRange;
 };
 
 /* Private function, not in public API. */
@@ -747,9 +745,7 @@ static void TA_ULTOSC_ReleaseImpl( struct TA_ULTOSC_Stream *sp )
 {
    if( !sp ) return;
    if( sp->cb_term_closeMinusTrueLow ) TA_Free( sp->cb_term_closeMinusTrueLow );
-   if( sp->cbMirror_term_closeMinusTrueLow ) TA_Free( sp->cbMirror_term_closeMinusTrueLow );
    if( sp->cb_term_trueRange ) TA_Free( sp->cb_term_trueRange );
-   if( sp->cbMirror_term_trueRange ) TA_Free( sp->cbMirror_term_trueRange );
    TA_Free( sp );
 }
 
@@ -1230,13 +1226,9 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
       if( sp->cbSize_term < 1 || sp->cbSize_term > historyLen + 1 ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(393); }
       sp->cb_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
       if( !sp->cb_term_closeMinusTrueLow ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->cbMirror_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
-      if( !sp->cbMirror_term_closeMinusTrueLow ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_term_closeMinusTrueLow, term_closeMinusTrueLow, sizeof(double) * (size_t)sp->cbSize_term );
       sp->cb_term_trueRange = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
       if( !sp->cb_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->cbMirror_term_trueRange = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
-      if( !sp->cbMirror_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_term_trueRange, term_trueRange, sizeof(double) * (size_t)sp->cbSize_term );
       if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); 
       sp->outRangeBegIdx = *outBegIdx;
@@ -1300,15 +1292,129 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Update( TA_ULTOSC_Stream *stream, double inHigh,
 TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    struct TA_ULTOSC_Stream scratch;
+   struct TA_ULTOSC_Stream *sp = &scratch;
+   double trueLow;
+   double trueRange;
+   double closeMinusTrueLow;
+   double tempDouble;
+   double output;
+   double tempHT;
+   double tempLT;
+   double tempCY;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+   int pkSlot1 = -1;
+   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.cb_term_closeMinusTrueLow = stream->cbMirror_term_closeMinusTrueLow;
-   memcpy( scratch.cb_term_closeMinusTrueLow, stream->cb_term_closeMinusTrueLow, sizeof(double) * (size_t)stream->cbSize_term );
-   scratch.cb_term_trueRange = stream->cbMirror_term_trueRange;
-   memcpy( scratch.cb_term_trueRange, stream->cb_term_trueRange, sizeof(double) * (size_t)stream->cbSize_term );
-   TA_ULTOSC_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
+   /* Add on today's terms */
+   tempLT = inLow;
+   tempHT = inHigh;
+   tempCY = sp->lag1_inClose;
+   trueLow = min(tempLT,tempCY);
+   closeMinusTrueLow = inClose - trueLow;
+   trueRange = tempHT - tempLT;
+   tempDouble = fabs(tempCY - tempHT);
+   if( tempDouble > trueRange )
+   {
+      trueRange = tempDouble;
+   }
+   tempDouble = fabs(tempCY - tempLT);
+   if( tempDouble > trueRange )
+   {
+      trueRange = tempDouble;
+   }
+   pkSlot0 = sp->term_Idx;
+   pkVal0 = closeMinusTrueLow;
+   pkSlot1 = sp->term_Idx;
+   pkVal1 = trueRange;
+   sp->a1Total += closeMinusTrueLow;
+   sp->a2Total += closeMinusTrueLow;
+   sp->a3Total += closeMinusTrueLow;
+   sp->b1Total += trueRange;
+   sp->b2Total += trueRange;
+   sp->b3Total += trueRange;
+   /* Once a whole window of no-contribution bars has gone by, every slot it
+    * spans is 0.0, so its totals are known to be exactly zero and the
+    * residue can be dropped. The periods are sorted shortest-first, so a
+    * run long enough for a longer window is long enough for every shorter
+    * one.
+    */
+   if( trueRange == 0.0 && closeMinusTrueLow == 0.0 )
+   {
+      sp->nullRun += 1;
+   } else 
+   {
+      sp->nullRun = 0;
+   }
+   if( sp->nullRun >= sp->optInTimePeriod1 )
+   {
+      sp->a1Total = 0.0;
+      sp->b1Total = 0.0;
+      if( sp->nullRun >= sp->optInTimePeriod2 )
+      {
+         sp->a2Total = 0.0;
+         sp->b2Total = 0.0;
+         if( sp->nullRun >= sp->optInTimePeriod3 )
+         {
+            sp->nullRun = sp->optInTimePeriod3;
+            sp->a3Total = 0.0;
+            sp->b3Total = 0.0;
+         }
+      }
+   }
+   /* Calculate the oscillator value for today. Each window contributes only
+    * when it holds a true range; the totals are sums of non-negative terms
+    * and the reseed above removes their residue, so the test is exact.
+    */
+   output = 0.0;
+   if( sp->b1Total > 0.0 )
+   {
+      output += 4.0 * (sp->a1Total / sp->b1Total);
+   }
+   if( sp->b2Total > 0.0 )
+   {
+      output += 2.0 * (sp->a2Total / sp->b2Total);
+   }
+   if( sp->b3Total > 0.0 )
+   {
+      output += sp->a3Total / sp->b3Total;
+   }
+   /* Remove the trailing terms to prepare for next day. Each was evaluated
+    * once, when its bar entered the ring.
+    */
+   sp->a1Total -= (sp->trailingPos1 != pkSlot0) ? sp->cb_term_closeMinusTrueLow[sp->trailingPos1] : pkVal0;
+   sp->b1Total -= (sp->trailingPos1 != pkSlot1) ? sp->cb_term_trueRange[sp->trailingPos1] : pkVal1;
+   sp->trailingPos1 += 1;
+   if( sp->trailingPos1 >= sp->optInTimePeriod3 )
+   {
+      sp->trailingPos1 = 0;
+   }
+   sp->a2Total -= (sp->trailingPos2 != pkSlot0) ? sp->cb_term_closeMinusTrueLow[sp->trailingPos2] : pkVal0;
+   sp->b2Total -= (sp->trailingPos2 != pkSlot1) ? sp->cb_term_trueRange[sp->trailingPos2] : pkVal1;
+   sp->trailingPos2 += 1;
+   if( sp->trailingPos2 >= sp->optInTimePeriod3 )
+   {
+      sp->trailingPos2 = 0;
+   }
+   sp->term_Idx = sp->term_Idx + 1;
+   if( sp->term_Idx > sp->maxIdx_term )
+   {
+      sp->term_Idx = 0;
+   }
+   sp->a3Total -= (sp->term_Idx != pkSlot0) ? sp->cb_term_closeMinusTrueLow[sp->term_Idx] : pkVal0;
+   sp->b3Total -= (sp->term_Idx != pkSlot1) ? sp->cb_term_trueRange[sp->term_Idx] : pkVal1;
+   /* Last operation is to write the output. Must
+    * be done after the trailing index have all been
+    * taken care of because the caller is allowed
+    * to have the input array to be also the output
+    * array.
+    */
+   *outReal= 100.0 * (output / 7.0);
+   /* Increment indexes */
+   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

@@ -64,7 +64,8 @@ fn test_java_sma_ring_stream_section() {
     // scratch lookup would cost more than the allocation it saves.
     assert!(!s.contains("PEEK_SCRATCH"));
     assert!(s.contains("SmaStream scratch = new SmaStream(this);"));
-    // The C mirror/peekMode machinery is deleted by design (copy-peek).
+    // Java's peek copies the handle; no backend carries a mirror or a routing
+    // flag any more, so these hold everywhere rather than marking a difference.
     assert!(!s.contains("Mirror"), "no peek mirrors in the Java tier");
     assert!(!s.contains("peekMode"), "no peekMode in the Java tier");
     // Lifecycle surface.

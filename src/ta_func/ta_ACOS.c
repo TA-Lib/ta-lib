@@ -237,11 +237,13 @@ TA_LIB_API TA_RetCode TA_ACOS_Update( TA_ACOS_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_ACOS_Peek( const TA_ACOS_Stream *stream, double inReal, double *outReal )
 {
    struct TA_ACOS_Stream scratch;
+   struct TA_ACOS_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ACOS_StepImpl( &scratch, inReal, outReal );
+   (void)sp;
+   *outReal= acos(inReal);
    return TA_SUCCESS;
 }
 

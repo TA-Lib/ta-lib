@@ -691,11 +691,38 @@ TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, doubl
 TA_LIB_API TA_RetCode TA_ATR_Peek( const TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    struct TA_ATR_Stream scratch;
+   struct TA_ATR_Stream *sp = &scratch;
+   double val2;
+   double val3;
+   double greatest;
+   double tempCY;
+   double tempLT;
+   double tempHT;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ATR_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
+   /* Find the greatest of the 3 values. */
+   tempLT = inLow;
+   tempHT = inHigh;
+   tempCY = sp->lag1_inClose;
+   greatest = tempHT - tempLT;
+   /* val1 */
+   val2 = fabs(tempCY - tempHT);
+   if( val2 > greatest )
+   {
+      greatest = val2;
+   }
+   val3 = fabs(tempCY - tempLT);
+   if( val3 > greatest )
+   {
+      greatest = val3;
+   }
+   sp->prevATR *= sp->optInTimePeriod - 1;
+   sp->prevATR += greatest;
+   sp->prevATR /= sp->optInTimePeriod;
+   *outReal= sp->prevATR;
+   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

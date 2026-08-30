@@ -232,7 +232,6 @@ struct TA_ROC_Stream {
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
-   double *ringMirror_trailingIdx_inReal;
 };
 
 /* Private function, not in public API. */
@@ -240,7 +239,6 @@ static void TA_ROC_ReleaseImpl( struct TA_ROC_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
-   if( sp->ringMirror_trailingIdx_inReal ) TA_Free( sp->ringMirror_trailingIdx_inReal );
    TA_Free( sp );
 }
 
@@ -377,8 +375,6 @@ static TA_RetCode TA_ROC_OpenImpl( struct TA_ROC_Stream **stream, const double i
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_ROC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_ROC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -443,13 +439,32 @@ TA_LIB_API TA_RetCode TA_ROC_Update( TA_ROC_Stream *stream, double inReal, doubl
 TA_LIB_API TA_RetCode TA_ROC_Peek( const TA_ROC_Stream *stream, double inReal, double *outReal )
 {
    struct TA_ROC_Stream scratch;
+   struct TA_ROC_Stream *sp = &scratch;
+   double tempReal;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
-   memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_ROC_StepImpl( &scratch, inReal, outReal );
+   if( sp->ringCap_trailingIdx == 0 )
+   {
+      pkSlot0 = 0;
+      pkVal0 = inReal;
+   }
+   tempReal = (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
+   if( tempReal != 0.0 )
+   {
+      *outReal= (inReal / tempReal - 1.0) * 100.0;
+   } else 
+   {
+      *outReal= 0.0;
+   }
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   {
+      sp->ringPos_trailingIdx = 0;
+   }
    return TA_SUCCESS;
 }
 

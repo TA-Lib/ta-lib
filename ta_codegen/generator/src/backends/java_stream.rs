@@ -40,7 +40,7 @@
 //!   the sanctioned checkpoint story is re-opening from retained history.
 //! - `peek` = deep-copy constructor + step on the throwaway copy (the design
 //!   doc's stated cost model); `copy()` exposes the same constructor as an
-//!   independent stream. No mirror buffers, no `peekMode`. The copy is deep:
+//!   independent stream. The copy is deep:
 //!   arrays clone, sub-handles copy recursively; only the `Core` reference is
 //!   shared (settings identity is the contract).
 //! - Multi-output functions return a per-function immutable `Value` class
@@ -3203,7 +3203,7 @@ fn emit_period_bank(
 // sub-handles, mirroring rust_stream's emit_composed with the managed-language
 // simplifications: GC replaces every cleanup ladder and series-free replay,
 // `free()` renders as a no-op so lag-ring seeding reads the still-live
-// intermediate array, and copy-peek deletes peekMode entirely (sub handles
+// intermediate array, and copy-peek needs no sub-call routing at all (sub handles
 // deep-copy through their copy constructors).
 // ---------------------------------------------------------------------------
 

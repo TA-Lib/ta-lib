@@ -252,7 +252,6 @@ struct TA_QSTICK_Stream {
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_derived;
-   double *ringMirror_trailingIdx_derived;
 };
 
 /* Private function, not in public API. */
@@ -260,7 +259,6 @@ static void TA_QSTICK_ReleaseImpl( struct TA_QSTICK_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_derived ) TA_Free( sp->ring_trailingIdx_derived );
-   if( sp->ringMirror_trailingIdx_derived ) TA_Free( sp->ringMirror_trailingIdx_derived );
    TA_Free( sp );
 }
 
@@ -399,8 +397,6 @@ static TA_RetCode TA_QSTICK_OpenImpl( struct TA_QSTICK_Stream **stream, const do
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_derived ) { TA_QSTICK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_derived ) { TA_QSTICK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_trailingIdx; fillJ < historyLen; fillJ++ )
              sp->ring_trailingIdx_derived[fillJ - (historyLen - sp->ringCap_trailingIdx)] = (double)(inClose[fillJ] - inOpen[fillJ]);
@@ -468,13 +464,28 @@ TA_LIB_API TA_RetCode TA_QSTICK_Update( TA_QSTICK_Stream *stream, double inOpen,
 TA_LIB_API TA_RetCode TA_QSTICK_Peek( const TA_QSTICK_Stream *stream, double inOpen, double inClose, double *outReal )
 {
    struct TA_QSTICK_Stream scratch;
+   struct TA_QSTICK_Stream *sp = &scratch;
+   double tempReal;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdx_derived = stream->ringMirror_trailingIdx_derived;
-   memcpy( scratch.ring_trailingIdx_derived, stream->ring_trailingIdx_derived, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_QSTICK_StepImpl( &scratch, inOpen, inClose, outReal );
+   if( sp->ringCap_trailingIdx == 0 )
+   {
+      pkSlot0 = 0;
+      pkVal0 = (double)(inClose - inOpen);
+   }
+   sp->periodTotal += (double)(inClose - inOpen);
+   tempReal = sp->periodTotal;
+   sp->periodTotal -= (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx] : pkVal0;
+   *outReal= tempReal / (double)sp->optInTimePeriod;
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   {
+      sp->ringPos_trailingIdx = 0;
+   }
    return TA_SUCCESS;
 }
 

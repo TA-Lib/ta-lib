@@ -388,11 +388,43 @@ TA_LIB_API TA_RetCode TA_PVI_Update( TA_PVI_Stream *stream, double inClose, doub
 TA_LIB_API TA_RetCode TA_PVI_Peek( const TA_PVI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
    struct TA_PVI_Stream scratch;
+   struct TA_PVI_Stream *sp = &scratch;
+   double tempClose;
+   double tempVolume;
+   double tempPVI;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_PVI_StepImpl( &scratch, inClose, inVolume, outReal );
+   tempClose = inClose;
+   tempVolume = inVolume;
+   /* prevClose != 0 guards the percentage-change division: a zero previous
+    * close is a degenerate input that would otherwise emit NaN/Inf; carry
+    * the index forward unchanged instead. Never triggers on real prices.
+    */
+   if( tempVolume > sp->prevVolume && sp->prevClose != 0.0 )
+   {
+      /* The index is a running product, so it has no upper bound: enough
+       * compounding gains push it past the largest double. Keep the last
+       * representable value instead of writing +/-Inf, which no caller can
+       * chart and which poisons every arithmetic downstream of it. Real
+       * price series never come close.
+       *
+       * Written as a compound assignment on the copy, exactly as the update
+       * was before the guard: spelling it `a + r*a` would match the FMA
+       * fusion detector and silently re-round every bar, not just the
+       * overflowing one.
+       */
+      tempPVI = sp->prevPVI;
+      tempPVI += (tempClose - sp->prevClose) / sp->prevClose * tempPVI;
+      if( TA_IS_FINITE(tempPVI) )
+      {
+         sp->prevPVI = tempPVI;
+      }
+   }
+   *outReal= sp->prevPVI;
+   sp->prevClose = tempClose;
+   sp->prevVolume = tempVolume;
    return TA_SUCCESS;
 }
 

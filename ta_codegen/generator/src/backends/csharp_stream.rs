@@ -3626,7 +3626,7 @@ fn emit_period_bank(
 // sub-handles, mirroring java_stream's emit_composed with the same managed
 // simplifications: GC replaces every cleanup ladder and series-free replay,
 // `free()` renders as a no-op so lag-ring seeding reads the still-live
-// intermediate array, and copy-peek deletes peekMode entirely (sub handles
+// intermediate array, and copy-peek needs no sub-call routing at all (sub handles
 // deep-copy through their copy constructors).
 // ---------------------------------------------------------------------------
 

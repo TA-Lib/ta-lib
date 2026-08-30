@@ -288,10 +288,6 @@ struct TA_PVO_Stream {
    int optInFastPeriod;
    int optInSlowPeriod;
    TA_MAType optInMAType;
-   /* Peek runs the SAME step body on a scratch copy; sub handles are
-    * heap pointers a struct copy cannot clone, so the copy carries this
-    * flag and the step calls sub-Peek instead of sub-Update. */
-   int peekMode;
    TA_MA_Stream *sub0;
    TA_MA_Stream *sub1;
 };
@@ -306,19 +302,11 @@ static TA_RetCode TA_PVO_StepImpl( struct TA_PVO_Stream *sp, double inVolume, do
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {
-      TA_RetCode subRc;
-      if( sp->peekMode )
-         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inVolume, &cur_tempBuffer );
-      else
-         subRc = TA_MA_Update( sp->sub0, inVolume, &cur_tempBuffer );
+      TA_RetCode subRc = TA_MA_Update( sp->sub0, inVolume, &cur_tempBuffer );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc;
-      if( sp->peekMode )
-         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inVolume, &cur_outReal );
-      else
-         subRc = TA_MA_Update( sp->sub1, inVolume, &cur_outReal );
+      TA_RetCode subRc = TA_MA_Update( sp->sub1, inVolume, &cur_outReal );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
@@ -565,12 +553,35 @@ TA_LIB_API TA_RetCode TA_PVO_Update( TA_PVO_Stream *stream, double inVolume, dou
 TA_LIB_API TA_RetCode TA_PVO_Peek( const TA_PVO_Stream *stream, double inVolume, double *outReal )
 {
    struct TA_PVO_Stream scratch;
+   struct TA_PVO_Stream *sp = &scratch;
+   double tempReal;
+   double cur_tempBuffer = 0.0;
+   double cur_outReal = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.peekMode = 1;
-   return TA_PVO_StepImpl( &scratch, inVolume, outReal );
+
+   /* Pipeline the new bar through the sub-streams (batch tail order). */
+   {
+      TA_RetCode subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inVolume, &cur_tempBuffer );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   {
+      TA_RetCode subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inVolume, &cur_outReal );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   /* Combine map (batch tail, per bar). */
+   tempReal = cur_outReal;
+   if( !TA_IS_ZERO(tempReal) )
+   {
+      cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
+   } else 
+   {
+      cur_outReal = 0.0;
+   }
+   *outReal = cur_outReal;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_PVO_UpdateAndFill( TA_PVO_Stream *stream, const double inVolume[], int barCount, double outReal[] )

@@ -1157,11 +1157,72 @@ TA_LIB_API TA_RetCode TA_DX_Update( TA_DX_Stream *stream, double inHigh, double 
 TA_LIB_API TA_RetCode TA_DX_Peek( const TA_DX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    struct TA_DX_Stream scratch;
+   struct TA_DX_Stream *sp = &scratch;
+   double tempReal;
+   double diffP;
+   double diffM;
+   double minusDI;
+   double plusDI;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_DX_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
+   /* Calculate the prevMinusDM and prevPlusDM */
+   tempReal = inHigh;
+   diffP = tempReal - sp->prevHigh;
+   /* Plus Delta */
+   sp->prevHigh = tempReal;
+   tempReal = inLow;
+   diffM = sp->prevLow - tempReal;
+   /* Minus Delta */
+   sp->prevLow = tempReal;
+   sp->prevMinusDM -= sp->prevMinusDM / sp->optInTimePeriod;
+   sp->prevPlusDM -= sp->prevPlusDM / sp->optInTimePeriod;
+   if( diffM > 0 && diffP < diffM )
+   {
+      /* Case 2 and 4: +DM=0,-DM=diffM */
+      sp->prevMinusDM += diffM;
+   } else if( diffP > 0 && diffP > diffM )
+   {
+      /* Case 1 and 3: +DM=diffP,-DM=0 */
+      sp->prevPlusDM += diffP;
+   }
+   /* Calculate the prevTR */
+   double _true_range_4;
+   double range_4 = sp->prevHigh - sp->prevLow;
+   double tmp_4 = fabs(sp->prevHigh - sp->prevClose);
+   if( tmp_4 > range_4 )
+   {
+      range_4 = tmp_4;
+   }
+   tmp_4 = fabs(sp->prevLow - sp->prevClose);
+   if( tmp_4 > range_4 )
+   {
+      range_4 = tmp_4;
+   }
+   _true_range_4 = range_4;
+   tempReal = _true_range_4;
+   sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
+   sp->prevClose = inClose;
+   /* Calculate the DX. The value is rounded (see Wilder book). */
+   if( sp->prevTR > 0.0 )
+   {
+      minusDI = (100.0 * (sp->prevMinusDM / sp->prevTR));
+      plusDI = (100.0 * (sp->prevPlusDM / sp->prevTR));
+      /* This loop is just to accumulate the initial DX */
+      tempReal = minusDI + plusDI;
+      if( !TA_IS_ZERO(tempReal) )
+      {
+         *outReal= (100.0 * (fabs(minusDI - plusDI) / tempReal));
+      } else 
+      {
+         *outReal= sp->lastOut_outReal;
+      }
+   } else 
+   {
+      *outReal= sp->lastOut_outReal;
+   }
+   sp->lastOut_outReal = *outReal;
    return TA_SUCCESS;
 }
 

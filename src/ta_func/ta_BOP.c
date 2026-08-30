@@ -315,11 +315,27 @@ TA_LIB_API TA_RetCode TA_BOP_Update( TA_BOP_Stream *stream, double inOpen, doubl
 TA_LIB_API TA_RetCode TA_BOP_Peek( const TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
 {
    struct TA_BOP_Stream scratch;
+   struct TA_BOP_Stream *sp = &scratch;
+   double tempReal;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_BOP_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outReal );
+   (void)sp;
+   /* BOP is a fraction of the bar's own range, so it is scale-free and the
+    * divisor only has to be positive. An exact test, not the fixed
+    * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+    * and that band zeroed the output for any instrument quoted below it
+    * (issue #253).
+    */
+   tempReal = inHigh - inLow;
+   if( tempReal <= 0.0 )
+   {
+      *outReal= 0.0;
+   } else 
+   {
+      *outReal= (inClose - inOpen) / tempReal;
+   }
    return TA_SUCCESS;
 }
 

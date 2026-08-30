@@ -558,8 +558,9 @@ static void TA_MACD_StepImpl( struct TA_MACD_Stream *sp, double inReal, double *
 {
    double macdValue;
    double tempReal;
-   double prevSignal = sp->prevSignal;
+   double prevSignal;
 
+   prevSignal = sp->prevSignal;
    tempReal = inReal;
    sp->prevFast = fma(tempReal - sp->prevFast, sp->fastK, sp->prevFast);
    sp->prevSlow = fma(tempReal - sp->prevSlow, sp->slowK, sp->prevSlow);
@@ -899,11 +900,30 @@ TA_LIB_API TA_RetCode TA_MACD_Update( TA_MACD_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_MACD_Peek( const TA_MACD_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    struct TA_MACD_Stream scratch;
+   struct TA_MACD_Stream *sp = &scratch;
+   double macdValue;
+   double tempReal;
+   double prevSignal;
 
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MACD_StepImpl( &scratch, inReal, outMACD, outMACDSignal, outMACDHist );
+   prevSignal = sp->prevSignal;
+   tempReal = inReal;
+   sp->prevFast = fma(tempReal - sp->prevFast, sp->fastK, sp->prevFast);
+   sp->prevSlow = fma(tempReal - sp->prevSlow, sp->slowK, sp->prevSlow);
+   macdValue = sp->prevFast - sp->prevSlow;
+   if( sp->optInSignalPeriod == 1 )
+   {
+      prevSignal = macdValue;
+   } else 
+   {
+      prevSignal = fma(macdValue - prevSignal, sp->signalK, prevSignal);
+   }
+   *outMACD= macdValue;
+   *outMACDSignal= prevSignal;
+   *outMACDHist= macdValue - prevSignal;
+   sp->prevSignal = prevSignal;
    return TA_SUCCESS;
 }
 

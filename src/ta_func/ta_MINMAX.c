@@ -556,7 +556,6 @@ struct TA_MINMAX_Stream {
    int xPhys;
    int xMask;
    double *x_inReal;
-   double *xMirror_inReal;
 };
 
 /* Private function, not in public API. */
@@ -564,7 +563,6 @@ static void TA_MINMAX_ReleaseImpl( struct TA_MINMAX_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inReal ) TA_Free( sp->x_inReal );
-   if( sp->xMirror_inReal ) TA_Free( sp->xMirror_inReal );
    TA_Free( sp );
 }
 
@@ -573,8 +571,9 @@ static void TA_MINMAX_StepImpl( struct TA_MINMAX_Stream *sp, double inReal, doub
 {
    double tmpHigh;
    double tmpLow;
-   double lowest = sp->lowest;
+   double lowest;
 
+   lowest = sp->lowest;
    if( sp->today >= 1073741824 )
    {
       int rebaseShift = sp->trailingIdx & ~sp->xMask;
@@ -796,8 +795,6 @@ static TA_RetCode TA_MINMAX_OpenImpl( struct TA_MINMAX_Stream **stream, const do
       sp->xMask = sp->xPhys - 1;
       sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->x_inReal ) { TA_MINMAX_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inReal ) { TA_MINMAX_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -867,13 +864,75 @@ TA_LIB_API TA_RetCode TA_MINMAX_Update( TA_MINMAX_Stream *stream, double inReal,
 TA_LIB_API TA_RetCode TA_MINMAX_Peek( const TA_MINMAX_Stream *stream, double inReal, double *outMin, double *outMax )
 {
    struct TA_MINMAX_Stream scratch;
+   struct TA_MINMAX_Stream *sp = &scratch;
+   double tmpHigh;
+   double tmpLow;
+   double lowest;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
 
    if( !stream || !outMin || !outMax ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.x_inReal = stream->xMirror_inReal;
-   memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xPhys );
-   TA_MINMAX_StepImpl( &scratch, inReal, outMin, outMax );
+   lowest = sp->lowest;
+   if( sp->today >= 1073741824 )
+   {
+      int rebaseShift = sp->trailingIdx & ~sp->xMask;
+      sp->today -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->highestIdx -= rebaseShift;
+      sp->i -= rebaseShift;
+      sp->lowestIdx -= rebaseShift;
+   }
+   pkSlot0 = sp->today & sp->xMask;
+   pkVal0 = inReal;
+   tmpHigh = ((sp->today & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->today & sp->xMask] : pkVal0;
+   tmpLow = tmpHigh;
+   if( sp->highestIdx < sp->trailingIdx )
+   {
+      sp->highestIdx = sp->trailingIdx;
+      sp->highest = ((sp->highestIdx & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->highestIdx & sp->xMask] : pkVal0;
+      sp->i = sp->highestIdx;
+      TA_UNROLL(4)
+      while( ++sp->i <= sp->today )
+      {
+         tmpHigh = ((sp->i & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->i & sp->xMask] : pkVal0;
+         if( tmpHigh > sp->highest )
+         {
+            sp->highestIdx = sp->i;
+            sp->highest = tmpHigh;
+         }
+      }
+   } else if( tmpHigh >= sp->highest )
+   {
+      sp->highestIdx = sp->today;
+      sp->highest = tmpHigh;
+   }
+   if( sp->lowestIdx < sp->trailingIdx )
+   {
+      sp->lowestIdx = sp->trailingIdx;
+      lowest = ((sp->lowestIdx & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->lowestIdx & sp->xMask] : pkVal0;
+      sp->i = sp->lowestIdx;
+      TA_UNROLL(4)
+      while( ++sp->i <= sp->today )
+      {
+         tmpLow = ((sp->i & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->i & sp->xMask] : pkVal0;
+         if( tmpLow < lowest )
+         {
+            sp->lowestIdx = sp->i;
+            lowest = tmpLow;
+         }
+      }
+   } else if( tmpLow <= lowest )
+   {
+      sp->lowestIdx = sp->today;
+      lowest = tmpLow;
+   }
+   *outMax= sp->highest;
+   *outMin= lowest;
+   sp->trailingIdx += 1;
+   sp->today += 1;
+   sp->lowest = lowest;
    return TA_SUCCESS;
 }
 

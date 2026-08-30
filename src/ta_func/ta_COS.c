@@ -237,11 +237,13 @@ TA_LIB_API TA_RetCode TA_COS_Update( TA_COS_Stream *stream, double inReal, doubl
 TA_LIB_API TA_RetCode TA_COS_Peek( const TA_COS_Stream *stream, double inReal, double *outReal )
 {
    struct TA_COS_Stream scratch;
+   struct TA_COS_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_COS_StepImpl( &scratch, inReal, outReal );
+   (void)sp;
+   *outReal= cos(inReal);
    return TA_SUCCESS;
 }
 

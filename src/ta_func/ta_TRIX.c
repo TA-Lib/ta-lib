@@ -647,11 +647,23 @@ TA_LIB_API TA_RetCode TA_TRIX_Update( TA_TRIX_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_TRIX_Peek( const TA_TRIX_Stream *stream, double inReal, double *outReal )
 {
    struct TA_TRIX_Stream scratch;
+   struct TA_TRIX_Stream *sp = &scratch;
+   double tempReal;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_TRIX_StepImpl( &scratch, inReal, outReal );
+   tempReal = sp->prevEMA3;
+   sp->prevEMA1 = fma(inReal - sp->prevEMA1, sp->optInK_1, sp->prevEMA1);
+   sp->prevEMA2 = fma(sp->prevEMA1 - sp->prevEMA2, sp->optInK_1, sp->prevEMA2);
+   sp->prevEMA3 = fma(sp->prevEMA2 - sp->prevEMA3, sp->optInK_1, sp->prevEMA3);
+   if( tempReal != 0.0 )
+   {
+      *outReal= (sp->prevEMA3 / tempReal - 1.0) * 100.0;
+   } else 
+   {
+      *outReal= 0.0;
+   }
    return TA_SUCCESS;
 }
 

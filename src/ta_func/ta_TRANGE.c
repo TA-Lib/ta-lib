@@ -413,11 +413,35 @@ TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh,
 TA_LIB_API TA_RetCode TA_TRANGE_Peek( const TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    struct TA_TRANGE_Stream scratch;
+   struct TA_TRANGE_Stream *sp = &scratch;
+   double val2;
+   double val3;
+   double greatest;
+   double tempCY;
+   double tempLT;
+   double tempHT;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_TRANGE_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
+   /* Find the greatest of the 3 values. */
+   tempLT = inLow;
+   tempHT = inHigh;
+   tempCY = sp->lag1_inClose;
+   greatest = tempHT - tempLT;
+   /* val1 */
+   val2 = fabs(tempCY - tempHT);
+   if( val2 > greatest )
+   {
+      greatest = val2;
+   }
+   val3 = fabs(tempCY - tempLT);
+   if( val3 > greatest )
+   {
+      greatest = val3;
+   }
+   *outReal= greatest;
+   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

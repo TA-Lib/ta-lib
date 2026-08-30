@@ -563,9 +563,7 @@ struct TA_MIDPRICE_Stream {
    int xPhys;
    int xMask;
    double *x_inHigh;
-   double *xMirror_inHigh;
    double *x_inLow;
-   double *xMirror_inLow;
 };
 
 /* Private function, not in public API. */
@@ -573,9 +571,7 @@ static void TA_MIDPRICE_ReleaseImpl( struct TA_MIDPRICE_Stream *sp )
 {
    if( !sp ) return;
    if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
-   if( sp->xMirror_inHigh ) TA_Free( sp->xMirror_inHigh );
    if( sp->x_inLow ) TA_Free( sp->x_inLow );
-   if( sp->xMirror_inLow ) TA_Free( sp->xMirror_inLow );
    TA_Free( sp );
 }
 
@@ -808,12 +804,8 @@ static TA_RetCode TA_MIDPRICE_OpenImpl( struct TA_MIDPRICE_Stream **stream, cons
       sp->xMask = sp->xPhys - 1;
       sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->x_inHigh ) { TA_MIDPRICE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inHigh ) { TA_MIDPRICE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->x_inLow ) { TA_MIDPRICE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inLow ) { TA_MIDPRICE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -882,15 +874,75 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Update( TA_MIDPRICE_Stream *stream, double inH
 TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    struct TA_MIDPRICE_Stream scratch;
+   struct TA_MIDPRICE_Stream *sp = &scratch;
+   double tmpLow;
+   double tmpHigh;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+   int pkSlot1 = -1;
+   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.x_inHigh = stream->xMirror_inHigh;
-   memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xPhys );
-   scratch.x_inLow = stream->xMirror_inLow;
-   memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xPhys );
-   TA_MIDPRICE_StepImpl( &scratch, inHigh, inLow, outReal );
+   if( sp->today >= 1073741824 )
+   {
+      int rebaseShift = sp->trailingIdx & ~sp->xMask;
+      sp->today -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->highestIdx -= rebaseShift;
+      sp->i -= rebaseShift;
+      sp->lowestIdx -= rebaseShift;
+   }
+   pkSlot0 = sp->today & sp->xMask;
+   pkVal0 = inHigh;
+   pkSlot1 = sp->today & sp->xMask;
+   pkVal1 = inLow;
+   tmpHigh = ((sp->today & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->today & sp->xMask] : pkVal0;
+   tmpLow = ((sp->today & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->today & sp->xMask] : pkVal1;
+   if( sp->highestIdx < sp->trailingIdx )
+   {
+      sp->highestIdx = sp->trailingIdx;
+      sp->highest = ((sp->highestIdx & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->highestIdx & sp->xMask] : pkVal0;
+      sp->i = sp->highestIdx;
+      TA_UNROLL(4)
+      while( ++sp->i <= sp->today )
+      {
+         tmpHigh = ((sp->i & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->i & sp->xMask] : pkVal0;
+         if( tmpHigh > sp->highest )
+         {
+            sp->highestIdx = sp->i;
+            sp->highest = tmpHigh;
+         }
+      }
+   } else if( tmpHigh >= sp->highest )
+   {
+      sp->highestIdx = sp->today;
+      sp->highest = tmpHigh;
+   }
+   if( sp->lowestIdx < sp->trailingIdx )
+   {
+      sp->lowestIdx = sp->trailingIdx;
+      sp->lowest = ((sp->lowestIdx & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->lowestIdx & sp->xMask] : pkVal1;
+      sp->i = sp->lowestIdx;
+      TA_UNROLL(4)
+      while( ++sp->i <= sp->today )
+      {
+         tmpLow = ((sp->i & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->i & sp->xMask] : pkVal1;
+         if( tmpLow < sp->lowest )
+         {
+            sp->lowestIdx = sp->i;
+            sp->lowest = tmpLow;
+         }
+      }
+   } else if( tmpLow <= sp->lowest )
+   {
+      sp->lowestIdx = sp->today;
+      sp->lowest = tmpLow;
+   }
+   *outReal= (sp->highest + sp->lowest) / 2.0;
+   sp->trailingIdx += 1;
+   sp->today += 1;
    return TA_SUCCESS;
 }
 

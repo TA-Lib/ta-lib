@@ -260,11 +260,13 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Update( TA_WCLPRICE_Stream *stream, double inH
 TA_LIB_API TA_RetCode TA_WCLPRICE_Peek( const TA_WCLPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    struct TA_WCLPRICE_Stream scratch;
+   struct TA_WCLPRICE_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_WCLPRICE_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
+   (void)sp;
+   *outReal= (fma(inClose, 2.0, inHigh + inLow)) / 4.0;
    return TA_SUCCESS;
 }
 

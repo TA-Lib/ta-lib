@@ -406,11 +406,9 @@ struct TA_WMA_Stream {
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
-   double *ringMirror_trailingIdx_inReal;
    int winPos_j;
    int winCap_j;
    double *win_j_inReal;
-   double *winMirror_j_inReal;
 };
 
 /* Private function, not in public API. */
@@ -418,9 +416,7 @@ static void TA_WMA_ReleaseImpl( struct TA_WMA_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
-   if( sp->ringMirror_trailingIdx_inReal ) TA_Free( sp->ringMirror_trailingIdx_inReal );
    if( sp->win_j_inReal ) TA_Free( sp->win_j_inReal );
-   if( sp->winMirror_j_inReal ) TA_Free( sp->winMirror_j_inReal );
    TA_Free( sp );
 }
 
@@ -430,9 +426,11 @@ static void TA_WMA_StepImpl( struct TA_WMA_Stream *sp, double inReal, double *ou
    int j;
    int rw;
    double tempReal;
-   double periodSum = sp->periodSum;
-   double periodSub = sp->periodSub;
+   double periodSum;
+   double periodSub;
 
+   periodSum = sp->periodSum;
+   periodSub = sp->periodSub;
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
@@ -576,8 +574,6 @@ static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double i
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memset( sp->ring_trailingIdx_inReal, 0, sizeof(double) * allocN );
       }
       sp->ringPos_trailingIdx = 0;
@@ -585,8 +581,6 @@ static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double i
       if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(401); }
       sp->win_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
       if( !sp->win_j_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
-      if( !sp->winMirror_j_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->win_j_inReal[0] = 0.0;
       sp->winPos_j = 0;
       {
@@ -791,8 +785,6 @@ static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double i
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -800,8 +792,6 @@ static TA_RetCode TA_WMA_OpenImpl( struct TA_WMA_Stream **stream, const double i
       if( sp->winCap_j < 1 || sp->winCap_j > historyLen ) { TA_WMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(401); }
       sp->win_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
       if( !sp->win_j_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_j_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_j );
-      if( !sp->winMirror_j_inReal ) { TA_WMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_j_inReal, inReal + (historyLen - sp->winCap_j), sizeof(double) * (size_t)sp->winCap_j );
       sp->winPos_j = 0;
       sp->outRangeBegIdx = *outBegIdx;
@@ -865,15 +855,123 @@ TA_LIB_API TA_RetCode TA_WMA_Update( TA_WMA_Stream *stream, double inReal, doubl
 TA_LIB_API TA_RetCode TA_WMA_Peek( const TA_WMA_Stream *stream, double inReal, double *outReal )
 {
    struct TA_WMA_Stream scratch;
+   struct TA_WMA_Stream *sp = &scratch;
+   int j;
+   int rw;
+   double tempReal;
+   double periodSum;
+   double periodSub;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+   int pkSlot1 = -1;
+   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
-   memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   scratch.win_j_inReal = stream->winMirror_j_inReal;
-   memcpy( scratch.win_j_inReal, stream->win_j_inReal, sizeof(double) * (size_t)stream->winCap_j );
-   TA_WMA_StepImpl( &scratch, inReal, outReal );
+   periodSum = sp->periodSum;
+   periodSub = sp->periodSub;
+   if( sp->optInTimePeriod == 1 )
+   {
+      *outReal= inReal;
+      sp->periodSum = periodSum;
+      sp->periodSub = periodSub;
+      return TA_SUCCESS;
+   }
+   if( sp->ringCap_trailingIdx == 0 )
+   {
+      pkSlot0 = 0;
+      pkVal0 = inReal;
+   }
+   pkSlot1 = sp->winPos_j;
+   pkVal1 = inReal;
+   /* Add the current price bar to the sum
+    * who are carried through the iterations.
+    */
+   tempReal = inReal;
+   periodSub += tempReal;
+   periodSub -= sp->trailingValue;
+   periodSum += tempReal * sp->optInTimePeriod;
+   /* Re-anchor: rebuild both totals from the window itself.
+    *
+    * periodSum and periodSub were running totals that were never
+    * recomputed, so each bar's rounding joined a residue no later bar
+    * could subtract, and its size was set by the largest value the totals
+    * had ever held rather than by the current window. That is the defect
+    * #254 fixed in the LINEARREG family, and `periodSum -= periodSub`
+    * below is the same weight-shifting identity as that family's
+    * `SumXY = SumXY + SumY - period*trailingValue` -- which is why WMA has
+    * it and TA_SMA, whose output lives at its own sum's scale, does not.
+    * Measured before the fix: worst range disagreement 1.41e-08 at 200000
+    * bars against a 1e-10 tier, over the tier from ~10000 bars on ordinary
+    * closes or ~1000 with one large print. After: 1.79e-12, flat in call
+    * length.
+    *
+    * ONE TRIGGER, NOT TWO, AND THE INTERVAL IS 8*period NOT 32. The
+    * LINEARREG family also carries an OUTLIER trigger (rebuild when the
+    * departing value outweighs the window) because for a slope the
+    * interval alone FAILS the tier outright, at 2.38e-10. WMA is not in
+    * that position: its weights are bounded by `period` and its divider is
+    * period*(period+1)/2, which dilutes the residue enough that the
+    * interval alone holds. Swept over periods 2, 3, 4, 14, 50, 200, 1000,
+    * 5000 and 20000 on 60000 bars, clean and with a 1000x print, the worst
+    * is 2.2e-11 -- 4.6x inside the band, and the margin does not thin at
+    * either end of the period range. Measured, the trigger bought 1.4e-11 -> 7e-12 and cost 1.17x
+    * here and 1.65x in TA_HMA, whose three fused stages each pay it. The
+    * shorter interval buys most of the accuracy for ~1.1x instead.
+    *
+    * The rebuild walks the window OLDEST FIRST with the weight counting UP
+    * from 1 -- the priming scan's own order and weighting -- so a
+    * re-anchored bar is bit-identical to the same bar computed by a call
+    * that started there. That identity is what the range-stability
+    * contract measures, and what test_wma.c W2/W3 assert.
+    *
+    * The loop start is written INLINE rather than through a `windowStart`
+    * local: only that form is recognised as a rescan window, which is what
+    * keeps this on the stream classifier's primary path. See
+    * docs/ta_codegen_input_code.md.
+    *
+    * Reading the window is safe when outReal aliases inReal: the outputs
+    * written so far occupy [0, outIdx-1], and the window starts at
+    * startIdx-lookbackTotal+outIdx, which is >= outIdx.
+    */
+   sp->barsSinceReseed -= 1;
+   if( sp->barsSinceReseed <= 0 )
+   {
+      sp->barsSinceReseed = 8 * sp->optInTimePeriod;
+      periodSub = (double)0.0;
+      periodSum = (double)0.0;
+      rw = 1;
+      for( j = sp->lookbackWin; j >= 0; j -= 1 )
+      {
+         tempReal = (((sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j) != pkSlot1) ? sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - j >= sp->winCap_j) ? sp->winPos_j + sp->winCap_j - j - sp->winCap_j : sp->winPos_j + sp->winCap_j - j] : pkVal1;
+         periodSub += tempReal;
+         periodSum += tempReal * rw;
+         rw += 1;
+      }
+   }
+   /* Save the trailing value for being substract at
+    * the next iteration.
+    * (must be saved here just in case outReal and
+    *  inReal are the same buffer).
+    */
+   sp->trailingValue = (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
+   /* Calculate the WMA for this price bar. */
+   *outReal= periodSum / sp->divider;
+   /* Prepare the periodSum for the next iteration. */
+   periodSum -= periodSub;
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   {
+      sp->ringPos_trailingIdx = 0;
+   }
+   sp->winPos_j = sp->winPos_j + 1;
+   if( sp->winPos_j >= sp->winCap_j )
+   {
+      sp->winPos_j = 0;
+   }
+   sp->periodSum = periodSum;
+   sp->periodSub = periodSub;
    return TA_SUCCESS;
 }
 

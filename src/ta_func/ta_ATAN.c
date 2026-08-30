@@ -239,11 +239,13 @@ TA_LIB_API TA_RetCode TA_ATAN_Update( TA_ATAN_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_ATAN_Peek( const TA_ATAN_Stream *stream, double inReal, double *outReal )
 {
    struct TA_ATAN_Stream scratch;
+   struct TA_ATAN_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ATAN_StepImpl( &scratch, inReal, outReal );
+   (void)sp;
+   *outReal= atan(inReal);
    return TA_SUCCESS;
 }
 

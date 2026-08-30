@@ -301,9 +301,7 @@ struct TA_VWMA_Stream {
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
-   double *ringMirror_trailingIdx_inReal;
    double *ring_trailingIdx_inVolume;
-   double *ringMirror_trailingIdx_inVolume;
 };
 
 /* Private function, not in public API. */
@@ -311,9 +309,7 @@ static void TA_VWMA_ReleaseImpl( struct TA_VWMA_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
-   if( sp->ringMirror_trailingIdx_inReal ) TA_Free( sp->ringMirror_trailingIdx_inReal );
    if( sp->ring_trailingIdx_inVolume ) TA_Free( sp->ring_trailingIdx_inVolume );
-   if( sp->ringMirror_trailingIdx_inVolume ) TA_Free( sp->ringMirror_trailingIdx_inVolume );
    TA_Free( sp );
 }
 
@@ -400,13 +396,9 @@ static TA_RetCode TA_VWMA_OpenImpl( struct TA_VWMA_Stream **stream, const double
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memset( sp->ring_trailingIdx_inReal, 0, sizeof(double) * allocN );
         sp->ring_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inVolume ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inVolume ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memset( sp->ring_trailingIdx_inVolume, 0, sizeof(double) * allocN );
       }
       sp->ringPos_trailingIdx = 0;
@@ -524,13 +516,9 @@ static TA_RetCode TA_VWMA_OpenImpl( struct TA_VWMA_Stream **stream, const double
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
         sp->ring_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inVolume ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inVolume ) { TA_VWMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inVolume, inVolume + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -595,15 +583,51 @@ TA_LIB_API TA_RetCode TA_VWMA_Update( TA_VWMA_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal, double inVolume, double *outReal )
 {
    struct TA_VWMA_Stream scratch;
+   struct TA_VWMA_Stream *sp = &scratch;
+   double tempPV;
+   double tempV;
+   double tempReal;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+   int pkSlot1 = -1;
+   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
-   memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   scratch.ring_trailingIdx_inVolume = stream->ringMirror_trailingIdx_inVolume;
-   memcpy( scratch.ring_trailingIdx_inVolume, stream->ring_trailingIdx_inVolume, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_VWMA_StepImpl( &scratch, inReal, inVolume, outReal );
+   if( sp->optInTimePeriod == 1 )
+   {
+      *outReal= inReal;
+      return TA_SUCCESS;
+   }
+   if( sp->ringCap_trailingIdx == 0 )
+   {
+      pkSlot0 = 0;
+      pkVal0 = inReal;
+      pkSlot1 = 0;
+      pkVal1 = inVolume;
+   }
+   tempReal = inReal * inVolume;
+   sp->sumPV += tempReal;
+   sp->sumV += inVolume;
+   /* Snapshot both sums before removing the trailing bar, mirroring the
+    * add-new / snapshot / subtract-old order of TA_SMA. That order is what
+    * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+    */
+   tempPV = sp->sumPV;
+   tempV = sp->sumV;
+   /* Read the trailing values before writing the output, since the caller
+    * may pass the same buffer for an input and the output.
+    */
+   tempReal = ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0) * ((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1);
+   sp->sumPV -= tempReal;
+   sp->sumV -= (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1;
+   *outReal= tempPV / (double)sp->optInTimePeriod / (tempV / (double)sp->optInTimePeriod);
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   {
+      sp->ringPos_trailingIdx = 0;
+   }
    return TA_SUCCESS;
 }
 

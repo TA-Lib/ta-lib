@@ -79,7 +79,8 @@ fn test_rust_sma_ring_stream_section() {
     assert!(s.contains("struct SmaStreamState {"));
     assert!(s.contains("ring_trailingIdx_inReal: Vec<f64>,"));
     assert!(s.contains("ringPos_trailingIdx: usize,"));
-    // The C mirror/peekMode machinery is deleted by design (clone-peek).
+    // Rust's peek copies the handle; no backend carries a mirror or a routing
+    // flag any more, so these hold everywhere rather than marking a difference.
     assert!(!s.contains("Mirror"), "no peek mirrors in the Rust tier");
     assert!(!s.contains("peekMode"), "no peekMode in the Rust tier");
     assert!(!s.contains("unsafe"), "stream sections are safe Rust");

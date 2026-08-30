@@ -1388,11 +1388,105 @@ TA_LIB_API TA_RetCode TA_PLUS_DI_Update( TA_PLUS_DI_Stream *stream, double inHig
 TA_LIB_API TA_RetCode TA_PLUS_DI_Peek( const TA_PLUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    struct TA_PLUS_DI_Stream scratch;
+   struct TA_PLUS_DI_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_PLUS_DI_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
+   if( sp->optInTimePeriod <= 1 )
+   {
+      double tempReal;
+      double diffP;
+      double diffM;
+
+      tempReal = inHigh;
+      diffP = tempReal - sp->prevHigh;
+      /* Plus Delta */
+      sp->prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp->prevLow - tempReal;
+      /* Minus Delta */
+      sp->prevLow = tempReal;
+      if( diffP > 0 && diffP > diffM )
+      {
+         /* Case 1 and 3: +DM=diffP,-DM=0 */
+         double _true_range_6;
+         double range_6 = sp->prevHigh - sp->prevLow;
+         double tmp_6 = fabs(sp->prevHigh - sp->prevClose);
+         if( tmp_6 > range_6 )
+         {
+            range_6 = tmp_6;
+         }
+         tmp_6 = fabs(sp->prevLow - sp->prevClose);
+         if( tmp_6 > range_6 )
+         {
+            range_6 = tmp_6;
+         }
+         _true_range_6 = range_6;
+         tempReal = _true_range_6;
+         if( tempReal <= 0.0 )
+         {
+            *outReal= (double)0.0;
+         } else 
+         {
+            *outReal= diffP / tempReal;
+         }
+      } else 
+      {
+         *outReal= (double)0.0;
+      }
+      sp->prevClose = inClose;
+   }
+   else
+   {
+      double tempReal;
+      double diffP;
+      double diffM;
+
+      /* Calculate the prevPlusDM */
+      tempReal = inHigh;
+      diffP = tempReal - sp->prevHigh;
+      /* Plus Delta */
+      sp->prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp->prevLow - tempReal;
+      /* Minus Delta */
+      sp->prevLow = tempReal;
+      if( diffP > 0 && diffP > diffM )
+      {
+         /* Case 1 and 3: +DM=diffP,-DM=0 */
+         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod + diffP;
+      } else 
+      {
+         /* Case 2,4,5 and 7 */
+         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod;
+      }
+      /* Calculate the prevTR */
+      double _true_range_7;
+      double range_7 = sp->prevHigh - sp->prevLow;
+      double tmp_7 = fabs(sp->prevHigh - sp->prevClose);
+      if( tmp_7 > range_7 )
+      {
+         range_7 = tmp_7;
+      }
+      tmp_7 = fabs(sp->prevLow - sp->prevClose);
+      if( tmp_7 > range_7 )
+      {
+         range_7 = tmp_7;
+      }
+      _true_range_7 = range_7;
+      tempReal = _true_range_7;
+      sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
+      sp->prevClose = inClose;
+      /* Calculate the DI. The value is rounded (see Wilder book). */
+      if( sp->prevTR > 0.0 )
+      {
+         *outReal= (100.0 * (sp->prevPlusDM / sp->prevTR));
+      } else 
+      {
+         *outReal= 0.0;
+      }
+   }
    return TA_SUCCESS;
 }
 

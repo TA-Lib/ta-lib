@@ -378,11 +378,8 @@ struct TA_ACCBANDS_Stream {
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inHigh;
-   double *ringMirror_trailingIdx_inHigh;
    double *ring_trailingIdx_inLow;
-   double *ringMirror_trailingIdx_inLow;
    double *ring_trailingIdx_inClose;
-   double *ringMirror_trailingIdx_inClose;
 };
 
 /* Private function, not in public API. */
@@ -390,11 +387,8 @@ static void TA_ACCBANDS_ReleaseImpl( struct TA_ACCBANDS_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inHigh ) TA_Free( sp->ring_trailingIdx_inHigh );
-   if( sp->ringMirror_trailingIdx_inHigh ) TA_Free( sp->ringMirror_trailingIdx_inHigh );
    if( sp->ring_trailingIdx_inLow ) TA_Free( sp->ring_trailingIdx_inLow );
-   if( sp->ringMirror_trailingIdx_inLow ) TA_Free( sp->ringMirror_trailingIdx_inLow );
    if( sp->ring_trailingIdx_inClose ) TA_Free( sp->ring_trailingIdx_inClose );
-   if( sp->ringMirror_trailingIdx_inClose ) TA_Free( sp->ringMirror_trailingIdx_inClose );
    TA_Free( sp );
 }
 
@@ -620,18 +614,12 @@ static TA_RetCode TA_ACCBANDS_OpenImpl( struct TA_ACCBANDS_Stream **stream, cons
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inHigh ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inHigh ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
         sp->ring_trailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inLow ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inLow ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inLow, inLow + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
         sp->ring_trailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inClose ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inClose ) { TA_ACCBANDS_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inClose, inClose + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -700,17 +688,69 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Update( TA_ACCBANDS_Stream *stream, double inH
 TA_LIB_API TA_RetCode TA_ACCBANDS_Peek( const TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    struct TA_ACCBANDS_Stream scratch;
+   struct TA_ACCBANDS_Stream *sp = &scratch;
+   double tempUpper;
+   double tempMiddle;
+   double tempLower;
+   double tempReal;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+   int pkSlot1 = -1;
+   double pkVal1 = 0.0;
+   int pkSlot2 = -1;
+   double pkVal2 = 0.0;
 
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdx_inHigh = stream->ringMirror_trailingIdx_inHigh;
-   memcpy( scratch.ring_trailingIdx_inHigh, stream->ring_trailingIdx_inHigh, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   scratch.ring_trailingIdx_inLow = stream->ringMirror_trailingIdx_inLow;
-   memcpy( scratch.ring_trailingIdx_inLow, stream->ring_trailingIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   scratch.ring_trailingIdx_inClose = stream->ringMirror_trailingIdx_inClose;
-   memcpy( scratch.ring_trailingIdx_inClose, stream->ring_trailingIdx_inClose, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_ACCBANDS_StepImpl( &scratch, inHigh, inLow, inClose, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   if( sp->ringCap_trailingIdx == 0 )
+   {
+      pkSlot0 = 0;
+      pkVal0 = inHigh;
+      pkSlot1 = 0;
+      pkVal1 = inLow;
+      pkSlot2 = 0;
+      pkVal2 = inClose;
+   }
+   /* Add the incoming bar to each running sum. */
+   tempReal = inHigh + inLow;
+   if( !TA_IS_ZERO_SCALED(tempReal, fabs(inHigh) + fabs(inLow)) )
+   {
+      tempReal = 4 * (inHigh - inLow) / tempReal;
+      sp->periodTotalUpper += inHigh * (1 + tempReal);
+      sp->periodTotalLower += inLow * (1 - tempReal);
+   } else 
+   {
+      sp->periodTotalUpper += inHigh;
+      sp->periodTotalLower += inLow;
+   }
+   sp->periodTotalMiddle += inClose;
+   /* Record the current window sums. */
+   tempUpper = sp->periodTotalUpper;
+   tempMiddle = sp->periodTotalMiddle;
+   tempLower = sp->periodTotalLower;
+   /* Remove the trailing bar from each running sum. */
+   tempReal = ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) + ((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1);
+   if( !TA_IS_ZERO_SCALED(tempReal, fabs((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) + fabs((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1)) )
+   {
+      tempReal = 4 * (((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) - ((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1)) / tempReal;
+      sp->periodTotalUpper -= ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) * (1 + tempReal);
+      sp->periodTotalLower -= ((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1) * (1 - tempReal);
+   } else 
+   {
+      sp->periodTotalUpper -= (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0;
+      sp->periodTotalLower -= (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1;
+   }
+   sp->periodTotalMiddle -= (sp->ringPos_trailingIdx != pkSlot2) ? sp->ring_trailingIdx_inClose[sp->ringPos_trailingIdx] : pkVal2;
+   /* Write the three bands. */
+   *outRealUpperBand= tempUpper / (double)sp->optInTimePeriod;
+   *outRealMiddleBand= tempMiddle / (double)sp->optInTimePeriod;
+   *outRealLowerBand= tempLower / (double)sp->optInTimePeriod;
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   {
+      sp->ringPos_trailingIdx = 0;
+   }
    return TA_SUCCESS;
 }
 

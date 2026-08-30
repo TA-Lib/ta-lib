@@ -363,11 +363,24 @@ TA_LIB_API TA_RetCode TA_AD_Update( TA_AD_Stream *stream, double inHigh, double 
 TA_LIB_API TA_RetCode TA_AD_Peek( const TA_AD_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    struct TA_AD_Stream scratch;
+   struct TA_AD_Stream *sp = &scratch;
+   double high;
+   double low;
+   double close;
+   double tmp;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_AD_StepImpl( &scratch, inHigh, inLow, inClose, inVolume, outReal );
+   high = inHigh;
+   low = inLow;
+   tmp = high - low;
+   close = inClose;
+   if( tmp > 0.0 )
+   {
+      sp->ad += (close - low - (high - close)) / tmp * (double)inVolume;
+   }
+   *outReal= sp->ad;
    return TA_SUCCESS;
 }
 

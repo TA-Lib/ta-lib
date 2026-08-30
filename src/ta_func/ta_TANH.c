@@ -237,11 +237,13 @@ TA_LIB_API TA_RetCode TA_TANH_Update( TA_TANH_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_TANH_Peek( const TA_TANH_Stream *stream, double inReal, double *outReal )
 {
    struct TA_TANH_Stream scratch;
+   struct TA_TANH_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_TANH_StepImpl( &scratch, inReal, outReal );
+   (void)sp;
+   *outReal= tanh(inReal);
    return TA_SUCCESS;
 }
 

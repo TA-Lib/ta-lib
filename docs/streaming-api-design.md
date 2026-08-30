@@ -89,22 +89,36 @@ the surface includes:
 bit-identical, guaranteed by construction: it is the same generated code as
 `update`, run without committing.
 
-Its overhead is a copy of the handle per peek, and that copy is the whole of
-the difference in cost between `peek` and `update`. Where the copy is several
-allocations deep — two or more buffers, two or more sub-handles, or a period
-bank — it is made into a scratch held **per thread** and refreshed in place,
-so only the first peek of that indicator on that thread allocates. Everywhere
-else the copy stays a throwaway, because a throwaway that dies inside `peek`
-is one the optimizer can delete outright, and where it does, reusing anything
-costs more than it saves.
+**C runs a transition of its own that commits nothing.** The store into a
+handle buffer becomes two locals — the slot it targeted and the value it held —
+and every load that could land on that slot selects them back; a store no load
+can reach this bar is deleted outright. Nothing else about the body changes, so
+`peek` is still the same numbers in the same order. What it buys is the cost
+model: peek copies the handle's SCALARS onto the stack and nothing else, so its
+overhead is a fixed number of bytes where the buffers are a function of the
+period. Measured on this box, WMA's peek was 9 ns at period 30, 31 ns at 200 and
+474 ns at 2000 against a flat 4.4 ns update; it is now flat with it. The
+per-handle mirror buffers are gone with it — they were ~38% of every handle.
 
-Neither form writes the handle, which is what keeps Rust's `peek` a `&self`
-method and both languages' handles concurrently peekable — a per-thread
-scratch cannot be shared by two threads peeking the same handle. `update`
-never allocates (that is the hard constraint, not peek's), and it is reached
-the same way from both forms: the scratch holds a *handle* and `peek` calls
-`update` on it, so the per-bar transition keeps a single call site and
-`update`'s own code generation is untouched.
+`peek` writing nothing also means C no longer needs the composed tier's routing
+flag: the peek frame calls each sub-stream's `Peek` directly, so `update` stops
+testing a flag per sub-call.
+
+**Rust, Java and .NET still copy the handle per peek**, and that copy is the
+whole of the difference in cost between `peek` and `update` there. Where it is
+several allocations deep — two or more buffers, two or more sub-handles, or a
+period bank — it is made into a scratch held **per thread** and refreshed in
+place, so only the first peek of that indicator on that thread allocates.
+Everywhere else the copy stays a throwaway, because a throwaway that dies
+inside `peek` is one the optimizer can delete outright, and where it does,
+reusing anything costs more than it saves.
+
+No form writes the handle, which is what keeps Rust's `peek` a `&self` method
+and every backend's handles concurrently peekable — a per-thread scratch cannot
+be shared by two threads peeking the same handle. `update` never allocates
+(that is the hard constraint, not peek's). In the three copying backends the
+transition also keeps a single call site: the scratch holds a *handle* and
+`peek` calls `update` on it, so `update`'s own code generation is untouched.
 
 ### Full-history output at open (`OpenAndFill`)
 
@@ -555,9 +569,10 @@ enforcing it its own way:
   the C batch tier already requires that nothing calls `TA_SetX` during
   concurrent calls. Distinct handles are otherwise fully independent; a
   single handle is **single-writer**: driving one handle from two threads
-  concurrently — `update` *or* `peek`, despite the latter's `const` — is
-  undefined behavior (C states as documentation what Rust enforces with
-  `&mut`).
+  concurrently is undefined behavior where either is an `update` (C states as
+  documentation what Rust enforces with `&mut`). Concurrent `Peek`s are safe:
+  the `const` is now load-bearing, since peek writes neither the handle nor
+  anything behind its pointers — the same guarantee Java and .NET document.
 - **Java / .NET.** Settings live per-`Core`-instance, so there is no
   process-global hazard; the same documented rule applies per instance: don't
   mutate a `Core`'s settings while streams opened from it are live (candle
@@ -753,13 +768,13 @@ Structural notes:
      the unstable-period skip logic come along verbatim — nothing is
      stripped from the input code. (Spike-validated bit-exact.)
    - `update` = the steady-loop body with the variable remapping, emitted
-     **once** as the transition function; `peek` is a two-line wrapper — an
-     O(state) copy of the state struct (a stack copy for the scalar tiers;
-     ring tiers redirect the copy to a scratch mirror pre-allocated in the
-     handle at open; composed tiers set a `peekMode` flag so the step calls
-     sub-`Peek`), then a call to that *same* transition function. One body means there is no
-     peek-specific logic to drift; `stream_verify` still asserts
-     peek == update. T4 transcribes the cached-index
+     **once** as the transition function; `peek` runs a SECOND frame of the
+     same transition, rewritten to commit nothing — a store into a handle
+     buffer becomes two locals and every load that could reach the stored slot
+     selects them back, so peek copies the state struct onto the stack and
+     shares the buffers read-only. Both frames come from one IR, so there is no
+     hand-written peek logic to drift; `stream_verify` asserts peek == update
+     and that a peek leaves the handle alone. T4 transcribes the cached-index
      automaton over a ring; TC emits sub-stream
      calls in batch temp-buffer order.
    - Generation-time invariant checks: no global *writes* and no
@@ -952,10 +967,10 @@ claim in *Motivation* gets measured, not asserted).
      Open opens the sub-streams on those very arrays at the exact points
      batch consumes them (raw %K before the in-place smoothing, smoothed %K
      after) before they are freed. Update pipelines: transcribed extrema
-     step → raw %K → sub-Update(K) → sub-Update(D) → outputs. Peek uses a
-     `peekMode` flag in the scratch state copy so the ONE step body calls
-     sub-Peek instead of sub-Update (heap sub-handles cannot be cloned by a
-     struct copy). Result: 14,580 cases across the full 9×9 MAType grid ×
+     step → raw %K → sub-Update(K) → sub-Update(D) → outputs. The peek frame
+     calls sub-Peek where the update frame calls sub-Update — the sub-handles
+     are heap pointers a struct copy shares rather than clones, so the routing
+     is what keeps a peek off them. Result: 14,580 cases across the full 9×9 MAType grid ×
      6 param sets (incl. period-1 identity-MA composition and fastK=1) ×
      5 data shapes (incl. CONSTANT and TIE_HEAVY) × 3 warm-up prefixes —
      **1,146,950 update legs bit-identical to `batch(0, n-1)`**, peek ==
@@ -971,10 +986,9 @@ claim in *Motivation* gets measured, not asserted).
      its output, plus a strictly-parsed tail pipeline (whole-range
      sub-calls over materialized series, tail-aligning memmoves into
      outputs, guard/free/bookkeeping statements — anything else errors).
-     The emitter renders ONE step body: the producer transition writes the
-     series' current scalar, which pipelines through the sub handles
-     (`peekMode` in the scratch copy selects sub-Peek — the binding
-     one-transition-body decision holds). Open allocates scratch output
+     The emitter renders the step body once per frame: the producer
+     transition writes the series' current scalar, which pipelines through the
+     sub handles (sub-Update in the update frame, sub-Peek in the peek one). Open allocates scratch output
      arrays (the tail writes real arrays), transcribes the batch body
      verbatim with out-meta mapped to dummies in both pointer forms, and
      opens each sub-stream on its source series at the sub-call's own

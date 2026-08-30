@@ -17,9 +17,10 @@
 //! expression text is hand-built outside the shared renderers.
 //!
 //! Deliberate simplifications vs the C emitter (see design spec):
-//! - `peek(&self)` = `update` on a scratch copy of the state. No `peekMode`
-//!   flag threaded through the transition, and the handle is never written —
-//!   which is what keeps the signature `&self` and the handle `Sync`. A state
+//! - `peek(&self)` = `update` on a scratch copy of the state, where C runs a
+//!   second frame of the transition that commits nothing. Either way the handle
+//!   is never written — which is what keeps the signature `&self` and the
+//!   handle `Sync`. A state
 //!   that owns no heap buffer is copied onto the stack; one that does is
 //!   restored into a reused thread-local scratch, so a peek calls the
 //!   allocator only the first time that thread peeks that function (#201).
@@ -3810,8 +3811,8 @@ fn emit_period_bank(
 // sub-handles, mirroring c_stream.rs's emit_composed with the Rust
 // simplifications the design blesses: RAII replaces every cleanup ladder and
 // series-free replay, `free()` renders as a no-op so lag-ring seeding reads
-// the still-live intermediate Vec, and clone-peek deletes peekMode entirely
-// (sub handles derive Clone, so the universal peek deep-clones the tree).
+// the still-live intermediate Vec, and clone-peek needs no sub-call routing at
+// all (sub handles derive Clone, so the universal peek deep-clones the tree).
 // ---------------------------------------------------------------------------
 
 /// Composed producer name map: identical to [`RustStreamNames`] except the

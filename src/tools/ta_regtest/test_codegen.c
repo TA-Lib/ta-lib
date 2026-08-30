@@ -106,6 +106,33 @@ static int codegen_lang_has_stream_state_probe(const char *lang)
     return lang && strcmp(lang, "c") == 0;
 }
 
+/* Which servers answer the peek non-commit leg: a handle peeked across the
+ * history must be bit-identical to a twin that was not.
+ *
+ * It needs its own leg because the value legs cannot see the whole class. They
+ * peek bar t and then update bar t with the SAME arguments, so a peek that
+ * stored what the update was about to store leaves both the values and the
+ * end-of-run state compare alike. Peeking a handle nobody then updates is what
+ * makes the store survive to be seen.
+ *
+ * Measured, against a generator sabotage that commits every shadowed store at
+ * its own slot: over a 32-function sample the leg ran on 23 and caught 15, of
+ * which THREE were its alone — CCI (circular buffer), AVGDEV and IMI (rescan
+ * window) were green on every other leg. It is blind on the extrema family
+ * (MIN/MAX/VAR/LINEARREG/CORREL/MIDPRICE/WILLR/STDDEV) because the state
+ * comparator skips the slack above the live window, which is exactly the slot
+ * a peek touches there — and the next update overwrites it, so that one is
+ * inert. The TOTAL gate for the property is structural, in the generator:
+ * tests/peek_suite.rs asserts no peek frame stores into a handle buffer at all.
+ *
+ * C only: its peek runs a frame that commits nothing, where the other three
+ * peek a copy of the handle and the property is structural. Widen this the
+ * moment one of them converts. */
+static int codegen_lang_has_peek_probe(const char *lang)
+{
+    return lang && strcmp(lang, "c") == 0;
+}
+
 /* Which languages cannot be held bit-identical on a call that reaches a
  * transcendental. THE single definition — both --xlang-hash (which copies it
  * into XlangServer.tolTranscendental) and server_verify's own per-call check
@@ -1873,6 +1900,8 @@ typedef struct {
     int               streamSkipped;
     int               streamRejectArms;
     int               streamFillFunctions; /* funcs whose OpenAndFill == batch(0,n-1) bitwise */
+    int               streamPeekFunctions; /* funcs that ran the peek-idempotence probe */
+    long long         streamPeekProbes;    /* probes run (peek, other bar, peek again) */
     int               streamUFillFunctions;/* funcs whose UpdateAndFill == batch over the same bars (#246) */
     int               streamStateFunctions; /* funcs whose handle state matched Open(n) (#240) */
     int               streamStateLegs;      /* legs that compared handle state (#240) */
@@ -3388,6 +3417,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int stateLegs = 0;     /* how many legs actually compared handle state */
     int stateOfLegs = 0;   /* value legs in the requests that reported it */
     int rangeChecked = 0;  /* set once any leg reports the OutRange compare (#241) */
+    int peekProbes = 0;    /* peek-idempotence probes this request ran */
     int rangeLegs = 0;     /* how many legs actually compared a handle's OutRange */
     int rangeSites = 0;    /* OR of the range-compare sites that fired */
     int rangeSitesN = 0;   /* how many the server says it has */
@@ -3634,6 +3664,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     return;
                 }
             }
+            {
+                int pc = stream_flag(ctx->responseBuf, "\"peek_checked\":");
+                if( pc > 0 ) peekProbes += pc;
+            }
             if( stream_flag(ctx->responseBuf, "\"ok\":") != 1 ||
                 stream_flag(ctx->responseBuf, "\"peek_ok\":") != 1 )
             {
@@ -3685,6 +3719,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     if( ufillChecked ) ctx->streamUFillFunctions++;
     if( stateChecked ) ctx->streamStateFunctions++;
     if( rangeChecked ) ctx->streamRangeFunctions++;
+    if( peekProbes > 0 ) ctx->streamPeekFunctions++;
+    ctx->streamPeekProbes += peekProbes;
     ctx->streamRangeLegs += rangeLegs;
     ctx->streamRangeSites |= rangeSites;
     if( rangeSitesN > ctx->streamRangeSitesN ) ctx->streamRangeSitesN = rangeSitesN;
@@ -4439,6 +4475,8 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamSkipped       = 0;
             ctx.streamRejectArms    = 0;
             ctx.streamFillFunctions = 0;
+            ctx.streamPeekFunctions = 0;
+            ctx.streamPeekProbes = 0;
             ctx.streamUFillFunctions = 0;
             ctx.streamStateFunctions = 0;
             ctx.streamStateLegs     = 0;
@@ -4527,6 +4565,21 @@ static ErrorNumber test_codegen_for_language(
                 printf("STREAM STATE VACUOUS: the %s server offers the "
                        "state-equivalence leg but reported it for 0 of %d "
                        "streaming functions\n", lang->name, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            if( codegen_lang_has_peek_probe(lang->name) )
+                printf("  Peek non-commit verify: %d functions, %lld peek(s), a peeked "
+                       "handle stays bit-identical to a twin that was not\n",
+                       ctx.streamPeekFunctions, ctx.streamPeekProbes);
+            /* Without this floor a server that stopped peeking reads exactly
+             * like one that peeked and passed. */
+            if( ctx.error == TA_TEST_PASS && ctx.streamFunctions != 0 &&
+                codegen_lang_has_peek_probe(lang->name) &&
+                ctx.streamPeekFunctions != ctx.streamFunctions )
+            {
+                printf("STREAM PEEK VACUOUS: only %d of %d streaming functions ran "
+                       "the peek non-commit leg\n",
+                       ctx.streamPeekFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* The range leg's ratchet (#241). Unlike the state leg this one is

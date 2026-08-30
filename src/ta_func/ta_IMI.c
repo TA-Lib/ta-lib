@@ -226,9 +226,7 @@ struct TA_IMI_Stream {
    int winPos_i;
    int winCap_i;
    double *win_i_inOpen;
-   double *winMirror_i_inOpen;
    double *win_i_inClose;
-   double *winMirror_i_inClose;
 };
 
 /* Private function, not in public API. */
@@ -236,9 +234,7 @@ static void TA_IMI_ReleaseImpl( struct TA_IMI_Stream *sp )
 {
    if( !sp ) return;
    if( sp->win_i_inOpen ) TA_Free( sp->win_i_inOpen );
-   if( sp->winMirror_i_inOpen ) TA_Free( sp->winMirror_i_inOpen );
    if( sp->win_i_inClose ) TA_Free( sp->win_i_inClose );
-   if( sp->winMirror_i_inClose ) TA_Free( sp->winMirror_i_inClose );
    TA_Free( sp );
 }
 
@@ -359,13 +355,9 @@ static TA_RetCode TA_IMI_OpenImpl( struct TA_IMI_Stream **stream, const double i
       if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_IMI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(337); }
       sp->win_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
       if( !sp->win_i_inOpen ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_i_inOpen = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->winMirror_i_inOpen ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inOpen, inOpen + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->win_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
       if( !sp->win_i_inClose ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_i_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->winMirror_i_inClose ) { TA_IMI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inClose, inClose + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->winPos_i = 0;
       sp->outRangeBegIdx = *outBegIdx;
@@ -429,15 +421,48 @@ TA_LIB_API TA_RetCode TA_IMI_Update( TA_IMI_Stream *stream, double inOpen, doubl
 TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, double inClose, double *outReal )
 {
    struct TA_IMI_Stream scratch;
+   struct TA_IMI_Stream *sp = &scratch;
+   double upsum;
+   double downsum;
+   int i;
+   double close;
+   double open;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+   int pkSlot1 = -1;
+   double pkVal1 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.win_i_inOpen = stream->winMirror_i_inOpen;
-   memcpy( scratch.win_i_inOpen, stream->win_i_inOpen, sizeof(double) * (size_t)stream->winCap_i );
-   scratch.win_i_inClose = stream->winMirror_i_inClose;
-   memcpy( scratch.win_i_inClose, stream->win_i_inClose, sizeof(double) * (size_t)stream->winCap_i );
-   TA_IMI_StepImpl( &scratch, inOpen, inClose, outReal );
+   pkSlot0 = sp->winPos_i;
+   pkVal0 = inOpen;
+   pkSlot1 = sp->winPos_i;
+   pkVal1 = inClose;
+   upsum = 0.0;
+   downsum = 0.0;
+   for( i = sp->optInTimePeriod - 1; i >= 0; i -= 1 )
+   {
+      close = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot1) ? sp->win_i_inClose[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal1;
+      open = (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? sp->win_i_inOpen[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0;
+      if( close > open )
+      {
+         upsum += close - open;
+      } else 
+      {
+         downsum += open - close;
+      }
+      /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+       * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+       * oscillator, so no up/down bias returns its neutral center, 50.0.
+       */
+      *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+   }
+   sp->winPos_i = sp->winPos_i + 1;
+   if( sp->winPos_i >= sp->winCap_i )
+   {
+      sp->winPos_i = 0;
+   }
    return TA_SUCCESS;
 }
 

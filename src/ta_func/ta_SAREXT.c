@@ -797,10 +797,13 @@ static void TA_SAREXT_StepImpl( struct TA_SAREXT_Stream *sp, double inHigh, doub
 {
    double prevHigh;
    double prevLow;
-   double newHigh = sp->newHigh;
-   double newLow = sp->newLow;
-   double sar = sp->sar;
+   double newHigh;
+   double newLow;
+   double sar;
 
+   newHigh = sp->newHigh;
+   newLow = sp->newLow;
+   sar = sp->sar;
    prevLow = newLow;
    prevHigh = newHigh;
    newLow = inLow;
@@ -1412,11 +1415,164 @@ TA_LIB_API TA_RetCode TA_SAREXT_Update( TA_SAREXT_Stream *stream, double inHigh,
 TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    struct TA_SAREXT_Stream scratch;
+   struct TA_SAREXT_Stream *sp = &scratch;
+   double prevHigh;
+   double prevLow;
+   double newHigh;
+   double newLow;
+   double sar;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_SAREXT_StepImpl( &scratch, inHigh, inLow, outReal );
+   newHigh = sp->newHigh;
+   newLow = sp->newLow;
+   sar = sp->sar;
+   prevLow = newLow;
+   prevHigh = newHigh;
+   newLow = inLow;
+   newHigh = inHigh;
+   if( sp->isLong == 1 )
+   {
+      /* Switch to short if the low penetrates the SAR value. */
+      if( newLow <= sar )
+      {
+         /* Switch and Overide the SAR with the ep */
+         sp->isLong = 0;
+         sar = sp->ep;
+         /* Make sure the overide SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar < prevHigh )
+         {
+            sar = prevHigh;
+         }
+         if( sar < newHigh )
+         {
+            sar = newHigh;
+         }
+         /* Output the overide SAR */
+         if( sp->optInOffsetOnReverse != 0.0 )
+         {
+            sar += sar * sp->optInOffsetOnReverse;
+         }
+         *outReal= 0 - sar;
+         /* Adjust afShort and ep */
+         sp->afShort = sp->optInAccelerationInitShort;
+         sp->ep = newLow;
+         /* Calculate the new SAR */
+         sar = fma(sp->afShort, sp->ep - sar, sar);
+         /* Make sure the new SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar < prevHigh )
+         {
+            sar = prevHigh;
+         }
+         if( sar < newHigh )
+         {
+            sar = newHigh;
+         }
+      } else 
+      {
+         /* No switch */
+         /* Output the SAR (was calculated in the previous iteration) */
+         *outReal= sar;
+         /* Adjust afLong and ep. */
+         if( newHigh > sp->ep )
+         {
+            sp->ep = newHigh;
+            sp->afLong += sp->optInAccelerationLong;
+            if( sp->afLong > sp->optInAccelerationMaxLong )
+            {
+               sp->afLong = sp->optInAccelerationMaxLong;
+            }
+         }
+         /* Calculate the new SAR */
+         sar = fma(sp->afLong, sp->ep - sar, sar);
+         /* Make sure the new SAR is within
+          * yesterday's and today's range.
+          */
+         if( sar > prevLow )
+         {
+            sar = prevLow;
+         }
+         if( sar > newLow )
+         {
+            sar = newLow;
+         }
+      }
+   /* Switch to long if the high penetrates the SAR value. */
+   } else if( newHigh >= sar )
+   {
+      /* Switch and Overide the SAR with the ep */
+      sp->isLong = 1;
+      sar = sp->ep;
+      /* Make sure the overide SAR is within
+       * yesterday's and today's range.
+       */
+      if( sar > prevLow )
+      {
+         sar = prevLow;
+      }
+      if( sar > newLow )
+      {
+         sar = newLow;
+      }
+      /* Output the overide SAR */
+      if( sp->optInOffsetOnReverse != 0.0 )
+      {
+         sar -= sar * sp->optInOffsetOnReverse;
+      }
+      *outReal= sar;
+      /* Adjust afLong and ep */
+      sp->afLong = sp->optInAccelerationInitLong;
+      sp->ep = newHigh;
+      /* Calculate the new SAR */
+      sar = fma(sp->afLong, sp->ep - sar, sar);
+      /* Make sure the new SAR is within
+       * yesterday's and today's range.
+       */
+      if( sar > prevLow )
+      {
+         sar = prevLow;
+      }
+      if( sar > newLow )
+      {
+         sar = newLow;
+      }
+   } else 
+   {
+      /* No switch */
+      /* Output the SAR (was calculated in the previous iteration) */
+      *outReal= 0 - sar;
+      /* Adjust afShort and ep. */
+      if( newLow < sp->ep )
+      {
+         sp->ep = newLow;
+         sp->afShort += sp->optInAccelerationShort;
+         if( sp->afShort > sp->optInAccelerationMaxShort )
+         {
+            sp->afShort = sp->optInAccelerationMaxShort;
+         }
+      }
+      /* Calculate the new SAR */
+      sar = fma(sp->afShort, sp->ep - sar, sar);
+      /* Make sure the new SAR is within
+       * yesterday's and today's range.
+       */
+      if( sar < prevHigh )
+      {
+         sar = prevHigh;
+      }
+      if( sar < newHigh )
+      {
+         sar = newHigh;
+      }
+   }
+   sp->newHigh = newHigh;
+   sp->newLow = newLow;
+   sp->sar = sar;
    return TA_SUCCESS;
 }
 

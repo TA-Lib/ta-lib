@@ -237,11 +237,13 @@ TA_LIB_API TA_RetCode TA_CEIL_Update( TA_CEIL_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_CEIL_Peek( const TA_CEIL_Stream *stream, double inReal, double *outReal )
 {
    struct TA_CEIL_Stream scratch;
+   struct TA_CEIL_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CEIL_StepImpl( &scratch, inReal, outReal );
+   (void)sp;
+   *outReal= ceil(inReal);
    return TA_SUCCESS;
 }
 

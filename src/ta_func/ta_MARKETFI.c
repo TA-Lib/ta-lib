@@ -337,11 +337,29 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Update( TA_MARKETFI_Stream *stream, double inH
 TA_LIB_API TA_RetCode TA_MARKETFI_Peek( const TA_MARKETFI_Stream *stream, double inHigh, double inLow, double inVolume, double *outReal )
 {
    struct TA_MARKETFI_Stream scratch;
+   struct TA_MARKETFI_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_MARKETFI_StepImpl( &scratch, inHigh, inLow, inVolume, outReal );
+   (void)sp;
+   /* A zero-volume bar would divide by zero. Neither reference guards
+    * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+    * issue #112 settled that a successful call never emits NaN or Inf,
+    * so an untraded bar facilitated no movement and reports 0.
+    *
+    * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+    * 1e-14 band is an absolute threshold and meaningless against an
+    * unbounded volume scale. Same reasoning as the prevClose guard in
+    * ta_codegen/input/nvi/nvi.c.
+    */
+   if( inVolume != 0.0 )
+   {
+      *outReal= (inHigh - inLow) / inVolume;
+   } else 
+   {
+      *outReal= 0.0;
+   }
    return TA_SUCCESS;
 }
 

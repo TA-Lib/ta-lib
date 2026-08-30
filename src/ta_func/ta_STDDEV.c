@@ -226,10 +226,6 @@ struct TA_STDDEV_Stream {
    int outRangeCount;
    int optInTimePeriod;
    double optInNbDev;
-   /* Peek runs the SAME step body on a scratch copy; sub handles are
-    * heap pointers a struct copy cannot clone, so the copy carries this
-    * flag and the step calls sub-Peek instead of sub-Update. */
-   int peekMode;
    TA_VAR_Stream *sub0;
 };
 
@@ -241,11 +237,7 @@ static TA_RetCode TA_STDDEV_StepImpl( struct TA_STDDEV_Stream *sp, double inReal
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {
-      TA_RetCode subRc;
-      if( sp->peekMode )
-         subRc = TA_VAR_Peek( (const TA_VAR_Stream *)sp->sub0, inReal, &cur_outReal );
-      else
-         subRc = TA_VAR_Update( sp->sub0, inReal, &cur_outReal );
+      TA_RetCode subRc = TA_VAR_Update( sp->sub0, inReal, &cur_outReal );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
@@ -446,12 +438,28 @@ TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal,
 TA_LIB_API TA_RetCode TA_STDDEV_Peek( const TA_STDDEV_Stream *stream, double inReal, double *outReal )
 {
    struct TA_STDDEV_Stream scratch;
+   struct TA_STDDEV_Stream *sp = &scratch;
+   double cur_outReal = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.peekMode = 1;
-   return TA_STDDEV_StepImpl( &scratch, inReal, outReal );
+
+   /* Pipeline the new bar through the sub-streams (batch tail order). */
+   {
+      TA_RetCode subRc = TA_VAR_Peek( (const TA_VAR_Stream *)sp->sub0, inReal, &cur_outReal );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   /* Combine map (batch tail, per bar). */
+   if( sp->optInNbDev != 1.0 )
+   {
+      cur_outReal = sqrt(cur_outReal) * sp->optInNbDev;
+   } else 
+   {
+      cur_outReal = sqrt(cur_outReal);
+   }
+   *outReal = cur_outReal;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_STDDEV_UpdateAndFill( TA_STDDEV_Stream *stream, const double inReal[], int barCount, double outReal[] )

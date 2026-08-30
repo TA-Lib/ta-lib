@@ -403,11 +403,31 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Update( TA_CDLXSIDEGAP3METHODS_Stre
 TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Peek( const TA_CDLXSIDEGAP3METHODS_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    struct TA_CDLXSIDEGAP3METHODS_Stream scratch;
+   struct TA_CDLXSIDEGAP3METHODS_Stream *sp = &scratch;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CDLXSIDEGAP3METHODS_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
+       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
+       inOpen < max(sp->lag1_inClose,sp->lag1_inOpen) &&  /* 3rd opens within 2nd rb */
+       inOpen > min(sp->lag1_inClose,sp->lag1_inOpen) &&
+       inClose < max(sp->lag2_inClose,sp->lag2_inOpen) && /* 3rd closes within 1st rb */
+       inClose > min(sp->lag2_inClose,sp->lag2_inOpen) &&
+       (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && ((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) || ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) ) /* when 1st is white upside gap when 1st is black downside gap */
+   {
+      *outInteger= ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) * 100;
+   } else 
+   {
+      *outInteger= 0;
+   }
+   /* add the current range and subtract the first range: this is done after the pattern recognition
+    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+    */
+   sp->lag2_inOpen = sp->lag1_inOpen;
+   sp->lag1_inOpen = inOpen;
+   sp->lag2_inClose = sp->lag1_inClose;
+   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

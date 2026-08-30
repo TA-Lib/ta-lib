@@ -754,11 +754,23 @@ TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double 
 TA_LIB_API TA_RetCode TA_T3_Peek( const TA_T3_Stream *stream, double inReal, double *outReal )
 {
    struct TA_T3_Stream scratch;
+   struct TA_T3_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_T3_StepImpl( &scratch, inReal, outReal );
+   if( sp->optInTimePeriod == 1 )
+   {
+      *outReal= inReal;
+      return TA_SUCCESS;
+   }
+   sp->e1 = fma(sp->one_minus_k, sp->e1, sp->k * inReal);
+   sp->e2 = fma(sp->one_minus_k, sp->e2, sp->k * sp->e1);
+   sp->e3 = fma(sp->one_minus_k, sp->e3, sp->k * sp->e2);
+   sp->e4 = fma(sp->one_minus_k, sp->e4, sp->k * sp->e3);
+   sp->e5 = fma(sp->one_minus_k, sp->e5, sp->k * sp->e4);
+   sp->e6 = fma(sp->one_minus_k, sp->e6, sp->k * sp->e5);
+   *outReal= fma(sp->c4, sp->e3, fma(sp->c3, sp->e4, fma(sp->c1, sp->e6, sp->c2 * sp->e5)));
    return TA_SUCCESS;
 }
 

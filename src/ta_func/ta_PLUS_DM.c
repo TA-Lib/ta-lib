@@ -944,11 +944,59 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Update( TA_PLUS_DM_Stream *stream, double inHig
 TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    struct TA_PLUS_DM_Stream scratch;
+   struct TA_PLUS_DM_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_PLUS_DM_StepImpl( &scratch, inHigh, inLow, outReal );
+   if( sp->optInTimePeriod <= 1 )
+   {
+      double tempReal;
+      double diffP;
+      double diffM;
+
+      tempReal = inHigh;
+      diffP = tempReal - sp->prevHigh;
+      /* Plus Delta */
+      sp->prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp->prevLow - tempReal;
+      /* Minus Delta */
+      sp->prevLow = tempReal;
+      if( diffP > 0 && diffP > diffM )
+      {
+         /* Case 1 and 3: +DM=diffP,-DM=0 */
+         *outReal= diffP;
+      } else 
+      {
+         *outReal= 0;
+      }
+   }
+   else
+   {
+      double tempReal;
+      double diffP;
+      double diffM;
+
+      tempReal = inHigh;
+      diffP = tempReal - sp->prevHigh;
+      /* Plus Delta */
+      sp->prevHigh = tempReal;
+      tempReal = inLow;
+      diffM = sp->prevLow - tempReal;
+      /* Minus Delta */
+      sp->prevLow = tempReal;
+      if( diffP > 0 && diffP > diffM )
+      {
+         /* Case 1 and 3: +DM=diffP,-DM=0 */
+         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod + diffP;
+      } else 
+      {
+         /* Case 2,4,5 and 7 */
+         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod;
+      }
+      *outReal= sp->prevPlusDM;
+   }
    return TA_SUCCESS;
 }
 

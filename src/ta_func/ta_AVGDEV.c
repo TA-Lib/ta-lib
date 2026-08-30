@@ -207,7 +207,6 @@ struct TA_AVGDEV_Stream {
    int winPos_i;
    int winCap_i;
    double *win_i_inReal;
-   double *winMirror_i_inReal;
 };
 
 /* Private function, not in public API. */
@@ -215,7 +214,6 @@ static void TA_AVGDEV_ReleaseImpl( struct TA_AVGDEV_Stream *sp )
 {
    if( !sp ) return;
    if( sp->win_i_inReal ) TA_Free( sp->win_i_inReal );
-   if( sp->winMirror_i_inReal ) TA_Free( sp->winMirror_i_inReal );
    TA_Free( sp );
 }
 
@@ -323,8 +321,6 @@ static TA_RetCode TA_AVGDEV_OpenImpl( struct TA_AVGDEV_Stream **stream, const do
       if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(190); }
       sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
       if( !sp->win_i_inReal ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->winMirror_i_inReal ) { TA_AVGDEV_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
       sp->winPos_i = 0;
       sp->outRangeBegIdx = *outBegIdx;
@@ -388,13 +384,34 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Update( TA_AVGDEV_Stream *stream, double inReal,
 TA_LIB_API TA_RetCode TA_AVGDEV_Peek( const TA_AVGDEV_Stream *stream, double inReal, double *outReal )
 {
    struct TA_AVGDEV_Stream scratch;
+   struct TA_AVGDEV_Stream *sp = &scratch;
+   double todaySum;
+   double todayDev;
+   int i;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.win_i_inReal = stream->winMirror_i_inReal;
-   memcpy( scratch.win_i_inReal, stream->win_i_inReal, sizeof(double) * (size_t)stream->winCap_i );
-   TA_AVGDEV_StepImpl( &scratch, inReal, outReal );
+   pkSlot0 = sp->winPos_i;
+   pkVal0 = inReal;
+   todaySum = 0.0;
+   for( i = 0; i < sp->optInTimePeriod; i += 1 )
+   {
+      todaySum += (((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0;
+   }
+   todayDev = 0.0;
+   for( i = 0; i < sp->optInTimePeriod; i += 1 )
+   {
+      todayDev += fabs(((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0) - todaySum / sp->optInTimePeriod);
+   }
+   *outReal= todayDev / sp->optInTimePeriod;
+   sp->winPos_i = sp->winPos_i + 1;
+   if( sp->winPos_i >= sp->winCap_i )
+   {
+      sp->winPos_i = 0;
+   }
    return TA_SUCCESS;
 }
 

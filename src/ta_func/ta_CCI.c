@@ -362,7 +362,6 @@ struct TA_CCI_Stream {
    int maxIdx_circBuffer;
    int cbSize_circBuffer;
    double *cb_circBuffer;
-   double *cbMirror_circBuffer;
 };
 
 /* Private function, not in public API. */
@@ -370,7 +369,6 @@ static void TA_CCI_ReleaseImpl( struct TA_CCI_Stream *sp )
 {
    if( !sp ) return;
    if( sp->cb_circBuffer ) TA_Free( sp->cb_circBuffer );
-   if( sp->cbMirror_circBuffer ) TA_Free( sp->cbMirror_circBuffer );
    TA_Free( sp );
 }
 
@@ -590,8 +588,6 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
       if( sp->cbSize_circBuffer < 1 || sp->cbSize_circBuffer > historyLen + 1 ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(193); }
       sp->cb_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );
       if( !sp->cb_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->cbMirror_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );
-      if( !sp->cbMirror_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_circBuffer, circBuffer, sizeof(double) * (size_t)sp->cbSize_circBuffer );
       if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); 
       sp->outRangeBegIdx = *outBegIdx;
@@ -655,13 +651,63 @@ TA_LIB_API TA_RetCode TA_CCI_Update( TA_CCI_Stream *stream, double inHigh, doubl
 TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    struct TA_CCI_Stream scratch;
+   struct TA_CCI_Stream *sp = &scratch;
+   double tempReal;
+   double tempReal2;
+   double tempReal3;
+   double theAverage;
+   double lastValue;
+   int j;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.cb_circBuffer = stream->cbMirror_circBuffer;
-   memcpy( scratch.cb_circBuffer, stream->cb_circBuffer, sizeof(double) * (size_t)stream->cbSize_circBuffer );
-   TA_CCI_StepImpl( &scratch, inHigh, inLow, inClose, outReal );
+   lastValue = (inHigh + inLow + inClose) / 3;
+   pkSlot0 = sp->circBuffer_Idx;
+   pkVal0 = lastValue;
+   /* Calculate the average for the whole period. */
+   theAverage = 0;
+   for( j = 0; j < sp->optInTimePeriod; j += 1 )
+   {
+      theAverage += (j != pkSlot0) ? sp->cb_circBuffer[j] : pkVal0;
+   }
+   theAverage /= sp->optInTimePeriod;
+   /* Do the summation of the ABS(TypePrice-average)
+    * for the whole period, then its mean.
+    */
+   tempReal2 = 0;
+   for( j = 0; j < sp->optInTimePeriod; j += 1 )
+   {
+      tempReal2 += fabs(((j != pkSlot0) ? sp->cb_circBuffer[j] : pkVal0) - theAverage);
+   }
+   tempReal2 /= sp->optInTimePeriod;
+   /* And finally, the CCI... */
+   tempReal = lastValue - theAverage;
+   /* Both tests are relative to the window's own price level (issue #253).
+    * They ask "is this window flat?", and flatness is a property of the
+    * prices relative to each other -- but a deviation carries the quote
+    * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+    * every window of an instrument quoted below it and zeroed the whole
+    * output. The band is still wide enough (~90 ulp of the average) to
+    * absorb the sub-epsilon residue an identical-price window leaves in the
+    * average, which is what it was widened for in the first place (#7).
+    */
+   tempReal3 = fabs(theAverage);
+   if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) )
+   {
+      *outReal= tempReal / (0.015 * tempReal2);
+   } else 
+   {
+      *outReal= 0.0;
+   }
+   /* Move forward the circular buffer indexes. */
+   sp->circBuffer_Idx = sp->circBuffer_Idx + 1;
+   if( sp->circBuffer_Idx > sp->maxIdx_circBuffer )
+   {
+      sp->circBuffer_Idx = 0;
+   }
    return TA_SUCCESS;
 }
 

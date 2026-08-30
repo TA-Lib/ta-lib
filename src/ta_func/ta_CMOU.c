@@ -414,7 +414,6 @@ struct TA_CMOU_Stream {
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
    double *ring_trailingIdx_inReal;
-   double *ringMirror_trailingIdx_inReal;
 };
 
 /* Private function, not in public API. */
@@ -422,7 +421,6 @@ static void TA_CMOU_ReleaseImpl( struct TA_CMOU_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdx_inReal ) TA_Free( sp->ring_trailingIdx_inReal );
-   if( sp->ringMirror_trailingIdx_inReal ) TA_Free( sp->ringMirror_trailingIdx_inReal );
    TA_Free( sp );
 }
 
@@ -697,8 +695,6 @@ static TA_RetCode TA_CMOU_OpenImpl( struct TA_CMOU_Stream **stream, const double
       { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
         sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdx_inReal ) { TA_CMOU_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_CMOU_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
       }
       sp->ringPos_trailingIdx = 0;
@@ -763,13 +759,77 @@ TA_LIB_API TA_RetCode TA_CMOU_Update( TA_CMOU_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_CMOU_Peek( const TA_CMOU_Stream *stream, double inReal, double *outReal )
 {
    struct TA_CMOU_Stream scratch;
+   struct TA_CMOU_Stream *sp = &scratch;
+   double sum;
+   double diff;
+   double tempReal;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
-   memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );
-   TA_CMOU_StepImpl( &scratch, inReal, outReal );
+   if( sp->ringCap_trailingIdx == 0 )
+   {
+      pkSlot0 = 0;
+      pkVal0 = inReal;
+   }
+   /* Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
+    * inReal[trailingIdx-1] comes from the cache (already overwritten when
+    * outReal == inReal); inReal[trailingIdx] is read here, before this
+    * iteration writes outReal[outIdx], so it is still the original price.
+    */
+   tempReal = (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
+   diff = tempReal - sp->trailingValue;
+   sp->trailingValue = tempReal;
+   if( diff > 0.0 )
+   {
+      sp->upSum -= diff;
+   } else if( diff < 0.0 )
+   {
+      sp->downSum += diff;
+   }
+   /* Add the newest change: inReal[today] - inReal[today-1]. */
+   tempReal = inReal;
+   diff = tempReal - sp->prevValue;
+   sp->prevValue = tempReal;
+   if( diff > 0.0 )
+   {
+      sp->upSum += diff;
+   } else if( diff < 0.0 )
+   {
+      sp->downSum -= diff;
+   }
+   /* Once a whole period of flat bars has gone by, every change in the
+    * window is exactly zero, so both sums are known to be exactly zero and
+    * the residue can be dropped.
+    */
+   if( diff == 0.0 )
+   {
+      sp->nullRun += 1;
+   } else 
+   {
+      sp->nullRun = 0;
+   }
+   if( sp->nullRun >= sp->optInTimePeriod )
+   {
+      sp->nullRun = sp->optInTimePeriod;
+      sp->upSum = 0.0;
+      sp->downSum = 0.0;
+   }
+   sum = sp->upSum + sp->downSum;
+   if( sum > 0.0 )
+   {
+      *outReal= 100.0 * (sp->upSum - sp->downSum) / sum;
+   } else 
+   {
+      *outReal= 0.0;
+   }
+   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
+   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
+   {
+      sp->ringPos_trailingIdx = 0;
+   }
    return TA_SUCCESS;
 }
 

@@ -237,11 +237,13 @@ TA_LIB_API TA_RetCode TA_SINH_Update( TA_SINH_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_SINH_Peek( const TA_SINH_Stream *stream, double inReal, double *outReal )
 {
    struct TA_SINH_Stream scratch;
+   struct TA_SINH_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_SINH_StepImpl( &scratch, inReal, outReal );
+   (void)sp;
+   *outReal= sinh(inReal);
    return TA_SUCCESS;
 }
 

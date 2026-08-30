@@ -824,22 +824,17 @@ struct TA_HMA_Stream {
    int ringPos_trailingIdxFull;
    int ringCap_trailingIdxFull;
    double *ring_trailingIdxFull_inReal;
-   double *ringMirror_trailingIdxFull_inReal;
    int winPos_jFull;
    int winCap_jFull;
    double *win_jFull_inReal;
-   double *winMirror_jFull_inReal;
    int ringPos_trailingIdxHalf;
    int ringCap_trailingIdxHalf;
    double *ring_trailingIdxHalf_inReal;
-   double *ringMirror_trailingIdxHalf_inReal;
    int winPos_jHalf;
    int winCap_jHalf;
    double *win_jHalf_inReal;
-   double *winMirror_jHalf_inReal;
    int cbSize_dRing;
    double *cb_dRing;
-   double *cbMirror_dRing;
 };
 
 /* Private function, not in public API. */
@@ -847,15 +842,10 @@ static void TA_HMA_ReleaseImpl( struct TA_HMA_Stream *sp )
 {
    if( !sp ) return;
    if( sp->ring_trailingIdxFull_inReal ) TA_Free( sp->ring_trailingIdxFull_inReal );
-   if( sp->ringMirror_trailingIdxFull_inReal ) TA_Free( sp->ringMirror_trailingIdxFull_inReal );
    if( sp->win_jFull_inReal ) TA_Free( sp->win_jFull_inReal );
-   if( sp->winMirror_jFull_inReal ) TA_Free( sp->winMirror_jFull_inReal );
    if( sp->ring_trailingIdxHalf_inReal ) TA_Free( sp->ring_trailingIdxHalf_inReal );
-   if( sp->ringMirror_trailingIdxHalf_inReal ) TA_Free( sp->ringMirror_trailingIdxHalf_inReal );
    if( sp->win_jHalf_inReal ) TA_Free( sp->win_jHalf_inReal );
-   if( sp->winMirror_jHalf_inReal ) TA_Free( sp->winMirror_jHalf_inReal );
    if( sp->cb_dRing ) TA_Free( sp->cb_dRing );
-   if( sp->cbMirror_dRing ) TA_Free( sp->cbMirror_dRing );
    TA_Free( sp );
 }
 
@@ -927,9 +917,11 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       int rw;
       int ringWalk;
       double tempReal2;
-      double periodSubSqrt = sp->periodSubSqrt;
-      double periodSumSqrt = sp->periodSumSqrt;
+      double periodSubSqrt;
+      double periodSumSqrt;
 
+      periodSubSqrt = sp->periodSubSqrt;
+      periodSumSqrt = sp->periodSumSqrt;
       if( sp->ringCap_trailingIdxFull == 0 )
       {
          sp->ring_trailingIdxFull_inReal[0] = inReal;
@@ -1097,8 +1089,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
         sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memset( sp->ring_trailingIdxFull_inReal, 0, sizeof(double) * allocN );
       }
       sp->ringPos_trailingIdxFull = 0;
@@ -1106,8 +1096,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(320); }
       sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
       if( !sp->win_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
-      if( !sp->winMirror_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       sp->win_jFull_inReal[0] = 0.0;
       sp->winPos_jFull = 0;
       {
@@ -1275,8 +1263,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
         sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdxFull_inReal, inReal + (historyLen - sp->ringCap_trailingIdxFull), sizeof(double) * (size_t)sp->ringCap_trailingIdxFull );
       }
       sp->ringPos_trailingIdxFull = 0;
@@ -1284,8 +1270,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(320); }
       sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
       if( !sp->win_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
-      if( !sp->winMirror_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_jFull_inReal, inReal + (historyLen - sp->winCap_jFull), sizeof(double) * (size_t)sp->winCap_jFull );
       sp->winPos_jFull = 0;
       sp->outRangeBegIdx = *outBegIdx;
@@ -1635,8 +1619,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
         sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdxFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdxFull_inReal, inReal + (historyLen - sp->ringCap_trailingIdxFull), sizeof(double) * (size_t)sp->ringCap_trailingIdxFull );
       }
       sp->ringPos_trailingIdxFull = 0;
@@ -1645,8 +1627,6 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       { size_t allocN = (size_t)(sp->ringCap_trailingIdxHalf > 0 ? sp->ringCap_trailingIdxHalf : 1);
         sp->ring_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_trailingIdxHalf_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdxHalf_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         memcpy( sp->ring_trailingIdxHalf_inReal, inReal + (historyLen - sp->ringCap_trailingIdxHalf), sizeof(double) * (size_t)sp->ringCap_trailingIdxHalf );
       }
       sp->ringPos_trailingIdxHalf = 0;
@@ -1654,24 +1634,18 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       if( sp->winCap_jFull < 1 || sp->winCap_jFull > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(320); }
       sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
       if( !sp->win_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_jFull_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jFull );
-      if( !sp->winMirror_jFull_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_jFull_inReal, inReal + (historyLen - sp->winCap_jFull), sizeof(double) * (size_t)sp->winCap_jFull );
       sp->winPos_jFull = 0;
       sp->winCap_jHalf = (int)(lookbackHalf + 1);
       if( sp->winCap_jHalf < 1 || sp->winCap_jHalf > historyLen ) { TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(323); }
       sp->win_jHalf_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jHalf );
       if( !sp->win_jHalf_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_jHalf_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_jHalf );
-      if( !sp->winMirror_jHalf_inReal ) { TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_jHalf_inReal, inReal + (historyLen - sp->winCap_jHalf), sizeof(double) * (size_t)sp->winCap_jHalf );
       sp->winPos_jHalf = 0;
       sp->cbSize_dRing = maxIdx_dRing + 1;
       if( sp->cbSize_dRing < 1 || sp->cbSize_dRing > historyLen + 1 ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(324); }
       sp->cb_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
       if( !sp->cb_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
-      sp->cbMirror_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
-      if( !sp->cbMirror_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_dRing, dRing, sizeof(double) * (size_t)sp->cbSize_dRing );
       if( dRing != &local_dRing[0] ) TA_Free( dRing ); 
       sp->outRangeBegIdx = *outBegIdx;
@@ -1738,30 +1712,215 @@ TA_LIB_API TA_RetCode TA_HMA_Update( TA_HMA_Stream *stream, double inReal, doubl
 TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, double *outReal )
 {
    struct TA_HMA_Stream scratch;
+   struct TA_HMA_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingIdxFull_inReal = stream->ringMirror_trailingIdxFull_inReal;
-   memcpy( scratch.ring_trailingIdxFull_inReal, stream->ring_trailingIdxFull_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdxFull > 0 ? stream->ringCap_trailingIdxFull : 1) );
-   scratch.win_jFull_inReal = stream->winMirror_jFull_inReal;
-   memcpy( scratch.win_jFull_inReal, stream->win_jFull_inReal, sizeof(double) * (size_t)stream->winCap_jFull );
-   if( stream->ring_trailingIdxHalf_inReal )
+   if( sp->optInTimePeriod == 1 )
    {
-      scratch.ring_trailingIdxHalf_inReal = stream->ringMirror_trailingIdxHalf_inReal;
-      memcpy( scratch.ring_trailingIdxHalf_inReal, stream->ring_trailingIdxHalf_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdxHalf > 0 ? stream->ringCap_trailingIdxHalf : 1) );
+      *outReal= inReal;
+      return TA_SUCCESS;
    }
-   if( stream->win_jHalf_inReal )
+   if( sp->optInTimePeriod == 2 || sp->optInTimePeriod == 3 )
    {
-      scratch.win_jHalf_inReal = stream->winMirror_jHalf_inReal;
-      memcpy( scratch.win_jHalf_inReal, stream->win_jHalf_inReal, sizeof(double) * (size_t)stream->winCap_jHalf );
+      double tempReal;
+      double fullOut;
+      int jFull;
+      int rw;
+      double tempReal2;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+      int pkSlot1 = -1;
+      double pkVal1 = 0.0;
+
+      if( sp->ringCap_trailingIdxFull == 0 )
+      {
+         pkSlot0 = 0;
+         pkVal0 = inReal;
+      }
+      pkSlot1 = sp->winPos_jFull;
+      pkVal1 = inReal;
+      tempReal = inReal;
+      sp->periodSubFull += tempReal;
+      sp->periodSubFull -= sp->trailingFull;
+      sp->periodSumFull += tempReal * sp->optInTimePeriod;
+      sp->barsSinceReseedFull -= 1;
+      if( sp->barsSinceReseedFull <= 0 )
+      {
+         sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
+         sp->periodSubFull = 0.0;
+         sp->periodSumFull = 0.0;
+         rw = 1;
+         for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
+         {
+            tempReal2 = (((sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull) != pkSlot1) ? sp->win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull] : pkVal1;
+            sp->periodSubFull += tempReal2;
+            sp->periodSumFull += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      sp->trailingFull = (sp->ringPos_trailingIdxFull != pkSlot0) ? sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] : pkVal0;
+      fullOut = sp->periodSumFull / sp->dividerFull;
+      sp->periodSumFull -= sp->periodSubFull;
+      *outReal= 2.0 * tempReal - fullOut;
+      sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
+      if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
+      {
+         sp->ringPos_trailingIdxFull = 0;
+      }
+      sp->winPos_jFull = sp->winPos_jFull + 1;
+      if( sp->winPos_jFull >= sp->winCap_jFull )
+      {
+         sp->winPos_jFull = 0;
+      }
    }
-   if( stream->cb_dRing )
+   else
    {
-      scratch.cb_dRing = stream->cbMirror_dRing;
-      memcpy( scratch.cb_dRing, stream->cb_dRing, sizeof(double) * (size_t)stream->cbSize_dRing );
+      double tempReal;
+      double fullOut;
+      double halfOut;
+      double diffReal;
+      int jFull;
+      int jHalf;
+      int q;
+      int rw;
+      int ringWalk;
+      double tempReal2;
+      double periodSubSqrt;
+      double periodSumSqrt;
+      int pkSlot0 = -1;
+      double pkVal0 = 0.0;
+      int pkSlot1 = -1;
+      double pkVal1 = 0.0;
+      int pkSlot2 = -1;
+      double pkVal2 = 0.0;
+      int pkSlot3 = -1;
+      double pkVal3 = 0.0;
+
+      periodSubSqrt = sp->periodSubSqrt;
+      periodSumSqrt = sp->periodSumSqrt;
+      if( sp->ringCap_trailingIdxFull == 0 )
+      {
+         pkSlot0 = 0;
+         pkVal0 = inReal;
+      }
+      if( sp->ringCap_trailingIdxHalf == 0 )
+      {
+         pkSlot1 = 0;
+         pkVal1 = inReal;
+      }
+      pkSlot2 = sp->winPos_jFull;
+      pkVal2 = inReal;
+      pkSlot3 = sp->winPos_jHalf;
+      pkVal3 = inReal;
+      tempReal = inReal;
+      sp->periodSubFull += tempReal;
+      sp->periodSubFull -= sp->trailingFull;
+      sp->periodSumFull += tempReal * sp->optInTimePeriod;
+      sp->barsSinceReseedFull -= 1;
+      if( sp->barsSinceReseedFull <= 0 )
+      {
+         sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
+         sp->periodSubFull = 0.0;
+         sp->periodSumFull = 0.0;
+         rw = 1;
+         for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
+         {
+            tempReal2 = (((sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull) != pkSlot2) ? sp->win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull] : pkVal2;
+            sp->periodSubFull += tempReal2;
+            sp->periodSumFull += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      sp->trailingFull = (sp->ringPos_trailingIdxFull != pkSlot0) ? sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] : pkVal0;
+      fullOut = sp->periodSumFull / sp->dividerFull;
+      sp->periodSumFull -= sp->periodSubFull;
+      sp->periodSubHalf += tempReal;
+      sp->periodSubHalf -= sp->trailingHalf;
+      sp->periodSumHalf += tempReal * sp->halfPeriod;
+      sp->barsSinceReseedHalf -= 1;
+      if( sp->barsSinceReseedHalf <= 0 )
+      {
+         sp->barsSinceReseedHalf = 8 * sp->halfPeriod;
+         sp->periodSubHalf = 0.0;
+         sp->periodSumHalf = 0.0;
+         rw = 1;
+         for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
+         {
+            tempReal2 = (((sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf) != pkSlot3) ? sp->win_jHalf_inReal[(sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf] : pkVal3;
+            sp->periodSubHalf += tempReal2;
+            sp->periodSumHalf += tempReal2 * rw;
+            rw += 1;
+         }
+      }
+      sp->trailingHalf = (sp->ringPos_trailingIdxHalf != pkSlot1) ? sp->ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf] : pkVal1;
+      halfOut = sp->periodSumHalf / sp->dividerHalf;
+      sp->periodSumHalf -= sp->periodSubHalf;
+      diffReal = 2.0 * halfOut - fullOut;
+      periodSubSqrt += diffReal;
+      periodSubSqrt -= sp->trailingSqrt;
+      periodSumSqrt += diffReal * sp->sqrtPeriod;
+      /* The outer WMA consumes a DERIVED series that is never
+       * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+       * the oldest slot (the one about to expire) and diffReal is the
+       * newest value, which together are the whole window. Oldest first,
+       * weight counting up from 1 -- the priming order above.
+       */
+      sp->barsSinceReseedSqrt -= 1;
+      if( sp->barsSinceReseedSqrt <= 0 )
+      {
+         sp->barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
+         periodSubSqrt = 0.0;
+         periodSumSqrt = 0.0;
+         rw = 1;
+         ringWalk = sp->dRing_Idx;
+         for( q = 0; q < sp->ringSize; q += 1 )
+         {
+            tempReal2 = sp->cb_dRing[ringWalk];
+            periodSubSqrt += tempReal2;
+            periodSumSqrt += tempReal2 * rw;
+            rw += 1;
+            ringWalk += 1;
+            if( ringWalk >= sp->ringSize )
+            {
+               ringWalk = 0;
+            }
+         }
+         periodSubSqrt += diffReal;
+         periodSumSqrt += diffReal * sp->sqrtPeriod;
+      }
+      sp->trailingSqrt = sp->cb_dRing[sp->dRing_Idx];
+      sp->dRing_Idx = sp->dRing_Idx + 1;
+      if( sp->dRing_Idx > sp->maxIdx_dRing )
+      {
+         sp->dRing_Idx = 0;
+      }
+      *outReal= periodSumSqrt / sp->dividerSqrt;
+      periodSumSqrt -= periodSubSqrt;
+      sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
+      if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
+      {
+         sp->ringPos_trailingIdxFull = 0;
+      }
+      sp->ringPos_trailingIdxHalf = sp->ringPos_trailingIdxHalf + 1;
+      if( sp->ringPos_trailingIdxHalf >= sp->ringCap_trailingIdxHalf )
+      {
+         sp->ringPos_trailingIdxHalf = 0;
+      }
+      sp->winPos_jFull = sp->winPos_jFull + 1;
+      if( sp->winPos_jFull >= sp->winCap_jFull )
+      {
+         sp->winPos_jFull = 0;
+      }
+      sp->winPos_jHalf = sp->winPos_jHalf + 1;
+      if( sp->winPos_jHalf >= sp->winCap_jHalf )
+      {
+         sp->winPos_jHalf = 0;
+      }
+      sp->periodSubSqrt = periodSubSqrt;
+      sp->periodSumSqrt = periodSumSqrt;
    }
-   TA_HMA_StepImpl( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }
 

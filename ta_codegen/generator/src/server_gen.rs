@@ -780,7 +780,7 @@ fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
         s.push_str("            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
         // Reachable after earlier candle rounds already compared, so the benign
         // count travels with it — otherwise those cases vanish from the summary.
-        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekAll, svZsign);\n");
+        s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);\n");
     } else {
         s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, openRejects);\n");
@@ -1186,10 +1186,6 @@ fn c_canary_check(fbuf: &[String], out_is_int: &[bool]) -> String {
 
 /// How the state comparator treats one pointer field of a stream struct.
 enum SvPtr {
-    /// A Peek scratch mirror: written only inside `Peek`, never part of the
-    /// state two opens must agree on. (Also never fully initialised — Peek
-    /// copies into it — so reading it would compare malloc leftovers.)
-    Mirror,
     /// `count` elements. With `phase`, the buffer is a ring and the compare is
     /// LOGICAL: slot `k` of one handle is `(phase + k) % count`, so two handles
     /// holding the same bars at different rotations compare equal.
@@ -1304,7 +1300,6 @@ fn sv_model_ptrs(
                 format!("ring_{}_{arr}", r.var),
                 SvPtr::Slots { count: cap.clone(), is_int: false, phase: Some(pos.clone()) },
             );
-            roles.insert(format!("ringMirror_{}_{arr}", r.var), SvPtr::Mirror);
         }
     }
     for w in model.windows() {
@@ -1316,7 +1311,6 @@ fn sv_model_ptrs(
                 format!("win_{}_{arr}", w.var),
                 SvPtr::Slots { count: cap.clone(), is_int: false, phase: Some(pos.clone()) },
             );
-            roles.insert(format!("winMirror_{}_{arr}", w.var), SvPtr::Mirror);
         }
     }
     for c in model.circs() {
@@ -1330,7 +1324,6 @@ fn sv_model_ptrs(
                 format!("cb_{storage}"),
                 SvPtr::Slots { count: size.clone(), is_int, phase: None },
             );
-            roles.insert(format!("cbMirror_{storage}"), SvPtr::Mirror);
         }
     }
     if let Some(ex) = model.extrema() {
@@ -1344,7 +1337,6 @@ fn sv_model_ptrs(
                     phys: "xPhys".to_string(),
                 },
             );
-            roles.insert(format!("xMirror_{arr}"), SvPtr::Mirror);
         }
     }
 }
@@ -1384,7 +1376,6 @@ fn sv_ptr_roles(
                         phase: Some(format!("lagRingPos_{s}")),
                     },
                 );
-                roles.insert(format!("lagRingMirror_{s}"), SvPtr::Mirror);
             }
         }
         StreamPlan::Dispatch(dp) => {
@@ -1485,7 +1476,6 @@ fn sv_comparator(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, Enum
             "   if( (a->{n} == NULL) != (b->{n} == NULL) ) {{ *w = \"{n}\"; return 1; }}\n"
         );
         match role {
-            SvPtr::Mirror => {}
             SvPtr::Slots { count, is_int, phase } => {
                 body.push_str(&guard);
                 match phase {
@@ -1902,6 +1892,83 @@ fn emit_sv_state_open(
     s.push_str("        }\n");
 }
 
+/// Peek commits nothing: a handle peeked over the history is bit-identical to a
+/// twin that was not.
+///
+/// This is the leg that has to carry the property, and the reason is that the
+/// value legs structurally CANNOT. They peek bar t and then update bar t with
+/// the same arguments, so a peek that stored what the update was about to store
+/// leaves the values and the end-of-run state compare alike — a sabotage
+/// committing every shadow in 107 of 176 peek entry points passed the whole
+/// sweep green. Peeking a handle nobody then updates is what makes the store
+/// survive to be seen.
+///
+/// `stEq` is the untouched twin: `Open(svN)`, already opened for the state leg
+/// and only ever read, so this costs one extra open per request rather than one
+/// per leg.
+fn emit_sv_peek_noncommit(
+    s: &mut String,
+    name: &str,
+    steq: bool,
+    out_is_int: &[bool],
+    in_args: &str,
+    opt_args: &str,
+    input_arrays: &[&str],
+) {
+    if !steq {
+        return;
+    }
+    let pouts: String = out_is_int
+        .iter()
+        .enumerate()
+        .map(|(i, is_int)| if *is_int { format!("int q{i} = 0;") } else { format!("double q{i} = 0.0;") })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let paddrs: String = (0..out_is_int.len())
+        .map(|i| format!("&q{i}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let mut bar_args = String::new();
+    for a in input_arrays {
+        bar_args.push_str(&format!("{a}[pi], "));
+    }
+    s.push_str("        if( stEq )
+        {
+");
+    let _ = writeln!(s, "            TA_{name}_Stream *stPk = NULL; {pouts}");
+    let _ = writeln!(
+        s,
+        "            if( TA_{name}_Open( &stPk, {in_args}svN, {opt_args}{paddrs} ) == TA_SUCCESS && stPk )"
+    );
+    s.push_str("            {
+");
+    s.push_str("                int pi;
+");
+    s.push_str("                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
+");
+    s.push_str("                {
+");
+    let _ = writeln!(s, "                    TA_{name}_Peek(stPk, {bar_args}{paddrs});");
+    s.push_str("                    peekChecked++;
+");
+    s.push_str("                }
+");
+    s.push_str("                {
+");
+    s.push_str("                    const char *pkWhat = \"-\";\n");
+    let _ = writeln!(
+        s,
+        "                    if( sv_steq_TA_{name}( stPk, stEq, &pkWhat, &svZsign ) ) {{ peekAll = 0; peekBad = pkWhat; }}"
+    );
+    s.push_str("                }
+");
+    s.push_str("            }
+");
+    let _ = writeln!(s, "            if( stPk ) TA_{name}_Close(stPk);");
+    s.push_str("        }
+");
+}
+
 /// The compare itself: the two handles have now consumed the same `svN` bars by
 /// different routes. Only when the value leg passed -- its loop breaks early on
 /// a mismatch, so the handle would be short of the reference.
@@ -2075,6 +2142,8 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         let steq = steq_have.contains(name);
         s.push_str("        TA_RetCode rc;\n");
         s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;\n");
+        s.push_str("        int peekChecked = 0;\n");
+        s.push_str("        const char *peekBad = \"-\";\n");
         s.push_str("        int fillOk = 1, fillChecked = 0;\n");
         emit_sv_state_decls(&mut s, name, steq);
         emit_sv_range_decls(&mut s);
@@ -2411,6 +2480,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_update_fill_leg(
             &mut s, name, &input_arrays, &in_args, &opt_args, &out_is_int, &bbuf, &fbuf_names,
         );
+        emit_sv_peek_noncommit(&mut s, name, steq, &out_is_int, &in_args, &opt_args, &input_arrays);
         emit_sv_state_close(&mut s, name, steq);
         if candle {
             s.push_str("        }\n");
@@ -2466,9 +2536,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_report(&mut s, steq);
         emit_sv_range_report(&mut s);
         if candle {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekAll, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);\n");
         } else {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekAll, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);\n");
         }
         s.push_str("        return;\n");
         s.push_str("    }\n");

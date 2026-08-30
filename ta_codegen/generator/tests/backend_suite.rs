@@ -9511,9 +9511,10 @@ fn c_stream_every_tier_leads_with_the_range_head() {
 ///
 /// Both directions per backend, and on every call site the backend has, so a
 /// half-applied rename (a definition the callers no longer name, or a Peek left
-/// on the old word) fails rather than passing on the half that moved. Rust has
-/// one call site where the others have two: its `peek` clones the handle and
-/// runs `update` on the copy, so the transition is named once.
+/// on the old word) fails rather than passing on the half that moved. Rust names
+/// the transition once where the others name it twice: its `peek` clones the
+/// handle and runs `update` on the copy, and C's peek frame is inline in `Peek`
+/// rather than a function, so C's two are `Update` and `UpdateAndFill`.
 #[test]
 fn the_transition_tier_is_step_impl_in_every_backend() {
     // SMA's own `stream` flag, not one forced on here: a test that sets the flag
@@ -9535,7 +9536,7 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
             "c",
             &c,
             "static void TA_SMA_StepImpl( struct TA_SMA_Stream *sp,",
-            &["TA_SMA_StepImpl( stream,", "TA_SMA_StepImpl( &scratch,"],
+            &["TA_SMA_StepImpl( stream,", "TA_SMA_StepImpl( stream, inReal[i]"],
             "StepInternal",
         ),
         (
@@ -9923,7 +9924,9 @@ fn test_c_trima_dual_mode_rings_stream_section() {
         "step branches on the stored parity"
     );
     assert!(c.contains("TA_TRIMA_ReleaseImpl"), "ReleaseImpl frees the rings");
-    assert!(c.contains("ringMirror_middleIdx_inReal"), "Peek ring mirror");
+    // Both modes' rings are shared, so the peek frame carries ONE shadow pair
+    // per ring across the two arms rather than a per-arm copy of the buffer.
+    assert!(!c.contains("Mirror"), "the peek frame replaced the per-handle ring mirror");
 }
 
 /// The body of `TA_<NAME>_StepImpl`, brace-balanced. Ring slots are also
@@ -10115,10 +10118,10 @@ fn test_c_midprice_stream_uses_the_declared_alternate() {
 }
 
 /// Pin the generated STOCH composed stream section: producer extrema state +
-/// peekMode + typed sub handles; Open opens each sub-stream on the
-/// materialized series BEFORE the batch call that consumes it (in-place
-/// smoothing overwrites the raw %K right there — order is the contract);
-/// the step pipelines through sub Update/Peek on the peekMode flag.
+/// typed sub handles; Open opens each sub-stream on the materialized series
+/// BEFORE the batch call that consumes it (in-place smoothing overwrites the
+/// raw %K right there — order is the contract); the update frame pipelines
+/// through sub-Update and the peek frame through sub-Peek.
 #[test]
 fn test_c_stoch_composed_stream_section() {
     let (mut func, enums) = load_indicator("stoch");
@@ -10128,8 +10131,9 @@ fn test_c_stoch_composed_stream_section() {
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
     let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
 
-    // Handle: producer extrema + peek flag + typed subs.
-    assert!(stream.contains("int peekMode;"));
+    // Handle: producer extrema + typed subs (no routing flag: the frames are
+    // separate functions, so `update` tests nothing per sub-call).
+    assert!(!stream.contains("peekMode"));
     assert!(stream.contains("TA_MA_Stream *sub0;"));
     assert!(stream.contains("TA_MA_Stream *sub1;"));
 
@@ -10164,16 +10168,15 @@ fn test_c_stoch_composed_stream_section() {
     assert!(stream.contains("&dummyBegIdx,&dummyNBElement"));
     assert!(!stream.contains(",outBegIdx,"), "raw out-meta arg leaked");
 
-    // Step: ONE body; sub calls dispatch on the scratch copy's peekMode.
-    assert!(stream.contains("if( sp->peekMode )"));
+    // Two bodies: the update frame drives sub-Update, the peek frame sub-Peek.
     assert!(stream.contains("TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, cur_tempBuffer, &cur_tempBuffer );"));
     assert!(stream.contains("TA_MA_Update( sp->sub0, cur_tempBuffer, &cur_tempBuffer );"));
     assert!(stream.contains("TA_MA_Update( sp->sub1, cur_tempBuffer, &cur_outSlowD );"));
     assert!(stream.contains("*outSlowK = cur_tempBuffer;"), "memmove tail-align");
     assert!(stream.contains("*outSlowD = cur_outSlowD;"));
 
-    // Peek sets the flag on the scratch copy; Close closes subs then frees.
-    assert!(stream.contains("scratch.peekMode = 1;"));
+    // Peek runs the peek frame on the scratch copy; Close closes subs then frees.
+    assert!(stream.contains("TA_MA_Peek( (const TA_MA_Stream *)sp->sub1,"));
     assert!(stream.contains("TA_MA_Close( stream->sub0 );"));
     assert!(stream.contains("TA_STOCH_ReleaseImpl( stream );"));
 }
@@ -10197,7 +10200,6 @@ fn test_c_adxr_open_frees_withheld_buffer_on_oom_paths() {
         "if( dummyNBElement < 1 ) { free( adx );",
         "if( !sp ) { free( adx );",
         "if( !sp->lagRing_adx ) { TA_Free( sp ); free( adx );",
-        "if( !sp->lagRingMirror_adx ) { TA_Free( sp->lagRing_adx ); TA_Free( sp ); free( adx );",
     ] {
         assert!(
             open.contains(guard),
@@ -10207,7 +10209,6 @@ fn test_c_adxr_open_frees_withheld_buffer_on_oom_paths() {
     // Close releases the ring buffers (the other half of leak-freedom).
     let close = &c[c.find("TA_RetCode TA_ADXR_Close").expect("ADXR Close")..];
     assert!(close.contains("TA_Free( stream->lagRing_adx );"));
-    assert!(close.contains("TA_Free( stream->lagRingMirror_adx );"));
 }
 
 /// A composed Open must emit ONE null-check block per allocated intermediate,

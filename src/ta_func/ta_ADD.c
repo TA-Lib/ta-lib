@@ -243,11 +243,13 @@ TA_LIB_API TA_RetCode TA_ADD_Update( TA_ADD_Stream *stream, double inReal0, doub
 TA_LIB_API TA_RetCode TA_ADD_Peek( const TA_ADD_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    struct TA_ADD_Stream scratch;
+   struct TA_ADD_Stream *sp = &scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_ADD_StepImpl( &scratch, inReal0, inReal1, outReal );
+   (void)sp;
+   *outReal= inReal0 + inReal1;
    return TA_SUCCESS;
 }
 

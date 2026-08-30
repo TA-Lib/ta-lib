@@ -386,11 +386,26 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Update( TA_CDL3OUTSIDE_Stream *stream, doub
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Peek( const TA_CDL3OUTSIDE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    struct TA_CDL3OUTSIDE_Stream scratch;
+   struct TA_CDL3OUTSIDE_Stream *sp = &scratch;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   TA_CDL3OUTSIDE_StepImpl( &scratch, inOpen, inHigh, inLow, inClose, outInteger );
+   if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp->lag1_inClose > sp->lag2_inOpen && sp->lag1_inOpen < sp->lag2_inClose && inClose > sp->lag1_inClose || ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && sp->lag1_inOpen > sp->lag2_inClose && sp->lag1_inClose < sp->lag2_inOpen && inClose < sp->lag1_inClose )
+   {
+      /* white engulfs black */
+      /* third candle higher */
+      /* black engulfs white */
+      /* third candle lower */
+      *outInteger= ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) * 100;
+   } else 
+   {
+      *outInteger= 0;
+   }
+   sp->lag2_inOpen = sp->lag1_inOpen;
+   sp->lag1_inOpen = inOpen;
+   sp->lag2_inClose = sp->lag1_inClose;
+   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

@@ -310,10 +310,6 @@ struct TA_STOCHRSI_Stream {
    int optInFastK_Period;
    int optInFastD_Period;
    TA_MAType optInFastD_MAType;
-   /* Peek runs the SAME step body on a scratch copy; sub handles are
-    * heap pointers a struct copy cannot clone, so the copy carries this
-    * flag and the step calls sub-Peek instead of sub-Update. */
-   int peekMode;
    TA_RSI_Stream *sub0;
    TA_STOCHF_Stream *sub1;
 };
@@ -328,19 +324,11 @@ static TA_RetCode TA_STOCHRSI_StepImpl( struct TA_STOCHRSI_Stream *sp, double in
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {
-      TA_RetCode subRc;
-      if( sp->peekMode )
-         subRc = TA_RSI_Peek( (const TA_RSI_Stream *)sp->sub0, inReal, &cur_tempRSIBuffer );
-      else
-         subRc = TA_RSI_Update( sp->sub0, inReal, &cur_tempRSIBuffer );
+      TA_RetCode subRc = TA_RSI_Update( sp->sub0, inReal, &cur_tempRSIBuffer );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc;
-      if( sp->peekMode )
-         subRc = TA_STOCHF_Peek( (const TA_STOCHF_Stream *)sp->sub1, cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer, &cur_outFastK, &cur_outFastD );
-      else
-         subRc = TA_STOCHF_Update( sp->sub1, cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer, &cur_outFastK, &cur_outFastD );
+      TA_RetCode subRc = TA_STOCHF_Update( sp->sub1, cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer, &cur_outFastK, &cur_outFastD );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    *outFastK = cur_outFastK;
@@ -592,12 +580,27 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inR
 TA_LIB_API TA_RetCode TA_STOCHRSI_Peek( const TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD )
 {
    struct TA_STOCHRSI_Stream scratch;
+   struct TA_STOCHRSI_Stream *sp = &scratch;
+   double cur_tempRSIBuffer = 0.0;
+   double cur_outFastK = 0.0;
+   double cur_outFastD = 0.0;
 
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.peekMode = 1;
-   return TA_STOCHRSI_StepImpl( &scratch, inReal, outFastK, outFastD );
+
+   /* Pipeline the new bar through the sub-streams (batch tail order). */
+   {
+      TA_RetCode subRc = TA_RSI_Peek( (const TA_RSI_Stream *)sp->sub0, inReal, &cur_tempRSIBuffer );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   {
+      TA_RetCode subRc = TA_STOCHF_Peek( (const TA_STOCHF_Stream *)sp->sub1, cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer, &cur_outFastK, &cur_outFastD );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   *outFastK = cur_outFastK;
+   *outFastD = cur_outFastD;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_STOCHRSI_UpdateAndFill( TA_STOCHRSI_Stream *stream, const double inReal[], int barCount, double outFastK[], double outFastD[] )

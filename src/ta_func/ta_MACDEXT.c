@@ -488,10 +488,6 @@ struct TA_MACDEXT_Stream {
    TA_MAType optInSlowMAType;
    int optInSignalPeriod;
    TA_MAType optInSignalMAType;
-   /* Peek runs the SAME step body on a scratch copy; sub handles are
-    * heap pointers a struct copy cannot clone, so the copy carries this
-    * flag and the step calls sub-Peek instead of sub-Update. */
-   int peekMode;
    TA_MA_Stream *sub0;
    TA_MA_Stream *sub1;
    TA_MA_Stream *sub2;
@@ -508,29 +504,17 @@ static TA_RetCode TA_MACDEXT_StepImpl( struct TA_MACDEXT_Stream *sp, double inRe
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {
-      TA_RetCode subRc;
-      if( sp->peekMode )
-         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inReal, &cur_slowMABuffer );
-      else
-         subRc = TA_MA_Update( sp->sub0, inReal, &cur_slowMABuffer );
+      TA_RetCode subRc = TA_MA_Update( sp->sub0, inReal, &cur_slowMABuffer );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc;
-      if( sp->peekMode )
-         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inReal, &cur_fastMABuffer );
-      else
-         subRc = TA_MA_Update( sp->sub1, inReal, &cur_fastMABuffer );
+      TA_RetCode subRc = TA_MA_Update( sp->sub1, inReal, &cur_fastMABuffer );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
    cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
    {
-      TA_RetCode subRc;
-      if( sp->peekMode )
-         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub2, cur_fastMABuffer, &cur_outMACDSignal );
-      else
-         subRc = TA_MA_Update( sp->sub2, cur_fastMABuffer, &cur_outMACDSignal );
+      TA_RetCode subRc = TA_MA_Update( sp->sub2, cur_fastMABuffer, &cur_outMACDSignal );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
@@ -882,12 +866,37 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inRea
 TA_LIB_API TA_RetCode TA_MACDEXT_Peek( const TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    struct TA_MACDEXT_Stream scratch;
+   struct TA_MACDEXT_Stream *sp = &scratch;
+   double cur_slowMABuffer = 0.0;
+   double cur_fastMABuffer = 0.0;
+   double cur_outMACDSignal = 0.0;
+   double cur_outMACDHist = 0.0;
 
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.peekMode = 1;
-   return TA_MACDEXT_StepImpl( &scratch, inReal, outMACD, outMACDSignal, outMACDHist );
+
+   /* Pipeline the new bar through the sub-streams (batch tail order). */
+   {
+      TA_RetCode subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inReal, &cur_slowMABuffer );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   {
+      TA_RetCode subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inReal, &cur_fastMABuffer );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   /* Combine map (batch tail, per bar). */
+   cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
+   {
+      TA_RetCode subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub2, cur_fastMABuffer, &cur_outMACDSignal );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   /* Combine map (batch tail, per bar). */
+   cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
+   *outMACD = cur_fastMABuffer;
+   *outMACDSignal = cur_outMACDSignal;
+   *outMACDHist = cur_outMACDHist;
+   return TA_SUCCESS;
 }
 
 TA_LIB_API TA_RetCode TA_MACDEXT_UpdateAndFill( TA_MACDEXT_Stream *stream, const double inReal[], int barCount, double outMACD[], double outMACDSignal[], double outMACDHist[] )

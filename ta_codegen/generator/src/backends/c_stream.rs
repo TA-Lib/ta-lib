@@ -881,7 +881,7 @@ pub fn generate(
             emit_step(&mut o, func, model, enums, registry, helpers, &counter);
             emit_open_core_body(&mut o, func, model, model.body, enums, registry, helpers, &counter);
             emit_update(&mut o, func, false);
-            emit_peek(&mut o, func, model);
+            emit_peek_loop(&mut o, func, model, enums, registry, helpers, &counter);
             emit_update_and_fill(&mut o, func, false);
             emit_close(&mut o, func, model);
         }
@@ -1139,12 +1139,13 @@ fn transform_map_step(
     rewritten.iter().flat_map(drop_forc_shells).collect()
 }
 
-/// The composed StepImpl: the producer transition (when present) writes the
-/// intermediate series' scalar, which pipelines through the sub handles;
-/// combine maps run per-bar. `peekMode` selects sub-Peek over sub-Update so
-/// the single step body serves both.
+/// The composed StepImpl / PeekImpl: the producer transition (when present)
+/// writes the intermediate series' scalar, which pipelines through the sub
+/// handles; combine maps run per-bar. The peek frame calls each sub's `Peek`,
+/// which is why `update` no longer tests a routing flag per sub-call.
 #[allow(clippy::too_many_lines)]
-fn emit_composed_step(
+fn emit_composed_frame_body(
+    decls: &mut String,
     o: &mut String,
     func: &FuncDef,
     cp: &streaming::ComposedPlan,
@@ -1154,21 +1155,15 @@ fn emit_composed_step(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
+    frame: StepFrame,
 ) {
-    let n = uname(func);
-    let bars = bar_params_sig(func);
-    let outs = out_params_sig(func);
-    let _ = writeln!(
-        o,
-        "/* Private function, not in public API. */\nstatic TA_RetCode TA_{n}_StepImpl( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
-    );
     if let Some(model) = &cp.producer {
         for (name, ty) in &model.temps {
-            let _ = writeln!(o, "   {};", c_decl(ty, name));
+            let _ = writeln!(decls, "   {};", c_decl(ty, name));
         }
     }
     for (name, ty) in &cp.map_temps {
-        let _ = writeln!(o, "   {};", c_decl(ty, name));
+        let _ = writeln!(decls, "   {};", c_decl(ty, name));
     }
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
     for name in &cur_scalars {
@@ -1189,9 +1184,8 @@ fn emit_composed_step(
         // — the read happened, and returned different stack garbage on two
         // identical calls. Rust, Java and C# already zero their equivalents.
         let zero = if cur_ty == "int" { "0" } else { "0.0" };
-        let _ = writeln!(o, "   {cur_ty} cur_{name} = {zero};");
+        let _ = writeln!(decls, "   {cur_ty} cur_{name} = {zero};");
     }
-    let _ = writeln!(o);
 
     // The cur-map: bar inputs are the step's scalar parameters; the producer
     // series (when present) is written by the producer transition below.
@@ -1201,12 +1195,28 @@ fn emit_composed_step(
         .collect();
 
     if let Some(model) = &cp.producer {
-        emit_extrema_rebase(o, model);
         let names = ComposedNames {
             series: cp.series.clone().expect("producer plan carries a series"),
         };
         let transition = streaming::build_transition(model, &names)
             .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+        // The shadow locals join the declarations above, ahead of the rebase:
+        // the extrema rebase is a STATEMENT, and a declaration after it would
+        // be C99, which this tier's producers (STOCH, STOCHF) would be the only
+        // place in the emitted library to need.
+        let transition = match frame {
+            StepFrame::Commit => transition,
+            StepFrame::Peek => {
+                let pt = streaming::peek_transition(
+                    &transition,
+                    &streaming::transition_buffers(model, &names),
+                )
+                .unwrap_or_else(|e| panic!("{}: {e}", func.name));
+                decls.push_str(&peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3));
+                answer_bare_returns(&pt.body)
+            }
+        };
+        emit_extrema_rebase(o, model);
         let mut body_c = String::new();
         for s in &transition {
             body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter, &nullable_out_names(func)));
@@ -1248,15 +1258,16 @@ fn emit_composed_step(
                 // Java/C# throw. Reachable only where an intermediate overflows
                 // to +/-Inf, i.e. input magnitudes the library already declares
                 // out of scope (#191) -- but silently wrong is not an option.
+                let call = match frame {
+                    StepFrame::Commit => {
+                        format!("{cpfx}_Update( sp->sub{sub_idx}, {arg_str} )")
+                    }
+                    StepFrame::Peek => format!(
+                        "{cpfx}_Peek( (const {cpfx}_Stream *)sp->sub{sub_idx}, {arg_str} )"
+                    ),
+                };
                 let _ = writeln!(o, "   {{");
-                let _ = writeln!(o, "      TA_RetCode subRc;");
-                let _ = writeln!(o, "      if( sp->peekMode )");
-                let _ = writeln!(
-                    o,
-                    "         subRc = {cpfx}_Peek( (const {cpfx}_Stream *)sp->sub{sub_idx}, {arg_str} );"
-                );
-                let _ = writeln!(o, "      else");
-                let _ = writeln!(o, "         subRc = {cpfx}_Update( sp->sub{sub_idx}, {arg_str} );");
+                let _ = writeln!(o, "      TA_RetCode subRc = {call};");
                 let _ = writeln!(o, "      if( subRc != TA_SUCCESS ) return subRc;");
                 let _ = writeln!(o, "   }}");
                 for d in &sub.dsts {
@@ -1280,22 +1291,23 @@ fn emit_composed_step(
             }
         }
     }
-    // Push the new sub-output value into each lag ring (after every read of the
-    // oldest slot in the combine above). In peek mode the ring points at its
-    // mirror, so this mutates the scratch copy, not the live handle.
-    for ring in &cp.sub_lag_rings {
-        let s = &ring.series;
-        let _ = writeln!(o, "   sp->lagRing_{s}[sp->lagRingPos_{s}] = cur_{s};");
-        let _ = writeln!(
-            o,
-            "   sp->lagRingPos_{s} = (sp->lagRingPos_{s} + 1) % sp->lagRingCap_{s};"
-        );
+    // Push the new sub-output value into each lag ring, after every read of the
+    // oldest slot in the combine above — which is why the peek frame drops the
+    // push outright rather than shadowing it: nothing below can load it back.
+    if frame == StepFrame::Commit {
+        for ring in &cp.sub_lag_rings {
+            let s = &ring.series;
+            let _ = writeln!(o, "   sp->lagRing_{s}[sp->lagRingPos_{s}] = cur_{s};");
+            let _ = writeln!(
+                o,
+                "   sp->lagRingPos_{s} = (sp->lagRingPos_{s} + 1) % sp->lagRingCap_{s};"
+            );
+        }
     }
     for out in outputs {
         let _ = writeln!(o, "   *{out} = {};", cur.get(out).expect("analyzer gated output"));
     }
     let _ = writeln!(o, "   return TA_SUCCESS;");
-    let _ = writeln!(o, "}}\n");
 }
 
 /// Composed Close: release the sub handles, then the producer buffers + handle
@@ -1310,7 +1322,6 @@ fn emit_composed_close(o: &mut String, func: &FuncDef, cp: &streaming::ComposedP
     for ring in &cp.sub_lag_rings {
         let s = &ring.series;
         let _ = writeln!(o, "   TA_Free( stream->lagRing_{s} );");
-        let _ = writeln!(o, "   TA_Free( stream->lagRingMirror_{s} );");
     }
     let has_buffers = cp.producer.as_ref().is_some_and(StreamModel::needs_release);
     if has_buffers {
@@ -1346,7 +1357,25 @@ fn emit_composed(
     }
 
     // --- StepImpl -----------------------------------------------------------
-    emit_composed_step(o, func, cp, &inputs, &outputs, enums, registry, helpers, counter);
+    {
+        let bars = bar_params_sig(func);
+        let outs = out_params_sig(func);
+        let _ = writeln!(
+            o,
+            "/* Private function, not in public API. */\nstatic TA_RetCode TA_{n}_StepImpl( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
+        );
+        let (mut decls, mut body) = (String::new(), String::new());
+        emit_composed_frame_body(
+            &mut decls, &mut body, func, cp, &inputs, &outputs, enums, registry, helpers, counter,
+            StepFrame::Commit,
+        );
+        o.push_str(&decls);
+        if !decls.is_empty() {
+            let _ = writeln!(o);
+        }
+        o.push_str(&body);
+        let _ = writeln!(o, "}}\n");
+    }
 
     // --- Open ------------------------------------------------------------------
     emit_composed_open(o, func, cp, &outputs, &cleanup, enums, registry, helpers, counter);
@@ -1357,63 +1386,35 @@ fn emit_composed(
 
     // --- Update / Peek / Close ---------------------------------------------------
     emit_update(o, func, true);
-    // Peek: scratch copy + (producer only) buffer mirrors + peekMode. A
-    // loopless pipeline has no producer buffers, so the struct copy alone
-    // (sub handles shared, peekMode routing sub-Peek) is const-correct.
+    // Peek: the scratch copy carries the scalars and the sub-handle pointers;
+    // the peek frame is what keeps every buffer behind those pointers read-only,
+    // and routes each sub-call to the callee's own `Peek`.
     {
-        let _ = writeln!(o, "{}\n{{", peek_signature(func));
-        let _ = writeln!(o, "   struct TA_{n}_Stream scratch;");
-        let _ = write!(o, "\n{}", presence_guard(func, Frame::StepEveryOutput));
-        o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
-        let _ = writeln!(o, "   scratch = *stream;");
-        if let Some(model) = &cp.producer {
-            for (_, text) in peek_fixup_groups(model) {
-                o.push_str(&text);
-            }
-        }
-        // Point each lag ring at its mirror so the step's ring push mutates the
-        // scratch copy, leaving the live handle untouched (peek is const).
-        for ring in &cp.sub_lag_rings {
-            let s = &ring.series;
-            let _ = writeln!(
-                o,
-                "   memcpy( scratch.lagRingMirror_{s}, stream->lagRing_{s}, sizeof(double) * (size_t)stream->lagRingCap_{s} );"
-            );
-            let _ = writeln!(o, "   scratch.lagRing_{s} = scratch.lagRingMirror_{s};");
-        }
-        let _ = writeln!(o, "   scratch.peekMode = 1;");
-        let args: Vec<String> = inputs
-            .iter()
-            .cloned()
-            .chain(outputs.iter().cloned())
-            .collect();
-        let _ = writeln!(o, "   return TA_{n}_StepImpl( &scratch, {} );\n}}\n", args.join(", "));
+        let (mut decls, mut body) = (String::new(), String::new());
+        emit_composed_frame_body(
+            &mut decls, &mut body, func, cp, &inputs, &outputs, enums, registry, helpers, counter,
+            StepFrame::Peek,
+        );
+        emit_peek(o, func, &decls, &body, true);
     }
     emit_update_and_fill(o, func, true);
     emit_composed_close(o, func, cp);
 }
 
 /// The trailing struct fields every composed tier carries after the producer's
-/// own: the Peek routing flag, one typed handle per sub-stream, and the
-/// sub-output lag rings.
+/// own: one typed handle per sub-stream, and the sub-output lag rings.
 fn composed_extra_fields(cp: &streaming::ComposedPlan) -> String {
     let mut extra = String::new();
-    let _ = writeln!(
-        extra,
-        "   /* Peek runs the SAME step body on a scratch copy; sub handles are\n    * heap pointers a struct copy cannot clone, so the copy carries this\n    * flag and the step calls sub-Peek instead of sub-Update. */"
-    );
-    let _ = writeln!(extra, "   int peekMode;");
     for (i, sub) in cp.subs.iter().enumerate() {
         let _ = writeln!(extra, "   {}_Stream *sub{i};", callee_prefix(&sub.callee));
     }
     // Sub-output lag rings (ADXR): a fixed-capacity ring of the last `lag`
-    // sub-output values, plus a peek mirror.
+    // sub-output values.
     for ring in &cp.sub_lag_rings {
         let s = &ring.series;
         let _ = writeln!(extra, "   int lagRingPos_{s};");
         let _ = writeln!(extra, "   int lagRingCap_{s};");
         let _ = writeln!(extra, "   double *lagRing_{s};");
-        let _ = writeln!(extra, "   double *lagRingMirror_{s};");
     }
     extra
 }
@@ -1756,14 +1757,6 @@ fn emit_composed_open(
         let _ = writeln!(
             o,
             "      if( !sp->lagRing_{s} ) {{ TA_Free( sp ); {epilogue_cleanup}; return TA_ALLOC_ERR; }}"
-        );
-        let _ = writeln!(
-            o,
-            "      sp->lagRingMirror_{s} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->lagRingCap_{s} );"
-        );
-        let _ = writeln!(
-            o,
-            "      if( !sp->lagRingMirror_{s} ) {{ TA_Free( sp->lagRing_{s} ); TA_Free( sp ); {epilogue_cleanup}; return TA_ALLOC_ERR; }}"
         );
         let _ = writeln!(o, "      {{");
         let _ = writeln!(o, "         int lagI;");
@@ -2855,15 +2848,8 @@ fn emit_dual_mode(
         o,
         "/* Private function, not in public API. */\nstatic void TA_{n}_StepImpl( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
     );
-    // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
-    // in the batch and in Open: it is a property of the function, not of a mode.
-    emit_identity_step_branch(o, ma, enums, registry, helpers, counter, 3);
-    let pred_h = render_dual_pred(&dmp.predicate, true, func, registry, helpers, counter);
-    let _ = writeln!(o, "   if( {pred_h} )\n   {{");
-    emit_step_inner(o, ma, enums, registry, helpers, counter, 6, false);
-    let _ = writeln!(o, "   }}\n   else\n   {{");
-    emit_step_inner(o, mb, enums, registry, helpers, counter, 6, false);
-    let _ = writeln!(o, "   }}\n}}\n");
+    emit_dual_frame_body(o, func, dmp, enums, registry, helpers, counter, StepFrame::Commit);
+    let _ = writeln!(o, "}}\n");
 
     // --- OpenImpl: shared head, then a predicate branch per mode ------------
     // The head is `emit_open_head` over the UNION circ hoist: a mode-B-only
@@ -2906,13 +2892,52 @@ fn emit_dual_mode(
     emit_open_and_fill_wrapper(o, func);
     emit_open_and_fill_internal_wrapper(o, func);
 
-    // --- Update / Peek / Close (mode-fixed handle: Peek mirrors the union of
-    // both modes' buffers, guarding mode-exclusive groups; Close releases the
-    // union) -----------------------------------------------------------------
+    // --- Update / Peek / Close (mode-fixed handle; Close releases the union of
+    // both modes' buffers) ---------------------------------------------------
     emit_update(o, func, false);
-    emit_peek_dual(o, func, ma, mb);
+    {
+        let mut body = String::new();
+        emit_dual_frame_body(&mut body, func, dmp, enums, registry, helpers, counter, StepFrame::Peek);
+        emit_peek(o, func, "", &body, false);
+    }
     emit_update_and_fill(o, func, false);
     emit_close_from(o, func, ma.needs_release() || mb.needs_release());
+}
+
+/// A dual-mode frame's statements: the identity short-circuit, then one arm per
+/// mode. Every declaration it needs lives inside an arm's own block, so unlike
+/// the single-model frame this emits statements only — which is what lets
+/// [`emit_peek`] drop it in after the handle copy.
+#[allow(clippy::too_many_arguments)]
+fn emit_dual_frame_body(
+    o: &mut String,
+    func: &FuncDef,
+    dmp: &streaming::DualModePlan,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+    frame: StepFrame,
+) {
+    let (ma, mb) = (&dmp.mode_a, &dmp.mode_b);
+    // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
+    // in the batch and in Open: it is a property of the function, not of a mode.
+    emit_identity_step_branch(o, ma, enums, registry, helpers, counter, 3, frame);
+    let pred_h = render_dual_pred(&dmp.predicate, true, func, registry, helpers, counter);
+    let _ = writeln!(o, "   if( {pred_h} )\n   {{");
+    for (arm, model) in [(0, ma), (1, mb)] {
+        if arm == 1 {
+            let _ = writeln!(o, "   }}\n   else\n   {{");
+        }
+        let (mut decls, mut body) = (String::new(), String::new());
+        emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 6, false, frame);
+        o.push_str(&decls);
+        if !decls.is_empty() {
+            let _ = writeln!(o);
+        }
+        o.push_str(&body);
+    }
+    let _ = writeln!(o, "   }}");
 }
 
 /// The two leading members every `struct TA_<N>_Stream` carries: the range of
@@ -2966,8 +2991,8 @@ fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
     emit_state_struct_ex(o, func, model, "");
 }
 
-/// State struct with extra trailing fields (composed tier: peekMode + typed
-/// sub handles appended after the producer's own fields).
+/// State struct with extra trailing fields (composed tier: typed sub handles
+/// appended after the producer's own fields).
 /// The non-scalar handle fields (out-feedback, lag slots, ring/window/circ/
 /// extrema buffers + their Peek mirrors) for one model. Shared by the loop-tier
 /// struct and the dual-mode union struct (whose two modes carry identical
@@ -2991,9 +3016,6 @@ fn emit_nonscalar_struct_fields(o: &mut String, func: &FuncDef, model: &StreamMo
         }
         for arr in &ring.arrays {
             let _ = writeln!(o, "   double *ring_{v}_{arr};");
-            // Scratch mirror for Peek: pre-allocated at open so Peek stays
-            // allocation-free (proposal: forming-bar evaluation).
-            let _ = writeln!(o, "   double *ringMirror_{v}_{arr};");
         }
     }
     for win in model.windows() {
@@ -3002,7 +3024,6 @@ fn emit_nonscalar_struct_fields(o: &mut String, func: &FuncDef, model: &StreamMo
         let _ = writeln!(o, "   int winCap_{v};");
         for arr in &win.arrays {
             let _ = writeln!(o, "   double *win_{v}_{arr};");
-            let _ = writeln!(o, "   double *winMirror_{v}_{arr};");
         }
     }
     for circ in model.circs() {
@@ -3010,7 +3031,6 @@ fn emit_nonscalar_struct_fields(o: &mut String, func: &FuncDef, model: &StreamMo
         for (storage, ty) in circ_storages(circ) {
             let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
             let _ = writeln!(o, "   {et} *cb_{storage};");
-            let _ = writeln!(o, "   {et} *cbMirror_{storage};");
         }
     }
     if let Some(ex) = model.extrema() {
@@ -3019,7 +3039,6 @@ fn emit_nonscalar_struct_fields(o: &mut String, func: &FuncDef, model: &StreamMo
         let _ = writeln!(o, "   int xMask;");
         for arr in &ex.arrays {
             let _ = writeln!(o, "   double *x_{arr};");
-            let _ = writeln!(o, "   double *xMirror_{arr};");
         }
     }
 }
@@ -3051,25 +3070,21 @@ fn release_free_lines(model: &StreamModel) -> Vec<String> {
     for ring in model.rings() {
         for arr in &ring.arrays {
             lines.push(format!("   if( sp->ring_{0}_{arr} ) TA_Free( sp->ring_{0}_{arr} );", ring.var));
-            lines.push(format!("   if( sp->ringMirror_{0}_{arr} ) TA_Free( sp->ringMirror_{0}_{arr} );", ring.var));
         }
     }
     for win in model.windows() {
         for arr in &win.arrays {
             lines.push(format!("   if( sp->win_{0}_{arr} ) TA_Free( sp->win_{0}_{arr} );", win.var));
-            lines.push(format!("   if( sp->winMirror_{0}_{arr} ) TA_Free( sp->winMirror_{0}_{arr} );", win.var));
         }
     }
     for circ in model.circs() {
         for (storage, _) in circ_storages(circ) {
             lines.push(format!("   if( sp->cb_{storage} ) TA_Free( sp->cb_{storage} );"));
-            lines.push(format!("   if( sp->cbMirror_{storage} ) TA_Free( sp->cbMirror_{storage} );"));
         }
     }
     if let Some(ex) = model.extrema() {
         for arr in &ex.arrays {
             lines.push(format!("   if( sp->x_{arr} ) TA_Free( sp->x_{arr} );"));
-            lines.push(format!("   if( sp->xMirror_{arr} ) TA_Free( sp->xMirror_{arr} );"));
         }
     }
     lines
@@ -3116,6 +3131,21 @@ fn emit_release_dual(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &Stre
     emit_release_from(o, func, &lines);
 }
 
+/// Which of the two transitions a step body renders. They differ only in what
+/// they do with a handle buffer: `Commit` stores into it, `Peek` carries the
+/// store in two locals and selects them back on any load that could reach the
+/// slot — see [`streaming::peek_transition`]. Everything else, the election
+/// included, is identical, which is what keeps the two bit-for-bit equal.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum StepFrame {
+    Commit,
+    Peek,
+}
+
+/// `TA_<N>_StepImpl` — the committing transition. `Update` and `UpdateAndFill`
+/// both call it, which is why it is a function; the peek frame has exactly one
+/// caller, forever (a cross-indicator call enters the callee's PUBLIC `Peek`),
+/// so it is emitted inline into [`emit_peek`] instead of as a second tier.
 fn emit_step(
     o: &mut String,
     func: &FuncDef,
@@ -3128,16 +3158,62 @@ fn emit_step(
     let n = uname(func);
     let bars = bar_params_sig(func);
     let outs = out_params_sig(func);
-    let _ = writeln!(
-        o,
-        "/* Private function, not in public API. */\nstatic void TA_{n}_StepImpl( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
-    );
     let void_sp = model.state.is_empty()
         && func.optional_inputs.is_empty()
         && func.private_extra_params.is_empty()
         && model.lags.is_empty();
-    emit_step_inner(o, model, enums, registry, helpers, counter, 3, void_sp);
+    let _ = writeln!(
+        o,
+        "/* Private function, not in public API. */\nstatic void TA_{n}_StepImpl( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
+    );
+    let (mut decls, mut body) = (String::new(), String::new());
+    emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 3, void_sp, StepFrame::Commit);
+    o.push_str(&decls);
+    if !decls.is_empty() {
+        let _ = writeln!(o);
+    }
+    o.push_str(&body);
     let _ = writeln!(o, "}}\n");
+}
+
+/// The transition's own early exits are valueless — it is a `void` transition —
+/// but a peek frame is emitted straight into `Peek`, which answers a `RetCode`.
+/// The only one the corpus carries is the param-degenerate identity
+/// short-circuit, which has already written the output when it fires.
+fn answer_bare_returns(body: &[Statement]) -> Vec<Statement> {
+    streaming::rewrite_stmts(
+        body,
+        &|e| e,
+        &|s| {
+            Some(match s {
+                Statement::Return { value: None } => Statement::Return {
+                    value: Some(Expr::Var("TA_SUCCESS".to_string())),
+                },
+                other => other,
+            })
+        },
+    )
+}
+
+/// The locals a peek frame's shadowed stores live in. `pkSlot*` is seeded with
+/// an index no load can produce, so a store that did not run never matches one.
+fn peek_shadow_decls(
+    shadows: &[streaming::PeekShadow],
+    slot_temps: &[String],
+    indent: usize,
+) -> String {
+    let pad = " ".repeat(indent);
+    let mut s = String::new();
+    for sh in shadows {
+        let ty = if sh.int_elem { "int" } else { "double" };
+        let zero = if sh.int_elem { "0" } else { "0.0" };
+        let _ = writeln!(s, "{pad}int {} = -1;", sh.slot_var);
+        let _ = writeln!(s, "{pad}{ty} {} = {zero};", sh.val_var);
+    }
+    for t in slot_temps {
+        let _ = writeln!(s, "{pad}int {t} = 0;");
+    }
+    s
 }
 
 /// State scalars the compiler is FORCED to reload, bound to a local for the
@@ -3415,13 +3491,20 @@ fn apply_step_scalars(transition: &[Statement], elected: &[String]) -> Vec<State
     )
 }
 
-/// The per-bar step body for ONE model at a given indent: temp decls, an
-/// optional `(void)sp`, the extrema rebase, the rendered transition, and
-/// candle-settings unpacking. Shared by the single-model [`emit_step`] and the
-/// dual-mode step (called once per arm inside the `if (sp->param ...)` branch,
-/// at a deeper indent, with `void_sp = false` since a mode always has state).
+/// The per-bar step body for ONE model at a given indent, split into the block's
+/// DECLARATIONS and its STATEMENTS. The peek frame is emitted straight into
+/// `Peek`, whose own `scratch`/`sp` declarations and argument guards sit between
+/// the two halves, and C89 wants every declaration in a block ahead of every
+/// statement in it. Shared by the single-model [`emit_step`] and the dual-mode
+/// step (called once per arm inside the `if (sp->param ...)` branch, at a deeper
+/// indent, with `void_sp = false` since a mode always has state).
+///
+/// An elected scalar's load is a STATEMENT here (`x = sp->x;`) rather than an
+/// initializer, because in `Peek` the copy it reads from has not happened yet
+/// where the declarations go.
 fn emit_step_inner(
-    o: &mut String,
+    decls: &mut String,
+    body: &mut String,
     model: &StreamModel,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
@@ -3429,25 +3512,42 @@ fn emit_step_inner(
     counter: &Cell<usize>,
     indent: usize,
     void_sp: bool,
+    frame: StepFrame,
 ) {
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, &CNames)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+    // The election is computed on the COMMITTING transition in both frames, so
+    // the two bodies name the same scalars the same way. `stream_base` makes
+    // `sp->x` and `x` classify alike, so which set is elected cannot move an
+    // FMA site — but only as long as both frames elect the SAME set.
     let elected = elect_step_scalars(model, &transition);
+    let (transition, shadows, slot_temps) = match frame {
+        StepFrame::Commit => (transition, Vec::new(), Vec::new()),
+        StepFrame::Peek => {
+            let pt = streaming::peek_transition(
+                &transition,
+                &streaming::transition_buffers(model, &CNames),
+            )
+            .unwrap_or_else(|e| panic!("{}: {e}", model.func.name));
+            (answer_bare_returns(&pt.body), pt.shadows, pt.slot_temps)
+        }
+    };
     let transition = apply_step_scalars(&transition, &elected);
     for (name, ty) in &model.temps {
-        let _ = writeln!(o, "{pad}{};", c_decl(ty, name));
+        let _ = writeln!(decls, "{pad}{};", c_decl(ty, name));
     }
     for name in &elected {
-        let _ = writeln!(o, "{pad}double {name} = {};", streaming::NameMap::state(&CNames, name));
+        let _ = writeln!(decls, "{pad}double {name};");
     }
-    if !model.temps.is_empty() || !elected.is_empty() {
-        let _ = writeln!(o);
-    }
+    decls.push_str(&peek_shadow_decls(&shadows, &slot_temps, indent));
     if void_sp {
-        let _ = writeln!(o, "{pad}(void)sp;");
+        let _ = writeln!(body, "{pad}(void)sp;");
     }
-    emit_extrema_rebase(o, model);
+    for name in &elected {
+        let _ = writeln!(body, "{pad}{name} = {};", streaming::NameMap::state(&CNames, name));
+    }
+    emit_extrema_rebase(body, model);
     let mut body_c = String::new();
     for s in &transition {
         body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter, &nullable_out_names(model.func)));
@@ -3461,9 +3561,9 @@ fn emit_step_inner(
     // the rendered body actually references them (no dead decls/-Wunused).
     let step_settings = crate::candle_settings::detect_candle_settings(&model.steady_stmts);
     if !step_settings.is_empty() {
-        o.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, indent));
+        decls.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, indent));
     }
-    o.push_str(&body_c);
+    body.push_str(&body_c);
 }
 
 /// The identity short-circuit at the top of a dual-mode step, above the mode
@@ -3477,8 +3577,17 @@ fn emit_identity_step_branch(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
     indent: usize,
+    frame: StepFrame,
 ) {
     if let Some(s) = streaming::identity_step_branch(model, &CNames) {
+        // The short-circuit exits the transition, which is `void`; in a peek
+        // frame it exits `Peek`, which answers a code.
+        let s = match frame {
+            StepFrame::Commit => s,
+            StepFrame::Peek => answer_bare_returns(std::slice::from_ref(&s))
+                .pop()
+                .expect("one statement in, one out"),
+        };
         o.push_str(&render_statement_stream(
             &s,
             indent,
@@ -4022,11 +4131,6 @@ fn emit_circ_capture(o: &mut String, model: &StreamModel, n: &str) {
                 "      sp->cb_{storage} = ({et} *)TA_Malloc( sizeof({et}) * (size_t)sp->cbSize_{id} );"
             );
             let _ = writeln!(o, "      if( !sp->cb_{storage} ) {{ {free_batch}TA_{n}_ReleaseImpl( sp ); return TA_ALLOC_ERR; }}");
-            let _ = writeln!(
-                o,
-                "      sp->cbMirror_{storage} = ({et} *)TA_Malloc( sizeof({et}) * (size_t)sp->cbSize_{id} );"
-            );
-            let _ = writeln!(o, "      if( !sp->cbMirror_{storage} ) {{ {free_batch}TA_{n}_ReleaseImpl( sp ); return TA_ALLOC_ERR; }}");
             // Live copy: contents AND rotation phase, straight from the
             // batch's own buffer (ring-ORDER constraint by construction).
             let _ = writeln!(
@@ -4096,11 +4200,6 @@ fn emit_ring_slots(
             "{pad}  sp->ring_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * allocN );"
         );
         let _ = writeln!(s, "{pad}  if( !sp->ring_{v}_{arr} ) {fail}");
-        let _ = writeln!(
-            s,
-            "{pad}  sp->ringMirror_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * allocN );"
-        );
-        let _ = writeln!(s, "{pad}  if( !sp->ringMirror_{v}_{arr} ) {fail}");
         if with_state {
             // A derived ring holds f(bar), not a raw column, so both fill
             // shapes evaluate the expression per bar instead of copying.
@@ -4292,11 +4391,6 @@ fn alloc_and_capture(
                 "{pad}sp->win_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_{v} );"
             );
             let _ = writeln!(s, "{pad}if( !sp->win_{v}_{arr} ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_ALLOC_ERR; }}");
-            let _ = writeln!(
-                s,
-                "{pad}sp->winMirror_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_{v} );"
-            );
-            let _ = writeln!(s, "{pad}if( !sp->winMirror_{v}_{arr} ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_ALLOC_ERR; }}");
             // Fill with the history tail: slot cap-1 = last bar, so the next
             // update writes the new bar at pos 0 and (pos+cap-w)%cap walks
             // back w bars.
@@ -4338,11 +4432,6 @@ fn alloc_and_capture(
                 "{pad}sp->x_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );"
             );
             let _ = writeln!(s, "{pad}if( !sp->x_{arr} ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_ALLOC_ERR; }}");
-            let _ = writeln!(
-                s,
-                "{pad}sp->xMirror_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );"
-            );
-            let _ = writeln!(s, "{pad}if( !sp->xMirror_{arr} ) {{ {pre}TA_{n}_ReleaseImpl( sp ); return TA_ALLOC_ERR; }}");
         }
         if with_state {
             // Absolute slots: bar j lives at j % cap (matches the automaton's
@@ -4713,129 +4802,60 @@ fn emit_update_and_fill(o: &mut String, func: &FuncDef, step_ret: bool) {
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
-fn emit_peek_from(o: &mut String, func: &FuncDef, fixups: &str) {
+/// `Peek` — the transition against a stack copy of the handle, inline.
+///
+/// The copy carries the scalars, and the in-struct arrays with them; the
+/// buffers it shares with the live handle are never written, because the peek
+/// frame carries every store in locals. So the copy is a fixed number of bytes
+/// per call where the buffers are a function of the period, which is the whole
+/// of why there is no mirror to memcpy any more.
+///
+/// The frame is inline rather than a second `_Impl` because it has exactly one
+/// caller and always will — a cross-indicator call enters the callee's PUBLIC
+/// `Peek`, never its frame. Inline, `&scratch` never crosses a call boundary,
+/// so the copy is scalarized by construction instead of by whether the inliner
+/// happened to fire on a body this large.
+fn emit_peek(
+    o: &mut String,
+    func: &FuncDef,
+    frame_decls: &str,
+    frame_body: &str,
+    fallible: bool,
+) {
     let n = uname(func);
-    let bars: Vec<String> = streaming::input_array_names(func);
-    let outs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let guard_frame = if fallible { Frame::StepEveryOutput } else { Frame::Step };
     let _ = writeln!(o, "{}\n{{", peek_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream scratch;");
-    let _ = write!(o, "\n{}", presence_guard(func, Frame::Step));
+    let _ = writeln!(o, "   struct TA_{n}_Stream *sp = &scratch;");
+    o.push_str(frame_decls);
+    let _ = write!(o, "\n{}", presence_guard(func, guard_frame));
     o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
     let _ = writeln!(o, "   scratch = *stream;");
-    o.push_str(fixups);
-    let args: Vec<String> = bars
-        .iter()
-        .cloned()
-        .chain(outs.iter().cloned())
-        .collect();
-    let _ = writeln!(o, "   TA_{n}_StepImpl( &scratch, {} );", args.join(", "));
-    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+    o.push_str(frame_body);
+    if !fallible {
+        let _ = writeln!(o, "   return TA_SUCCESS;");
+    }
+    let _ = writeln!(o, "}}\n");
 }
 
-fn emit_peek(o: &mut String, func: &FuncDef, model: &StreamModel) {
-    let fixups: String = peek_fixup_groups(model)
-        .into_iter()
-        .map(|(_, text)| text)
-        .collect();
-    emit_peek_from(o, func, &fixups);
-}
-
-/// Dual-mode Peek: mirror fixups for the UNION of both modes' buffers. A
-/// group both modes carry is emitted bare (TRIMA: both arms share the same
-/// rings — byte-identical to the single-model Peek); a mode-exclusive group
-/// is guarded on its live buffer pointer, which Open's memset leaves NULL
-/// under the other mode (an unguarded memcpy would dereference it).
-fn emit_peek_dual(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &StreamModel) {
-    let ga = peek_fixup_groups(ma);
-    let gb = peek_fixup_groups(mb);
-    let a_keys: std::collections::BTreeSet<&String> = ga.iter().map(|(k, _)| k).collect();
-    let b_map: std::collections::BTreeMap<&String, &String> =
-        gb.iter().map(|(k, t)| (k, t)).collect();
-    let mut fixups = String::new();
-    let push_guarded = |out: &mut String, guard: &String, text: &String| {
-        let _ = writeln!(out, "   if( {guard} )\n   {{");
-        for line in text.lines() {
-            let _ = writeln!(out, "   {line}");
-        }
-        let _ = writeln!(out, "   }}");
-    };
-    for (k, t) in &ga {
-        if let Some(bt) = b_map.get(k) {
-            assert!(
-                *bt == t,
-                "{}: dual-mode Peek fixup for shared buffer `{k}` differs across modes",
-                func.name
-            );
-            fixups.push_str(t);
-        } else {
-            push_guarded(&mut fixups, k, t);
-        }
-    }
-    for (k, t) in &gb {
-        if !a_keys.contains(k) {
-            push_guarded(&mut fixups, k, t);
-        }
-    }
-    emit_peek_from(o, func, &fixups);
-}
-
-/// Rings/windows/circs/extrema: run the step against the handle's
-/// pre-allocated scratch mirrors so the live buffers are never touched (the
-/// handle is logically const; single-writer covers the mirror — see the
-/// proposal). One `(live-buffer expr, fixup text)` group per buffer: the key
-/// identifies a buffer across the dual-mode arms and doubles as the NULL
-/// guard for a mode-exclusive group.
-fn peek_fixup_groups(model: &StreamModel) -> Vec<(String, String)> {
-    let mut groups: Vec<(String, String)> = Vec::new();
-    for ring in model.rings() {
-        let v = &ring.var;
-        for arr in &ring.arrays {
-            let mut t = String::new();
-            let _ = writeln!(t, "   scratch.ring_{v}_{arr} = stream->ringMirror_{v}_{arr};");
-            let _ = writeln!(
-                t,
-                "   memcpy( scratch.ring_{v}_{arr}, stream->ring_{v}_{arr}, sizeof(double) * (size_t)(stream->ringCap_{v} > 0 ? stream->ringCap_{v} : 1) );"
-            );
-            groups.push((format!("stream->ring_{v}_{arr}"), t));
-        }
-    }
-    for win in model.windows() {
-        let v = &win.var;
-        for arr in &win.arrays {
-            let mut t = String::new();
-            let _ = writeln!(t, "   scratch.win_{v}_{arr} = stream->winMirror_{v}_{arr};");
-            let _ = writeln!(
-                t,
-                "   memcpy( scratch.win_{v}_{arr}, stream->win_{v}_{arr}, sizeof(double) * (size_t)stream->winCap_{v} );"
-            );
-            groups.push((format!("stream->win_{v}_{arr}"), t));
-        }
-    }
-    for circ in model.circs() {
-        let id = &circ.id;
-        for (storage, ty) in circ_storages(circ) {
-            let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
-            let mut t = String::new();
-            let _ = writeln!(t, "   scratch.cb_{storage} = stream->cbMirror_{storage};");
-            let _ = writeln!(
-                t,
-                "   memcpy( scratch.cb_{storage}, stream->cb_{storage}, sizeof({et}) * (size_t)stream->cbSize_{id} );"
-            );
-            groups.push((format!("stream->cb_{storage}"), t));
-        }
-    }
-    if let Some(ex) = model.extrema() {
-        for arr in &ex.arrays {
-            let mut t = String::new();
-            let _ = writeln!(t, "   scratch.x_{arr} = stream->xMirror_{arr};");
-            let _ = writeln!(
-                t,
-                "   memcpy( scratch.x_{arr}, stream->x_{arr}, sizeof(double) * (size_t)stream->xPhys );"
-            );
-            groups.push((format!("stream->x_{arr}"), t));
-        }
-    }
-    groups
+/// [`emit_peek`] for one model: build the peek frame, then wrap it.
+#[allow(clippy::too_many_arguments)]
+fn emit_peek_loop(
+    o: &mut String,
+    func: &FuncDef,
+    model: &StreamModel,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let void_sp = model.state.is_empty()
+        && func.optional_inputs.is_empty()
+        && func.private_extra_params.is_empty()
+        && model.lags.is_empty();
+    let (mut decls, mut body) = (String::new(), String::new());
+    emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 3, void_sp, StepFrame::Peek);
+    emit_peek(o, func, &decls, &body, false);
 }
 
 fn emit_close_from(o: &mut String, func: &FuncDef, needs_release: bool) {
