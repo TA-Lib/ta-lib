@@ -493,6 +493,31 @@ jobs:
         shell: bash
         run: cargo test --tests -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
 
+      # Every step above compiles the crate IN the workspace, where each file on
+      # disk is reachable whether or not it would ship. The `.crate` tarball is a
+      # different artifact -- cargo builds its file list from git, filtered by the
+      # manifest's include/exclude and by every .gitignore above it -- and nothing
+      # here had ever built one (#179 E1). So a file could be present, compiled,
+      # linted, documented and tested and still be absent from what crates.io
+      # receives, with a published release that does not build as the first sign.
+      #
+      # The script packages the pair (the library pins an =0.1.2 dispatch that is
+      # not on crates.io yet, so it cannot resolve alone), which makes cargo
+      # verification-BUILD each crate from its own unpacked tarball, and then
+      # checks the tarball contents against `git ls-files` -- derived, so adding a
+      # function needs no edit here, and exact, so losing one fails. Measured
+      # against the four steps above by excluding LICENSE from the manifest: all
+      # four stay green (clippy, rustdoc, 534 doctests, the --tests suites) and
+      # only this step goes red. See scripts/rust_package_check.py.
+      #
+      # No --allow-dirty on purpose: this runs on a fresh checkout, so an
+      # unexpectedly dirty tree is itself something to hear about. No
+      # setup-python either -- the script is stdlib-only and ubuntu-latest ships
+      # python3, so this job stays the self-contained Rust-only one it is.
+      - name: Package the publishable crates and check what ships
+        shell: bash
+        run: python3 scripts/rust_package_check.py
+
   # The two publishable crates declare `rust-version = "1.86"`, and nothing
   # else here compiles them at it -- every other Rust step runs on the pinned
   # toolchain from rust-toolchain.toml (1.97.0), so a post-1.86 API reaching
