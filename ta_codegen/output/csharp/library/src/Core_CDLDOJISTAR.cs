@@ -518,9 +518,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CdldojistarStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -548,11 +545,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -562,15 +560,60 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLDOJISTAR", "peek", RetCode.BadParam);
-         CdldojistarStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new CdldojistarStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         CdldojistarStream sp = this;
+         double BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+         int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+         double BodyDoji_factor = sp.cs_BodyDoji_factor;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.CdldojistarStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((BodyLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.Abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long real body */
+             Math.Abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             (((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && (Math.Min(inOpen, inClose) > Math.Max(lag1_inOpen, lag1_inClose)) || ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.Max(inOpen, inClose) < Math.Min(lag1_inOpen, lag1_inClose))) ) /* that gaps up if 1st is white or down if 1st is black */
+         {
+            cur_outInteger = (0 - ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1)) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot1) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal1);
+         BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
+         if( ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
+            ringPos_BodyDojiTrailingIdx = 0;
+         }
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

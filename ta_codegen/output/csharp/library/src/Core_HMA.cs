@@ -1066,9 +1066,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static HmaStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -1093,26 +1090,217 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HMA", "peek", RetCode.BadParam);
-         HmaStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new HmaStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         HmaStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
          }
-         core.HmaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
+            double tempReal = 0.0;
+            double fullOut = 0.0;
+            int jFull = 0;
+            int rw = 0;
+            double tempReal2 = 0.0;
+            int barsSinceReseedFull = sp.barsSinceReseedFull;
+            double periodSubFull = sp.periodSubFull;
+            double periodSumFull = sp.periodSumFull;
+            int ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull;
+            double trailingFull = sp.trailingFull;
+            int winPos_jFull = sp.winPos_jFull;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            if( sp.ringCap_trailingIdxFull == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            pkSlot1 = winPos_jFull;
+            pkVal1 = inReal;
+            tempReal = inReal;
+            periodSubFull += tempReal;
+            periodSubFull -= trailingFull;
+            periodSumFull += tempReal * sp.optInTimePeriod;
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * sp.optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+                  tempReal2 = (((winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : winPos_jFull + sp.winCap_jFull - jFull) != pkSlot1) ? sp.win_jFull_inReal[(winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : winPos_jFull + sp.winCap_jFull - jFull] : pkVal1;
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = (ringPos_trailingIdxFull != pkSlot0) ? sp.ring_trailingIdxFull_inReal[ringPos_trailingIdxFull] : pkVal0;
+            fullOut = periodSumFull / sp.dividerFull;
+            periodSumFull -= periodSubFull;
+            cur_outReal = 2.0 * tempReal - fullOut;
+            ringPos_trailingIdxFull = ringPos_trailingIdxFull + 1;
+            if( ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
+               ringPos_trailingIdxFull = 0;
+            }
+            winPos_jFull = winPos_jFull + 1;
+            if( winPos_jFull >= sp.winCap_jFull ) {
+               winPos_jFull = 0;
+            }
+         } else {
+            double tempReal = 0.0;
+            double fullOut = 0.0;
+            double halfOut = 0.0;
+            double diffReal = 0.0;
+            int jFull = 0;
+            int jHalf = 0;
+            int q = 0;
+            int rw = 0;
+            int ringWalk = 0;
+            double tempReal2 = 0.0;
+            int barsSinceReseedFull = sp.barsSinceReseedFull;
+            int barsSinceReseedHalf = sp.barsSinceReseedHalf;
+            int barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
+            int dRing_Idx = sp.dRing_Idx;
+            double periodSubFull = sp.periodSubFull;
+            double periodSubHalf = sp.periodSubHalf;
+            double periodSubSqrt = sp.periodSubSqrt;
+            double periodSumFull = sp.periodSumFull;
+            double periodSumHalf = sp.periodSumHalf;
+            double periodSumSqrt = sp.periodSumSqrt;
+            int ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull;
+            int ringPos_trailingIdxHalf = sp.ringPos_trailingIdxHalf;
+            double trailingFull = sp.trailingFull;
+            double trailingHalf = sp.trailingHalf;
+            double trailingSqrt = sp.trailingSqrt;
+            int winPos_jFull = sp.winPos_jFull;
+            int winPos_jHalf = sp.winPos_jHalf;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            int pkSlot2 = -1;
+            double pkVal2 = 0.0;
+            int pkSlot3 = -1;
+            double pkVal3 = 0.0;
+            if( sp.ringCap_trailingIdxFull == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            if( sp.ringCap_trailingIdxHalf == 0 ) {
+               pkSlot1 = 0;
+               pkVal1 = inReal;
+            }
+            pkSlot2 = winPos_jFull;
+            pkVal2 = inReal;
+            pkSlot3 = winPos_jHalf;
+            pkVal3 = inReal;
+            tempReal = inReal;
+            periodSubFull += tempReal;
+            periodSubFull -= trailingFull;
+            periodSumFull += tempReal * sp.optInTimePeriod;
+            barsSinceReseedFull -= 1;
+            if( barsSinceReseedFull <= 0 ) {
+               barsSinceReseedFull = 8 * sp.optInTimePeriod;
+               periodSubFull = 0.0;
+               periodSumFull = 0.0;
+               rw = 1;
+               for( jFull = sp.lookbackFull; jFull >= 0; jFull -= 1 ) {
+                  tempReal2 = (((winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : winPos_jFull + sp.winCap_jFull - jFull) != pkSlot2) ? sp.win_jFull_inReal[(winPos_jFull + sp.winCap_jFull - jFull >= sp.winCap_jFull) ? winPos_jFull + sp.winCap_jFull - jFull - sp.winCap_jFull : winPos_jFull + sp.winCap_jFull - jFull] : pkVal2;
+                  periodSubFull += tempReal2;
+                  periodSumFull += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingFull = (ringPos_trailingIdxFull != pkSlot0) ? sp.ring_trailingIdxFull_inReal[ringPos_trailingIdxFull] : pkVal0;
+            fullOut = periodSumFull / sp.dividerFull;
+            periodSumFull -= periodSubFull;
+            periodSubHalf += tempReal;
+            periodSubHalf -= trailingHalf;
+            periodSumHalf += tempReal * sp.halfPeriod;
+            barsSinceReseedHalf -= 1;
+            if( barsSinceReseedHalf <= 0 ) {
+               barsSinceReseedHalf = 8 * sp.halfPeriod;
+               periodSubHalf = 0.0;
+               periodSumHalf = 0.0;
+               rw = 1;
+               for( jHalf = sp.lookbackHalf; jHalf >= 0; jHalf -= 1 ) {
+                  tempReal2 = (((winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : winPos_jHalf + sp.winCap_jHalf - jHalf) != pkSlot3) ? sp.win_jHalf_inReal[(winPos_jHalf + sp.winCap_jHalf - jHalf >= sp.winCap_jHalf) ? winPos_jHalf + sp.winCap_jHalf - jHalf - sp.winCap_jHalf : winPos_jHalf + sp.winCap_jHalf - jHalf] : pkVal3;
+                  periodSubHalf += tempReal2;
+                  periodSumHalf += tempReal2 * rw;
+                  rw += 1;
+               }
+            }
+            trailingHalf = (ringPos_trailingIdxHalf != pkSlot1) ? sp.ring_trailingIdxHalf_inReal[ringPos_trailingIdxHalf] : pkVal1;
+            halfOut = periodSumHalf / sp.dividerHalf;
+            periodSumHalf -= periodSubHalf;
+            diffReal = 2.0 * halfOut - fullOut;
+            periodSubSqrt += diffReal;
+            periodSubSqrt -= trailingSqrt;
+            periodSumSqrt += diffReal * sp.sqrtPeriod;
+            /* The outer WMA consumes a DERIVED series that is never
+             * materialised, so its rescan walks the de-lag ring: dRing_Idx is
+             * the oldest slot (the one about to expire) and diffReal is the
+             * newest value, which together are the whole window. Oldest first,
+             * weight counting up from 1 -- the priming order above.
+             */
+            barsSinceReseedSqrt -= 1;
+            if( barsSinceReseedSqrt <= 0 ) {
+               barsSinceReseedSqrt = 8 * sp.sqrtPeriod;
+               periodSubSqrt = 0.0;
+               periodSumSqrt = 0.0;
+               rw = 1;
+               ringWalk = dRing_Idx;
+               for( q = 0; q < sp.ringSize; q += 1 ) {
+                  tempReal2 = sp.cb_dRing[ringWalk];
+                  periodSubSqrt += tempReal2;
+                  periodSumSqrt += tempReal2 * rw;
+                  rw += 1;
+                  ringWalk += 1;
+                  if( ringWalk >= sp.ringSize ) {
+                     ringWalk = 0;
+                  }
+               }
+               periodSubSqrt += diffReal;
+               periodSumSqrt += diffReal * sp.sqrtPeriod;
+            }
+            trailingSqrt = sp.cb_dRing[dRing_Idx];
+            dRing_Idx = dRing_Idx + 1;
+            if( dRing_Idx > sp.maxIdx_dRing ) {
+               dRing_Idx = 0;
+            }
+            cur_outReal = periodSumSqrt / sp.dividerSqrt;
+            periodSumSqrt -= periodSubSqrt;
+            ringPos_trailingIdxFull = ringPos_trailingIdxFull + 1;
+            if( ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull ) {
+               ringPos_trailingIdxFull = 0;
+            }
+            ringPos_trailingIdxHalf = ringPos_trailingIdxHalf + 1;
+            if( ringPos_trailingIdxHalf >= sp.ringCap_trailingIdxHalf ) {
+               ringPos_trailingIdxHalf = 0;
+            }
+            winPos_jFull = winPos_jFull + 1;
+            if( winPos_jFull >= sp.winCap_jFull ) {
+               winPos_jFull = 0;
+            }
+            winPos_jHalf = winPos_jHalf + 1;
+            if( winPos_jHalf >= sp.winCap_jHalf ) {
+               winPos_jHalf = 0;
+            }
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

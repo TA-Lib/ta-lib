@@ -602,9 +602,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CmfStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -632,11 +629,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -646,15 +644,39 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("CMF", "peek", RetCode.BadParam);
-         CmfStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new CmfStream(this);
-            peekScratch = scratch;
+         CmfStream sp = this;
+         double high = 0.0;
+         double low = 0.0;
+         double close = 0.0;
+         double tmp = 0.0;
+         double mfv = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int mfv_Idx = sp.mfv_Idx;
+         double sumMFV = sp.sumMFV;
+         double sumVol = sp.sumVol;
+         sumMFV -= sp.cb_mfv_flow[mfv_Idx];
+         sumVol -= sp.cb_mfv_volume[mfv_Idx];
+         high = inHigh;
+         low = inLow;
+         close = inClose;
+         tmp = high - low;
+         if( tmp > 0.0 ) {
+            mfv = (close - low - (high - close)) / tmp * inVolume;
          } else {
-            scratch.CopyFrom(this);
+            mfv = 0.0;
          }
-         core.CmfStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         sumMFV += mfv;
+         sumVol += inVolume;
+         if( sumVol > 0.0 ) {
+            cur_outReal = sumMFV / sumVol;
+         } else {
+            cur_outReal = 0.0;
+         }
+         mfv_Idx = mfv_Idx + 1;
+         if( mfv_Idx > sp.maxIdx_mfv ) {
+            mfv_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

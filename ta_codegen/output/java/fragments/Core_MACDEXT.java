@@ -727,6 +727,7 @@
          double cur_fastMABuffer = 0.0;
          double cur_outMACDSignal = 0.0;
          double cur_outMACDHist = 0.0;
+         double cur_outMACD = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_slowMABuffer = sp.sub0.peek(inReal);
          cur_fastMABuffer = sp.sub1.peek(inReal);
@@ -736,8 +737,6 @@
          /* Combine map (batch tail, per bar). */
          cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
          cur_outMACD = cur_fastMABuffer;
-         cur_outMACDSignal = cur_outMACDSignal;
-         cur_outMACDHist = cur_outMACDHist;
          return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 

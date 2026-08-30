@@ -436,20 +436,39 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ROCP", "peek", RetCode.BadParam);
-         RocpStream scratch = new RocpStream(this);
-         core.RocpStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         RocpStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         tempReal = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         if( tempReal != 0.0 ) {
+            cur_outReal = (inReal - tempReal) / tempReal;
+         } else {
+            cur_outReal = 0.0;
+         }
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

@@ -119,19 +119,29 @@ inherit the classification the QUALIFIED name carried; the `while i <= n` to
 as `usize`; and the outputs are rebound as `&mut` inside a block so the body
 keeps the `(*out) = …` spelling and every cast with it.
 
-**Java and .NET still copy the handle per peek**, and that copy is the whole of
-the difference in cost between `peek` and `update` there. Where it is several
-allocations deep it is made into a scratch held **per thread** and refreshed in
-place, so only the first peek of that indicator on that thread allocates.
-Everywhere else the copy stays a throwaway, because a throwaway that dies inside
-`peek` is one the optimizer can delete outright.
+**Java and .NET run the same frame**, tier for tier, with two differences that
+are theirs alone. A managed array field is a *reference*, so a localized one is
+cloned rather than aliased — always a fixed-size per-bar accumulator, two to
+five elements, never a period-sized buffer, which the frame only reads. And
+`cur_<out>` is itself a handle field, so localizing the stores is what turns the
+cached output into the local `peek` returns.
+
+Nothing copies a handle in any backend now. Java's `copyFrom`, both backends'
+per-thread scratch and the predicate that chose between a reused scratch and a
+throwaway are all deleted; the shipped `Core.java` lost ~14,000 lines with them.
 
 No form writes the handle, which is what keeps Rust's `peek` a `&self` method
-and every backend's handles concurrently peekable — a per-thread scratch cannot
-be shared by two threads peeking the same handle. `update` never allocates
-(that is the hard constraint, not peek's). In the two copying backends the
-transition also keeps a single call site: the scratch holds a *handle* and
-`peek` calls `update` on it, so `update`'s own code generation is untouched.
+and every backend's handles concurrently peekable — including two threads
+peeking the same handle, which a per-thread scratch could not serve. `update`
+never allocates (that is the hard constraint, not peek's), and now neither does
+`peek`, in any of the four.
+
+The property is structural, not observable: a peek that copied and then wrote
+the copy would still answer correctly, so no value gate can see the difference.
+Each backend therefore carries its own sweep over every streamable function —
+`peek_suite` for C, `no_rust_peek_copies_the_handle`,
+`no_java_peek_copies_the_handle`, `no_csharp_peek_copies_the_handle` — asserting
+a frame is what runs and that nothing in it allocates.
 
 ### Full-history output at open (`OpenAndFill`)
 
@@ -392,8 +402,8 @@ TA_LIB_API TA_RetCode TA_SMA_UpdateAndFill( TA_SMA_Stream *stream,
                                             int            barCount,
                                             double         outReal[] );
 
-/* peek: the same generated transition as update, run on a scratch copy
- * of the state — never commits (the handle is logically const). */
+/* peek: the same generated transition as update, rewritten to commit
+ * nothing — the handle is const, and stays untouched. */
 TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
                                    double               inReal,
                                    double              *outReal );
@@ -430,9 +440,9 @@ let (mut s, _last) = core.sma_open(&history, 14)?; // &self method on Core; the
 for &x in new_bars { let v = s.update(x)?; }       // &mut self; Err(BadParam)
                                                   // only on a non-finite bar
 s.update_and_fill(&gap_bars, &mut out)?;            // n bars, n values, one call
-let provisional = s.peek(forming_bar_close)?;      // &self: runs the same
-                                                  // transition on a reused
-                                                  // scratch, never commits
+let provisional = s.peek(forming_bar_close)?;      // &self: the same
+                                                  // transition, committing
+                                                  // nothing
 let r = s.out_range();                             // bars produced so far —
                                                   // what batch reports for them
 ```
@@ -447,7 +457,7 @@ Java (shipped shape — design-panel reviewed):
 Core core = new Core();
 Core.SmaStream s = core.smaOpen(history, 14);  // throws on reject; value() = last-bar value
 double v = s.update(bar);                        // one value per closed bar
-double p = s.peek(formingBarClose);              // forming bar, non-committing (scratch copy)
+double p = s.peek(formingBarClose);              // forming bar, non-committing
 s.updateAndFill(gapBars, out);                   // n bars, n values, one call
 Core.SmaStream t = s.copy();                    // independent stream fork
 Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
@@ -478,8 +488,7 @@ OutRange r = s2.outRange();                      // bars produced so far, on the
 - `copy()` is the universal deep copy (arrays cloned, sub-handles copied
   recursively, the `Core` reference shared) — the Java rendering of Rust's
   `Clone`; it is named to avoid `ForkJoinTask.fork()`'s async connotation and
-  Java's broken `clone()`. `peek` produces the same copy through `copyFrom`,
-  which overwrites a scratch held per thread instead of allocating a peer.
+  Java's broken `clone()`. It is the only path left that copies a handle.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality (complete in Java: arrays are identical or disjoint) — Java is the
   one managed backend where `smaOpenAndFill(history, …, history)` compiles, so
@@ -501,8 +510,8 @@ wrapper over the C handles would instead own native memory and need
 `SafeHandle`/`IDisposable` — a worse API; this design chose the managed
 emitter and accepted the later delivery date.
 
-Two places the C# tier deliberately departs from the Java one, both because
-the language offers something Java does not:
+One place the C# tier deliberately departs from the Java one, because the
+language offers something Java does not:
 
 - **Multi-output values are a `readonly record struct`, not a class.** Java
   caches the boxed `Value` so that `value()` allocates nothing; a struct is
@@ -514,10 +523,6 @@ the language offers something Java does not:
   mean. (JLS 17.5's final-field safe-publication guarantee has no ECMA-335
   analogue, but none is needed: a returned record struct is copied into the
   caller's frame, which is stronger.)
-- **The peek scratch is `[ThreadStatic]`, not `ThreadLocal<T>`.**
-  `ThreadLocal<T>` is itself `IDisposable`, and an undisposed static
-  `IDisposable` inside the one tier whose thesis is "nothing here needs
-  disposing" is the wrong signal.
 
 ### Rust concurrency
 

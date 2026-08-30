@@ -492,7 +492,6 @@
          } else {
             cur_outReal = 0.0;
          }
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 

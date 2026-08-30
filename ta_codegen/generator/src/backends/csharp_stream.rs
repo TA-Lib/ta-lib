@@ -530,7 +530,11 @@ fn emit_loop_shape(
 ) {
     let step_settings = detect_candle_settings(&model.steady_stmts);
     let fields = state_fields(func, model, &step_settings);
-    emit_handle_class(o, func, &fields, &SubMembers::none());
+    let frame = peek_frame_arm(
+        func, model, &fields, &step_settings, stream_fma, enums, registry, helpers, counter, 9,
+        &BTreeSet::new(),
+    );
+    emit_handle_class(o, func, &fields, &SubMembers::none(), frame.as_deref());
     emit_step(o, func, model, &step_settings, stream_fma, enums, registry, helpers, counter);
     emit_open_body(
         o, func, model, body, &fields, &step_settings, stream_fma, enums, registry, helpers,
@@ -834,21 +838,27 @@ impl SubMembers {
 /// Emit the sibling `<Name>Value` record struct and the nested handle class.
 /// `subs` holds the tier-owned members (sub-handle copies); the loop tier passes
 /// [`SubMembers::none`].
-fn emit_handle_class(o: &mut String, func: &FuncDef, fields: &[Field], subs: &SubMembers) -> bool {
-    emit_handle_class_with_members(o, func, fields, subs, "")
+fn emit_handle_class(
+    o: &mut String,
+    func: &FuncDef,
+    fields: &[Field],
+    subs: &SubMembers,
+    frame: Option<&str>,
+) {
+    emit_handle_class_with_members(o, func, fields, subs, "", frame);
 }
 
 /// [`emit_handle_class`] with additional raw member declarations (dispatch's
-/// `object? sub;`, composed/period-bank sub-handle fields). Returns whether the
-/// handle owns enough on the heap for `Peek` to reuse a scratch.
-#[allow(clippy::too_many_lines)]
+/// `object? sub;`, composed/period-bank sub-handle fields).
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 fn emit_handle_class_with_members(
     o: &mut String,
     func: &FuncDef,
     fields: &[Field],
     subs: &SubMembers,
     extra_members: &str,
-) -> bool {
+    frame: Option<&str>,
+) {
     let class = stream_class_name(func);
     let base = pascal_words(&base_name(func));
     let n = func.name.to_uppercase();
@@ -972,13 +982,11 @@ fn emit_handle_class_with_members(
     // an `= []` initialiser, so under `Nullable=enable` the length branch is
     // both sufficient and the only check the compiler accepts without a
     // diagnostic.
-    let mut arrays = 0;
     let _ = writeln!(o, "\n      internal void CopyFrom( {class} other )");
     let _ = writeln!(o, "      {{");
     let _ = writeln!(o, "         this.core = other.core;");
     for (name, cty, _) in fields {
         if let Some(elem) = cty.strip_suffix("[]") {
-            arrays += 1;
             let _ = writeln!(o, "         if( this.{name}.Length != other.{name}.Length ) {{");
             let _ = writeln!(o, "            this.{name} = new {elem}[other.{name}.Length];");
             let _ = writeln!(o, "         }}");
@@ -992,31 +1000,9 @@ fn emit_handle_class_with_members(
     let _ = writeln!(o, "         this.outRangeCount = other.outRangeCount;");
     let _ = writeln!(o, "      }}");
 
-    // What `Peek` trades away by reusing a scratch is one thread-static read,
-    // and what it buys back is the allocation of a peer handle. For one small
-    // array that is a wash — measured in Java, a slight loss — so the reuse is
-    // for the shapes where the copy is several arrays or a sub-stream tree
-    // (#201). The predicate is Java's, shipped unchanged: there is no C#
-    // benchmark row to defend a different one with, and a re-derivation without
-    // a control arm would be a guess wearing a number.
-    let reuse = subs.unbounded || subs.subs >= 2 || arrays >= 2;
-    if reuse {
-        // `[ThreadStatic]`, not `ThreadLocal<T>`: `ThreadLocal<T>` is itself
-        // `IDisposable`, the wrong signal inside the one tier whose thesis is
-        // that it needs no `Dispose`. No inline initialiser — a thread-static
-        // field initialiser runs on the first thread only, so the null check in
-        // `Peek` is what creates it lazily, per thread.
-        let _ = writeln!(
-            o,
-            "\n      /* Peek's reusable scratch — one per thread, see CopyFrom. */"
-        );
-        let _ = writeln!(o, "      [ThreadStatic] private static {class}? peekScratch;");
-    }
-
-    emit_update_peek_value_clone(o, func, reuse);
+    emit_update_peek_value_clone(o, func, frame);
 
     let _ = writeln!(o, "   }}");
-    reuse
 }
 
 /// The immutable multi-output value type: a *sibling* nested
@@ -1121,9 +1107,9 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
 }
 
 
-fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
+fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     emit_update_method(o, func);
-    emit_peek_method(o, func, reuse);
+    emit_peek_method(o, func, frame);
     emit_update_and_fill_method(o, func);
     emit_value_property(o, func);
     emit_clone_method(o, func);
@@ -1174,37 +1160,25 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
 }
 
 // --- Peek ----------------------------------------------------------------------
-fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool) {
+fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     let class = stream_class_name(func);
-    let base = pascal_words(&base_name(func));
     let vt = value_surface_type(func);
-    let (sig_bars, fwd_bars) = bar_params(func);
+    let (sig_bars, _) = bar_params(func);
     let inputs = streaming::input_array_names(func);
 
-    // State what the caller can observe, never a comparative performance claim.
-    // The scratch-election predicate is Java's, shipped unchanged because no C#
-    // A/B exists to justify a different one — so the emitted docs must not
-    // assert to a .NET consumer that one arm is "cheaper", which is a
-    // conclusion measured on another runtime. The allocation itself is a fact
-    // and is worth telling them, because `Peek`-per-tick is the obvious usage.
-    let alloc_note = if reuse {
-        "It runs on a scratch handle held per thread and reused, so it allocates nothing \
-         after this thread's first peek of this indicator. That scratch is retained for \
-         the life of the thread."
-    } else {
-        "It runs on a fresh copy of this handle, so it allocates one — proportional to \
-         the state this indicator carries. If you peek on every tick and that matters, \
-         hold the value <see cref=\"Update\"/> returns instead."
-    };
     let mut d = XmlDoc::new();
     d.summary("Evaluate a forming bar without committing it.");
     d.open("remarks");
     d.para(
         "Bit-identical to what the next <see cref=\"Update\"/> with the same bar would \
-         return — it is the same generated code, run on a copy. Never writes this handle, \
-         so peeks may run concurrently with each other.",
+         return — the same transition, with every store it would make carried in a local \
+         instead. Never writes this handle, so peeks may run concurrently with each other.",
     );
-    d.para(alloc_note);
+    d.para(
+        "It copies nothing: the frame runs against this handle, reading its buffers and \
+         holding what the step would commit in locals. The cost does not grow with the \
+         period, and <c>Peek</c> never allocates.",
+    );
     d.close("remarks");
     for input in &inputs {
         d.param(input, &bar_param_desc(input));
@@ -1214,26 +1188,13 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, reuse: bool) {
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public {vt} Peek( {sig_bars} )");
     let _ = writeln!(o, "      {{");
-    // Ahead of the scratch copy, not left to the step: a rejected bar must not
-    // pay for a handle copy.
+    // Ahead of the frame, not left to the transition: a rejected bar must not
+    // run any of it.
     o.push_str(&finite_bar_check(func, "         ", "peek"));
-    if reuse {
-        // Per thread, not per handle: `Peek` must not write the handle (two
-        // threads may peek the same one), and a thread-static keeps the reuse
-        // bounded — one scratch per thread per indicator, whatever the number of
-        // live handles. `CopyFrom` retargets it, `core` included.
-        let _ = writeln!(o, "         {class}? scratch = peekScratch;");
-        let _ = writeln!(o, "         if( scratch is null ) {{");
-        let _ = writeln!(o, "            scratch = new {class}(this);");
-        let _ = writeln!(o, "            peekScratch = scratch;");
-        let _ = writeln!(o, "         }} else {{");
-        let _ = writeln!(o, "            scratch.CopyFrom(this);");
-        let _ = writeln!(o, "         }}");
-    } else {
-        let _ = writeln!(o, "         {class} scratch = new {class}(this);");
-    }
-    let _ = writeln!(o, "         core.{base}StepImpl(scratch, {fwd_bars});");
-    let _ = writeln!(o, "         return {};", fresh_value_expr(func, "scratch"));
+    let body = frame.expect("every tier emits a peek frame");
+    let _ = writeln!(o, "         {class} sp = this;");
+    o.push_str(body);
+    let _ = writeln!(o, "         return {};", fresh_value_expr(func, ""));
     let _ = writeln!(o, "      }}");
 }
 
@@ -1425,6 +1386,318 @@ fn stream_ctx<'a>(
         fma: Some(fma_sets),
         matype_map: HashMap::new(),
     }
+}
+
+/// The state fields a transition writes, and the transition with every mention
+/// of them moved to a bare local.
+///
+/// A peek frame runs against the live handle, so anything it would store lives
+/// in a local instead. The local keeps the field's OWN name: `stream_base`
+/// strips the `sp.` qualifier before classifying an operand, so `sp.x` and `x`
+/// fuse alike and any other spelling would move an FMA site.
+///
+/// `None` when a written field's bare name would collide with a bar input,
+/// where the local would shadow the parameter rather than fail to compile.
+fn localize_state_writes(
+    func: &FuncDef,
+    transition: &[Statement],
+    extra: &[String],
+    buffers: &[(String, bool)],
+) -> Option<(Vec<String>, Vec<Statement>)> {
+    let mut written: BTreeSet<String> = extra.iter().cloned().collect();
+    fn note(e: &Expr, out: &mut BTreeSet<String>) {
+        if let Expr::Var(v) = e {
+            if let Some(bare) = v.strip_prefix("sp.") {
+                out.insert(bare.to_string());
+            }
+        }
+    }
+    fn targets(list: &[Statement], out: &mut BTreeSet<String>) {
+        for st in list {
+            if let Statement::Assign { target, .. } = st {
+                note(target, out);
+                // A fixed-size array field is named through its subscript,
+                // which the `Var` arm never sees.
+                if let Expr::ArrayAccess(n, _) = target {
+                    note(&Expr::Var(n.clone()), out);
+                }
+            }
+            let inner: Vec<&[Statement]> = match st {
+                Statement::While { body, .. }
+                | Statement::DoWhile { body, .. }
+                | Statement::For { body, .. }
+                | Statement::Block { body } => vec![body.as_slice()],
+                Statement::ForC { init, update, body, .. } => vec![
+                    std::slice::from_ref(init.as_ref()),
+                    std::slice::from_ref(update.as_ref()),
+                    body.as_slice(),
+                ],
+                Statement::If { then_body, else_body, .. } => {
+                    vec![then_body.as_slice(), else_body.as_slice()]
+                }
+                Statement::Switch { cases, default, .. } => {
+                    let mut v: Vec<&[Statement]> = cases.iter().map(|(_, b)| b.as_slice()).collect();
+                    v.push(default.as_slice());
+                    v
+                }
+                _ => Vec::new(),
+            };
+            for b in inner {
+                targets(b, out);
+            }
+        }
+    }
+    for st in transition {
+        streaming::walk_stmt_exprs(st, &mut |top| {
+            streaming::walk_expr(top, &mut |e| match e {
+                Expr::PostIncrement(i)
+                | Expr::PostDecrement(i)
+                | Expr::PreIncrement(i)
+                | Expr::PreDecrement(i) => note(i, &mut written),
+                _ => {}
+            });
+        });
+    }
+    targets(transition, &mut written);
+    for (b, _) in buffers {
+        if let Some(bare) = b.strip_prefix("sp.") {
+            written.remove(bare);
+        }
+    }
+    let taken: BTreeSet<String> = streaming::input_array_names(func).into_iter().collect();
+    if written.iter().any(|w| taken.contains(w)) {
+        return None;
+    }
+    let bare: HashMap<String, String> =
+        written.iter().map(|w| (format!("sp.{w}"), w.clone())).collect();
+    let out = streaming::rewrite_stmts(
+        transition,
+        &|e| match e {
+            Expr::Var(ref v) => bare.get(v).map_or(e, |b| Expr::Var(b.clone())),
+            Expr::ArrayAccess(ref v, ref i) => match bare.get(v) {
+                Some(b) => Expr::ArrayAccess(b.clone(), i.clone()),
+                None => e,
+            },
+            other => other,
+        },
+        &|st| Some(st),
+    );
+    Some((written.into_iter().collect(), out))
+}
+
+/// The dual-mode identity short-circuit as a frame renders it: its write goes
+/// to the output LOCAL, not the handle field, and its valueless exit answers a
+/// value. It sits above the mode predicate, so the outputs it names are
+/// declared by the frame rather than by either arm.
+fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<Statement>> {
+    let st = streaming::identity_step_branch(model, &CsStreamNames)?;
+    let answer = fresh_value_expr(func, "");
+    let bare: HashMap<String, String> = func
+        .outputs
+        .iter()
+        .map(|o| (format!("sp.cur_{}", o.name), format!("cur_{}", o.name)))
+        .collect();
+    Some(streaming::rewrite_stmts(
+        std::slice::from_ref(&st),
+        &|e| match e {
+            Expr::Var(ref v) => bare.get(v).map_or(e, |b| Expr::Var(b.clone())),
+            other => other,
+        },
+        &|s| match s {
+            Statement::Return { value: None } => Some(Statement::Return {
+                value: Some(Expr::Var(answer.clone())),
+            }),
+            other => Some(other),
+        },
+    ))
+}
+
+/// The dispatch tier's peek frame: the step's switch with each arm entering the
+/// callee's PUBLIC `Peek`. The sub-handle is only read, which is the point —
+/// nothing here commits, so there is no copy to make.
+#[allow(clippy::too_many_arguments)]
+fn build_dispatch_peek_frame(
+    func: &FuncDef,
+    dp: &streaming::DispatchPlan,
+    outputs: &[String],
+    bar_args: &str,
+    ctx: &CsRenderCtx,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    let mut f = String::new();
+    for out in &func.outputs {
+        let cty = out_cs_type(func, &out.name);
+        let zero = if cty == "int" { "0" } else { "0.0" };
+        let _ = writeln!(f, "         {cty} cur_{} = {zero};", out.name);
+    }
+    if let Some(idp) = &dp.identity {
+        let cond = params_on_state(func, &idp.condition);
+        let cond = render_predicate(&cond, ctx, registry, helpers);
+        let _ = writeln!(f, "         if( {cond} ) {{");
+        for (out, inp) in &idp.pairs {
+            let _ = writeln!(f, "            cur_{out} = {inp};");
+        }
+        let _ = writeln!(f, "            return {};", fresh_value_expr(func, ""));
+        let _ = writeln!(f, "         }}");
+    }
+    let _ = writeln!(f, "         switch( sp.{} )", dp.param);
+    let _ = writeln!(f, "         {{");
+    for arm in dp.arms.iter().filter(|a| a.supported) {
+        let label = render_csharp_switch_label(&arm.label, enums);
+        let cls = callee_stream_class(registry, &arm.callee);
+        let _ = writeln!(f, "         case {label}: {{");
+        if arm.out_map.len() == 1 {
+            let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
+                panic!("single-output arm cannot discard its only slot")
+            };
+            let _ = writeln!(
+                f,
+                "            cur_{} = (({cls}) sp.sub!).Peek({bar_args});",
+                outputs[k]
+            );
+        } else {
+            let vt = callee_value_type(registry, &arm.callee);
+            let _ = writeln!(
+                f,
+                "            {vt} subValue = (({cls}) sp.sub!).Peek({bar_args});"
+            );
+            for (i, slot) in arm.out_map.iter().enumerate() {
+                if let streaming::OutSlot::Forward(k) = slot {
+                    let _ = writeln!(
+                        f,
+                        "            cur_{} = subValue.{};",
+                        outputs[*k],
+                        callee_value_member(registry, &arm.callee, i)
+                    );
+                }
+            }
+        }
+        let _ = writeln!(f, "            break;");
+        let _ = writeln!(f, "         }}");
+    }
+    let _ = writeln!(f, "         default:");
+    let _ = writeln!(f, "            break; /* unreachable: open rejects arms without a sub-stream */");
+    let _ = writeln!(f, "         }}");
+    f
+}
+
+/// [`peek_frame_arm_named`] for the tiers whose transition uses the ordinary
+/// stream names.
+#[allow(clippy::too_many_arguments)]
+fn peek_frame_arm(
+    func: &FuncDef,
+    model: &StreamModel,
+    fields: &[Field],
+    step_settings: &BTreeSet<String>,
+    stream_fma: &FmaVarSets,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+    indent: usize,
+    predeclared: &BTreeSet<String>,
+) -> Option<String> {
+    peek_frame_arm_named(
+        func, model, &CsStreamNames, fields, step_settings, stream_fma, enums, registry, helpers,
+        counter, indent, predeclared,
+    )
+}
+
+/// One model's peek frame: the transition rewritten to commit nothing, run
+/// against the live handle at `indent`.
+#[allow(clippy::too_many_arguments)]
+fn peek_frame_arm_named(
+    func: &FuncDef,
+    model: &StreamModel,
+    names: &dyn streaming::NameMap,
+    fields: &[Field],
+    step_settings: &BTreeSet<String>,
+    stream_fma: &FmaVarSets,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+    indent: usize,
+    predeclared: &BTreeSet<String>,
+) -> Option<String> {
+    let pad = " ".repeat(indent);
+    let transition = streaming::build_transition(model, names).ok()?;
+    let bufs = streaming::transition_buffers(model, names);
+    let pt = streaming::peek_transition(&transition, &bufs, None).ok()?;
+    // The extrema rebase moves the cursor before the first store, so its
+    // targets localize with the transition's own.
+    let mut rebased: Vec<String> = Vec::new();
+    if let Some(ex) = model.extrema() {
+        rebased.push(model.cursor.clone());
+        rebased.push(ex.trailing.clone());
+        rebased.extend(ex.index_vars.iter().cloned());
+    }
+    let (locals, body_ir) = localize_state_writes(func, &pt.body, &rebased, &bufs)?;
+    // The transition's own early exit — the param-degenerate identity
+    // short-circuit — is valueless, because a step returns `void`. Inline in
+    // `Peek` it exits a method that answers a value.
+    let answer = fresh_value_expr(func, "");
+    let body_ir = streaming::rewrite_stmts(&body_ir, &|e| e, &|st| match st {
+        Statement::Return { value: None } => Some(Statement::Return {
+            value: Some(Expr::Var(answer.clone())),
+        }),
+        other => Some(other),
+    });
+    let types: HashMap<&str, &str> =
+        fields.iter().map(|(n, t, _)| (n.as_str(), t.as_str())).collect();
+
+    let mut out = String::new();
+    for (name, ty) in &model.temps {
+        let (cty, default) = field_type_and_default(ty);
+        let _ = writeln!(out, "{pad}{cty} {name} = {default};");
+    }
+    for name in &locals {
+        if predeclared.contains(name) {
+            continue;
+        }
+        let cty = types.get(name.as_str()).copied()?;
+        // A C# array field is a reference: taking it plain would write the
+        // handle through it. These are the fixed-size per-bar accumulators —
+        // two to five elements — never a period-sized buffer, which the frame
+        // only ever reads. Allocate and `Array.Copy` rather than `Clone()`, the
+        // same shape the copy constructor states its case for.
+        if let Some(elem) = cty.strip_suffix("[]") {
+            let _ = writeln!(out, "{pad}{cty} {name} = new {elem}[sp.{name}.Length];");
+            let _ = writeln!(out, "{pad}Array.Copy( sp.{name}, {name}, sp.{name}.Length );");
+        } else {
+            let _ = writeln!(out, "{pad}{cty} {name} = sp.{name};");
+        }
+    }
+    for sh in &pt.shadows {
+        let (t, z) = if sh.int_elem { ("int", "0") } else { ("double", "0.0") };
+        let _ = writeln!(out, "{pad}int {} = -1;", sh.slot_var);
+        let _ = writeln!(out, "{pad}{t} {} = {z};", sh.val_var);
+    }
+    for t in &pt.slot_temps {
+        let _ = writeln!(out, "{pad}int {t} = 0;");
+    }
+    if let Some(ex) = model.extrema() {
+        let inner = " ".repeat(indent + 3);
+        let _ = writeln!(out, "{pad}if( {} >= 1073741824 ) {{", model.cursor);
+        let _ = writeln!(out, "{inner}int rebaseShift = {} & ~sp.xMask;", ex.trailing);
+        for v in &rebased {
+            let _ = writeln!(out, "{inner}{v} -= rebaseShift;");
+        }
+        let _ = writeln!(out, "{pad}}}");
+    }
+    for s in step_settings {
+        let _ = writeln!(out, "{pad}int {s}_rangeType = sp.cs_{s}_rangeType;");
+        let _ = writeln!(out, "{pad}int {s}_avgPeriod = sp.cs_{s}_avgPeriod;");
+        let _ = writeln!(out, "{pad}double {s}_factor = sp.cs_{s}_factor;");
+    }
+    let empty = HashSet::new();
+    let ctx = stream_ctx(&empty, counter, stream_fma);
+    for s in &body_ir {
+        out.push_str(&render_statement_ctx(s, indent, &ctx, enums, registry, helpers));
+    }
+    Some(out)
 }
 
 /// `internal void <base>StepImpl( <Class> sp, double bar... )` — the one
@@ -2948,7 +3221,48 @@ fn emit_dual_mode(
     let fields_a = state_fields_from(func, ma, &union_scalars, &step_settings);
     let fields_b = state_fields_from(func, mb, &union_scalars, &step_settings);
     let fields = dual_union_fields(func, &fields_a, &fields_b);
-    emit_handle_class(o, func, &fields, &SubMembers::none());
+
+    // The peek frame: the identity short-circuit, then one frame per mode. Each
+    // arm's locals live in its own block, so two modes carrying the same field
+    // name never share one.
+    let dual_frame = {
+        let no_locals = HashSet::new();
+        let fctx = stream_ctx(&no_locals, counter, stream_fma);
+        // The outputs are declared by the frame, above the identity branch that
+        // writes them and above both arms.
+        let outs: BTreeSet<String> =
+            func.outputs.iter().map(|o| format!("cur_{}", o.name)).collect();
+        peek_frame_arm(
+            func, ma, &fields, &step_settings, stream_fma, enums, registry, helpers, counter, 12,
+            &outs,
+        )
+        .zip(peek_frame_arm(
+            func, mb, &fields, &step_settings, stream_fma, enums, registry, helpers, counter, 12,
+            &outs,
+        ))
+        .map(|(a, b)| {
+            let mut f = String::new();
+            for out in &func.outputs {
+                let cty = out_cs_type(func, &out.name);
+                let zero = if cty == "int" { "0" } else { "0.0" };
+                let _ = writeln!(f, "         {cty} cur_{} = {zero};", out.name);
+            }
+            if let Some(ident) = identity_branch_as_frame(func, ma) {
+                for st in &ident {
+                    f.push_str(&render_statement_ctx(st, 9, &fctx, enums, registry, helpers));
+                }
+            }
+            let pred = params_on_state(func, &dmp.predicate);
+            let pred = render_predicate(&pred, &fctx, registry, helpers);
+            let _ = writeln!(f, "         if( {pred} ) {{");
+            f.push_str(&a);
+            let _ = writeln!(f, "         }} else {{");
+            f.push_str(&b);
+            let _ = writeln!(f, "         }}");
+            f
+        })
+    };
+    emit_handle_class(o, func, &fields, &SubMembers::none(), dual_frame.as_deref());
 
     // --- step: one method, the mode re-derived from the stored param --------
     emit_step_sig(o, func);
@@ -3180,7 +3494,13 @@ fn emit_dispatch(
     // The dispatch arm is an enum value chosen at run time, so what the sub owns
     // is not knowable here.
     let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
-    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
+    // The peek frame: the same routing, into each callee's PUBLIC `Peek`.
+    // Nothing here commits, so the dispatch tier needs no copy of the handle it
+    // delegates to.
+    let dispatch_frame = build_dispatch_peek_frame(
+        func, dp, &outputs, &bar_args, &ctx, enums, registry, helpers,
+    );
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&dispatch_frame));
 
     // --- step ---------------------------------------------------------------
     emit_step_sig(o, func);
@@ -3484,7 +3804,20 @@ fn emit_period_bank(
     let _ = writeln!(restore_extra, "         }}");
     // A bank is one handle per period in the span: unbounded by construction.
     let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
-    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
+    // The peek frame: only the SELECTED slot is peeked. The other slots' next
+    // values are not this bar's answer and peeking is non-committing per
+    // handle, so advancing them would be work thrown away — which is why the
+    // step advances all of them and the frame does not.
+    let mut bank_frame = String::new();
+    let _ = writeln!(bank_frame, "         int cp = (int){period};");
+    let _ = writeln!(bank_frame, "         if( cp < sp.{min} ) {{");
+    let _ = writeln!(bank_frame, "            cp = sp.{min};");
+    let _ = writeln!(bank_frame, "         }} else if( cp > sp.{max} ) {{");
+    let _ = writeln!(bank_frame, "            cp = sp.{max};");
+    let _ = writeln!(bank_frame, "         }}");
+    let _ = writeln!(bank_frame, "         int slot = cp - sp.{min};");
+    let _ = writeln!(bank_frame, "         double cur_{out} = sp.bank[slot].Peek({price});");
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&bank_frame));
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
     emit_step_sig(o, func);
@@ -3806,28 +4139,36 @@ fn emit_composed_step_decls(
     func: &FuncDef,
     cp: &streaming::ComposedPlan,
     cur_scalars: &[String],
+    indent: usize,
+    frame: bool,
 ) {
-    if let Some(model) = &cp.producer {
+    let pad = " ".repeat(indent);
+    // In a frame the producer's temps are declared by the frame builder, beside
+    // the locals its stores live in.
+    if let (Some(model), false) = (&cp.producer, frame) {
         for (name, ty) in &model.temps {
             let (cty, default) = field_type_and_default(ty);
-            let _ = writeln!(o, "      {cty} {name} = {default};");
+            let _ = writeln!(o, "{pad}{cty} {name} = {default};");
         }
     }
     for (name, ty) in &cp.map_temps {
         let (cty, default) = field_type_and_default(ty);
-        let _ = writeln!(o, "      {cty} {name} = {default};");
+        let _ = writeln!(o, "{pad}{cty} {name} = {default};");
     }
     for name in cur_scalars {
         let ty = out_cs_type(func, name);
         let zero = if ty == "int" { "0" } else { "0.0" };
-        let _ = writeln!(o, "      {ty} cur_{name} = {zero};");
+        let _ = writeln!(o, "{pad}{ty} cur_{name} = {zero};");
     }
 }
 
 /// The composed `StepImpl`: producer transition (writing `cur_<series>`), then
 /// the batch-tail pipeline through the owned sub handles, combine maps per bar,
-/// lag-ring pushes, and the `sp.cur_*` output stores. No peek flag: peek is the
-/// universal deep-copy of the whole tree.
+/// lag-ring pushes, and the `sp.cur_*` output stores.
+///
+/// `frame` renders the same pipeline as `Peek`'s body instead: the producer as
+/// a peek frame, each sub entered through its PUBLIC `Peek`, the lag-ring push
+/// dropped (nothing below loads it back), and the outputs left in locals.
 #[allow(clippy::too_many_arguments)]
 fn emit_composed_step(
     o: &mut String,
@@ -3841,11 +4182,35 @@ fn emit_composed_step(
     enums: &HashMap<String, EnumDef>,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-) {
-    emit_step_sig(o, func);
+    fields: &[Field],
+    frame: bool,
+) -> Option<String> {
+    // In a frame the body is the peek method's, three columns deeper.
+    let indent = if frame { 9 } else { 6 };
+    let pad = " ".repeat(indent);
+    let mut sink = String::new();
+    let o: &mut String = if frame { &mut sink } else { o };
+    if !frame {
+        emit_step_sig(o, func);
+    }
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
 
-    emit_composed_step_decls(o, func, cp, &cur_scalars);
+    emit_composed_step_decls(o, func, cp, &cur_scalars, indent, frame);
+    // An output the pipeline reaches only through an ALIAS is written by the
+    // tail loop below and by nothing else, so it never enters `cur_scalars`. In
+    // the step that write lands on `sp.cur_<out>`; in a frame the bare name
+    // would resolve to that same FIELD and commit it. Give it a local.
+    let mut aliased: Vec<String> = Vec::new();
+    if frame {
+        for out in outputs {
+            if !cur_scalars.contains(out) {
+                let ty = out_cs_type(func, out);
+                let zero = if ty == "int" { "0" } else { "0.0" };
+                let _ = writeln!(o, "{pad}{ty} cur_{out} = {zero};");
+                aliased.push(out.clone());
+            }
+        }
+    }
 
     let empty = HashSet::new();
     let ctx = stream_ctx(&empty, counter, stream_fma);
@@ -3857,29 +4222,43 @@ fn emit_composed_step(
         .collect();
 
     if let Some(model) = &cp.producer {
-        emit_extrema_rebase(o, model, 6);
-        // Same load-bearing local names as the loop tier — `fma::expr_is_float_typed`
-        // types an operand float by the `_factor` SUFFIX and these are emitted
-        // as text, never as IR VarDecls.
-        for s in step_settings {
-            let _ = writeln!(o, "      int {s}_rangeType = sp.cs_{s}_rangeType;");
-            let _ = writeln!(o, "      int {s}_avgPeriod = sp.cs_{s}_avgPeriod;");
-            let _ = writeln!(o, "      double {s}_factor = sp.cs_{s}_factor;");
-        }
         let names = CsComposedNames {
             series: cp.series.clone().expect("producer plan carries a series"),
         };
-        let transition = streaming::build_transition(model, &names)
-            .unwrap_or_else(|e| panic!("streaming transition: {e}"));
-        for st in &transition {
-            o.push_str(&render_statement_ctx(st, 6, &ctx, enums, registry, helpers));
+        if frame {
+            let declared: BTreeSet<String> = cur_scalars
+                .iter()
+                .chain(aliased.iter())
+                .map(|n| format!("cur_{n}"))
+                .chain(cp.map_temps.iter().map(|(n, _)| n.clone()))
+                .collect();
+            o.push_str(&peek_frame_arm_named(
+                func, model, &names, fields, step_settings, stream_fma, enums, registry, helpers,
+                counter, indent, &declared,
+            )?);
+        } else {
+            emit_extrema_rebase(o, model, indent);
+            // Same load-bearing local names as the loop tier — `fma::expr_is_float_typed`
+            // types an operand float by the `_factor` SUFFIX and these are emitted
+            // as text, never as IR VarDecls.
+            for s in step_settings {
+                let _ = writeln!(o, "{pad}int {s}_rangeType = sp.cs_{s}_rangeType;");
+                let _ = writeln!(o, "{pad}int {s}_avgPeriod = sp.cs_{s}_avgPeriod;");
+                let _ = writeln!(o, "{pad}double {s}_factor = sp.cs_{s}_factor;");
+            }
+            let transition = streaming::build_transition(model, &names)
+                .unwrap_or_else(|e| panic!("streaming transition: {e}"));
+            for st in &transition {
+                o.push_str(&render_statement_ctx(st, indent, &ctx, enums, registry, helpers));
+            }
         }
         let series = cp.series.clone().expect("producer plan carries a series");
         cur.insert(series.clone(), format!("cur_{series}"));
     }
 
     // Pipeline: the batch tail, one scalar per bar through the sub handles.
-    let _ = writeln!(o, "      /* Pipeline the new bar through the sub-streams (batch tail order). */");
+    let verb = if frame { "Peek" } else { "Update" };
+    let _ = writeln!(o, "{pad}/* Pipeline the new bar through the sub-streams (batch tail order). */");
     let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     for step in &cp.steps {
         match step {
@@ -3894,19 +4273,19 @@ fn emit_composed_step(
                 let arg_str = args.join(", ");
                 if sub.dsts.len() == 1 {
                     let d = &sub.dsts[0];
-                    let _ = writeln!(o, "      cur_{d} = sp.sub{sub_idx}.Update({arg_str});");
+                    let _ = writeln!(o, "{pad}cur_{d} = sp.sub{sub_idx}.{verb}({arg_str});");
                 } else {
                     let vt = callee_value_type(registry, &callee_key);
-                    let _ = writeln!(o, "      {{");
-                    let _ = writeln!(o, "         {vt} subOut{sub_idx} = sp.sub{sub_idx}.Update({arg_str});");
+                    let _ = writeln!(o, "{pad}{{");
+                    let _ = writeln!(o, "{pad}   {vt} subOut{sub_idx} = sp.sub{sub_idx}.{verb}({arg_str});");
                     for (k, d) in sub.dsts.iter().enumerate() {
                         let _ = writeln!(
                             o,
-                            "         cur_{d} = subOut{sub_idx}.{};",
+                            "{pad}   cur_{d} = subOut{sub_idx}.{};",
                             callee_value_member(registry, &callee_key, k)
                         );
                     }
-                    let _ = writeln!(o, "      }}");
+                    let _ = writeln!(o, "{pad}}}");
                 }
                 for d in &sub.dsts {
                     cur.insert(d.clone(), format!("cur_{d}"));
@@ -3920,27 +4299,41 @@ fn emit_composed_step(
                 for out in streaming::map_output_writes(&cp.tail[*tail_idx], outputs) {
                     cur.entry(out.clone()).or_insert_with(|| format!("cur_{out}"));
                 }
-                let _ = writeln!(o, "      /* Combine map (batch tail, per bar). */");
+                let _ = writeln!(o, "{pad}/* Combine map (batch tail, per bar). */");
                 for st in &transform_map_step(&cp.tail[*tail_idx], &cur, &params, &cp.sub_lag_rings) {
-                    o.push_str(&render_statement_ctx(st, 6, &ctx, enums, registry, helpers));
+                    o.push_str(&render_statement_ctx(st, indent, &ctx, enums, registry, helpers));
                 }
             }
         }
     }
     // Push the new sub-output value into each lag ring AFTER every read of the
     // oldest slot in the combine above (mirrors C, incl. the modulo advance).
-    for ring in &cp.sub_lag_rings {
-        let sn = &ring.series;
-        let _ = writeln!(o, "      sp.lagRing_{sn}[sp.lagRingPos_{sn}] = cur_{sn};");
-        let _ = writeln!(
-            o,
-            "      sp.lagRingPos_{sn} = (sp.lagRingPos_{sn} + 1) % sp.lagRingCap_{sn};"
-        );
+    // A frame drops the push outright: nothing below loads it back.
+    if !frame {
+        for ring in &cp.sub_lag_rings {
+            let sn = &ring.series;
+            let _ = writeln!(o, "{pad}sp.lagRing_{sn}[sp.lagRingPos_{sn}] = cur_{sn};");
+            let _ = writeln!(
+                o,
+                "{pad}sp.lagRingPos_{sn} = (sp.lagRingPos_{sn} + 1) % sp.lagRingCap_{sn};"
+            );
+        }
     }
+    let target = if frame { "" } else { "sp." };
     for out in outputs {
-        let _ = writeln!(o, "      sp.cur_{out} = {};", cur.get(out).expect("analyzer gated output"));
+        let src = cur.get(out).expect("analyzer gated output");
+        // In a frame the pipeline may already have written this very local, and
+        // `x = x;` is CS1717 — an error under the shipped csproj, not a warning.
+        if frame && src == &format!("cur_{out}") {
+            continue;
+        }
+        let _ = writeln!(o, "{pad}{target}cur_{out} = {src};");
+    }
+    if frame {
+        return Some(sink);
     }
     let _ = writeln!(o, "   }}");
+    None
 }
 
 /// The transcribed (region, tail) for the composed open: output arrays renamed
@@ -4356,11 +4749,18 @@ fn emit_composed(
         subs: cp.subs.len(),
         unbounded: false,
     };
-    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
+    let frame = {
+        let mut sink = String::new();
+        emit_composed_step(
+            &mut sink, func, cp, &step_settings, stream_fma, registry, &inputs, &outputs, enums,
+            helpers, counter, &fields, true,
+        )
+    };
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, frame.as_deref());
 
     emit_composed_step(
         o, func, cp, &step_settings, stream_fma, registry, &inputs, &outputs, enums, helpers,
-        counter,
+        counter, &fields, false,
     );
     emit_composed_open(
         o, func, cp, &step_settings, stream_fma, &outputs, enums, registry, helpers, counter,

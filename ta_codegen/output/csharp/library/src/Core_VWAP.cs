@@ -513,11 +513,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -527,9 +528,100 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWAP", "peek", RetCode.BadParam);
-         VwapStream scratch = new VwapStream(this);
-         core.VwapStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         VwapStream sp = this;
+         double typPrice = 0.0;
+         double volume = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double sumPV = sp.sumPV;
+         double sumV = sp.sumV;
+         double vwap = sp.vwap;
+         /* The typical price is written exactly as in ta_TYPPRICE.c so that the
+          * two agree bit for bit and this stays a true composite of it.
+          */
+         typPrice = (inHigh + inLow + inClose) / 3.0;
+         volume = inVolume;
+         /* A bar is weighted only if both of its terms are real numbers. That is
+          * the whole condition: a NaN or an infinity in the price or the volume
+          * is the only way a bar cannot be weighted, and every other bar --
+          * including one that traded nothing -- is weighted normally.
+          *
+          * The test gates BOTH adds. Letting the volume in without its matching
+          * price term would leave a weight in the divisor that nothing paid for,
+          * biasing every later value: a NaN close with a good volume would drag
+          * the next value 25% low.
+          *
+          * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+          * sums with no trailing term to subtract anything back out, so a single
+          * non-finite bar allowed in would leave both sums non-finite for the
+          * REST of the call -- the line would repeat one stale value on every
+          * later bar however clean it was, silently, and looking like a plausible
+          * price the whole way. Skipping keeps the state usable, so the average
+          * resumes on the very next bar that can be weighted.
+          *
+          * Testing the two INPUTS, not the product and not the candidate sums, is
+          * a measured choice:
+          *
+          *   - The candidate sums would have to be committed conditionally, which
+          *     puts four cmovs in the loop-carried dependency chain and costs
+          *     +60% on this loop. Both forms below leave the adds unconditional
+          *     inside a predicted branch and measure free.
+          *   - The product alone would also detect every unusable bar, one test
+          *     instead of two, and measures the same. But it would additionally
+          *     drop a WELL-FORMED bar whose price and volume are both finite and
+          *     whose product merely overflows -- silently, and taking that bar's
+          *     volume out of the divisor with it. Testing the inputs leaves that
+          *     case exactly as it was before this guard existed: the overflow
+          *     reaches the sum and the call reports Inf, which is the documented
+          *     `double` overflow class rather than an indicator defect, and is
+          *     louder than a freeze.
+          *
+          * So this changes behaviour for one thing only: a bar whose price or
+          * volume is not a finite number. On finite data the test is always true
+          * and no value the function has ever produced moves. Only the batch path
+          * needs it -- the streaming Update/Peek entry points reject a non-finite
+          * bar with TA_BAD_PARAM before it reaches any accumulator.
+          */
+         /* The product is kept in its own statement so no compiler may contract it
+          * into an FMA. Contracting here would make the C output disagree with the
+          * Rust, Java and C# backends under the cross-language bitwise gate. Same
+          * reason as in ta_codegen/input/vwma/vwma.c.
+          *
+          * Computed before the guard rather than inside it, and unconditionally,
+          * so it stays a per-bar temporary. Assigned only on the taken arm it
+          * would instead be live across bars, and the streaming tier would carry
+          * it as a fourth state field in every handle -- 8 bytes to hold a value
+          * no later bar reads. The multiply on a skipped bar is discarded.
+          */
+         tempReal = typPrice * volume;
+         if( (double.IsFinite(typPrice)) && (double.IsFinite(volume)) ) {
+            sumPV += tempReal;
+            sumV += volume;
+         }
+         /* Bars that traded nothing carry no weight, so a zero-volume bar in
+          * the middle of a series leaves both sums untouched and repeats the
+          * previous value on its own -- no arm needed for that. A bar skipped
+          * by the guard above repeats it for the same reason.
+          *
+          * The arm below is for the one case the ratio cannot express: a
+          * leading run of bars before any volume has traded, where there are
+          * no weights at all and the weighted mean is undefined. The last
+          * value computed is carried forward instead, which is 0.0 until the
+          * first bar with volume. Volume is non-negative, so once the divisor
+          * leaves zero it never returns and this arm cannot fire again.
+          *
+          * A successful call therefore never emits NaN or Inf (issue #112),
+          * which is the divergence from pandas-ta-classic and from
+          * trading-signals: the first emits NaN there, the second no bar at
+          * all. Testing sumV rather than the bar's own volume also keeps a
+          * negative divisor -- which no non-negative volume series can
+          * produce -- out of a price-scale output, as ta_CMF.c does.
+          */
+         if( sumV > 0.0 ) {
+            vwap = sumPV / sumV;
+         }
+         cur_outReal = vwap;
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

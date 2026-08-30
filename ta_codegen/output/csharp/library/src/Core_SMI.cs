@@ -1007,9 +1007,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static SmiStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -1036,11 +1033,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -1049,15 +1047,109 @@ public partial class Core
       public SmiValue Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("SMI", "peek", RetCode.BadParam);
-         SmiStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new SmiStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         SmiStream sp = this;
+         double tmp = 0.0;
+         double num = 0.0;
+         double den = 0.0;
+         double halfDen = 0.0;
+         double smiValue = 0.0;
+         double cur_outSMI = sp.cur_outSMI;
+         double cur_outSMISignal = sp.cur_outSMISignal;
+         double emaFastDen = sp.emaFastDen;
+         double emaFastNum = sp.emaFastNum;
+         double emaSlowDen = sp.emaSlowDen;
+         double emaSlowNum = sp.emaSlowNum;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         double prevSignal = sp.prevSignal;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.SmiStepImpl(scratch, inHigh, inLow, inClose);
-         return new SmiValue(scratch.cur_outSMI, scratch.cur_outSMISignal);
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         pkSlot2 = today & sp.xMask;
+         pkVal2 = inClose;
+         /* Set the lowest low */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Set the highest high */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         den = highest - lowest;
+         num = (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - (highest + lowest) * 0.5;
+         emaSlowNum = Math.FusedMultiplyAdd(num - emaSlowNum, sp.kSlow, emaSlowNum);
+         emaSlowDen = Math.FusedMultiplyAdd(den - emaSlowDen, sp.kSlow, emaSlowDen);
+         emaFastNum = Math.FusedMultiplyAdd(emaSlowNum - emaFastNum, sp.kFast, emaFastNum);
+         emaFastDen = Math.FusedMultiplyAdd(emaSlowDen - emaFastDen, sp.kFast, emaFastDen);
+         /* The denominator is an EMA of an EMA of the high-low range: every term
+          * is non-negative and every weight is positive, so it carries no
+          * cancellation residue and is zero only when every range that reached it
+          * was exactly zero -- 0/0, since a window of H == L bars makes num zero
+          * too, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+          * convention. Test it exactly: the range carries the quote unit, so the
+          * fixed TA_IS_ZERO band this used to be zeroed the oscillator for any
+          * instrument quoted below it (issue #253). Issue #107's machine-flat
+          * window is caught by the exact test as well, since the residue an
+          * EMA leaves there is zero, not sub-epsilon.
+          */
+         halfDen = 0.5 * emaFastDen;
+         if( halfDen > 0.0 ) {
+            smiValue = 100.0 * emaFastNum / halfDen;
+         } else {
+            smiValue = 0.0;
+         }
+         prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, sp.kSignal, prevSignal);
+         cur_outSMI = smiValue;
+         cur_outSMISignal = prevSignal;
+         trailingIdx = trailingIdx + 1;
+         today = today + 1;
+         return new SmiValue(cur_outSMI, cur_outSMISignal);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

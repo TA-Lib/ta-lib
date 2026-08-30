@@ -720,9 +720,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static MaStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -747,26 +744,71 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MA", "peek", RetCode.BadParam);
-         MaStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new MaStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         MaStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
+            cur_outReal = inReal;
+            return cur_outReal;
          }
-         core.MaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         switch( sp.optInMAType )
+         {
+         case MAType.SMA: {
+            cur_outReal = ((SmaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.EMA: {
+            cur_outReal = ((EmaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.WMA: {
+            cur_outReal = ((WmaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.DEMA: {
+            cur_outReal = ((DemaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.TEMA: {
+            cur_outReal = ((TemaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.TRIMA: {
+            cur_outReal = ((TrimaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.KAMA: {
+            cur_outReal = ((KamaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.MAMA: {
+            MamaValue subValue = ((MamaStream) sp.sub!).Peek(inReal);
+            cur_outReal = subValue.MAMA;
+            break;
+         }
+         case MAType.T3: {
+            cur_outReal = ((T3Stream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.HMA: {
+            cur_outReal = ((HmaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         default:
+            break; /* unreachable: open rejects arms without a sub-stream */
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

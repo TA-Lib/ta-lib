@@ -792,9 +792,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static MavpStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -820,11 +817,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <param name="inPeriods">The period to use for this bar.</param>
@@ -832,15 +830,16 @@ public partial class Core
       public double Peek( double inReal, double inPeriods )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inPeriods) ) throw Core.StreamFailure("MAVP", "peek", RetCode.BadParam);
-         MavpStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new MavpStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         MavpStream sp = this;
+         int cp = (int)inPeriods;
+         if( cp < sp.optInMinPeriod ) {
+            cp = sp.optInMinPeriod;
+         } else if( cp > sp.optInMaxPeriod ) {
+            cp = sp.optInMaxPeriod;
          }
-         core.MavpStepImpl(scratch, inReal, inPeriods);
-         return scratch.cur_outReal;
+         int slot = cp - sp.optInMinPeriod;
+         double cur_outReal = sp.bank[slot].Peek(inReal);
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

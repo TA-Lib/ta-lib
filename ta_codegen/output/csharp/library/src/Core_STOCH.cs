@@ -871,9 +871,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static StochStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -900,11 +897,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -913,15 +911,97 @@ public partial class Core
       public StochValue Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("STOCH", "peek", RetCode.BadParam);
-         StochStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new StochStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         StochStream sp = this;
+         double cur_tempBuffer = 0.0;
+         double cur_outSlowD = 0.0;
+         double cur_outSlowK = 0.0;
+         double tmp = 0.0;
+         double diff = sp.diff;
+         double highest = sp.highest;
+         int highestIdx = sp.highestIdx;
+         int i = sp.i;
+         double lowest = sp.lowest;
+         int lowestIdx = sp.lowestIdx;
+         int today = sp.today;
+         int trailingIdx = sp.trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( today >= 1073741824 ) {
+            int rebaseShift = trailingIdx & ~sp.xMask;
+            today -= rebaseShift;
+            trailingIdx -= rebaseShift;
+            highestIdx -= rebaseShift;
+            i -= rebaseShift;
+            lowestIdx -= rebaseShift;
          }
-         core.StochStepImpl(scratch, inHigh, inLow, inClose);
-         return new StochValue(scratch.cur_outSlowK, scratch.cur_outSlowD);
+         pkSlot0 = today & sp.xMask;
+         pkVal0 = inHigh;
+         pkSlot1 = today & sp.xMask;
+         pkVal1 = inLow;
+         pkSlot2 = today & sp.xMask;
+         pkVal2 = inClose;
+         /* Set the lowest low */
+         tmp = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Set the highest high */
+         tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
+          * machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
+          * range against ITS OWN two extremes, not against a fixed band: the range
+          * carries the quote unit, so a constant put against it answers "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output (issue #253).
+          */
+         if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+            cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / diff;
+         } else {
+            cur_tempBuffer = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer = sp.sub0.Peek(cur_tempBuffer);
+         cur_outSlowD = sp.sub1.Peek(cur_tempBuffer);
+         cur_outSlowK = cur_tempBuffer;
+         return new StochValue(cur_outSlowK, cur_outSlowD);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

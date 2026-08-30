@@ -494,9 +494,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CdlhighwaveStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -524,11 +521,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -538,15 +536,49 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHIGHWAVE", "peek", RetCode.BadParam);
-         CdlhighwaveStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new CdlhighwaveStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         CdlhighwaveStream sp = this;
+         double BodyPeriodTotal = sp.BodyPeriodTotal;
+         double ShadowPeriodTotal = sp.ShadowPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
+         int ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+         int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+         double BodyShort_factor = sp.cs_BodyShort_factor;
+         int ShadowVeryLong_rangeType = sp.cs_ShadowVeryLong_rangeType;
+         int ShadowVeryLong_avgPeriod = sp.cs_ShadowVeryLong_avgPeriod;
+         double ShadowVeryLong_factor = sp.cs_ShadowVeryLong_factor;
+         if( sp.ringCap_BodyTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          }
-         core.CdlhighwaveStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         if( sp.ringCap_ShadowTrailingIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( Math.Abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
+         ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ringPos_ShadowTrailingIdx != pkSlot1) ? sp.ring_ShadowTrailingIdx_derived[ringPos_ShadowTrailingIdx] : pkVal1);
+         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
+         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+            ringPos_BodyTrailingIdx = 0;
+         }
+         ringPos_ShadowTrailingIdx = ringPos_ShadowTrailingIdx + 1;
+         if( ringPos_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx ) {
+            ringPos_ShadowTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

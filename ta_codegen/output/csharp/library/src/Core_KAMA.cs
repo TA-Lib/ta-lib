@@ -743,20 +743,87 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("KAMA", "peek", RetCode.BadParam);
-         KamaStream scratch = new KamaStream(this);
-         core.KamaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         KamaStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double periodROC = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double lag1_inReal = sp.lag1_inReal;
+         int nullRun = sp.nullRun;
+         double prevKAMA = sp.prevKAMA;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         double sumROC1 = sp.sumROC1;
+         double trailingValue = sp.trailingValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         tempReal = inReal;
+         tempReal2 = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         periodROC = tempReal - tempReal2;
+         /* Adjust sumROC1:
+          *  - Remove trailing ROC1
+          *  - Add new ROC1
+          */
+         sumROC1 -= Math.Abs(trailingValue - tempReal2);
+         sumROC1 += Math.Abs(tempReal - lag1_inReal);
+         /* Once a whole window of flat bars has gone by, every 1-day change it
+          * spans is exactly zero, so the sum is known to be exactly zero and the
+          * residue can be dropped. That is what lets the efficiency ratio be
+          * decided by `sumROC1 <= periodROC` alone: a window that flat has
+          * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
+          */
+         if( tempReal - lag1_inReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            sumROC1 = 0.0;
+         }
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
+         /* Calculate the efficiency ratio */
+         if( sumROC1 <= periodROC ) {
+            tempReal = 1.0;
+         } else {
+            tempReal = Math.Abs(periodROC / sumROC1);
+         }
+         /* Calculate the smoothing constant */
+         tempReal = Math.FusedMultiplyAdd(tempReal, sp.constDiff, sp.constMax);
+         tempReal *= tempReal;
+         /* Calculate the KAMA like an EMA, using the
+          * smoothing constant as the adaptive factor.
+          */
+         prevKAMA = Math.FusedMultiplyAdd(inReal - prevKAMA, tempReal, prevKAMA);
+         cur_outReal = prevKAMA;
+         lag1_inReal = inReal;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

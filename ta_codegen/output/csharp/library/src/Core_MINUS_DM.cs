@@ -657,11 +657,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -669,9 +670,53 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("MINUS_DM", "peek", RetCode.BadParam);
-         MinusDmStream scratch = new MinusDmStream(this);
-         core.MinusDmStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         MinusDmStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod <= 1 ) {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               cur_outReal = diffM;
+            } else {
+               cur_outReal = 0;
+            }
+         } else {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            double prevMinusDM = sp.prevMinusDM;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod + diffM;
+            } else {
+               /* Case 1,3,5 and 7 */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod;
+            }
+            cur_outReal = prevMinusDM;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

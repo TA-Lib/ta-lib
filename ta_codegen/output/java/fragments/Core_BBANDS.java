@@ -939,6 +939,7 @@
          double cur_tempBuffer2 = 0.0;
          double cur_outRealUpperBand = 0.0;
          double cur_outRealLowerBand = 0.0;
+         double cur_outRealMiddleBand = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempBuffer1 = sp.sub0.peek(inReal);
          cur_tempBuffer2 = sp.sub1.peek(inReal);
@@ -953,9 +954,7 @@
             cur_outRealUpperBand = Math.fma(cur_tempBuffer2, sp.optInNbDevUp, tempReal2);
             cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
          }
-         cur_outRealUpperBand = cur_outRealUpperBand;
          cur_outRealMiddleBand = cur_tempBuffer1;
-         cur_outRealLowerBand = cur_outRealLowerBand;
          return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 

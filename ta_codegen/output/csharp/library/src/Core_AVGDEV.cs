@@ -414,20 +414,42 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("AVGDEV", "peek", RetCode.BadParam);
-         AvgdevStream scratch = new AvgdevStream(this);
-         core.AvgdevStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         AvgdevStream sp = this;
+         double todaySum = 0.0;
+         double todayDev = 0.0;
+         int i = 0;
+         double cur_outReal = sp.cur_outReal;
+         int winPos_i = sp.winPos_i;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         pkSlot0 = winPos_i;
+         pkVal0 = inReal;
+         todaySum = 0.0;
+         for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
+            todaySum += (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0;
+         }
+         todayDev = 0.0;
+         for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
+            todayDev += Math.Abs(((((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0) - todaySum / sp.optInTimePeriod);
+         }
+         cur_outReal = todayDev / sp.optInTimePeriod;
+         winPos_i = winPos_i + 1;
+         if( winPos_i >= sp.winCap_i ) {
+            winPos_i = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

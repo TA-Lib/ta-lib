@@ -614,11 +614,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -628,9 +629,26 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("ADOSC", "peek", RetCode.BadParam);
-         AdoscStream scratch = new AdoscStream(this);
-         core.AdoscStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         AdoscStream sp = this;
+         double high = 0.0;
+         double low = 0.0;
+         double close = 0.0;
+         double tmp = 0.0;
+         double ad = sp.ad;
+         double cur_outReal = sp.cur_outReal;
+         double fastEMA = sp.fastEMA;
+         double slowEMA = sp.slowEMA;
+         high = inHigh;
+         low = inLow;
+         tmp = high - low;
+         close = inClose;
+         if( tmp > 0.0 ) {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume;
+         }
+         fastEMA = Math.FusedMultiplyAdd(sp.one_minus_fastk, fastEMA, sp.fastk * ad);
+         slowEMA = Math.FusedMultiplyAdd(sp.one_minus_slowk, slowEMA, sp.slowk * ad);
+         cur_outReal = fastEMA - slowEMA;
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

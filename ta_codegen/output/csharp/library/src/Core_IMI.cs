@@ -413,9 +413,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static ImiStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -441,11 +438,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inClose">This bar's close price.</param>
@@ -453,15 +451,43 @@ public partial class Core
       public double Peek( double inOpen, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("IMI", "peek", RetCode.BadParam);
-         ImiStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new ImiStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         ImiStream sp = this;
+         double upsum = 0.0;
+         double downsum = 0.0;
+         int i = 0;
+         double close = 0.0;
+         double open = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int winPos_i = sp.winPos_i;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         pkSlot0 = winPos_i;
+         pkVal0 = inOpen;
+         pkSlot1 = winPos_i;
+         pkVal1 = inClose;
+         upsum = 0.0;
+         downsum = 0.0;
+         for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 ) {
+            close = (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inClose[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal1;
+            open = (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inOpen[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0;
+            if( close > open ) {
+               upsum += close - open;
+            } else {
+               downsum += open - close;
+            }
+            /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
+             * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
+             * oscillator, so no up/down bias returns its neutral center, 50.0.
+             */
+            cur_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
          }
-         core.ImiStepImpl(scratch, inOpen, inClose);
-         return scratch.cur_outReal;
+         winPos_i = winPos_i + 1;
+         if( winPos_i >= sp.winCap_i ) {
+            winPos_i = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

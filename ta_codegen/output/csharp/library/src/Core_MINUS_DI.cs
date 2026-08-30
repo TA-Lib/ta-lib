@@ -873,11 +873,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -886,9 +887,94 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("MINUS_DI", "peek", RetCode.BadParam);
-         MinusDiStream scratch = new MinusDiStream(this);
-         core.MinusDiStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         MinusDiStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod <= 1 ) {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevClose = sp.prevClose;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               double _true_range_0 = 0;
+               double range_0 = prevHigh - prevLow;
+               double tmp_0 = Math.Abs(prevHigh - prevClose);
+               if( tmp_0 > range_0 ) {
+                  range_0 = tmp_0;
+               }
+               tmp_0 = Math.Abs(prevLow - prevClose);
+               if( tmp_0 > range_0 ) {
+                  range_0 = tmp_0;
+               }
+               _true_range_0 = range_0;
+               tempReal = _true_range_0;
+               if( tempReal <= 0.0 ) {
+                  cur_outReal = (double)0.0;
+               } else {
+                  cur_outReal = diffM / tempReal;
+               }
+            } else {
+               cur_outReal = (double)0.0;
+            }
+            prevClose = inClose;
+         } else {
+            double tempReal = 0.0;
+            double diffP = 0.0;
+            double diffM = 0.0;
+            double prevClose = sp.prevClose;
+            double prevHigh = sp.prevHigh;
+            double prevLow = sp.prevLow;
+            double prevMinusDM = sp.prevMinusDM;
+            double prevTR = sp.prevTR;
+            /* Calculate the prevMinusDM */
+            tempReal = inHigh;
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow;
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod + diffM;
+            } else {
+               /* Case 1,3,5 and 7 */
+               prevMinusDM = prevMinusDM - prevMinusDM / sp.optInTimePeriod;
+            }
+            /* Calculate the prevTR */
+            double _true_range_1 = 0;
+            double range_1 = prevHigh - prevLow;
+            double tmp_1 = Math.Abs(prevHigh - prevClose);
+            if( tmp_1 > range_1 ) {
+               range_1 = tmp_1;
+            }
+            tmp_1 = Math.Abs(prevLow - prevClose);
+            if( tmp_1 > range_1 ) {
+               range_1 = tmp_1;
+            }
+            _true_range_1 = range_1;
+            tempReal = _true_range_1;
+            prevTR = prevTR - prevTR / sp.optInTimePeriod + tempReal;
+            prevClose = inClose;
+            /* Calculate the DI. The value is rounded (see Wilder book). */
+            if( prevTR > 0.0 ) {
+               cur_outReal = (100.0 * (prevMinusDM / prevTR));
+            } else {
+               cur_outReal = 0.0;
+            }
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
@@ -951,18 +1037,18 @@ public partial class Core
          sp.prevLow = tempReal;
          if( diffM > 0 && diffP < diffM ) {
             /* Case 2 and 4: +DM=0,-DM=diffM */
-            double _true_range_0 = 0;
-            double range_0 = sp.prevHigh - sp.prevLow;
-            double tmp_0 = Math.Abs(sp.prevHigh - sp.prevClose);
-            if( tmp_0 > range_0 ) {
-               range_0 = tmp_0;
+            double _true_range_2 = 0;
+            double range_2 = sp.prevHigh - sp.prevLow;
+            double tmp_2 = Math.Abs(sp.prevHigh - sp.prevClose);
+            if( tmp_2 > range_2 ) {
+               range_2 = tmp_2;
             }
-            tmp_0 = Math.Abs(sp.prevLow - sp.prevClose);
-            if( tmp_0 > range_0 ) {
-               range_0 = tmp_0;
+            tmp_2 = Math.Abs(sp.prevLow - sp.prevClose);
+            if( tmp_2 > range_2 ) {
+               range_2 = tmp_2;
             }
-            _true_range_0 = range_0;
-            tempReal = _true_range_0;
+            _true_range_2 = range_2;
+            tempReal = _true_range_2;
             if( tempReal <= 0.0 ) {
                sp.cur_outReal = (double)0.0;
             } else {
@@ -993,18 +1079,18 @@ public partial class Core
             sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod;
          }
          /* Calculate the prevTR */
-         double _true_range_1 = 0;
-         double range_1 = sp.prevHigh - sp.prevLow;
-         double tmp_1 = Math.Abs(sp.prevHigh - sp.prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         double _true_range_3 = 0;
+         double range_3 = sp.prevHigh - sp.prevLow;
+         double tmp_3 = Math.Abs(sp.prevHigh - sp.prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         tmp_1 = Math.Abs(sp.prevLow - sp.prevClose);
-         if( tmp_1 > range_1 ) {
-            range_1 = tmp_1;
+         tmp_3 = Math.Abs(sp.prevLow - sp.prevClose);
+         if( tmp_3 > range_3 ) {
+            range_3 = tmp_3;
          }
-         _true_range_1 = range_1;
-         tempReal = _true_range_1;
+         _true_range_3 = range_3;
+         tempReal = _true_range_3;
          sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + tempReal;
          sp.prevClose = inClose;
          /* Calculate the DI. The value is rounded (see Wilder book). */
@@ -1185,18 +1271,18 @@ public partial class Core
             prevLow = tempReal;
             if( diffM > 0 && diffP < diffM ) {
                /* Case 2 and 4: +DM=0,-DM=diffM */
-               double _true_range_2 = 0;
-               double range_2 = prevHigh - prevLow;
-               double tmp_2 = Math.Abs(prevHigh - prevClose);
-               if( tmp_2 > range_2 ) {
-                  range_2 = tmp_2;
+               double _true_range_4 = 0;
+               double range_4 = prevHigh - prevLow;
+               double tmp_4 = Math.Abs(prevHigh - prevClose);
+               if( tmp_4 > range_4 ) {
+                  range_4 = tmp_4;
                }
-               tmp_2 = Math.Abs(prevLow - prevClose);
-               if( tmp_2 > range_2 ) {
-                  range_2 = tmp_2;
+               tmp_4 = Math.Abs(prevLow - prevClose);
+               if( tmp_4 > range_4 ) {
+                  range_4 = tmp_4;
                }
-               _true_range_2 = range_2;
-               tempReal = _true_range_2;
+               _true_range_4 = range_4;
+               tempReal = _true_range_4;
                if( tempReal <= 0.0 ) {
                   outReal[outIdx++ * outStride] = (double)0.0;
                } else {
@@ -1367,18 +1453,18 @@ public partial class Core
                /* Case 2 and 4: +DM=0,-DM=diffM */
                prevMinusDM += diffM;
             }
-            double _true_range_3 = 0;
-            double range_3 = prevHigh - prevLow;
-            double tmp_3 = Math.Abs(prevHigh - prevClose);
-            if( tmp_3 > range_3 ) {
-               range_3 = tmp_3;
+            double _true_range_5 = 0;
+            double range_5 = prevHigh - prevLow;
+            double tmp_5 = Math.Abs(prevHigh - prevClose);
+            if( tmp_5 > range_5 ) {
+               range_5 = tmp_5;
             }
-            tmp_3 = Math.Abs(prevLow - prevClose);
-            if( tmp_3 > range_3 ) {
-               range_3 = tmp_3;
+            tmp_5 = Math.Abs(prevLow - prevClose);
+            if( tmp_5 > range_5 ) {
+               range_5 = tmp_5;
             }
-            _true_range_3 = range_3;
-            tempReal = _true_range_3;
+            _true_range_5 = range_5;
+            tempReal = _true_range_5;
             prevTR += tempReal;
             prevClose = inClose[today];
          }
@@ -1406,18 +1492,18 @@ public partial class Core
                prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
             }
             /* Calculate the prevTR */
-            double _true_range_4 = 0;
-            double range_4 = prevHigh - prevLow;
-            double tmp_4 = Math.Abs(prevHigh - prevClose);
-            if( tmp_4 > range_4 ) {
-               range_4 = tmp_4;
+            double _true_range_6 = 0;
+            double range_6 = prevHigh - prevLow;
+            double tmp_6 = Math.Abs(prevHigh - prevClose);
+            if( tmp_6 > range_6 ) {
+               range_6 = tmp_6;
             }
-            tmp_4 = Math.Abs(prevLow - prevClose);
-            if( tmp_4 > range_4 ) {
-               range_4 = tmp_4;
+            tmp_6 = Math.Abs(prevLow - prevClose);
+            if( tmp_6 > range_6 ) {
+               range_6 = tmp_6;
             }
-            _true_range_4 = range_4;
-            tempReal = _true_range_4;
+            _true_range_6 = range_6;
+            tempReal = _true_range_6;
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
          }
@@ -1456,18 +1542,18 @@ public partial class Core
                prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
             }
             /* Calculate the prevTR */
-            double _true_range_5 = 0;
-            double range_5 = prevHigh - prevLow;
-            double tmp_5 = Math.Abs(prevHigh - prevClose);
-            if( tmp_5 > range_5 ) {
-               range_5 = tmp_5;
+            double _true_range_7 = 0;
+            double range_7 = prevHigh - prevLow;
+            double tmp_7 = Math.Abs(prevHigh - prevClose);
+            if( tmp_7 > range_7 ) {
+               range_7 = tmp_7;
             }
-            tmp_5 = Math.Abs(prevLow - prevClose);
-            if( tmp_5 > range_5 ) {
-               range_5 = tmp_5;
+            tmp_7 = Math.Abs(prevLow - prevClose);
+            if( tmp_7 > range_7 ) {
+               range_7 = tmp_7;
             }
-            _true_range_5 = range_5;
-            tempReal = _true_range_5;
+            _true_range_7 = range_7;
+            tempReal = _true_range_7;
             prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
             prevClose = inClose[today];
             /* Calculate the DI. The value is rounded (see Wilder book). */

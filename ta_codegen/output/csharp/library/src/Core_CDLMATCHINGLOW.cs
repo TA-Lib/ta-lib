@@ -485,11 +485,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -499,9 +500,43 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMATCHINGLOW", "peek", RetCode.BadParam);
-         CdlmatchinglowStream scratch = new CdlmatchinglowStream(this);
-         core.CdlmatchinglowStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlmatchinglowStream sp = this;
+         double EqualPeriodTotal = sp.EqualPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int Equal_rangeType = sp.cs_Equal_rangeType;
+         int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
+         double Equal_factor = sp.cs_Equal_factor;
+         pkSlot0 = ringPos_EqualTrailingIdx;
+         pkVal0 = ((Equal_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* first black */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* second black */
+             inClose <= lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st and 2nd same close */
+             inClose >= lag1_inClose - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            cur_outInteger = 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot0) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal0);
+         lag1_inOpen = inOpen;
+         lag1_inHigh = inHigh;
+         lag1_inLow = inLow;
+         lag1_inClose = inClose;
+         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
+         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
+            ringPos_EqualTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

@@ -372,11 +372,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -386,9 +387,22 @@ public partial class Core
       public double Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("BOP", "peek", RetCode.BadParam);
-         BopStream scratch = new BopStream(this);
-         core.BopStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         BopStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         /* BOP is a fraction of the bar's own range, so it is scale-free and the
+          * divisor only has to be positive. An exact test, not the fixed
+          * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+          * and that band zeroed the output for any instrument quoted below it
+          * (issue #253).
+          */
+         tempReal = inHigh - inLow;
+         if( tempReal <= 0.0 ) {
+            cur_outReal = 0.0;
+         } else {
+            cur_outReal = (inClose - inOpen) / tempReal;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

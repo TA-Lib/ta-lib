@@ -512,9 +512,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static VwmaStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -540,11 +537,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <param name="inVolume">This bar's volume.</param>
@@ -552,15 +550,49 @@ public partial class Core
       public double Peek( double inReal, double inVolume )
       {
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWMA", "peek", RetCode.BadParam);
-         VwmaStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new VwmaStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         VwmaStream sp = this;
+         double tempPV = 0.0;
+         double tempV = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         double sumPV = sp.sumPV;
+         double sumV = sp.sumV;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
          }
-         core.VwmaStepImpl(scratch, inReal, inVolume);
-         return scratch.cur_outReal;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+            pkSlot1 = 0;
+            pkVal1 = inVolume;
+         }
+         tempReal = inReal * inVolume;
+         sumPV += tempReal;
+         sumV += inVolume;
+         /* Snapshot both sums before removing the trailing bar, mirroring the
+          * add-new / snapshot / subtract-old order of TA_SMA. That order is what
+          * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
+          */
+         tempPV = sumPV;
+         tempV = sumV;
+         /* Read the trailing values before writing the output, since the caller
+          * may pass the same buffer for an input and the output.
+          */
+         tempReal = ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0) * ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] : pkVal1);
+         sumPV -= tempReal;
+         sumV -= (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] : pkVal1;
+         cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

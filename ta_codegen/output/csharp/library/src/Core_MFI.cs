@@ -652,9 +652,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static MfiStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -682,11 +679,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -696,15 +694,53 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose, double inVolume )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("MFI", "peek", RetCode.BadParam);
-         MfiStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new MfiStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         MfiStream sp = this;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double tempValue3 = 0.0;
+         double moneyFlow = 0.0;
+         double posFlow = 0.0;
+         double negFlow = 0.0;
+         double posClamped = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int mflow_Idx = sp.mflow_Idx;
+         double negSumMF = sp.negSumMF;
+         int nullRun = sp.nullRun;
+         double posSumMF = sp.posSumMF;
+         double prevValue = sp.prevValue;
+         posSumMF -= sp.cb_mflow_positive[mflow_Idx];
+         negSumMF -= sp.cb_mflow_negative[mflow_Idx];
+         tempValue1 = (inHigh + inLow + inClose) / 3.0;
+         tempValue2 = tempValue1 - prevValue;
+         /* Dead-zone scaled to the two typical prices being compared (issue #107).
+          * Captured before prevValue/tempValue1 are repurposed below.
+          */
+         tempValue3 = Math.Abs(tempValue1) + Math.Abs(prevValue);
+         prevValue = tempValue1;
+         tempValue1 *= inVolume;
+         moneyFlow = (Math.Abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ? 0.0 : tempValue1;
+         posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
+         negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
+         posSumMF += posFlow;
+         negSumMF += negFlow;
+         nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            posSumMF = 0.0;
+            negSumMF = 0.0;
          }
-         core.MfiStepImpl(scratch, inHigh, inLow, inClose, inVolume);
-         return scratch.cur_outReal;
+         tempValue1 = posSumMF + negSumMF;
+         posClamped = (posSumMF < 0.0) ? 0.0 : ((posSumMF > tempValue1) ? tempValue1 : posSumMF);
+         if( tempValue1 <= 0.0 ) {
+            cur_outReal = 0.0;
+         } else {
+            cur_outReal = 100.0 * (posClamped / tempValue1);
+         }
+         mflow_Idx = mflow_Idx + 1;
+         if( mflow_Idx > sp.maxIdx_mflow ) {
+            mflow_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

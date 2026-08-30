@@ -6875,7 +6875,6 @@ public final class Core {
          cur_adx = sp.sub0.peek(inHigh, inLow, inClose);
          /* Combine map (batch tail, per bar). */
          cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 
@@ -8463,7 +8462,6 @@ public final class Core {
          cur_outReal = sp.sub1.peek(inReal);
          /* Combine map (batch tail, per bar). */
          cur_outReal = cur_tempBuffer - cur_outReal;
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 
@@ -14289,6 +14287,7 @@ public final class Core {
          double cur_tempBuffer2 = 0.0;
          double cur_outRealUpperBand = 0.0;
          double cur_outRealLowerBand = 0.0;
+         double cur_outRealMiddleBand = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempBuffer1 = sp.sub0.peek(inReal);
          cur_tempBuffer2 = sp.sub1.peek(inReal);
@@ -14303,9 +14302,7 @@ public final class Core {
             cur_outRealUpperBand = Math.fma(cur_tempBuffer2, sp.optInNbDevUp, tempReal2);
             cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
          }
-         cur_outRealUpperBand = cur_outRealUpperBand;
          cur_outRealMiddleBand = cur_tempBuffer1;
-         cur_outRealLowerBand = cur_outRealLowerBand;
          return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
@@ -105970,6 +105967,7 @@ public final class Core {
          double cur_fastMABuffer = 0.0;
          double cur_outMACDSignal = 0.0;
          double cur_outMACDHist = 0.0;
+         double cur_outMACD = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_slowMABuffer = sp.sub0.peek(inReal);
          cur_fastMABuffer = sp.sub1.peek(inReal);
@@ -105979,8 +105977,6 @@ public final class Core {
          /* Combine map (batch tail, per bar). */
          cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
          cur_outMACD = cur_fastMABuffer;
-         cur_outMACDSignal = cur_outMACDSignal;
-         cur_outMACDHist = cur_outMACDHist;
          return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
 
@@ -128640,7 +128636,6 @@ public final class Core {
          } else {
             cur_outReal = 0.0;
          }
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 
@@ -129986,7 +129981,6 @@ public final class Core {
          } else {
             cur_outReal = 0.0;
          }
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 
@@ -141382,7 +141376,6 @@ public final class Core {
          } else {
             cur_outReal = Math.sqrt(cur_outReal);
          }
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 
@@ -142430,6 +142423,7 @@ public final class Core {
          StochStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outSlowD = 0.0;
+         double cur_outSlowK = 0.0;
          double tmp = 0.0;
          double diff = sp.diff;
          double highest = sp.highest;
@@ -142516,7 +142510,6 @@ public final class Core {
          cur_tempBuffer = sp.sub0.peek(cur_tempBuffer);
          cur_outSlowD = sp.sub1.peek(cur_tempBuffer);
          cur_outSlowK = cur_tempBuffer;
-         cur_outSlowD = cur_outSlowD;
          return new Value(cur_outSlowK, cur_outSlowD);
       }
 
@@ -143762,6 +143755,7 @@ public final class Core {
          StochfStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outFastD = 0.0;
+         double cur_outFastK = 0.0;
          double tmp = 0.0;
          double diff = sp.diff;
          double highest = sp.highest;
@@ -143847,7 +143841,6 @@ public final class Core {
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_outFastD = sp.sub0.peek(cur_tempBuffer);
          cur_outFastK = cur_tempBuffer;
-         cur_outFastD = cur_outFastD;
          return new Value(cur_outFastK, cur_outFastD);
       }
 
@@ -144878,8 +144871,6 @@ public final class Core {
             cur_outFastK = subOut1.fastK();
             cur_outFastD = subOut1.fastD();
          }
-         cur_outFastK = cur_outFastK;
-         cur_outFastD = cur_outFastD;
          return new Value(cur_outFastK, cur_outFastD);
       }
 

@@ -846,6 +846,7 @@
          StochStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outSlowD = 0.0;
+         double cur_outSlowK = 0.0;
          double tmp = 0.0;
          double diff = sp.diff;
          double highest = sp.highest;
@@ -932,7 +933,6 @@
          cur_tempBuffer = sp.sub0.peek(cur_tempBuffer);
          cur_outSlowD = sp.sub1.peek(cur_tempBuffer);
          cur_outSlowK = cur_tempBuffer;
-         cur_outSlowD = cur_outSlowD;
          return new Value(cur_outSlowK, cur_outSlowD);
       }
 

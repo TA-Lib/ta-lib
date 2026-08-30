@@ -576,8 +576,6 @@
             cur_outFastK = subOut1.fastK();
             cur_outFastD = subOut1.fastD();
          }
-         cur_outFastK = cur_outFastK;
-         cur_outFastD = cur_outFastD;
          return new Value(cur_outFastK, cur_outFastD);
       }
 

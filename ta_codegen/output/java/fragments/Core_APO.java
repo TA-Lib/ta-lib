@@ -477,7 +477,6 @@
          cur_outReal = sp.sub1.peek(inReal);
          /* Combine map (batch tail, per bar). */
          cur_outReal = cur_tempBuffer - cur_outReal;
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 

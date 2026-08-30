@@ -3692,6 +3692,21 @@ fn emit_composed_step(
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
 
     emit_composed_step_decls(o, func, cp, &cur_scalars, indent, frame);
+    // An output the pipeline reaches only through an ALIAS is written by the
+    // tail loop below and by nothing else, so it never enters `cur_scalars`. In
+    // the step that write lands on `sp.cur_<out>`; in a frame the bare name
+    // would resolve to that same FIELD and commit it. Give it a local.
+    let mut aliased: Vec<String> = Vec::new();
+    if frame {
+        for out in outputs {
+            if !cur_scalars.contains(out) {
+                let ty = out_java_type(func, out);
+                let zero = if ty == "int" { "0" } else { "0.0" };
+                let _ = writeln!(o, "{pad}{ty} cur_{out} = {zero};");
+                aliased.push(out.clone());
+            }
+        }
+    }
 
     let empty = HashSet::new();
     let ctx = stream_ctx(&empty, counter, stream_fma);
@@ -3709,6 +3724,7 @@ fn emit_composed_step(
         if frame {
             let declared: BTreeSet<String> = cur_scalars
                 .iter()
+                .chain(aliased.iter())
                 .map(|n| format!("cur_{n}"))
                 .chain(cp.map_temps.iter().map(|(n, _)| n.clone()))
                 .collect();
@@ -3798,11 +3814,13 @@ fn emit_composed_step(
     }
     let target = if frame { "" } else { "sp." };
     for out in outputs {
-        let _ = writeln!(
-            o,
-            "{pad}{target}cur_{out} = {};",
-            cur.get(out).expect("analyzer gated output")
-        );
+        let src = cur.get(out).expect("analyzer gated output");
+        // In a frame the pipeline may already have written this very local, and
+        // `x = x;` is CS1717 — an error under the shipped csproj, not a warning.
+        if frame && src == &format!("cur_{out}") {
+            continue;
+        }
+        let _ = writeln!(o, "{pad}{target}cur_{out} = {src};");
     }
     if frame {
         return Some(sink);

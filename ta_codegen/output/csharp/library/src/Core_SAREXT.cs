@@ -1019,11 +1019,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -1031,9 +1032,137 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAREXT", "peek", RetCode.BadParam);
-         SarextStream scratch = new SarextStream(this);
-         core.SarextStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         SarextStream sp = this;
+         double prevHigh = 0.0;
+         double prevLow = 0.0;
+         double afLong = sp.afLong;
+         double afShort = sp.afShort;
+         double cur_outReal = sp.cur_outReal;
+         double ep = sp.ep;
+         int isLong = sp.isLong;
+         double newHigh = sp.newHigh;
+         double newLow = sp.newLow;
+         double sar = sp.sar;
+         prevLow = newLow;
+         prevHigh = newHigh;
+         newLow = inLow;
+         newHigh = inHigh;
+         if( isLong == 1 ) {
+            /* Switch to short if the low penetrates the SAR value. */
+            if( newLow <= sar ) {
+               /* Switch and Overide the SAR with the ep */
+               isLong = 0;
+               sar = ep;
+               /* Make sure the overide SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+               /* Output the overide SAR */
+               if( sp.optInOffsetOnReverse != 0.0 ) {
+                  sar += sar * sp.optInOffsetOnReverse;
+               }
+               cur_outReal = 0 - sar;
+               /* Adjust afShort and ep */
+               afShort = sp.optInAccelerationInitShort;
+               ep = newLow;
+               /* Calculate the new SAR */
+               sar = Math.FusedMultiplyAdd(afShort, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+            } else {
+               /* No switch */
+               /* Output the SAR (was calculated in the previous iteration) */
+               cur_outReal = sar;
+               /* Adjust afLong and ep. */
+               if( newHigh > ep ) {
+                  ep = newHigh;
+                  afLong += sp.optInAccelerationLong;
+                  if( afLong > sp.optInAccelerationMaxLong ) {
+                     afLong = sp.optInAccelerationMaxLong;
+                  }
+               }
+               /* Calculate the new SAR */
+               sar = Math.FusedMultiplyAdd(afLong, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar > prevLow ) {
+                  sar = prevLow;
+               }
+               if( sar > newLow ) {
+                  sar = newLow;
+               }
+            }
+         /* Switch to long if the high penetrates the SAR value. */
+         } else if( newHigh >= sar ) {
+            /* Switch and Overide the SAR with the ep */
+            isLong = 1;
+            sar = ep;
+            /* Make sure the overide SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+            /* Output the overide SAR */
+            if( sp.optInOffsetOnReverse != 0.0 ) {
+               sar -= sar * sp.optInOffsetOnReverse;
+            }
+            cur_outReal = sar;
+            /* Adjust afLong and ep */
+            afLong = sp.optInAccelerationInitLong;
+            ep = newHigh;
+            /* Calculate the new SAR */
+            sar = Math.FusedMultiplyAdd(afLong, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+         } else {
+            /* No switch */
+            /* Output the SAR (was calculated in the previous iteration) */
+            cur_outReal = 0 - sar;
+            /* Adjust afShort and ep. */
+            if( newLow < ep ) {
+               ep = newLow;
+               afShort += sp.optInAccelerationShort;
+               if( afShort > sp.optInAccelerationMaxShort ) {
+                  afShort = sp.optInAccelerationMaxShort;
+               }
+            }
+            /* Calculate the new SAR */
+            sar = Math.FusedMultiplyAdd(afShort, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh ) {
+               sar = prevHigh;
+            }
+            if( sar < newHigh ) {
+               sar = newHigh;
+            }
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

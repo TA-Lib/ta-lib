@@ -421,11 +421,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inClose">This bar's close price.</param>
       /// <param name="inVolume">This bar's volume.</param>
@@ -433,9 +434,42 @@ public partial class Core
       public double Peek( double inClose, double inVolume )
       {
          if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("NVI", "peek", RetCode.BadParam);
-         NviStream scratch = new NviStream(this);
-         core.NviStepImpl(scratch, inClose, inVolume);
-         return scratch.cur_outReal;
+         NviStream sp = this;
+         double tempClose = 0.0;
+         double tempVolume = 0.0;
+         double tempNVI = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevClose = sp.prevClose;
+         double prevNVI = sp.prevNVI;
+         double prevVolume = sp.prevVolume;
+         tempClose = inClose;
+         tempVolume = inVolume;
+         /* prevClose != 0 guards the percentage-change division: a zero previous
+          * close is a degenerate input that would otherwise emit NaN/Inf; carry
+          * the index forward unchanged instead. Never triggers on real prices.
+          */
+         if( tempVolume < prevVolume && prevClose != 0.0 ) {
+            /* The index is a running product, so it has no upper bound: enough
+             * compounding gains push it past the largest double. Keep the last
+             * representable value instead of writing +/-Inf, which no caller can
+             * chart and which poisons every arithmetic downstream of it. Real
+             * price series never come close.
+             *
+             * Written as a compound assignment on the copy, exactly as the update
+             * was before the guard: spelling it `a + r*a` would match the FMA
+             * fusion detector and silently re-round every bar, not just the
+             * overflowing one.
+             */
+            tempNVI = prevNVI;
+            tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
+            if( (double.IsFinite(tempNVI)) ) {
+               prevNVI = tempNVI;
+            }
+         }
+         cur_outReal = prevNVI;
+         prevClose = tempClose;
+         prevVolume = tempVolume;
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

@@ -6,7 +6,7 @@
 //! - Logic vs guarded validation checks
 //! - Indicator-specific feature tests (unstable period, enums, etc.)
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
 use ta_codegen_lib::backends;
 use ta_codegen_lib::helper_registry::HelperRegistry;
@@ -9559,7 +9559,8 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
             "csharp",
             &csharp,
             "internal void SmaStepImpl( SmaStream sp,",
-            &["core.SmaStepImpl(this,", "core.SmaStepImpl(scratch,"],
+            // Only `Update`'s. `Peek` runs a frame inline and calls no step.
+            &["core.SmaStepImpl(this,"],
             "StreamStep",
         ),
     ];
@@ -13265,3 +13266,137 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
     );
 }
 
+
+/// No C# `Peek` copies the handle: every one runs a frame against `this`, and
+/// what it allocates never grows with the period.
+///
+/// Structural for the same reason the C, Rust and Java sweeps are — a `Peek`
+/// that copied and then wrote the copy would still answer correctly, so no
+/// value gate can see the difference. What it costs is the flat-in-period cost
+/// the frame is for.
+///
+/// The one allocation a frame is allowed is a fixed-size accumulator: a C#
+/// array field is a reference, so a localized one must be cloned or the frame
+/// would write the handle through it. "Fixed-size" is read off the emitted code
+/// rather than asserted from a name list — the batch body declares exactly
+/// these with a literal dimension (`new double[3]`), and a period-sized buffer
+/// never is.
+#[test]
+fn no_csharp_peek_copies_the_handle() {
+    /// The handle's own fields, read off the emitted class declarations.
+    fn handle_fields(s: &str) -> BTreeSet<String> {
+        s.lines()
+            .filter_map(|l| l.trim().strip_prefix("internal "))
+            .filter_map(|d| d.split_once(' '))
+            .map(|(_, rest)| rest.trim_end_matches(';').split(" =").next().unwrap_or(rest))
+            .filter(|n| !n.is_empty() && n.chars().all(|c| c.is_alphanumeric() || c == '_'))
+            .map(str::to_string)
+            .collect()
+    }
+
+    /// The name `line` assigns to, with any subscript stripped — `None` when it
+    /// is not a plain assignment.
+    fn assign_target(line: &str) -> Option<&str> {
+        let (lhs, _) = line.split_once('=')?;
+        let lhs = lhs.trim();
+        if lhs.ends_with(['=', '!', '<', '>', '+', '-', '*', '/']) {
+            return None; // ==, !=, <=, +=, ...
+        }
+        // The declared name is the LAST token; strip its subscript there, not
+        // over the whole left side — `double[] x = ...` carries a `[` in the
+        // TYPE, and cutting at it would name the type instead of the variable.
+        let last = lhs.rsplit(' ').next()?;
+        let last = last.split_once('[').map_or(last, |(h, _)| h);
+        (!last.is_empty() && last.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '.'))
+            .then_some(last)
+    }
+
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let (mut swept, mut frames, mut clones, mut writes) = (0usize, 0usize, 0usize, 0usize);
+    let mut offenders: Vec<String> = Vec::new();
+
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        if !func.streaming || !backends::csharp_stream::emits_stream(&func, &registry) {
+            continue;
+        }
+        let batch = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        let s = backends::csharp_stream::generate(&func, &enums, &registry, &helpers);
+        let mut at = 0usize;
+        while let Some(k) = s[at..].find("\n      public ") {
+            let start = at + k + 1;
+            at = start + 1;
+            let Some(nl) = s[start..].find('\n') else { break };
+            if !s[start..start + nl].contains(" Peek( ") {
+                continue;
+            }
+            let end = s[start..].find("\n      }").map_or(s.len(), |e| start + e);
+            let peek = &s[start..end];
+            swept += 1;
+            if peek.contains("Stream sp = this;") {
+                frames += 1;
+            }
+            let fields = handle_fields(&s);
+            let mut locals: BTreeSet<&str> = BTreeSet::new();
+            for line in peek.lines() {
+                let l = line.trim();
+                if l.starts_with("//") || l.starts_with("/*") || l.starts_with('*') {
+                    continue;
+                }
+                // A frame writes locals. A bare `cur_x = ...` whose name the
+                // frame never DECLARED resolves to the handle field of that
+                // name and commits it — which is what a composed output reached
+                // only through an alias used to do, invisibly to every value
+                // gate but C#'s `valueNeUpdate` leg.
+                if let Some(t) = assign_target(l) {
+                    let declared = l
+                        .split_once('=')
+                        .is_some_and(|(lhs, _)| lhs.trim().split(' ').count() > 1);
+                    if declared {
+                        locals.insert(t);
+                    } else if t.starts_with("sp.") || (fields.contains(t) && !locals.contains(t)) {
+                        offenders.push(format!("{name}: writes the handle: {l}"));
+                    } else {
+                        writes += 1;
+                    }
+                }
+                if l.contains("CopyFrom") || l.contains("peekScratch") {
+                    offenders.push(format!("{name}: {l}"));
+                    continue;
+                }
+                if !l.contains("new ") || l.starts_with("throw new") || l.starts_with("return new")
+                {
+                    continue;
+                }
+                // `<T>[] <f> = new <T>[sp.<f>.Length];` — allowed only where the
+                // batch body sizes `<f>` with a literal.
+                let ok = l
+                    .split_once("= new ")
+                    .and_then(|(_, rhs)| rhs.split_once("[sp."))
+                    .and_then(|(elem, tail)| tail.split_once(".Length];").map(|(f, _)| (elem, f)))
+                    .is_some_and(|(elem, f)| {
+                        let decl = format!("{elem}[] {f} = new {elem}[");
+                        batch.match_indices(&decl).any(|(i, _)| {
+                            batch[i + decl.len()..]
+                                .split_once(']')
+                                .is_some_and(|(n, _)| n.parse::<u32>().is_ok())
+                        })
+                    });
+                if ok {
+                    clones += 1;
+                } else {
+                    offenders.push(format!("{name}: {l}"));
+                }
+            }
+        }
+    }
+
+    assert!(swept > 170, "only {swept} Peek(s) swept");
+    assert_eq!(frames, swept, "{frames} of {swept} Peek(s) run a frame");
+    // A floor on the exemption itself: if the clone shape stopped being emitted
+    // the branch above would be dead and would stop discriminating.
+    assert!(clones >= 20, "only {clones} accumulator clones seen — the exemption is untested");
+    assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
+    assert!(offenders.is_empty(), "a Peek copies:\n{}", offenders.join("\n"));
+}

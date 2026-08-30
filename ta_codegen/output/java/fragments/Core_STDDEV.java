@@ -416,7 +416,6 @@
          } else {
             cur_outReal = Math.sqrt(cur_outReal);
          }
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 

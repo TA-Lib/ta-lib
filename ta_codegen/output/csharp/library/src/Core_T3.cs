@@ -679,20 +679,38 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("T3", "peek", RetCode.BadParam);
-         T3Stream scratch = new T3Stream(this);
-         core.T3StepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         T3Stream sp = this;
+         double cur_outReal = sp.cur_outReal;
+         double e1 = sp.e1;
+         double e2 = sp.e2;
+         double e3 = sp.e3;
+         double e4 = sp.e4;
+         double e5 = sp.e5;
+         double e6 = sp.e6;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         e1 = Math.FusedMultiplyAdd(sp.one_minus_k, e1, sp.k * inReal);
+         e2 = Math.FusedMultiplyAdd(sp.one_minus_k, e2, sp.k * e1);
+         e3 = Math.FusedMultiplyAdd(sp.one_minus_k, e3, sp.k * e2);
+         e4 = Math.FusedMultiplyAdd(sp.one_minus_k, e4, sp.k * e3);
+         e5 = Math.FusedMultiplyAdd(sp.one_minus_k, e5, sp.k * e4);
+         e6 = Math.FusedMultiplyAdd(sp.one_minus_k, e6, sp.k * e5);
+         cur_outReal = Math.FusedMultiplyAdd(sp.c4, e3, Math.FusedMultiplyAdd(sp.c3, e4, Math.FusedMultiplyAdd(sp.c1, e6, sp.c2 * e5)));
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

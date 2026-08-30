@@ -495,11 +495,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -509,9 +510,58 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL2CROWS", "peek", RetCode.BadParam);
-         Cdl2crowsStream scratch = new Cdl2crowsStream(this);
-         core.Cdl2crowsStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         Cdl2crowsStream sp = this;
+         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
+         int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
+         double BodyLong_factor = sp.cs_BodyLong_factor;
+         if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = ((BodyLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         }
+         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* 1st: white */
+             Math.Abs(lag2_inClose - lag2_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 2nd: black */
+             (Math.Min(lag1_inOpen, lag1_inClose) > Math.Max(lag2_inOpen, lag2_inClose)) && /* gapping up */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&           /* 3rd: black */
+             inOpen < lag1_inOpen &&
+             inOpen > lag1_inClose &&                                /* opening within 2nd rb */
+             inClose > lag2_inOpen &&
+             inClose < lag2_inClose )                                /* closing within 1st rb */
+         {
+            cur_outInteger = 0 - 100;
+         } else {
+            cur_outInteger = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyLong_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyLong_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[ringPos_BodyLongTrailingIdx] : pkVal0);
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
+         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
+            ringPos_BodyLongTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

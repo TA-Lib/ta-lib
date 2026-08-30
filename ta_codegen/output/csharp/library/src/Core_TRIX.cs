@@ -539,20 +539,34 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIX", "peek", RetCode.BadParam);
-         TrixStream scratch = new TrixStream(this);
-         core.TrixStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         TrixStream sp = this;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevEMA1 = sp.prevEMA1;
+         double prevEMA2 = sp.prevEMA2;
+         double prevEMA3 = sp.prevEMA3;
+         tempReal = prevEMA3;
+         prevEMA1 = Math.FusedMultiplyAdd(inReal - prevEMA1, sp.optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, sp.optInK_1, prevEMA2);
+         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, sp.optInK_1, prevEMA3);
+         if( tempReal != 0.0 ) {
+            cur_outReal = (prevEMA3 / tempReal - 1.0) * 100.0;
+         } else {
+            cur_outReal = 0.0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

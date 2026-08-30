@@ -509,11 +509,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -523,9 +524,41 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHIKKAKE", "peek", RetCode.BadParam);
-         CdlhikkakeStream scratch = new CdlhikkakeStream(this);
-         core.CdlhikkakeStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         CdlhikkakeStream sp = this;
+         int cd = sp.cd;
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         int patternResult = sp.patternResult;
+         double savedHigh = sp.savedHigh;
+         double savedLow = sp.savedLow;
+         if( lag1_inHigh < lag2_inHigh &&
+             lag1_inLow > lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh < lag1_inHigh && inLow < lag1_inLow || inHigh > lag1_inHigh && inLow > lag1_inLow) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh < lag1_inHigh) ? 1 : 0 - 1);
+            savedHigh = lag1_inHigh;
+            savedLow = lag1_inLow;
+            cd = 4;
+            cur_outInteger = patternResult;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose > savedHigh || patternResult < 0 && inClose < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            cur_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            cd = 0;
+         } else {
+            cur_outInteger = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
+         }
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         return cur_outInteger;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

@@ -763,6 +763,7 @@
          StochfStream sp = this;
          double cur_tempBuffer = 0.0;
          double cur_outFastD = 0.0;
+         double cur_outFastK = 0.0;
          double tmp = 0.0;
          double diff = sp.diff;
          double highest = sp.highest;
@@ -848,7 +849,6 @@
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_outFastD = sp.sub0.peek(cur_tempBuffer);
          cur_outFastK = cur_tempBuffer;
-         cur_outFastD = cur_outFastD;
          return new Value(cur_outFastK, cur_outFastD);
       }
 

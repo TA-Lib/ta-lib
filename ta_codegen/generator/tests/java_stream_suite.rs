@@ -8,7 +8,7 @@
 //! check: the transition build panics on a cursor/startIdx leak, so a clean
 //! render proves the analyzer normalizations fired.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::path::PathBuf;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::registry::Registry;
@@ -629,8 +629,40 @@ fn java_composed_copy_out_is_stride_guarded() {
 /// flat-in-period cost the frame is for.
 #[test]
 fn no_java_peek_copies_the_handle() {
+    /// The handle's own fields: a two-token declaration at the class's own
+    /// indent (`      double[] ring_x;`).
+    fn handle_fields(s: &str) -> BTreeSet<String> {
+        s.lines()
+            .filter(|l| l.starts_with("      ") && !l.starts_with("       "))
+            .filter_map(|l| l.trim().strip_suffix(';'))
+            .filter_map(|d| d.split_once(' '))
+            .filter(|(_, n)| {
+                !n.is_empty() && n.chars().all(|c| c.is_alphanumeric() || c == '_')
+            })
+            .map(|(_, n)| n.to_string())
+            .collect()
+    }
+
+    /// The name `line` assigns to, with any subscript stripped — `None` when it
+    /// is not a plain assignment.
+    fn assign_target(line: &str) -> Option<&str> {
+        let (lhs, _) = line.split_once('=')?;
+        let lhs = lhs.trim();
+        if lhs.ends_with(['=', '!', '<', '>', '+', '-', '*', '/']) {
+            return None; // ==, !=, <=, +=, ...
+        }
+        // The declared name is the LAST token; strip its subscript there, not
+        // over the whole left side — `double[] x = ...` carries a `[` in the
+        // TYPE, and cutting at it would name the type instead of the variable.
+        let last = lhs.rsplit(' ').next()?;
+        let last = last.split_once('[').map_or(last, |(h, _)| h);
+        (!last.is_empty() && last.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '.'))
+            .then_some(last)
+    }
+
     let mut swept = 0usize;
     let mut frames = 0usize;
+    let mut writes = 0usize;
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
         let s = java_stream_section(&name);
@@ -642,8 +674,27 @@ fn no_java_peek_copies_the_handle() {
         if peek.contains(" sp = this;") {
             frames += 1;
         }
+        let fields = handle_fields(&s);
+        let mut locals: BTreeSet<&str> = BTreeSet::new();
         for line in peek.lines() {
             let l = line.trim();
+            // A frame writes locals. A bare `cur_x = ...` whose name the frame
+            // never DECLARED resolves to the handle field of that name and
+            // commits it — which is what a composed output reached only through
+            // an alias used to do, and no value gate here can see it: `value()`
+            // returns the CACHED record, which such a write does not move.
+            if let Some(t) = assign_target(l) {
+                let declared = l
+                    .split_once('=')
+                    .is_some_and(|(lhs, _)| lhs.trim().split(' ').count() > 1);
+                if declared {
+                    locals.insert(t);
+                } else if t.starts_with("sp.") || (fields.contains(t) && !locals.contains(t)) {
+                    offenders.push(format!("{name}: writes the handle: {l}"));
+                } else {
+                    writes += 1;
+                }
+            }
             // Comments carry the word too, and `throw new
             // TaLibArgumentException` is the bar rejection while `new Value(`
             // packs the answer — none of the three copies a handle.
@@ -659,6 +710,7 @@ fn no_java_peek_copies_the_handle() {
     }
     assert!(swept > 170, "only {swept} peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} peek(s) run a frame");
+    assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
     assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));
 }
 

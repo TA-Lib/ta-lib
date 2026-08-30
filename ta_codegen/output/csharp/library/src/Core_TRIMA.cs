@@ -729,9 +729,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static TrimaStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -756,26 +753,106 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TRIMA", "peek", RetCode.BadParam);
-         TrimaStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new TrimaStream(this);
-            peekScratch = scratch;
+         TrimaStream sp = this;
+         double cur_outReal = 0.0;
+         if( sp.optInTimePeriod % 2 == 1 ) {
+            double numerator = sp.numerator;
+            double numeratorAdd = sp.numeratorAdd;
+            double numeratorSub = sp.numeratorSub;
+            int ringPos_middleIdx = sp.ringPos_middleIdx;
+            int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            double tempReal = sp.tempReal;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            if( sp.ringCap_middleIdx == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            if( sp.ringCap_trailingIdx == 0 ) {
+               pkSlot1 = 0;
+               pkVal1 = inReal;
+            }
+            /* Step (1) */
+            numerator -= numeratorSub;
+            numeratorSub -= tempReal;
+            tempReal = (ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[ringPos_middleIdx] : pkVal0;
+            numeratorSub += tempReal;
+            /* Step (2) */
+            numerator += numeratorAdd;
+            numeratorAdd -= tempReal;
+            tempReal = inReal;
+            numeratorAdd += tempReal;
+            /* Step (3) */
+            numerator += tempReal;
+            /* Step (4) */
+            tempReal = (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal1;
+            cur_outReal = numerator * sp.factor;
+            ringPos_middleIdx = ringPos_middleIdx + 1;
+            if( ringPos_middleIdx >= sp.ringCap_middleIdx ) {
+               ringPos_middleIdx = 0;
+            }
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+               ringPos_trailingIdx = 0;
+            }
          } else {
-            scratch.CopyFrom(this);
+            double numerator = sp.numerator;
+            double numeratorAdd = sp.numeratorAdd;
+            double numeratorSub = sp.numeratorSub;
+            int ringPos_middleIdx = sp.ringPos_middleIdx;
+            int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+            double tempReal = sp.tempReal;
+            int pkSlot0 = -1;
+            double pkVal0 = 0.0;
+            int pkSlot1 = -1;
+            double pkVal1 = 0.0;
+            if( sp.ringCap_middleIdx == 0 ) {
+               pkSlot0 = 0;
+               pkVal0 = inReal;
+            }
+            if( sp.ringCap_trailingIdx == 0 ) {
+               pkSlot1 = 0;
+               pkVal1 = inReal;
+            }
+            /* Step (1) */
+            numerator -= numeratorSub;
+            numeratorSub -= tempReal;
+            tempReal = (ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[ringPos_middleIdx] : pkVal0;
+            numeratorSub += tempReal;
+            /* Step (2) */
+            numeratorAdd -= tempReal;
+            numerator += numeratorAdd;
+            tempReal = inReal;
+            numeratorAdd += tempReal;
+            /* Step (3) */
+            numerator += tempReal;
+            /* Step (4) */
+            tempReal = (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal1;
+            cur_outReal = numerator * sp.factor;
+            ringPos_middleIdx = ringPos_middleIdx + 1;
+            if( ringPos_middleIdx >= sp.ringCap_middleIdx ) {
+               ringPos_middleIdx = 0;
+            }
+            ringPos_trailingIdx = ringPos_trailingIdx + 1;
+            if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+               ringPos_trailingIdx = 0;
+            }
          }
-         core.TrimaStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

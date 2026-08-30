@@ -559,9 +559,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static AoStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -587,11 +584,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -599,15 +597,51 @@ public partial class Core
       public double Peek( double inHigh, double inLow )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AO", "peek", RetCode.BadParam);
-         AoStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new AoStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         AoStream sp = this;
+         double medianPrice = 0.0;
+         double tempReal = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         int ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
+         int ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
+         double sumFast = sp.sumFast;
+         double sumSlow = sp.sumSlow;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         if( sp.ringCap_trailingFastIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = (inHigh + inLow) / 2.0;
          }
-         core.AoStepImpl(scratch, inHigh, inLow);
-         return scratch.cur_outReal;
+         if( sp.ringCap_trailingSlowIdx == 0 ) {
+            pkSlot1 = 0;
+            pkVal1 = (inHigh + inLow) / 2.0;
+         }
+         medianPrice = (inHigh + inLow) / 2.0;
+         sumFast += medianPrice;
+         sumSlow += medianPrice;
+         /* Snapshot the oscillator before either total drops its trailing bar,
+          * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+          */
+         tempReal = sumFast / (double)sp.optInFastPeriod - sumSlow / (double)sp.optInSlowPeriod;
+         /* Read both trailing bars before writing the output. When startIdx is
+          * clamped to the lookback the longer window's trailing index equals
+          * outIdx exactly, so a store hoisted above this would read back the
+          * value it had just overwritten whenever the caller aliases outReal
+          * over inHigh or inLow.
+          */
+         sumFast -= (ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] : pkVal0;
+         sumSlow -= (ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] : pkVal1;
+         cur_outReal = tempReal;
+         ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
+         if( ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
+            ringPos_trailingFastIdx = 0;
+         }
+         ringPos_trailingSlowIdx = ringPos_trailingSlowIdx + 1;
+         if( ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
+            ringPos_trailingSlowIdx = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

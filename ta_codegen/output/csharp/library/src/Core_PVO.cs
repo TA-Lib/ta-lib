@@ -498,9 +498,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static PvoStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -525,26 +522,33 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inVolume">This bar's volume.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inVolume )
       {
          if( !double.IsFinite(inVolume) ) throw Core.StreamFailure("PVO", "peek", RetCode.BadParam);
-         PvoStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new PvoStream(this);
-            peekScratch = scratch;
+         PvoStream sp = this;
+         double tempReal = 0.0;
+         double cur_tempBuffer = 0.0;
+         double cur_outReal = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer = sp.sub0.Peek(inVolume);
+         cur_outReal = sp.sub1.Peek(inVolume);
+         /* Combine map (batch tail, per bar). */
+         tempReal = cur_outReal;
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            cur_outReal = (cur_tempBuffer - tempReal) / tempReal * 100.0;
          } else {
-            scratch.CopyFrom(this);
+            cur_outReal = 0.0;
          }
-         core.PvoStepImpl(scratch, inVolume);
-         return scratch.cur_outReal;
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

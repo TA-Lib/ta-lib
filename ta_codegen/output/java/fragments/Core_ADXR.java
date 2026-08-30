@@ -434,7 +434,6 @@
          cur_adx = sp.sub0.peek(inHigh, inLow, inClose);
          /* Combine map (batch tail, per bar). */
          cur_outReal = ((cur_adx + sp.lagRing_adx[sp.lagRingPos_adx]) / 2.0);
-         cur_outReal = cur_outReal;
          return cur_outReal;
       }
 

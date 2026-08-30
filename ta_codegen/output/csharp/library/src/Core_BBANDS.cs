@@ -931,9 +931,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static BbandsStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -958,26 +955,42 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public BbandsValue Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("BBANDS", "peek", RetCode.BadParam);
-         BbandsStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new BbandsStream(this);
-            peekScratch = scratch;
+         BbandsStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double cur_tempBuffer1 = 0.0;
+         double cur_tempBuffer2 = 0.0;
+         double cur_outRealUpperBand = 0.0;
+         double cur_outRealLowerBand = 0.0;
+         double cur_outRealMiddleBand = 0.0;
+         /* Pipeline the new bar through the sub-streams (batch tail order). */
+         cur_tempBuffer1 = sp.sub0.Peek(inReal);
+         cur_tempBuffer2 = sp.sub1.Peek(inReal);
+         /* Combine map (batch tail, per bar). */
+         if( sp.optInNbDevUp == sp.optInNbDevDn ) {
+            tempReal = cur_tempBuffer2 * sp.optInNbDevUp;
+            tempReal2 = cur_tempBuffer1;
+            cur_outRealUpperBand = tempReal2 + tempReal;
+            cur_outRealLowerBand = tempReal2 - tempReal;
          } else {
-            scratch.CopyFrom(this);
+            tempReal2 = cur_tempBuffer1;
+            cur_outRealUpperBand = Math.FusedMultiplyAdd(cur_tempBuffer2, sp.optInNbDevUp, tempReal2);
+            cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
          }
-         core.BbandsStepImpl(scratch, inReal);
-         return new BbandsValue(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+         cur_outRealMiddleBand = cur_tempBuffer1;
+         return new BbandsValue(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

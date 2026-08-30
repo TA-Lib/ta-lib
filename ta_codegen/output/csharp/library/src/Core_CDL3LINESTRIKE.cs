@@ -502,9 +502,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static Cdl3linestrikeStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -532,11 +529,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -546,15 +544,67 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3LINESTRIKE", "peek", RetCode.BadParam);
-         Cdl3linestrikeStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new Cdl3linestrikeStream(this);
-            peekScratch = scratch;
+         Cdl3linestrikeStream sp = this;
+         int totIdx = 0;
+         double[] NearPeriodTotal = new double[sp.NearPeriodTotal.Length];
+         Array.Copy( sp.NearPeriodTotal, NearPeriodTotal, sp.NearPeriodTotal.Length );
+         int cur_outInteger = sp.cur_outInteger;
+         double lag1_inClose = sp.lag1_inClose;
+         double lag1_inHigh = sp.lag1_inHigh;
+         double lag1_inLow = sp.lag1_inLow;
+         double lag1_inOpen = sp.lag1_inOpen;
+         double lag2_inClose = sp.lag2_inClose;
+         double lag2_inHigh = sp.lag2_inHigh;
+         double lag2_inLow = sp.lag2_inLow;
+         double lag2_inOpen = sp.lag2_inOpen;
+         double lag3_inClose = sp.lag3_inClose;
+         double lag3_inHigh = sp.lag3_inHigh;
+         double lag3_inLow = sp.lag3_inLow;
+         double lag3_inOpen = sp.lag3_inOpen;
+         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int Near_rangeType = sp.cs_Near_rangeType;
+         int Near_avgPeriod = sp.cs_Near_avgPeriod;
+         double Near_factor = sp.cs_Near_factor;
+         pkSlot0 = ringPos_NearTrailingIdx;
+         pkVal0 = ((Near_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+         if( ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) && /* three with same color */
+             ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) &&
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) && /* 4th opposite color */
+             lag2_inOpen >= Math.Min(lag3_inOpen, lag3_inClose) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(lag3_inClose - lag3_inOpen)) : ((Near_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((Near_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd opens within/near 1st rb */
+             lag2_inOpen <= Math.Max(lag3_inOpen, lag3_inClose) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(lag3_inClose - lag3_inOpen)) : ((Near_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((Near_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             lag1_inOpen >= Math.Min(lag2_inOpen, lag2_inClose) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd opens within/near 2nd rb */
+             lag1_inOpen <= Math.Max(lag2_inOpen, lag2_inClose) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
+             (((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && lag1_inClose > lag2_inClose && lag2_inClose > lag3_inClose && inOpen > lag1_inClose && inClose < lag3_inOpen || ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && lag1_inClose < lag2_inClose && lag2_inClose < lag3_inClose && inOpen < lag1_inClose && inClose > lag3_inOpen) ) /* if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open */
+         {
+            cur_outInteger = ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) * 100;
          } else {
-            scratch.CopyFrom(this);
+            cur_outInteger = 0;
          }
-         core.Cdl3linestrikeStepImpl(scratch, inOpen, inHigh, inLow, inClose);
-         return scratch.cur_outInteger;
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx) != pkSlot0) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] : pkVal0) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx != pkSlot0) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx] : pkVal0));
+         }
+         lag3_inOpen = lag2_inOpen;
+         lag2_inOpen = lag1_inOpen;
+         lag1_inOpen = inOpen;
+         lag3_inHigh = lag2_inHigh;
+         lag2_inHigh = lag1_inHigh;
+         lag1_inHigh = inHigh;
+         lag3_inLow = lag2_inLow;
+         lag2_inLow = lag1_inLow;
+         lag1_inLow = inLow;
+         lag3_inClose = lag2_inClose;
+         lag2_inClose = lag1_inClose;
+         lag1_inClose = inClose;
+         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
+         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
+            ringPos_NearTrailingIdx = 0;
+         }
+         return cur_outInteger;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

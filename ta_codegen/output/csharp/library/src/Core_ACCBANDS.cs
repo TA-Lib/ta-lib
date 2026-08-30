@@ -605,9 +605,6 @@ public partial class Core
          this.outRangeCount = other.outRangeCount;
       }
 
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static AccbandsStream? peekScratch;
-
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
@@ -634,11 +631,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -647,15 +645,67 @@ public partial class Core
       public AccbandsValue Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("ACCBANDS", "peek", RetCode.BadParam);
-         AccbandsStream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new AccbandsStream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
+         AccbandsStream sp = this;
+         double tempUpper = 0.0;
+         double tempMiddle = 0.0;
+         double tempLower = 0.0;
+         double tempReal = 0.0;
+         double cur_outRealLowerBand = sp.cur_outRealLowerBand;
+         double cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
+         double cur_outRealUpperBand = sp.cur_outRealUpperBand;
+         double periodTotalLower = sp.periodTotalLower;
+         double periodTotalMiddle = sp.periodTotalMiddle;
+         double periodTotalUpper = sp.periodTotalUpper;
+         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inHigh;
+            pkSlot1 = 0;
+            pkVal1 = inLow;
+            pkSlot2 = 0;
+            pkVal2 = inClose;
          }
-         core.AccbandsStepImpl(scratch, inHigh, inLow, inClose);
-         return new AccbandsValue(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+         /* Add the incoming bar to each running sum. */
+         tempReal = inHigh + inLow;
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs(inHigh) + Math.Abs(inLow))) ) {
+            tempReal = 4 * (inHigh - inLow) / tempReal;
+            periodTotalUpper += inHigh * (1 + tempReal);
+            periodTotalLower += inLow * (1 - tempReal);
+         } else {
+            periodTotalUpper += inHigh;
+            periodTotalLower += inLow;
+         }
+         periodTotalMiddle += inClose;
+         /* Record the current window sums. */
+         tempUpper = periodTotalUpper;
+         tempMiddle = periodTotalMiddle;
+         tempLower = periodTotalLower;
+         /* Remove the trailing bar from each running sum. */
+         tempReal = ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) + ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1);
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (Math.Abs((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) + Math.Abs((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1))) ) {
+            tempReal = 4 * (((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) - ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1)) / tempReal;
+            periodTotalUpper -= ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0) * (1 + tempReal);
+            periodTotalLower -= ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1) * (1 - tempReal);
+         } else {
+            periodTotalUpper -= (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] : pkVal0;
+            periodTotalLower -= (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[ringPos_trailingIdx] : pkVal1;
+         }
+         periodTotalMiddle -= (ringPos_trailingIdx != pkSlot2) ? sp.ring_trailingIdx_inClose[ringPos_trailingIdx] : pkVal2;
+         /* Write the three bands. */
+         cur_outRealUpperBand = tempUpper / (double)sp.optInTimePeriod;
+         cur_outRealMiddleBand = tempMiddle / (double)sp.optInTimePeriod;
+         cur_outRealLowerBand = tempLower / (double)sp.optInTimePeriod;
+         ringPos_trailingIdx = ringPos_trailingIdx + 1;
+         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+            ringPos_trailingIdx = 0;
+         }
+         return new AccbandsValue(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

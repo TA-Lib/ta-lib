@@ -610,20 +610,48 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CMO", "peek", RetCode.BadParam);
-         CmoStream scratch = new CmoStream(this);
-         core.CmoStepImpl(scratch, inReal);
-         return scratch.cur_outReal;
+         CmoStream sp = this;
+         double tempValue1 = 0.0;
+         double tempValue2 = 0.0;
+         double cur_outReal = sp.cur_outReal;
+         double prevGain = sp.prevGain;
+         double prevLoss = sp.prevLoss;
+         double prevValue = sp.prevValue;
+         if( sp.optInTimePeriod == 1 ) {
+            cur_outReal = inReal;
+            return cur_outReal ;
+         }
+         tempValue1 = inReal;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= sp.optInTimePeriod - 1;
+         prevGain *= sp.optInTimePeriod - 1;
+         if( tempValue2 < 0 ) {
+            prevLoss -= tempValue2;
+         } else {
+            prevGain += tempValue2;
+         }
+         prevLoss /= sp.optInTimePeriod;
+         prevGain /= sp.optInTimePeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( tempValue1 > 0.0 ) {
+            cur_outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
+         } else {
+            cur_outReal = 0.0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>

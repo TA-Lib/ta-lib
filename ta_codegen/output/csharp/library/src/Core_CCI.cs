@@ -546,11 +546,12 @@ public partial class Core
       /// <summary>Evaluate a forming bar without committing it.</summary>
       /// <remarks>
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
-      /// would return — it is the same generated code, run on a copy. Never writes
-      /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
-      /// to the state this indicator carries. If you peek on every tick and that
-      /// matters, hold the value <see cref="Update"/> returns instead.</para>
+      /// would return — the same transition, with every store it would make carried
+      /// in a local instead. Never writes this handle, so peeks may run
+      /// concurrently with each other.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
@@ -559,9 +560,57 @@ public partial class Core
       public double Peek( double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CCI", "peek", RetCode.BadParam);
-         CciStream scratch = new CciStream(this);
-         core.CciStepImpl(scratch, inHigh, inLow, inClose);
-         return scratch.cur_outReal;
+         CciStream sp = this;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double tempReal3 = 0.0;
+         double theAverage = 0.0;
+         double lastValue = 0.0;
+         int j = 0;
+         int circBuffer_Idx = sp.circBuffer_Idx;
+         double cur_outReal = sp.cur_outReal;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         lastValue = (inHigh + inLow + inClose) / 3;
+         pkSlot0 = circBuffer_Idx;
+         pkVal0 = lastValue;
+         /* Calculate the average for the whole period. */
+         theAverage = 0;
+         for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+            theAverage += (j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0;
+         }
+         theAverage /= sp.optInTimePeriod;
+         /* Do the summation of the ABS(TypePrice-average)
+          * for the whole period, then its mean.
+          */
+         tempReal2 = 0;
+         for( j = 0; j < sp.optInTimePeriod; j += 1 ) {
+            tempReal2 += Math.Abs(((j != pkSlot0) ? sp.cb_circBuffer[j] : pkVal0) - theAverage);
+         }
+         tempReal2 /= sp.optInTimePeriod;
+         /* And finally, the CCI... */
+         tempReal = lastValue - theAverage;
+         /* Both tests are relative to the window's own price level (issue #253).
+          * They ask "is this window flat?", and flatness is a property of the
+          * prices relative to each other -- but a deviation carries the quote
+          * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
+          * every window of an instrument quoted below it and zeroed the whole
+          * output. The band is still wide enough (~90 ulp of the average) to
+          * absorb the sub-epsilon residue an identical-price window leaves in the
+          * average, which is what it was widened for in the first place (#7).
+          */
+         tempReal3 = Math.Abs(theAverage);
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+            cur_outReal = tempReal / (0.015 * tempReal2);
+         } else {
+            cur_outReal = 0.0;
+         }
+         /* Move forward the circular buffer indexes. */
+         circBuffer_Idx = circBuffer_Idx + 1;
+         if( circBuffer_Idx > sp.maxIdx_circBuffer ) {
+            circBuffer_Idx = 0;
+         }
+         return cur_outReal;
       }
 
       /// <summary>Commit <c>n</c> closed bars and write their <c>n</c> values, in one call.</summary>
