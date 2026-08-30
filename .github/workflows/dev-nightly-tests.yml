@@ -583,6 +583,83 @@ jobs:
             exit 1
           fi
 
+  # Every Rust step in this tree compiles for the runner's own host triple,
+  # x86_64-unknown-linux-gnu, and that is the only machine shape the crate has
+  # ever been compiled in (#179 E3). Two assumptions rustc can see are invisible
+  # from there: a pointer width of 64 -- the crate indexes with `usize` end to
+  # end -- and an x86 ISA. Neither has a symptom here; the first sign is a
+  # compile error in a consumer's build, on a platform nobody in this repo
+  # builds for, in a published version that cannot be edited.
+  #
+  # Measured on this tree, by injecting each defect into the generated crate and
+  # re-running all three legs:
+  #
+  #   injected into library/src/lib.rs                  host   i686   aarch64
+  #   const _: () = assert!(size_of::<usize>() == 8)    green   RED    green
+  #   use core::arch::x86_64::_mm_pause;                green   RED    RED
+  #
+  # So i686 is the leg that does the work: it is the only one of the three that
+  # sees a pointer-width assumption. aarch64 earns its place on a different
+  # argument -- it is a platform consumers actually run on (Apple Silicon,
+  # Graviton), not a defect class i686 misses. No defect was found that aarch64
+  # catches and i686 does not.
+  #
+  # `check`, not `test`: running the crate on either target needs an emulator and
+  # a cross linker, and this job deliberately buys neither. A 32-bit arithmetic
+  # overflow that only appears at run time is therefore NOT covered here -- this
+  # gate is about what the compiler can see.
+  #
+  # Nightly, not the PR gate, for the same reason as msrv above: two rust-std
+  # downloads of unmeasured time do not belong in every contributor's
+  # merge-blocking path. Rust-only and self-contained, so also not gated on the
+  # C hero 'test' job.
+  cross-target:
+    name: Rust cross-target check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      # The list is the job's non-vacuity guard. An empty list, or one that named
+      # the host again, would leave every step below green while compiling
+      # nothing the other Rust jobs do not already compile -- so both are a hard
+      # failure here rather than a silently weaker gate.
+      - name: Install the cross targets
+        id: targets
+        shell: bash
+        run: |
+          host=$(rustc -vV | sed -n 's/^host: //p')
+          targets="i686-unknown-linux-gnu aarch64-unknown-linux-gnu"
+          if [ -z "${targets// /}" ]; then
+            echo "::error::No cross targets are listed, so this job would pass without compiling anything the host jobs do not. Restore the list in .github/workflows/dev-nightly-tests.yml or delete the job."
+            exit 1
+          fi
+          for t in $targets; do
+            if [ "$t" = "$host" ]; then
+              echo "::error::Cross target '$t' is the runner's own host triple, so that leg re-checks what every other Rust job here already checks. Name a target that differs from the host, or drop it from the list."
+              exit 1
+            fi
+          done
+          echo "Host: $host"
+          echo "Cross targets: $targets"
+          rustup target add $targets
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+
+      - name: Compile the publishable crates for each cross target
+        shell: bash
+        run: |
+          for t in ${{ steps.targets.outputs.targets }}; do
+            echo "--- $t ---"
+            if ! cargo check -p ta-lib -p ta-lib-dispatch --all-targets --target "$t" --manifest-path ta_codegen/output/rust/Cargo.toml; then
+              echo "::error::The publishable crates do not compile for $t. The crate is pure Rust with no platform-specific code, so this is a portability assumption that reached the generated output -- a pointer width (anything that assumes usize is 64 bits), an x86-only intrinsic, or a type too large for a 32-bit address space. Fix the generator that emits it in ta_codegen/generator/ and re-run 'scripts/build.py generate'; do not edit ta_codegen/output/. Reproduce locally: rustup target add $t && cargo check -p ta-lib -p ta-lib-dispatch --all-targets --target $t --manifest-path ta_codegen/output/rust/Cargo.toml"
+              exit 1
+            fi
+          done
+
   # Bit-exact regression gate vs the last release (v0.6.4): diff every function
   # at period>=2, fail on any real divergence. C-only, gated on 'test'.
   # fetch-depth: 0 so the v0.6.4 tag is available. See ta_regtest/CLAUDE.md.
