@@ -441,6 +441,7 @@ struct TemaStreamState {
     prevEMA2: f64,
     prevEMA3: f64,
     optInK_1: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -452,12 +453,14 @@ impl Core {
     fn tema_step_impl(sp: &mut TemaStreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
+            sp.cur_outReal = (*outReal);
             return;
         }
         sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
         sp.prevEMA2 = (sp.prevEMA1 - sp.prevEMA2 as f64).mul_add(sp.optInK_1, sp.prevEMA2);
         sp.prevEMA3 = (sp.prevEMA2 - sp.prevEMA3 as f64).mul_add(sp.optInK_1, sp.prevEMA3);
         (*outReal) = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::tema_open_internal`]
@@ -493,6 +496,7 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = TemaStreamState {
+                cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
                 prevEMA1: 0.0_f64,
                 prevEMA2: 0.0_f64,
@@ -666,6 +670,7 @@ impl Core {
             prevEMA2,
             prevEMA3,
             optInK_1,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(TemaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -850,8 +855,8 @@ impl TemaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -868,19 +873,35 @@ impl TemaStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut cur_outReal = sp.cur_outReal;
             let mut prevEMA1 = sp.prevEMA1;
             let mut prevEMA2 = sp.prevEMA2;
             let mut prevEMA3 = sp.prevEMA3;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
+                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             prevEMA1 = (inReal - prevEMA1 as f64).mul_add(sp.optInK_1, prevEMA1);
             prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(sp.optInK_1, prevEMA2);
             prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(sp.optInK_1, prevEMA3);
             (*outReal) = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_TEMA_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

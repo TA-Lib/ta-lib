@@ -352,6 +352,8 @@ struct TA_CDLHIKKAKEMOD_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLHIKKAKEMOD_Value). */
+   int cur_outInteger;
    double NearPeriodTotal;
    int patternResult;
    int patternCount;
@@ -410,6 +412,7 @@ static void TA_CDLHIKKAKEMOD_StepImpl( struct TA_CDLHIKKAKEMOD_Stream *sp, doubl
    {
       sp->patternCount -= 1;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag3_inHigh = sp->lag2_inHigh;
@@ -610,6 +613,7 @@ static TA_RetCode TA_CDLHIKKAKEMOD_OpenImpl( struct TA_CDLHIKKAKEMOD_Stream **st
       sp->lag2_inClose = inClose[historyLen - 2];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -707,6 +711,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Peek( const TA_CDLHIKKAKEMOD_Stream *stre
    {
       sp->patternCount -= 1;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag3_inHigh = sp->lag2_inHigh;
@@ -748,6 +753,33 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_UpdateAndFill( TA_CDLHIKKAKEMOD_Stream *s
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Close( TA_CDLHIKKAKEMOD_Stream *stream )
 {
    TA_CDLHIKKAKEMOD_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Value( const TA_CDLHIKKAKEMOD_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Clone( const TA_CDLHIKKAKEMOD_Stream *stream, TA_CDLHIKKAKEMOD_Stream **clone )
+{
+   struct TA_CDLHIKKAKEMOD_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLHIKKAKEMOD_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_NearTrailingIdx_derived = NULL;
+   if( stream->ring_NearTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+     sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLHIKKAKEMOD_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_NearTrailingIdx_derived, stream->ring_NearTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

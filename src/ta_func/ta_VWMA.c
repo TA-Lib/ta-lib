@@ -295,6 +295,8 @@ struct TA_VWMA_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_VWMA_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double sumPV;
    double sumV;
@@ -323,6 +325,7 @@ static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double i
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
+      sp->cur_outReal = *outReal;
       return;
    }
    if( sp->ringCap_trailingIdx == 0 )
@@ -346,6 +349,7 @@ static void TA_VWMA_StepImpl( struct TA_VWMA_Stream *sp, double inReal, double i
    sp->sumPV -= tempReal;
    sp->sumV -= sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx];
    *outReal= tempPV / (double)sp->optInTimePeriod / (tempV / (double)sp->optInTimePeriod);
+   sp->cur_outReal = *outReal;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] = inVolume;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
@@ -420,6 +424,7 @@ static TA_RetCode TA_VWMA_OpenImpl( struct TA_VWMA_Stream **stream, const double
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -524,6 +529,7 @@ static TA_RetCode TA_VWMA_OpenImpl( struct TA_VWMA_Stream **stream, const double
       sp->ringPos_trailingIdx = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -602,6 +608,7 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
+      sp->cur_outReal = *outReal;
       return TA_SUCCESS;
    }
    if( sp->ringCap_trailingIdx == 0 )
@@ -627,6 +634,7 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
    sp->sumPV -= tempReal;
    sp->sumV -= (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1;
    *outReal= tempPV / (double)sp->optInTimePeriod / (tempV / (double)sp->optInTimePeriod);
+   sp->cur_outReal = *outReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
    {
@@ -658,6 +666,39 @@ TA_LIB_API TA_RetCode TA_VWMA_UpdateAndFill( TA_VWMA_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_VWMA_Close( TA_VWMA_Stream *stream )
 {
    TA_VWMA_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_VWMA_Value( const TA_VWMA_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_VWMA_Clone( const TA_VWMA_Stream *stream, TA_VWMA_Stream **clone )
+{
+   struct TA_VWMA_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_VWMA_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingIdx_inReal = NULL;
+   sp->ring_trailingIdx_inVolume = NULL;
+   if( stream->ring_trailingIdx_inReal )
+   { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+     sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingIdx_inReal ) { TA_VWMA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * copyN ); }
+   if( stream->ring_trailingIdx_inVolume )
+   { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+     sp->ring_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingIdx_inVolume ) { TA_VWMA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingIdx_inVolume, stream->ring_trailingIdx_inVolume, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

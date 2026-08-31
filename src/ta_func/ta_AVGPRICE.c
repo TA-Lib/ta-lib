@@ -154,6 +154,8 @@ struct TA_AVGPRICE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_AVGPRICE_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -161,6 +163,7 @@ static void TA_AVGPRICE_StepImpl( struct TA_AVGPRICE_Stream *sp, double inOpen, 
 {
    (void)sp;
    *outReal= (inHigh + inLow + inClose + inOpen) / 4;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_AVGPRICE_OpenImpl( struct TA_AVGPRICE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -205,6 +208,7 @@ static TA_RetCode TA_AVGPRICE_OpenImpl( struct TA_AVGPRICE_Stream **stream, cons
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -275,6 +279,7 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Peek( const TA_AVGPRICE_Stream *stream, double
    scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow + inClose + inOpen) / 4;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -301,6 +306,27 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_UpdateAndFill( TA_AVGPRICE_Stream *stream, con
 TA_LIB_API TA_RetCode TA_AVGPRICE_Close( TA_AVGPRICE_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Value( const TA_AVGPRICE_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AVGPRICE_Clone( const TA_AVGPRICE_Stream *stream, TA_AVGPRICE_Stream **clone )
+{
+   struct TA_AVGPRICE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_AVGPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

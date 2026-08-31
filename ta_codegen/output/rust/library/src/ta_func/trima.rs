@@ -515,6 +515,7 @@ struct TrimaStreamState {
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -546,6 +547,7 @@ impl Core {
             // Step (4)
             sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             (*outReal) = sp.numerator * sp.factor;
+            sp.cur_outReal = (*outReal);
             sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
             sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
             if sp.ringPos_middleIdx >= sp.ringCap_middleIdx {
@@ -578,6 +580,7 @@ impl Core {
             // Step (4)
             sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             (*outReal) = sp.numerator * sp.factor;
+            sp.cur_outReal = (*outReal);
             sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
             sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
             if sp.ringPos_middleIdx >= sp.ringCap_middleIdx {
@@ -838,6 +841,7 @@ impl Core {
                 numeratorAdd,
                 factor,
                 tempReal,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
                 ringPos_middleIdx: 0_usize,
                 ringCap_middleIdx: cap_middleIdx as usize,
                 ring_middleIdx_inReal,
@@ -1046,6 +1050,7 @@ impl Core {
                 numeratorAdd,
                 factor,
                 tempReal,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
                 ringPos_middleIdx: 0_usize,
                 ringCap_middleIdx: cap_middleIdx as usize,
                 ring_middleIdx_inReal,
@@ -1237,8 +1242,8 @@ impl TrimaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -1256,6 +1261,7 @@ impl TrimaStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             if sp.optInTimePeriod % 2 == 1 {
+                let mut cur_outReal = sp.cur_outReal;
                 let mut numerator = sp.numerator;
                 let mut numeratorAdd = sp.numeratorAdd;
                 let mut numeratorSub = sp.numeratorSub;
@@ -1289,6 +1295,7 @@ impl TrimaStream {
                 // Step (4)
                 tempReal = (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal1 });
                 (*outReal) = numerator * sp.factor;
+                cur_outReal = (*outReal);
                 ringPos_middleIdx = ringPos_middleIdx + 1;
                 if ringPos_middleIdx >= sp.ringCap_middleIdx {
                     ringPos_middleIdx = 0;
@@ -1298,6 +1305,7 @@ impl TrimaStream {
                     ringPos_trailingIdx = 0;
                 }
             } else {
+                let mut cur_outReal = sp.cur_outReal;
                 let mut numerator = sp.numerator;
                 let mut numeratorAdd = sp.numeratorAdd;
                 let mut numeratorSub = sp.numeratorSub;
@@ -1331,6 +1339,7 @@ impl TrimaStream {
                 // Step (4)
                 tempReal = (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal1 });
                 (*outReal) = numerator * sp.factor;
+                cur_outReal = (*outReal);
                 ringPos_middleIdx = ringPos_middleIdx + 1;
                 if ringPos_middleIdx >= sp.ringCap_middleIdx {
                     ringPos_middleIdx = 0;
@@ -1342,6 +1351,19 @@ impl TrimaStream {
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_TRIMA_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

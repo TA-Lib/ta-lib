@@ -412,6 +412,8 @@ struct TA_MIN_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_MIN_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double lowest;
    int trailingIdx;
@@ -470,6 +472,7 @@ static void TA_MIN_StepImpl( struct TA_MIN_Stream *sp, double inReal, double *ou
    *outReal= sp->lowest;
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_MIN_OpenImpl( struct TA_MIN_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -603,6 +606,7 @@ static TA_RetCode TA_MIN_OpenImpl( struct TA_MIN_Stream **stream, const double i
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -708,6 +712,7 @@ TA_LIB_API TA_RetCode TA_MIN_Peek( const TA_MIN_Stream *stream, double inReal, d
    *outReal= sp->lowest;
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -734,6 +739,33 @@ TA_LIB_API TA_RetCode TA_MIN_UpdateAndFill( TA_MIN_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_MIN_Close( TA_MIN_Stream *stream )
 {
    TA_MIN_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MIN_Value( const TA_MIN_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MIN_Clone( const TA_MIN_Stream *stream, TA_MIN_Stream **clone )
+{
+   struct TA_MIN_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MIN_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inReal = NULL;
+   if( stream->x_inReal )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inReal ) { TA_MIN_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inReal, stream->x_inReal, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

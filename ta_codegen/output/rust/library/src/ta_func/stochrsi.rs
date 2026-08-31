@@ -375,6 +375,8 @@ struct StochrsiStreamState {
     optInFastD_MAType: MAType,
     sub0: RsiStream,
     sub1: StochfStream,
+    cur_outFastK: f64,
+    cur_outFastD: f64,
 }
 
 #[allow(unused_variables)]
@@ -518,7 +520,9 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let state = StochrsiStreamState {
+        let mut state = StochrsiStreamState {
+            cur_outFastK: 0.0_f64,
+            cur_outFastD: 0.0_f64,
             optInTimePeriod,
             optInFastK_Period,
             optInFastD_Period,
@@ -526,6 +530,8 @@ impl Core {
             sub0,
             sub1,
         };
+        state.cur_outFastK = sc_outFastK[*outNBElement - 1];
+        state.cur_outFastD = sc_outFastD[*outNBElement - 1];
         if outStride != 1 && *outNBElement > 0 {
             let last_sc_outFastK = sc_outFastK[*outNBElement - 1];
             outFastK[0] = last_sc_outFastK;
@@ -683,6 +689,8 @@ impl StochrsiStream {
         let mut outFastK: f64 = 0.0_f64;
         let mut outFastD: f64 = 0.0_f64;
         Core::stochrsi_step_impl(&mut self.state, inReal, &mut outFastK, &mut outFastD)?;
+        self.state.cur_outFastK = outFastK;
+        self.state.cur_outFastD = outFastD;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -720,6 +728,8 @@ impl StochrsiStream {
                 return Err(RetCode::BadParam);
             }
             Core::stochrsi_step_impl(&mut self.state, inReal[i], &mut outFastK[i], &mut outFastD[i])?;
+            self.state.cur_outFastK = outFastK[i];
+            self.state.cur_outFastD = outFastD[i];
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -730,8 +740,8 @@ impl StochrsiStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -765,6 +775,19 @@ impl StochrsiStream {
             (*outFastD) = cur_outFastD;
         }
         Ok((outFastK, outFastD))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_STOCHRSI_Value")]
+    pub fn value(&self) -> (f64, f64) {
+        (self.state.cur_outFastK, self.state.cur_outFastD)
     }
 
     /// The bars this stream has consumed, in the input series'

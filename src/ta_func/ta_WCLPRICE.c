@@ -150,6 +150,8 @@ struct TA_WCLPRICE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_WCLPRICE_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -157,6 +159,7 @@ static void TA_WCLPRICE_StepImpl( struct TA_WCLPRICE_Stream *sp, double inHigh, 
 {
    (void)sp;
    *outReal= (fma(inClose, 2.0, inHigh + inLow)) / 4.0;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_WCLPRICE_OpenImpl( struct TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -201,6 +204,7 @@ static TA_RetCode TA_WCLPRICE_OpenImpl( struct TA_WCLPRICE_Stream **stream, cons
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -271,6 +275,7 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Peek( const TA_WCLPRICE_Stream *stream, double
    scratch = *stream;
    (void)sp;
    *outReal= (fma(inClose, 2.0, inHigh + inLow)) / 4.0;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -297,6 +302,27 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_UpdateAndFill( TA_WCLPRICE_Stream *stream, con
 TA_LIB_API TA_RetCode TA_WCLPRICE_Close( TA_WCLPRICE_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Value( const TA_WCLPRICE_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_WCLPRICE_Clone( const TA_WCLPRICE_Stream *stream, TA_WCLPRICE_Stream **clone )
+{
+   struct TA_WCLPRICE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_WCLPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

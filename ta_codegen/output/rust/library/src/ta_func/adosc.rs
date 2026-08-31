@@ -450,6 +450,7 @@ struct AdoscStreamState {
     fastk: f64,
     one_minus_fastk: f64,
     ad: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -473,6 +474,7 @@ impl Core {
         sp.fastEMA = (sp.one_minus_fastk as f64).mul_add(sp.fastEMA, sp.fastk * sp.ad);
         sp.slowEMA = (sp.one_minus_slowk as f64).mul_add(sp.slowEMA, sp.slowk * sp.ad);
         (*outReal) = sp.fastEMA - sp.slowEMA;
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::adosc_open_internal`]
@@ -631,6 +633,7 @@ impl Core {
             fastk,
             one_minus_fastk,
             ad,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(AdoscStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -832,8 +835,8 @@ impl AdoscStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -855,6 +858,7 @@ impl AdoscStream {
             let mut close: f64 = 0.0_f64;
             let mut tmp: f64 = 0.0_f64;
             let mut ad = sp.ad;
+            let mut cur_outReal = sp.cur_outReal;
             let mut fastEMA = sp.fastEMA;
             let mut slowEMA = sp.slowEMA;
             high = inHigh;
@@ -867,8 +871,22 @@ impl AdoscStream {
             fastEMA = (sp.one_minus_fastk as f64).mul_add(fastEMA, sp.fastk * ad);
             slowEMA = (sp.one_minus_slowk as f64).mul_add(slowEMA, sp.slowk * ad);
             (*outReal) = fastEMA - slowEMA;
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_ADOSC_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

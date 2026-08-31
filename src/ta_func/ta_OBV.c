@@ -170,6 +170,8 @@ struct TA_OBV_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_OBV_Value). */
+   double cur_outReal;
    double prevReal;
    double prevOBV;
 };
@@ -189,6 +191,7 @@ static void TA_OBV_StepImpl( struct TA_OBV_Stream *sp, double inReal, double inV
    }
    *outReal= sp->prevOBV;
    sp->prevReal = tempReal;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_OBV_OpenImpl( struct TA_OBV_Stream **stream, const double inReal[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -248,6 +251,7 @@ static TA_RetCode TA_OBV_OpenImpl( struct TA_OBV_Stream **stream, const double i
       sp->prevOBV = prevOBV;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -327,6 +331,7 @@ TA_LIB_API TA_RetCode TA_OBV_Peek( const TA_OBV_Stream *stream, double inReal, d
    }
    *outReal= sp->prevOBV;
    sp->prevReal = tempReal;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -353,6 +358,27 @@ TA_LIB_API TA_RetCode TA_OBV_UpdateAndFill( TA_OBV_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_OBV_Close( TA_OBV_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_OBV_Value( const TA_OBV_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_OBV_Clone( const TA_OBV_Stream *stream, TA_OBV_Stream **clone )
+{
+   struct TA_OBV_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_OBV_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

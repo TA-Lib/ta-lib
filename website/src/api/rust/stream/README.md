@@ -1,6 +1,6 @@
 ---
 title: Rust Streaming API
-description: "Rust streaming API for live feeds: a stream handle carries indicator state from bar to bar at O(1) per update, bit-identical to the batch calls."
+description: "Rust streaming API for live feeds: a stream carries indicator state from bar to bar at O(1) per update, bit-identical to the batch calls."
 toc: false
 ---
 
@@ -44,14 +44,14 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` the only thing they reject is invalid input such as NaN or ±Inf. A rejected bar leaves the handle's **state** untouched — nothing is committed — but a rejected `update` still advances `out_range()` by one (see [Utility Calls](#utility-calls)); `peek` advances nothing.
+`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` the only thing they reject is invalid input such as NaN or ±Inf. A rejected bar leaves the stream's **state** untouched — nothing is committed — but a rejected `update` still advances `out_range()` by one (see [Utility Calls](#utility-calls)); `peek` advances nothing.
 
 ## Rules
 
 - **Warm-up.** `open` succeeds only if `history.len() >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `open`, the history can be dropped — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are captured from the immutable `Core` at `open` and cannot change during the stream's life.
-- **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` never writes the handle, so peeks may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
+- **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. `peek(&self)` and `value(&self)` never write the stream, so they may run concurrently. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
 
 ## Multi-input / multi-output
 
@@ -113,13 +113,42 @@ counts one more than the values written.
 
 | Call | When | Does |
 |------|------|------|
-| `stream.out_range()` | any time | the bars this stream has consumed — the batch range over the same bars |
+| `stream.value()` | any time | the value(s) at the last bar consumed, without recomputing |
+| `stream.clone()` | any time | an independent fork of the stream, at the same bar |
+| `stream.out_range()` | any time | the bars the stream has consumed — the batch range over the same bars |
 
 ```rust
-let r = s.out_range();   // the same range core.sma(0, nbBar - 1, ...) would report
+let v = s.value();          // the value at the last bar consumed
+let mut fork = s.clone();   // independent from here on
+let r = s.out_range();      // the bars s has consumed
 ```
 
-A stream opened over `history.len()` bars starts at `(lookback, history.len() - lookback)`; every bar handed to `update` adds one — a bar rejected as non-finite included, since it happened and holds a position in the series, which is what keeps two streams on the same feed positionally aligned when one rejects a bar the other accepts. `peek` advances nothing.
+`value()` hands back what the opener or the last `update` already gave you: it
+recomputes nothing and takes no bar. It returns exactly what `update` returns —
+`f64` for a single-output function, a tuple for the rest — so a multi-output
+function answers all of them at once. The opener seeds it, an accepted bar
+replaces it, and a rejected bar holds it — a held value is that bar's output —
+while `peek` leaves it alone. So it always names the bar `out_range()` reports.
+
+`clone()` gives a second, independent stream at the same bar: it is the derived
+`Clone`, so every buffer and every sub-stream is copied and the fork carries the
+value and the range verbatim. Dropping either closes only that one. It is the only
+way to fork a live stream — the warm-up history is gone once the opener returns —
+and it is what makes `value()` worth having, since a fork has no call that handed
+you its value and `peek` would answer for a bar you have not committed.
+
+`out_range()` reports the bars the stream has consumed. A stream opened over
+`history.len()` bars starts at `(lookback, history.len() - lookback)`; every bar
+handed to `update` adds one — a bar rejected as non-finite included, since it
+happened and holds a position in the series, and its output is the previous one,
+held. That is what keeps two streams on the same feed positionally aligned when one
+rejects a bar the other accepts. `peek` counts nothing, and neither does a
+malformed call — a fault in the call is not a bar.
+
+None of the three returns a `Result`: they read what the stream already holds, so
+there is nothing for them to reject.
+
+See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Discovering streamable functions
 

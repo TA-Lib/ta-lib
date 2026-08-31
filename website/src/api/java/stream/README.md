@@ -1,6 +1,6 @@
 ---
 title: Java Streaming API
-description: "Java streaming API for live feeds: a stream handle carries indicator state from bar to bar at O(1) per update, bit-identical to the batch calls."
+description: "Java streaming API for live feeds: a stream carries indicator state from bar to bar at O(1) per update, bit-identical to the batch calls."
 toc: false
 ---
 
@@ -42,14 +42,14 @@ double v = s.update(newClose);                  // throws only on a non-finite b
 double provisional = s.peek(formingClose);      // state left unchanged
 ```
 
-`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, the only thing `update` and `peek` reject is invalid input such as NaN or ±Inf. A rejected bar leaves the handle's **state** untouched — nothing is committed, and `value()` still answers the last accepted bar — but a rejected `update` still advances `outRange()` by one (see [Utility Calls](#utility-calls)); `peek` advances nothing.
+`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, the only thing `update` and `peek` reject is invalid input such as NaN or ±Inf. A rejected bar leaves the stream's **state** untouched — nothing is committed, and `value()` still answers the last accepted bar — but a rejected `update` still advances `outRange()` by one (see [Utility Calls](#utility-calls)); `peek` advances nothing.
 
 ## Rules
 
 - **Warm-up.** `open` succeeds only if `history.length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
-- **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `copy()` results) are fully independent.
+- **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `clone()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`clone()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `clone()` results) are fully independent.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Multi-input / multi-output
@@ -92,7 +92,7 @@ OutRange r = s.outRange();                      // the bars it has consumed
 double v = s.update(newClose);
 ```
 
-The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned handle as `outRange()` rather than through out-parameters — see [Utility Calls](#utility-calls) below. The output arrays must not alias the input or each other.
+The optional parameters and output arrays are exactly the [batch method](/api/java/)'s. The range written is reported on the returned stream as `outRange()` rather than through out-parameters — see [Utility Calls](#utility-calls) below. The output arrays must not alias the input or each other.
 
 **`updateAndFill`**
 
@@ -119,29 +119,52 @@ counts one more than the values written.
 
 | Call | When | Does |
 |------|------|------|
-| `stream.value()` | any time | the most recently committed value |
-| `stream.copy()` | any time | an independent copy of the stream |
-| `stream.outRange()` | any time | the bars this stream has consumed — the batch range over the same bars |
-
-`value()` re-reads the last committed value without recomputing. `copy()` returns an independent stream that can be updated separately from the original — see [Rules](#rules) for when concurrent reads of these are safe.
-
-`outRange()` holds the bars the stream has consumed: `(lookback, historyLen - lookback)` at `open`, then one more for every bar handed to `update` — a bar rejected as non-finite included, since it happened and holds a position in the series, which is what keeps two streams on the same feed positionally aligned when one rejects a bar the other accepts. `peek` advances nothing.
+| `stream.value()` | any time | the value(s) at the last bar consumed, without recomputing |
+| `stream.clone()` | any time | an independent fork of the stream, at the same bar |
+| `stream.outRange()` | any time | the bars the stream has consumed — the batch range over the same bars |
 
 ```java
 Core.SmaStream s = core.smaOpen(history, 30);
-double v = s.value();          // the value at the last history bar
-Core.SmaStream snapshot = s.copy();
-OutRange r = s.outRange();     // the bars s has consumed
+
+double v = s.value();               // the value at the last bar consumed
+Core.SmaStream fork = s.clone();    // independent from here on
+OutRange r = s.outRange();          // the bars s has consumed
 ```
+
+`value()` hands back what `open` or the last `update` already gave you: it
+recomputes nothing and takes no bar. A single-output function returns `double`; a
+multi-output one returns its nested `Value` record, so all its outputs come back at
+once. `open` seeds it, an accepted bar replaces it, and a rejected bar holds it —
+a held value is that bar's output — while `peek` leaves it alone. So it always
+names the bar `outRange()` reports.
+
+`clone()` gives a second, independent stream at the same bar: arrays are copied and
+sub-streams cloned recursively, and the fork carries the value and the range
+verbatim. The `Core` reference is shared, because a `Core` is immutable for a
+stream's lifetime. It overrides `Object.clone()` but does not use the `Cloneable`
+protocol — the body is a copy constructor, so it needs no marker interface and
+throws no `CloneNotSupportedException`. It is the only way to fork a live stream —
+the warm-up history is gone once `open` returns — and it is what makes `value()`
+worth having, since a fork has no call that handed you its value.
+
+`outRange()` reports the bars the stream has consumed: `(lookback, historyLen -
+lookback)` at `open`, then one more for every bar handed to `update` — a bar
+rejected as non-finite included, since it happened and holds a position in the
+series, and its output is the previous one, held. That is what keeps two streams on
+the same feed positionally aligned when one rejects a bar the other accepts. `peek`
+counts nothing, and neither does a malformed call — a fault in the call is not a
+bar.
+
+See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Error model
 
 | Call | Behaviour |
 |------|-----------|
 | `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
-| `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. The handle's state is untouched — nothing is committed and `value()` still answers the last accepted bar — but a rejected `update` still advances `outRange()` by one; `peek` advances nothing. Nothing else throws after a successful `open` (see the note below for the one composed-indicator corner). |
+| `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. The stream's state is untouched — nothing is committed and `value()` still answers the last accepted bar — but a rejected `update` still advances `outRange()` by one; `peek` advances nothing. Nothing else throws after a successful `open` (see the note below for the one composed-indicator corner). |
 | `updateAndFill` | Ragged inputs, an output shorter than the bar count, or an output that is also an input or another output throw `IllegalArgumentException` — none of which commits or counts anything. An invalid bar (NaN or ±Inf) also throws `IllegalArgumentException`, having committed the bars before it and counted — but not committed — the invalid one. |
-| `value` / `copy` / `outRange` | Never throw. |
+| `value` / `clone` / `outRange` | Never throw. |
 
 ## Discovering streamable functions
 

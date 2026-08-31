@@ -731,6 +731,8 @@ struct TA_BETA_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_BETA_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double S_xx;
    double S_xy;
@@ -989,6 +991,7 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    S_xy -= x * y;
    S_x -= x;
    S_y -= y;
+   sp->cur_outReal = *outReal;
    sp->S_xx = S_xx;
    sp->S_xy = S_xy;
    sp->S_x = S_x;
@@ -1408,6 +1411,7 @@ static TA_RetCode TA_BETA_OpenImpl( struct TA_BETA_Stream **stream, const double
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1703,6 +1707,7 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
    S_xy -= x * y;
    S_x -= x;
    S_y -= y;
+   sp->cur_outReal = *outReal;
    sp->S_xx = S_xx;
    sp->S_xy = S_xy;
    sp->S_x = S_x;
@@ -1734,6 +1739,39 @@ TA_LIB_API TA_RetCode TA_BETA_UpdateAndFill( TA_BETA_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_BETA_Close( TA_BETA_Stream *stream )
 {
    TA_BETA_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_BETA_Value( const TA_BETA_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_BETA_Clone( const TA_BETA_Stream *stream, TA_BETA_Stream **clone )
+{
+   struct TA_BETA_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_BETA_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inReal0 = NULL;
+   sp->x_inReal1 = NULL;
+   if( stream->x_inReal0 )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inReal0 = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inReal0 ) { TA_BETA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inReal0, stream->x_inReal0, sizeof(double) * copyN ); }
+   if( stream->x_inReal1 )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inReal1 = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inReal1 ) { TA_BETA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inReal1, stream->x_inReal1, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -357,6 +357,8 @@ struct AroonStreamState {
     xMask: i32,
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
+    cur_outAroonDown: f64,
+    cur_outAroonUp: f64,
 }
 
 #[allow(unused_variables)]
@@ -417,6 +419,8 @@ impl Core {
         (*outAroonDown) = sp.factor * (((sp.optInTimePeriod - (sp.today - sp.lowestIdx))) as f64);
         sp.trailingIdx += 1;
         sp.today += 1;
+        sp.cur_outAroonDown = (*outAroonDown);
+        sp.cur_outAroonUp = (*outAroonUp);
     }
 
     /// The single whole-history transcription behind [`Core::aroon_open_internal`]
@@ -562,6 +566,8 @@ impl Core {
             highestIdx: (highestIdx) as i32,
             i: (i) as i32,
             today: (today) as i32,
+            cur_outAroonDown: outAroonDown[(*outNBElement - 1) * outStride],
+            cur_outAroonUp: outAroonUp[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inHigh,
             x_inLow,
@@ -767,8 +773,8 @@ impl AroonStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -788,6 +794,8 @@ impl AroonStream {
             let outAroonDown = &mut outAroonDown;
             let outAroonUp = &mut outAroonUp;
             let mut tmp: f64 = 0.0_f64;
+            let mut cur_outAroonDown = sp.cur_outAroonDown;
+            let mut cur_outAroonUp = sp.cur_outAroonUp;
             let mut highest = sp.highest;
             let mut highestIdx = sp.highestIdx;
             let mut i = sp.i;
@@ -851,8 +859,23 @@ impl AroonStream {
             (*outAroonDown) = sp.factor * (((sp.optInTimePeriod - (today - lowestIdx))) as f64);
             trailingIdx += 1;
             today += 1;
+            cur_outAroonDown = (*outAroonDown);
+            cur_outAroonUp = (*outAroonUp);
         }
         Ok((outAroonDown, outAroonUp))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_AROON_Value")]
+    pub fn value(&self) -> (f64, f64) {
+        (self.state.cur_outAroonDown, self.state.cur_outAroonUp)
     }
 
     /// The bars this stream has consumed, in the input series'

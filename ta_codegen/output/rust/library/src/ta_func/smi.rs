@@ -650,6 +650,8 @@ struct SmiStreamState {
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
     x_inClose: Vec<f64>,
+    cur_outSMI: f64,
+    cur_outSMISignal: f64,
 }
 
 #[allow(unused_variables)]
@@ -736,6 +738,8 @@ impl Core {
         (*outSMISignal) = sp.prevSignal;
         sp.trailingIdx = sp.trailingIdx + 1;
         sp.today = sp.today + 1;
+        sp.cur_outSMI = (*outSMI);
+        sp.cur_outSMISignal = (*outSMISignal);
     }
 
     /// The single whole-history transcription behind [`Core::smi_open_internal`]
@@ -1076,6 +1080,8 @@ impl Core {
             lowestIdx: (lowestIdx) as i32,
             i: (i) as i32,
             today: (today) as i32,
+            cur_outSMI: outSMI[(*outNBElement - 1) * outStride],
+            cur_outSMISignal: outSMISignal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inHigh,
             x_inLow,
@@ -1288,8 +1294,8 @@ impl SmiStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -1313,6 +1319,8 @@ impl SmiStream {
             let mut den: f64 = 0.0_f64;
             let mut halfDen: f64 = 0.0_f64;
             let mut smiValue: f64 = 0.0_f64;
+            let mut cur_outSMI = sp.cur_outSMI;
+            let mut cur_outSMISignal = sp.cur_outSMISignal;
             let mut emaFastDen = sp.emaFastDen;
             let mut emaFastNum = sp.emaFastNum;
             let mut emaSlowDen = sp.emaSlowDen;
@@ -1406,8 +1414,23 @@ impl SmiStream {
             (*outSMISignal) = prevSignal;
             trailingIdx = trailingIdx + 1;
             today = today + 1;
+            cur_outSMI = (*outSMI);
+            cur_outSMISignal = (*outSMISignal);
         }
         Ok((outSMI, outSMISignal))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_SMI_Value")]
+    pub fn value(&self) -> (f64, f64) {
+        (self.state.cur_outSMI, self.state.cur_outSMISignal)
     }
 
     /// The bars this stream has consumed, in the input series'

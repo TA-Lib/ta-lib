@@ -432,6 +432,7 @@ struct CdlhighwaveStreamState {
     ringPos_ShadowTrailingIdx: usize,
     ringCap_ShadowTrailingIdx: usize,
     ring_ShadowTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -528,6 +529,7 @@ impl Core {
             }
         }
         sp.ShadowPeriodTotal += _candlerange_3 - sp.ring_ShadowTrailingIdx_derived[sp.ringPos_ShadowTrailingIdx];
+        sp.cur_outInteger = (*outInteger);
         let mut _candlerange_4: f64;
         match BodyShort_rangeType {
             0 => {
@@ -790,6 +792,7 @@ impl Core {
         let state = CdlhighwaveStreamState {
             BodyPeriodTotal,
             ShadowPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             ringPos_BodyTrailingIdx: 0_usize,
             ringCap_BodyTrailingIdx: cap_BodyTrailingIdx as usize,
             ring_BodyTrailingIdx_derived,
@@ -996,8 +999,8 @@ impl CdlhighwaveStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -1016,6 +1019,7 @@ impl CdlhighwaveStream {
             let outInteger = &mut outInteger;
             let mut BodyPeriodTotal = sp.BodyPeriodTotal;
             let mut ShadowPeriodTotal = sp.ShadowPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
             let mut ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx;
             let mut pkSlot0: usize = usize::MAX;
@@ -1111,6 +1115,7 @@ impl CdlhighwaveStream {
                 }
             }
             ShadowPeriodTotal += _candlerange_15 - (if (ringPos_ShadowTrailingIdx as usize) != pkSlot1 { sp.ring_ShadowTrailingIdx_derived[ringPos_ShadowTrailingIdx] } else { pkVal1 });
+            cur_outInteger = (*outInteger);
             ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
             if ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
                 ringPos_BodyTrailingIdx = 0;
@@ -1121,6 +1126,19 @@ impl CdlhighwaveStream {
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLHIGHWAVE_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has consumed, in the input series'

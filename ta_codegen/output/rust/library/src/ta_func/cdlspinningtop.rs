@@ -357,6 +357,7 @@ struct CdlspinningtopStreamState {
     ringPos_BodyTrailingIdx: usize,
     ringCap_BodyTrailingIdx: usize,
     ring_BodyTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -413,6 +414,7 @@ impl Core {
             }
         }
         sp.BodyPeriodTotal += _candlerange_1 - sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx];
+        sp.cur_outInteger = (*outInteger);
         let mut _candlerange_2: f64;
         match BodyShort_rangeType {
             0 => {
@@ -579,6 +581,7 @@ impl Core {
         }
         let state = CdlspinningtopStreamState {
             BodyPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             ringPos_BodyTrailingIdx: 0_usize,
             ringCap_BodyTrailingIdx: cap_BodyTrailingIdx as usize,
             ring_BodyTrailingIdx_derived,
@@ -782,8 +785,8 @@ impl CdlspinningtopStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -801,6 +804,7 @@ impl CdlspinningtopStream {
             let sp = &self.state;
             let outInteger = &mut outInteger;
             let mut BodyPeriodTotal = sp.BodyPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -852,12 +856,26 @@ impl CdlspinningtopStream {
                 }
             }
             BodyPeriodTotal += _candlerange_7 - (if (ringPos_BodyTrailingIdx as usize) != pkSlot0 { sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] } else { pkVal0 });
+            cur_outInteger = (*outInteger);
             ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
             if ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
                 ringPos_BodyTrailingIdx = 0;
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLSPINNINGTOP_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has consumed, in the input series'

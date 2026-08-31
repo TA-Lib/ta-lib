@@ -627,6 +627,7 @@ struct HmaStreamState {
     win_jHalf_inReal: Vec<f64>,
     cbSize_dRing: usize,
     cb_dRing: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -638,6 +639,7 @@ impl Core {
     fn hma_step_impl(sp: &mut HmaStreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
+            sp.cur_outReal = (*outReal);
             return;
         }
         if sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 {
@@ -675,6 +677,7 @@ impl Core {
             fullOut = sp.periodSumFull / sp.dividerFull;
             sp.periodSumFull -= sp.periodSubFull;
             (*outReal) = 2.0 * tempReal - fullOut;
+            sp.cur_outReal = (*outReal);
             sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
             sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
             if sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
@@ -790,6 +793,7 @@ impl Core {
             }
             (*outReal) = sp.periodSumSqrt / sp.dividerSqrt;
             sp.periodSumSqrt -= sp.periodSubSqrt;
+            sp.cur_outReal = (*outReal);
             sp.ring_trailingIdxFull_inReal[sp.ringPos_trailingIdxFull] = inReal;
             sp.ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull + 1;
             if sp.ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
@@ -844,6 +848,7 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = HmaStreamState {
+                cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
                 dividerFull: 0.0_f64,
                 periodSubFull: 0.0_f64,
@@ -1070,6 +1075,7 @@ impl Core {
                 barsSinceReseedSqrt,
                 dRing_Idx,
                 maxIdx_dRing,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
                 ringPos_trailingIdxFull: 0_usize,
                 ringCap_trailingIdxFull: cap_trailingIdxFull as usize,
                 ring_trailingIdxFull_inReal,
@@ -1424,6 +1430,7 @@ impl Core {
                 barsSinceReseedSqrt,
                 dRing_Idx,
                 maxIdx_dRing,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
                 ringPos_trailingIdxFull: 0_usize,
                 ringCap_trailingIdxFull: cap_trailingIdxFull as usize,
                 ring_trailingIdxFull_inReal,
@@ -1623,8 +1630,8 @@ impl HmaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -1652,6 +1659,7 @@ impl HmaStream {
                 let mut rw: usize = 0_usize;
                 let mut tempReal2: f64 = 0.0_f64;
                 let mut barsSinceReseedFull = sp.barsSinceReseedFull;
+                let mut cur_outReal = sp.cur_outReal;
                 let mut periodSubFull = sp.periodSubFull;
                 let mut periodSumFull = sp.periodSumFull;
                 let mut ringPos_trailingIdxFull = sp.ringPos_trailingIdxFull;
@@ -1692,6 +1700,7 @@ impl HmaStream {
                 fullOut = periodSumFull / sp.dividerFull;
                 periodSumFull -= periodSubFull;
                 (*outReal) = 2.0 * tempReal - fullOut;
+                cur_outReal = (*outReal);
                 ringPos_trailingIdxFull = ringPos_trailingIdxFull + 1;
                 if ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
                     ringPos_trailingIdxFull = 0;
@@ -1714,6 +1723,7 @@ impl HmaStream {
                 let mut barsSinceReseedFull = sp.barsSinceReseedFull;
                 let mut barsSinceReseedHalf = sp.barsSinceReseedHalf;
                 let mut barsSinceReseedSqrt = sp.barsSinceReseedSqrt;
+                let mut cur_outReal = sp.cur_outReal;
                 let mut dRing_Idx = sp.dRing_Idx;
                 let mut periodSubFull = sp.periodSubFull;
                 let mut periodSubHalf = sp.periodSubHalf;
@@ -1834,6 +1844,7 @@ impl HmaStream {
                 }
                 (*outReal) = periodSumSqrt / sp.dividerSqrt;
                 periodSumSqrt -= periodSubSqrt;
+                cur_outReal = (*outReal);
                 ringPos_trailingIdxFull = ringPos_trailingIdxFull + 1;
                 if ringPos_trailingIdxFull >= sp.ringCap_trailingIdxFull {
                     ringPos_trailingIdxFull = 0;
@@ -1853,6 +1864,19 @@ impl HmaStream {
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_HMA_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

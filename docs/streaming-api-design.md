@@ -93,9 +93,10 @@ handle buffer becomes two locals — the slot it targeted and the value it held 
 and every load that could land on that slot selects them back; a store no load
 can reach this bar is deleted outright. Nothing else about the body changes, so
 `peek` is still the same numbers in the same order. What it buys is the cost
-model: peek copies the handle's SCALARS onto the stack and nothing else, so its
-overhead is a fixed number of bytes where the buffers are a function of the
-period. Measured on this box, WMA's peek was 9 ns at period 30, 31 ns at 200 and
+model: peek copies the handle's fixed-size part onto the stack — the scalars
+and the in-struct accumulators — and never a buffer, so its overhead is a fixed
+number of bytes where the buffers are a function of the period. Measured on
+this box, WMA's peek was 9 ns at period 30, 31 ns at 200 and
 474 ns at 2000 against a flat 4.4 ns update; it is now flat with it. The
 per-handle mirror buffers are gone with it — they were ~38% of every handle.
 
@@ -119,28 +120,38 @@ as `usize`; and the outputs are rebound as `&mut` inside a block so the body
 keeps the `(*out) = …` spelling and every cast with it.
 
 **Java and .NET run the same frame**, tier for tier, with two differences that
-are theirs alone. A managed array field is a *reference*, so a localized one is
-cloned rather than aliased — always a fixed-size per-bar accumulator, two to
-five elements, never a period-sized buffer, which the frame only reads. And
-`cur_<out>` is itself a handle field, so localizing the stores is what turns the
-cached output into the local `peek` returns.
+are theirs alone. A managed array field is a *reference*, so localizing one
+means cloning it, and that clone is a per-call allocation the other two
+backends do not pay. So the accumulators are offered to the shadow rewrite
+alongside the handle's buffers, and a store no load reaches is deleted outright
+instead — leaving a clone only where the rewrite refuses, which today is an
+accumulator the batch body sums inside a loop. The offer is made from all four
+backends or from none, for the bit-identity reason
+`transition_buffers_with_state_arrays` states. And `cur_<out>` is itself a
+handle field, so localizing the stores is what turns the cached output into the
+local `peek` returns.
 
-Nothing copies a handle in any backend now. Java's `copyFrom`, both backends'
-per-thread scratch and the predicate that chose between a reused scratch and a
-throwaway are all deleted; the shipped `Core.java` lost ~14,000 lines with them.
+No backend copies a handle's BUFFERS to peek it any more. Java's `copyFrom`,
+both backends' per-thread scratch and the predicate that chose between a reused
+scratch and a throwaway are all deleted; the shipped `Core.java` lost ~14,000
+lines with them. C still copies the struct itself, which is the fixed-size part
+and nothing behind a pointer.
 
 No form writes the handle, which is what keeps Rust's `peek` a `&self` method
 and every backend's handles concurrently peekable — including two threads
 peeking the same handle, which a per-thread scratch could not serve. `update`
-never allocates (that is the hard constraint, not peek's), and now neither does
-`peek`, in any of the four.
+never allocates (that is the hard constraint, not peek's). Neither does `peek`
+in C or Rust; in Java and .NET it allocates only where the surviving clone
+above is, and the generated doc comment on each `peek` says which of the two it
+is rather than claiming the stronger one everywhere.
 
 The property is structural, not observable: a peek that copied and then wrote
 the copy would still answer correctly, so no value gate can see the difference.
 Each backend therefore carries its own sweep over every streamable function —
 `peek_suite` for C, `no_rust_peek_copies_the_handle`,
 `no_java_peek_copies_the_handle`, `no_csharp_peek_copies_the_handle` — asserting
-a frame is what runs and that nothing in it allocates.
+a frame is what runs, that it allocates nothing that grows with the period, and
+that the accumulators it still copies are the ones the shadow rewrite refused.
 
 ### Full-history output at open (`OpenAndFill`)
 
@@ -466,7 +477,7 @@ Core.SmaStream s = core.smaOpen(history, 14);  // throws on reject; value() = la
 double v = s.update(bar);                        // one value per closed bar
 double p = s.peek(formingBarClose);              // forming bar, non-committing
 s.updateAndFill(gapBars, out);                   // n bars, n values, one call
-Core.SmaStream t = s.copy();                    // independent stream fork
+Core.SmaStream t = s.clone();                   // independent stream fork
 Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
 Core.MacdStream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
 Core.SmaStream s2 = core.smaOpenAndFill(history, 14, warmup);
@@ -494,10 +505,24 @@ OutRange r = s2.outRange();                      // bars produced so far, on the
 - `value()` re-reads the last committed value(s) without recomputing (seeded by
   open, refreshed by `update`, untouched by `peek`); multi-output `update`
   caches the immutable `Value` it returns, so `value()` is allocation-free.
-- `copy()` is the universal deep copy (arrays cloned, sub-handles copied
-  recursively, the `Core` reference shared) — the Java rendering of Rust's
-  `Clone`; it is named to avoid `ForkJoinTask.fork()`'s async connotation and
-  Java's broken `clone()`. It is the only path left that copies a handle.
+- `clone()` is the universal deep copy (arrays cloned, sub-handles copied
+  recursively, the `Core` reference shared), and it is spelled the same in all
+  four backends: `TA_<N>_Clone`, `.clone()`, `clone()`, `Clone()`. It is the
+  only path left that copies a handle.
+
+  It was `copy()` in Java, to avoid `ForkJoinTask.fork()`'s async connotation
+  and "Java's broken `clone()`". The first reason stands and is why the verb is
+  not `fork`. The second does not: what is broken is `Cloneable` +
+  `super.clone()` — the marker interface that changes `Object.clone()`'s
+  behaviour from outside the language, the field-by-field copy that fights
+  `final`, the contract that comes apart under inheritance. Every one of those
+  attaches to `super.clone()`, and the remedy the same critique prescribes is a
+  copy constructor, which is what every backend already emits. A `public <N>Stream
+  clone()` that never calls `super.clone()` needs no `Cloneable`, throws no
+  `CloneNotSupportedException`, and on a `final` handle cannot be inherited into
+  the broken case. C# reached this conclusion first and shipped a typed
+  `Clone()` with no `ICloneable`, for the same reason and against the same
+  objection. Rust has no choice at all — the fork is `Clone::clone`.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality (complete in Java: arrays are identical or disjoint) — Java is the
   one managed backend where `smaOpenAndFill(history, …, history)` compiles, so
@@ -604,9 +629,9 @@ enforcing it its own way:
   process-global hazard; the same documented rule applies per instance: don't
   mutate a `Core`'s settings while streams opened from it are live (candle
   settings are additionally snapshotted into CDL handles at open — see above).
-  Single-writer per handle — `update`, and `peek`/`value()`/`copy()` count as
+  Single-writer per handle — `update`, and `peek`/`value()`/`clone()` count as
   accesses under that rule; with no concurrent `update`, `peek`/`value()`/
-  `copy()` never write the handle and are safe to call concurrently after safe
+  `clone()` never write the handle and are safe to call concurrently after safe
   publication (a stronger guarantee than C documents for `const` peek). No
   synchronization in the generated code; safe publication when handing a
   handle between threads is the caller's usual memory-model responsibility.

@@ -315,6 +315,8 @@ struct TA_CDLSEPARATINGLINES_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLSEPARATINGLINES_Value). */
+   int cur_outInteger;
    double ShadowVeryShortPeriodTotal;
    double BodyLongPeriodTotal;
    double EqualPeriodTotal;
@@ -373,6 +375,7 @@ static void TA_CDLSEPARATINGLINES_StepImpl( struct TA_CDLSEPARATINGLINES_Stream 
    sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose) - sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx];
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose) - sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx];
    sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
@@ -563,6 +566,7 @@ static TA_RetCode TA_CDLSEPARATINGLINES_OpenImpl( struct TA_CDLSEPARATINGLINES_S
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -666,6 +670,7 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Peek( const TA_CDLSEPARATINGLINES_St
    sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_ShadowVeryShortTrailingIdx != pkSlot2) ? sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] : pkVal2);
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyLongTrailingIdx != pkSlot0) ? sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] : pkVal0);
    sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - (((sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx != pkSlot1) ? sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx] : pkVal1);
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
@@ -711,6 +716,45 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_UpdateAndFill( TA_CDLSEPARATINGLINES
 TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Close( TA_CDLSEPARATINGLINES_Stream *stream )
 {
    TA_CDLSEPARATINGLINES_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Value( const TA_CDLSEPARATINGLINES_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Clone( const TA_CDLSEPARATINGLINES_Stream *stream, TA_CDLSEPARATINGLINES_Stream **clone )
+{
+   struct TA_CDLSEPARATINGLINES_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLSEPARATINGLINES_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyLongTrailingIdx_derived = NULL;
+   sp->ring_EqualTrailingIdx_derived = NULL;
+   sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+     sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLSEPARATINGLINES_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_EqualTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
+     sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLSEPARATINGLINES_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowVeryShortTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
+     sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLSEPARATINGLINES_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -274,6 +274,7 @@ struct AvgdevStreamState {
     winPos_i: usize,
     winCap_i: usize,
     win_i_inReal: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -302,6 +303,7 @@ impl Core {
             i += 1;
         }
         (*outReal) = todayDev / ((sp.optInTimePeriod) as f64);
+        sp.cur_outReal = (*outReal);
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
             sp.winPos_i = 0;
@@ -384,6 +386,7 @@ impl Core {
         win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
         let state = AvgdevStreamState {
             optInTimePeriod,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             winPos_i: 0_usize,
             winCap_i: cap_i as usize,
             win_i_inReal,
@@ -571,8 +574,8 @@ impl AvgdevStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -592,6 +595,7 @@ impl AvgdevStream {
             let mut todaySum: f64 = 0.0_f64;
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
+            let mut cur_outReal = sp.cur_outReal;
             let mut winPos_i = sp.winPos_i;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -612,12 +616,26 @@ impl AvgdevStream {
                 i += 1;
             }
             (*outReal) = todayDev / ((sp.optInTimePeriod) as f64);
+            cur_outReal = (*outReal);
             winPos_i = winPos_i + 1;
             if winPos_i >= sp.winCap_i {
                 winPos_i = 0;
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_AVGDEV_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

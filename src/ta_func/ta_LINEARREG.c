@@ -402,6 +402,8 @@ struct TA_LINEARREG_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_LINEARREG_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    int lookbackTotal;
    int trailingIdx;
@@ -533,6 +535,7 @@ static void TA_LINEARREG_StepImpl( struct TA_LINEARREG_Stream *sp, double inReal
    sp->trailingIdx += 1;
    *outReal= fma(m, (double)(sp->optInTimePeriod - 1), b);
    sp->today += 1;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_LINEARREG_OpenImpl( struct TA_LINEARREG_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -775,6 +778,7 @@ static TA_RetCode TA_LINEARREG_OpenImpl( struct TA_LINEARREG_Stream **stream, co
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -947,6 +951,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Peek( const TA_LINEARREG_Stream *stream, doub
    sp->trailingIdx += 1;
    *outReal= fma(m, (double)(sp->optInTimePeriod - 1), b);
    sp->today += 1;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -973,6 +978,33 @@ TA_LIB_API TA_RetCode TA_LINEARREG_UpdateAndFill( TA_LINEARREG_Stream *stream, c
 TA_LIB_API TA_RetCode TA_LINEARREG_Close( TA_LINEARREG_Stream *stream )
 {
    TA_LINEARREG_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_LINEARREG_Value( const TA_LINEARREG_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_LINEARREG_Clone( const TA_LINEARREG_Stream *stream, TA_LINEARREG_Stream **clone )
+{
+   struct TA_LINEARREG_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_LINEARREG_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inReal = NULL;
+   if( stream->x_inReal )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inReal ) { TA_LINEARREG_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inReal, stream->x_inReal, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -227,6 +227,8 @@ struct TA_CDLENGULFING_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLENGULFING_Value). */
+   int cur_outInteger;
    double lag1_inOpen;
    double lag1_inClose;
 };
@@ -249,6 +251,7 @@ static void TA_CDLENGULFING_StepImpl( struct TA_CDLENGULFING_Stream *sp, double 
    {
       *outInteger= 0;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inClose = inClose;
 }
@@ -345,6 +348,7 @@ static TA_RetCode TA_CDLENGULFING_OpenImpl( struct TA_CDLENGULFING_Stream **stre
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -428,6 +432,7 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream
    {
       *outInteger= 0;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inClose = inClose;
    return TA_SUCCESS;
@@ -456,6 +461,27 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_UpdateAndFill( TA_CDLENGULFING_Stream *str
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Close( TA_CDLENGULFING_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Value( const TA_CDLENGULFING_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Clone( const TA_CDLENGULFING_Stream *stream, TA_CDLENGULFING_Stream **clone )
+{
+   struct TA_CDLENGULFING_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLENGULFING_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

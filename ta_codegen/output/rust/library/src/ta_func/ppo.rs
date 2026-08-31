@@ -339,6 +339,7 @@ struct PpoStreamState {
     optInMAType: MAType,
     sub0: MaStream,
     sub1: MaStream,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -469,13 +470,15 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let state = PpoStreamState {
+        let mut state = PpoStreamState {
+            cur_outReal: 0.0_f64,
             optInFastPeriod,
             optInSlowPeriod,
             optInMAType,
             sub0,
             sub1,
         };
+        state.cur_outReal = sc_outReal[*outNBElement - 1];
         if outStride != 1 && *outNBElement > 0 {
             let last_sc_outReal = sc_outReal[*outNBElement - 1];
             outReal[0] = last_sc_outReal;
@@ -616,6 +619,7 @@ impl PpoStream {
         }
         let mut outReal: f64 = 0.0_f64;
         Core::ppo_step_impl(&mut self.state, inReal, &mut outReal)?;
+        self.state.cur_outReal = outReal;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -653,6 +657,7 @@ impl PpoStream {
                 return Err(RetCode::BadParam);
             }
             Core::ppo_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
+            self.state.cur_outReal = outReal[i];
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -663,8 +668,8 @@ impl PpoStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -698,6 +703,19 @@ impl PpoStream {
             (*outReal) = cur_outReal;
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_PPO_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

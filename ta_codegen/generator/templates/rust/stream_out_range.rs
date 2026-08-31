@@ -271,11 +271,8 @@ fn a_rejected_bar_is_counted_by_update_and_never_by_peek() {
 
     let (mut s, _) = core.sma_open(&close[..WARM], 14).expect("open");
     let mut expect = s.out_range();
-    // A probe bar answers "did the state move?" without an accessor: peek is
-    // pure, so the same probe over an unchanged state gives the same bits.
-    let probe = close[WARM];
     for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
-        let held = s.peek(probe).expect("finite probe");
+        let held = s.value();
         let before = s.out_range();
         assert!(matches!(s.peek(bad), Err(RetCode::BadParam)), "a non-finite bar is rejected");
         assert_eq!(s.out_range(), before, "peek counts nothing, rejected or not");
@@ -284,9 +281,9 @@ fn a_rejected_bar_is_counted_by_update_and_never_by_peek() {
         expect.count += 1;
         assert_eq!(s.out_range(), expect, "a rejected bar is counted");
         assert_eq!(
-            s.peek(probe).expect("finite probe").to_bits(),
+            s.value().to_bits(),
             held.to_bits(),
-            "the rejection moved the state: the same probe answers differently"
+            "the rejected bar's output is the previous output, held"
         );
     }
     s.update(close[WARM]).expect("finite bar");

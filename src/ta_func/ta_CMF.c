@@ -404,6 +404,8 @@ struct TA_CMF_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CMF_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double sumMFV;
    double sumVol;
@@ -465,6 +467,7 @@ static void TA_CMF_StepImpl( struct TA_CMF_Stream *sp, double inHigh, double inL
    {
       sp->mfv_Idx = 0;
    }
+   sp->cur_outReal = *outReal;
    sp->sumMFV = sumMFV;
    sp->sumVol = sumVol;
 }
@@ -659,6 +662,7 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -763,6 +767,7 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    {
       sp->mfv_Idx = 0;
    }
+   sp->cur_outReal = *outReal;
    sp->sumMFV = sumMFV;
    sp->sumVol = sumVol;
    return TA_SUCCESS;
@@ -791,6 +796,39 @@ TA_LIB_API TA_RetCode TA_CMF_UpdateAndFill( TA_CMF_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_CMF_Close( TA_CMF_Stream *stream )
 {
    TA_CMF_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CMF_Value( const TA_CMF_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CMF_Clone( const TA_CMF_Stream *stream, TA_CMF_Stream **clone )
+{
+   struct TA_CMF_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CMF_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->cb_mfv_flow = NULL;
+   sp->cb_mfv_volume = NULL;
+   if( stream->cb_mfv_flow )
+   { size_t copyN = (size_t)(sp->cbSize_mfv);
+     sp->cb_mfv_flow = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_mfv_flow ) { TA_CMF_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_mfv_flow, stream->cb_mfv_flow, sizeof(double) * copyN ); }
+   if( stream->cb_mfv_volume )
+   { size_t copyN = (size_t)(sp->cbSize_mfv);
+     sp->cb_mfv_volume = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_mfv_volume ) { TA_CMF_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_mfv_volume, stream->cb_mfv_volume, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

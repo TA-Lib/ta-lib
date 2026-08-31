@@ -357,6 +357,8 @@ struct TA_CCI_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CCI_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    int circBuffer_Idx;
    int maxIdx_circBuffer;
@@ -425,6 +427,7 @@ static void TA_CCI_StepImpl( struct TA_CCI_Stream *sp, double inHigh, double inL
    {
       sp->circBuffer_Idx = 0;
    }
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -592,6 +595,7 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
       if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -712,6 +716,7 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    {
       sp->circBuffer_Idx = 0;
    }
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -738,6 +743,33 @@ TA_LIB_API TA_RetCode TA_CCI_UpdateAndFill( TA_CCI_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_CCI_Close( TA_CCI_Stream *stream )
 {
    TA_CCI_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CCI_Value( const TA_CCI_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CCI_Clone( const TA_CCI_Stream *stream, TA_CCI_Stream **clone )
+{
+   struct TA_CCI_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CCI_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->cb_circBuffer = NULL;
+   if( stream->cb_circBuffer )
+   { size_t copyN = (size_t)(sp->cbSize_circBuffer);
+     sp->cb_circBuffer = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_circBuffer ) { TA_CCI_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_circBuffer, stream->cb_circBuffer, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

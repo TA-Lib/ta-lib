@@ -301,6 +301,8 @@ struct TA_CDLHIKKAKE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLHIKKAKE_Value). */
+   int cur_outInteger;
    int patternResult;
    int cd;
    double savedHigh;
@@ -336,6 +338,7 @@ static void TA_CDLHIKKAKE_StepImpl( struct TA_CDLHIKKAKE_Stream *sp, double inOp
    {
       sp->cd -= 1;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inHigh = sp->lag1_inHigh;
    sp->lag1_inHigh = inHigh;
    sp->lag2_inLow = sp->lag1_inLow;
@@ -479,6 +482,7 @@ static TA_RetCode TA_CDLHIKKAKE_OpenImpl( struct TA_CDLHIKKAKE_Stream **stream, 
       sp->lag2_inLow = inLow[historyLen - 2];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -569,6 +573,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, do
    {
       sp->cd -= 1;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inHigh = sp->lag1_inHigh;
    sp->lag1_inHigh = inHigh;
    sp->lag2_inLow = sp->lag1_inLow;
@@ -599,6 +604,27 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_UpdateAndFill( TA_CDLHIKKAKE_Stream *stream,
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Close( TA_CDLHIKKAKE_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Value( const TA_CDLHIKKAKE_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Clone( const TA_CDLHIKKAKE_Stream *stream, TA_CDLHIKKAKE_Stream **clone )
+{
+   struct TA_CDLHIKKAKE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLHIKKAKE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

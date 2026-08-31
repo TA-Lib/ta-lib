@@ -411,6 +411,7 @@ struct MaStreamState {
     optInMAType: MAType,
     // Sub-stream, tagged by optInMAType; `MaSub::Identity` on the identity path.
     sub: MaSub,
+    cur_outReal: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -506,7 +507,7 @@ impl Core {
             if historyLen < fillLb + 1 {
                 return Err(RetCode::InsufficientHistory);
             }
-            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity };
+            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity, cur_outReal: inReal[historyLen - 1], };
             return Ok((MaStream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, inReal[historyLen - 1]));
         }
         let (sub, value, subRange) = match optInMAType {
@@ -562,7 +563,7 @@ impl Core {
             }
             _ => return Err(RetCode::BadParam),
         };
-        let state = MaStreamState { optInTimePeriod, optInMAType, sub };
+        let state = MaStreamState { optInTimePeriod, optInMAType, sub, cur_outReal: value, };
         Ok((MaStream { state, out: subRange }, value))
     }
 
@@ -660,7 +661,7 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity };
+            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity, cur_outReal: inReal[historyLen - 1], };
             return Ok((MaStream { state, out: OutRange { beg_idx: fillLb, count: historyLen - fillLb } }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
         }
         let (sub, fillRange) = match optInMAType {
@@ -706,7 +707,7 @@ impl Core {
             }
             _ => return Err(RetCode::BadParam),
         };
-        let state = MaStreamState { optInTimePeriod, optInMAType, sub };
+        let state = MaStreamState { optInTimePeriod, optInMAType, sub, cur_outReal: outReal[fillRange.count - 1], };
         Ok((MaStream { state, out: fillRange }, fillRange))
     }
 
@@ -746,7 +747,7 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity };
+            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity, cur_outReal: inReal[historyLen - 1], };
             return Ok(MaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } });
         }
         let sub = match optInMAType {
@@ -782,7 +783,7 @@ impl Core {
             ),
             _ => return Err(RetCode::BadParam),
         };
-        let state = MaStreamState { optInTimePeriod, optInMAType, sub };
+        let state = MaStreamState { optInTimePeriod, optInMAType, sub, cur_outReal: outReal[*outNBElement - 1], };
         Ok(MaStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
 
@@ -819,6 +820,7 @@ impl MaStream {
         }
         let mut outReal: f64 = 0.0_f64;
         Core::ma_step_impl(&mut self.state, inReal, &mut outReal)?;
+        self.state.cur_outReal = outReal;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -856,6 +858,7 @@ impl MaStream {
                 return Err(RetCode::BadParam);
             }
             Core::ma_step_impl(&mut self.state, inReal[i], &mut outReal[i])?;
+            self.state.cur_outReal = outReal[i];
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -866,8 +869,8 @@ impl MaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -905,6 +908,19 @@ impl MaStream {
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MA_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

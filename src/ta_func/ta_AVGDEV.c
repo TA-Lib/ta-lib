@@ -203,6 +203,8 @@ struct TA_AVGDEV_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_AVGDEV_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    int winPos_i;
    int winCap_i;
@@ -236,6 +238,7 @@ static void TA_AVGDEV_StepImpl( struct TA_AVGDEV_Stream *sp, double inReal, doub
       todayDev += fabs(sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] - todaySum / sp->optInTimePeriod);
    }
    *outReal= todayDev / sp->optInTimePeriod;
+   sp->cur_outReal = *outReal;
    sp->winPos_i = sp->winPos_i + 1;
    if( sp->winPos_i >= sp->winCap_i )
    {
@@ -325,6 +328,7 @@ static TA_RetCode TA_AVGDEV_OpenImpl( struct TA_AVGDEV_Stream **stream, const do
       sp->winPos_i = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -411,6 +415,7 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Peek( const TA_AVGDEV_Stream *stream, double inR
       todayDev += fabs(((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0) - todaySum / sp->optInTimePeriod);
    }
    *outReal= todayDev / sp->optInTimePeriod;
+   sp->cur_outReal = *outReal;
    sp->winPos_i = sp->winPos_i + 1;
    if( sp->winPos_i >= sp->winCap_i )
    {
@@ -442,6 +447,33 @@ TA_LIB_API TA_RetCode TA_AVGDEV_UpdateAndFill( TA_AVGDEV_Stream *stream, const d
 TA_LIB_API TA_RetCode TA_AVGDEV_Close( TA_AVGDEV_Stream *stream )
 {
    TA_AVGDEV_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AVGDEV_Value( const TA_AVGDEV_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AVGDEV_Clone( const TA_AVGDEV_Stream *stream, TA_AVGDEV_Stream **clone )
+{
+   struct TA_AVGDEV_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_AVGDEV_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->win_i_inReal = NULL;
+   if( stream->win_i_inReal )
+   { size_t copyN = (size_t)(sp->winCap_i);
+     sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->win_i_inReal ) { TA_AVGDEV_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->win_i_inReal, stream->win_i_inReal, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

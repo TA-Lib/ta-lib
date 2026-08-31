@@ -388,6 +388,7 @@ struct AoStreamState {
     ringPos_trailingSlowIdx: usize,
     ringCap_trailingSlowIdx: usize,
     ring_trailingSlowIdx_derived: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -419,6 +420,7 @@ impl Core {
         sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
         sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
         (*outReal) = tempReal;
+        sp.cur_outReal = (*outReal);
         sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
         sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
         if sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
@@ -596,6 +598,7 @@ impl Core {
             optInSlowPeriod,
             sumFast,
             sumSlow,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingFastIdx: 0_usize,
             ringCap_trailingFastIdx: cap_trailingFastIdx as usize,
             ring_trailingFastIdx_derived,
@@ -791,8 +794,8 @@ impl AoStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -811,6 +814,7 @@ impl AoStream {
             let outReal = &mut outReal;
             let mut medianPrice: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
             let mut ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
             let mut sumFast = sp.sumFast;
@@ -841,6 +845,7 @@ impl AoStream {
             sumFast -= (if (ringPos_trailingFastIdx as usize) != pkSlot0 { sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] } else { pkVal0 });
             sumSlow -= (if (ringPos_trailingSlowIdx as usize) != pkSlot1 { sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] } else { pkVal1 });
             (*outReal) = tempReal;
+            cur_outReal = (*outReal);
             ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
             if ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
                 ringPos_trailingFastIdx = 0;
@@ -851,6 +856,19 @@ impl AoStream {
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_AO_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

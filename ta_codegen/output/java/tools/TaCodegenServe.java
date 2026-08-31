@@ -704,11 +704,11 @@ class Core {
         * Open with {@link Core#acOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -743,7 +743,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -919,10 +919,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AcStream copy() {
+          @Override
+          public AcStream clone() {
              return new AcStream(this);
           }
        }
@@ -1739,11 +1747,11 @@ class Core {
         * Open with {@link Core#accbandsOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -1774,7 +1782,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -1887,9 +1895,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -1967,10 +1976,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AccbandsStream copy() {
+          @Override
+          public AccbandsStream clone() {
              return new AccbandsStream(this);
           }
        }
@@ -2476,11 +2493,11 @@ class Core {
         * Open with {@link Core#acosOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -2499,7 +2516,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -2596,10 +2613,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AcosStream copy() {
+          @Override
+          public AcosStream clone() {
              return new AcosStream(this);
           }
        }
@@ -2990,11 +3015,11 @@ class Core {
         * Open with {@link Core#adOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -3014,7 +3039,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -3127,10 +3152,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AdStream copy() {
+          @Override
+          public AdStream clone() {
              return new AdStream(this);
           }
        }
@@ -3505,11 +3538,11 @@ class Core {
         * Open with {@link Core#addOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -3528,7 +3561,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -3626,10 +3659,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AddStream copy() {
+          @Override
+          public AddStream clone() {
              return new AddStream(this);
           }
        }
@@ -4209,11 +4250,11 @@ class Core {
         * Open with {@link Core#adoscOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -4241,7 +4282,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -4366,10 +4407,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AdoscStream copy() {
+          @Override
+          public AdoscStream clone() {
              return new AdoscStream(this);
           }
        }
@@ -5441,11 +5490,11 @@ class Core {
         * Open with {@link Core#adxOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -5472,7 +5521,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -5636,10 +5685,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AdxStream copy() {
+          @Override
+          public AdxStream clone() {
              return new AdxStream(this);
           }
        }
@@ -6498,11 +6555,11 @@ class Core {
         * Open with {@link Core#adxrOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -6526,7 +6583,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -6634,10 +6691,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AdxrStream copy() {
+          @Override
+          public AdxrStream clone() {
              return new AdxrStream(this);
           }
        }
@@ -7261,11 +7326,11 @@ class Core {
         * Open with {@link Core#aoOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -7294,7 +7359,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -7443,10 +7508,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AoStream copy() {
+          @Override
+          public AoStream clone() {
              return new AoStream(this);
           }
        }
@@ -8104,11 +8177,11 @@ class Core {
         * Open with {@link Core#apoOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -8132,7 +8205,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -8239,10 +8312,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public ApoStream copy() {
+          @Override
+          public ApoStream clone() {
              return new ApoStream(this);
           }
        }
@@ -8837,11 +8918,11 @@ class Core {
         * Open with {@link Core#aroonOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -8874,7 +8955,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -8985,9 +9066,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -9073,10 +9155,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AroonStream copy() {
+          @Override
+          public AroonStream clone() {
              return new AroonStream(this);
           }
        }
@@ -9767,11 +9857,11 @@ class Core {
         * Open with {@link Core#aroonoscOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -9802,7 +9892,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -9985,10 +10075,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AroonoscStream copy() {
+          @Override
+          public AroonoscStream clone() {
              return new AroonoscStream(this);
           }
        }
@@ -10499,11 +10597,11 @@ class Core {
         * Open with {@link Core#asinOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -10522,7 +10620,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -10619,10 +10717,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AsinStream copy() {
+          @Override
+          public AsinStream clone() {
              return new AsinStream(this);
           }
        }
@@ -10929,11 +11035,11 @@ class Core {
         * Open with {@link Core#atanOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -10952,7 +11058,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -11049,10 +11155,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AtanStream copy() {
+          @Override
+          public AtanStream clone() {
              return new AtanStream(this);
           }
        }
@@ -11639,11 +11753,11 @@ class Core {
         * Open with {@link Core#atrOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -11665,7 +11779,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -11793,10 +11907,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AtrStream copy() {
+          @Override
+          public AtrStream clone() {
              return new AtrStream(this);
           }
        }
@@ -12364,11 +12486,11 @@ class Core {
         * Open with {@link Core#avgdevOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -12391,7 +12513,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -12512,10 +12634,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AvgdevStream copy() {
+          @Override
+          public AvgdevStream clone() {
              return new AvgdevStream(this);
           }
        }
@@ -12914,11 +13044,11 @@ class Core {
         * Open with {@link Core#avgpriceOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -12937,7 +13067,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -13037,10 +13167,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public AvgpriceStream copy() {
+          @Override
+          public AvgpriceStream clone() {
              return new AvgpriceStream(this);
           }
        }
@@ -13969,11 +14107,11 @@ class Core {
         * Open with {@link Core#bbandsOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -14001,7 +14139,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -14109,9 +14247,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -14152,10 +14291,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public BbandsStream copy() {
+          @Override
+          public BbandsStream clone() {
              return new BbandsStream(this);
           }
        }
@@ -15169,11 +15316,11 @@ class Core {
         * Open with {@link Core#betaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -15214,7 +15361,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -15546,10 +15693,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public BetaStream copy() {
+          @Override
+          public BetaStream clone() {
              return new BetaStream(this);
           }
        }
@@ -16460,11 +16615,11 @@ class Core {
         * Open with {@link Core#bopOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -16483,7 +16638,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -16595,10 +16750,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public BopStream copy() {
+          @Override
+          public BopStream clone() {
              return new BopStream(this);
           }
        }
@@ -17159,11 +17322,11 @@ class Core {
         * Open with {@link Core#cciOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -17187,7 +17350,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -17338,10 +17501,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CciStream copy() {
+          @Override
+          public CciStream clone() {
              return new CciStream(this);
           }
        }
@@ -17940,11 +18111,11 @@ class Core {
         * Open with {@link Core#cdl2crowsOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -17978,7 +18149,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -18141,10 +18312,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdl2crowsStream copy() {
+          @Override
+          public Cdl2crowsStream clone() {
              return new Cdl2crowsStream(this);
           }
        }
@@ -18737,11 +18916,11 @@ class Core {
         * Open with {@link Core#cdl3blackcrowsOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -18779,7 +18958,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -18877,10 +19056,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -18961,10 +19138,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdl3blackcrowsStream copy() {
+          @Override
+          public Cdl3blackcrowsStream clone() {
              return new Cdl3blackcrowsStream(this);
           }
        }
@@ -19597,11 +19782,11 @@ class Core {
         * Open with {@link Core#cdl3insideOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -19642,7 +19827,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -19824,10 +20009,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdl3insideStream copy() {
+          @Override
+          public Cdl3insideStream clone() {
              return new Cdl3insideStream(this);
           }
        }
@@ -20451,11 +20644,11 @@ class Core {
         * Open with {@link Core#cdl3linestrikeOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -20494,7 +20687,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -20593,10 +20786,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -20673,10 +20864,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdl3linestrikeStream copy() {
+          @Override
+          public Cdl3linestrikeStream clone() {
              return new Cdl3linestrikeStream(this);
           }
        }
@@ -21228,11 +21427,11 @@ class Core {
         * Open with {@link Core#cdl3outsideOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -21255,7 +21454,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -21375,10 +21574,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdl3outsideStream copy() {
+          @Override
+          public Cdl3outsideStream clone() {
              return new Cdl3outsideStream(this);
           }
        }
@@ -22002,11 +22209,11 @@ class Core {
         * Open with {@link Core#cdl3starsinsouthOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -22064,7 +22271,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -22182,10 +22389,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -22306,10 +22511,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdl3starsinsouthStream copy() {
+          @Override
+          public Cdl3starsinsouthStream clone() {
              return new Cdl3starsinsouthStream(this);
           }
        }
@@ -23163,11 +23376,11 @@ class Core {
         * Open with {@link Core#cdl3whitesoldiersOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -23225,7 +23438,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -23343,10 +23556,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -23468,10 +23679,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdl3whitesoldiersStream copy() {
+          @Override
+          public Cdl3whitesoldiersStream clone() {
              return new Cdl3whitesoldiersStream(this);
           }
        }
@@ -24297,11 +24516,11 @@ class Core {
         * Open with {@link Core#cdlabandonedbabyOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -24350,7 +24569,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -24555,10 +24774,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlabandonedbabyStream copy() {
+          @Override
+          public CdlabandonedbabyStream clone() {
              return new CdlabandonedbabyStream(this);
           }
        }
@@ -25386,11 +25613,11 @@ class Core {
         * Open with {@link Core#cdladvanceblockOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -25457,7 +25684,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -25584,10 +25811,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -25720,10 +25945,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdladvanceblockStream copy() {
+          @Override
+          public CdladvanceblockStream clone() {
              return new CdladvanceblockStream(this);
           }
        }
@@ -26525,11 +26758,11 @@ class Core {
         * Open with {@link Core#cdlbeltholdOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -26562,7 +26795,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -26717,10 +26950,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlbeltholdStream copy() {
+          @Override
+          public CdlbeltholdStream clone() {
              return new CdlbeltholdStream(this);
           }
        }
@@ -27304,11 +27545,11 @@ class Core {
         * Open with {@link Core#cdlbreakawayOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -27351,7 +27592,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -27533,10 +27774,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlbreakawayStream copy() {
+          @Override
+          public CdlbreakawayStream clone() {
              return new CdlbreakawayStream(this);
           }
        }
@@ -28146,11 +28395,11 @@ class Core {
         * Open with {@link Core#cdlclosingmarubozuOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -28183,7 +28432,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -28338,10 +28587,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlclosingmarubozuStream copy() {
+          @Override
+          public CdlclosingmarubozuStream clone() {
              return new CdlclosingmarubozuStream(this);
           }
        }
@@ -28940,11 +29197,11 @@ class Core {
         * Open with {@link Core#cdlconcealbabyswallOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -28983,7 +29240,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -29082,10 +29339,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -29167,10 +29422,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlconcealbabyswallStream copy() {
+          @Override
+          public CdlconcealbabyswallStream clone() {
              return new CdlconcealbabyswallStream(this);
           }
        }
@@ -29807,11 +30070,11 @@ class Core {
         * Open with {@link Core#cdlcounterattackOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -29850,7 +30113,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -29949,10 +30212,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -30024,10 +30285,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlcounterattackStream copy() {
+          @Override
+          public CdlcounterattackStream clone() {
              return new CdlcounterattackStream(this);
           }
        }
@@ -30657,11 +30926,11 @@ class Core {
         * Open with {@link Core#cdldarkcloudcoverOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -30693,7 +30962,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -30841,10 +31110,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdldarkcloudcoverStream copy() {
+          @Override
+          public CdldarkcloudcoverStream clone() {
              return new CdldarkcloudcoverStream(this);
           }
        }
@@ -31395,11 +31672,11 @@ class Core {
         * Open with {@link Core#cdldojiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -31425,7 +31702,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -31555,10 +31832,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdldojiStream copy() {
+          @Override
+          public CdldojiStream clone() {
              return new CdldojiStream(this);
           }
        }
@@ -32139,11 +32424,11 @@ class Core {
         * Open with {@link Core#cdldojistarOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -32180,7 +32465,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -32348,10 +32633,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdldojistarStream copy() {
+          @Override
+          public CdldojistarStream clone() {
              return new CdldojistarStream(this);
           }
        }
@@ -32983,11 +33276,11 @@ class Core {
         * Open with {@link Core#cdldragonflydojiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -33020,7 +33313,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -33173,10 +33466,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdldragonflydojiStream copy() {
+          @Override
+          public CdldragonflydojiStream clone() {
              return new CdldragonflydojiStream(this);
           }
        }
@@ -33733,11 +34034,11 @@ class Core {
         * Open with {@link Core#cdlengulfingOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -33758,7 +34059,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -33874,10 +34175,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlengulfingStream copy() {
+          @Override
+          public CdlengulfingStream clone() {
              return new CdlengulfingStream(this);
           }
        }
@@ -34479,11 +34788,11 @@ class Core {
         * Open with {@link Core#cdleveningdojistarOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -34532,7 +34841,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -34740,10 +35049,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdleveningdojistarStream copy() {
+          @Override
+          public CdleveningdojistarStream clone() {
              return new CdleveningdojistarStream(this);
           }
        }
@@ -35474,11 +35791,11 @@ class Core {
         * Open with {@link Core#cdleveningstarOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -35522,7 +35839,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -35709,10 +36026,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdleveningstarStream copy() {
+          @Override
+          public CdleveningstarStream clone() {
              return new CdleveningstarStream(this);
           }
        }
@@ -36373,11 +36698,11 @@ class Core {
         * Open with {@link Core#cdlgapsidesidewhiteOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -36418,7 +36743,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -36594,10 +36919,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlgapsidesidewhiteStream copy() {
+          @Override
+          public CdlgapsidesidewhiteStream clone() {
              return new CdlgapsidesidewhiteStream(this);
           }
        }
@@ -37241,11 +37574,11 @@ class Core {
         * Open with {@link Core#cdlgravestonedojiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -37278,7 +37611,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -37431,10 +37764,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlgravestonedojiStream copy() {
+          @Override
+          public CdlgravestonedojiStream clone() {
              return new CdlgravestonedojiStream(this);
           }
        }
@@ -38103,11 +38444,11 @@ class Core {
         * Open with {@link Core#cdlhammerOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -38158,7 +38499,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -38373,10 +38714,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlhammerStream copy() {
+          @Override
+          public CdlhammerStream clone() {
              return new CdlhammerStream(this);
           }
        }
@@ -39148,11 +39497,11 @@ class Core {
         * Open with {@link Core#cdlhangingmanOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -39203,7 +39552,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -39418,10 +39767,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlhangingmanStream copy() {
+          @Override
+          public CdlhangingmanStream clone() {
              return new CdlhangingmanStream(this);
           }
        }
@@ -40156,11 +40513,11 @@ class Core {
         * Open with {@link Core#cdlharamiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -40197,7 +40554,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -40379,10 +40736,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlharamiStream copy() {
+          @Override
+          public CdlharamiStream clone() {
              return new CdlharamiStream(this);
           }
        }
@@ -41060,11 +41425,11 @@ class Core {
         * Open with {@link Core#cdlharamicrossOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -41101,7 +41466,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -41283,10 +41648,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlharamicrossStream copy() {
+          @Override
+          public CdlharamicrossStream clone() {
              return new CdlharamicrossStream(this);
           }
        }
@@ -41941,11 +42314,11 @@ class Core {
         * Open with {@link Core#cdlhighwaveOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -41978,7 +42351,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -42131,10 +42504,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlhighwaveStream copy() {
+          @Override
+          public CdlhighwaveStream clone() {
              return new CdlhighwaveStream(this);
           }
        }
@@ -42753,11 +43134,11 @@ class Core {
         * Open with {@link Core#cdlhikkakeOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -42784,7 +43165,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -42923,10 +43304,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlhikkakeStream copy() {
+          @Override
+          public CdlhikkakeStream clone() {
              return new CdlhikkakeStream(this);
           }
        }
@@ -43578,11 +43967,11 @@ class Core {
         * Open with {@link Core#cdlhikkakemodOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -43623,7 +44012,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -43804,10 +44193,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlhikkakemodStream copy() {
+          @Override
+          public CdlhikkakemodStream clone() {
              return new CdlhikkakemodStream(this);
           }
        }
@@ -44474,11 +44871,11 @@ class Core {
         * Open with {@link Core#cdlhomingpigeonOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -44516,7 +44913,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -44686,10 +45083,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlhomingpigeonStream copy() {
+          @Override
+          public CdlhomingpigeonStream clone() {
              return new CdlhomingpigeonStream(this);
           }
        }
@@ -45348,11 +45753,11 @@ class Core {
         * Open with {@link Core#cdlidentical3crowsOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -45395,7 +45800,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -45498,10 +45903,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -45590,10 +45993,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdlidentical3crowsStream copy() {
+          @Override
+          public Cdlidentical3crowsStream clone() {
              return new Cdlidentical3crowsStream(this);
           }
        }
@@ -46268,11 +46679,11 @@ class Core {
         * Open with {@link Core#cdlinneckOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -46311,7 +46722,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -46480,10 +46891,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlinneckStream copy() {
+          @Override
+          public CdlinneckStream clone() {
              return new CdlinneckStream(this);
           }
        }
@@ -47138,11 +47557,11 @@ class Core {
         * Open with {@link Core#cdlinvertedhammerOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -47184,7 +47603,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -47371,10 +47790,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlinvertedhammerStream copy() {
+          @Override
+          public CdlinvertedhammerStream clone() {
              return new CdlinvertedhammerStream(this);
           }
        }
@@ -48051,11 +48478,11 @@ class Core {
         * Open with {@link Core#cdlkickingOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -48094,7 +48521,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -48193,10 +48620,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -48271,10 +48696,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlkickingStream copy() {
+          @Override
+          public CdlkickingStream clone() {
              return new CdlkickingStream(this);
           }
        }
@@ -48921,11 +49354,11 @@ class Core {
         * Open with {@link Core#cdlkickingbylengthOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -48964,7 +49397,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -49063,10 +49496,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -49141,10 +49572,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlkickingbylengthStream copy() {
+          @Override
+          public CdlkickingbylengthStream clone() {
              return new CdlkickingbylengthStream(this);
           }
        }
@@ -49765,11 +50204,11 @@ class Core {
         * Open with {@link Core#cdlladderbottomOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -49806,7 +50245,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -49977,10 +50416,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlladderbottomStream copy() {
+          @Override
+          public CdlladderbottomStream clone() {
              return new CdlladderbottomStream(this);
           }
        }
@@ -50591,11 +51038,11 @@ class Core {
         * Open with {@link Core#cdllongleggeddojiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -50628,7 +51075,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -50781,10 +51228,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdllongleggeddojiStream copy() {
+          @Override
+          public CdllongleggeddojiStream clone() {
              return new CdllongleggeddojiStream(this);
           }
        }
@@ -51374,11 +51829,11 @@ class Core {
         * Open with {@link Core#cdllonglineOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -51411,7 +51866,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -51564,10 +52019,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdllonglineStream copy() {
+          @Override
+          public CdllonglineStream clone() {
              return new CdllonglineStream(this);
           }
        }
@@ -52168,11 +52631,11 @@ class Core {
         * Open with {@link Core#cdlmarubozuOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -52205,7 +52668,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -52358,10 +52821,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlmarubozuStream copy() {
+          @Override
+          public CdlmarubozuStream clone() {
              return new CdlmarubozuStream(this);
           }
        }
@@ -52937,11 +53408,11 @@ class Core {
         * Open with {@link Core#cdlmatchinglowOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -52972,7 +53443,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -53117,10 +53588,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlmatchinglowStream copy() {
+          @Override
+          public CdlmatchinglowStream clone() {
              return new CdlmatchinglowStream(this);
           }
        }
@@ -53759,11 +54238,11 @@ class Core {
         * Open with {@link Core#cdlmatholdOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -53814,7 +54293,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -53925,10 +54404,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -54034,10 +54511,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlmatholdStream copy() {
+          @Override
+          public CdlmatholdStream clone() {
              return new CdlmatholdStream(this);
           }
        }
@@ -54801,11 +55286,11 @@ class Core {
         * Open with {@link Core#cdlmorningdojistarOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -54854,7 +55339,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -55062,10 +55547,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlmorningdojistarStream copy() {
+          @Override
+          public CdlmorningdojistarStream clone() {
              return new CdlmorningdojistarStream(this);
           }
        }
@@ -55804,11 +56297,11 @@ class Core {
         * Open with {@link Core#cdlmorningstarOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -55852,7 +56345,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -56039,10 +56532,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlmorningstarStream copy() {
+          @Override
+          public CdlmorningstarStream clone() {
              return new CdlmorningstarStream(this);
           }
        }
@@ -56703,11 +57204,11 @@ class Core {
         * Open with {@link Core#cdlonneckOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -56746,7 +57247,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -56915,10 +57416,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlonneckStream copy() {
+          @Override
+          public CdlonneckStream clone() {
              return new CdlonneckStream(this);
           }
        }
@@ -57525,11 +58034,11 @@ class Core {
         * Open with {@link Core#cdlpiercingOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -57560,7 +58069,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -57651,10 +58160,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -57714,10 +58221,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlpiercingStream copy() {
+          @Override
+          public CdlpiercingStream clone() {
              return new CdlpiercingStream(this);
           }
        }
@@ -58340,11 +58855,11 @@ class Core {
         * Open with {@link Core#cdlrickshawmanOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -58384,7 +58899,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -58564,10 +59079,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlrickshawmanStream copy() {
+          @Override
+          public CdlrickshawmanStream clone() {
              return new CdlrickshawmanStream(this);
           }
        }
@@ -59265,11 +59788,11 @@ class Core {
         * Open with {@link Core#cdlrisefall3methodsOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -59319,7 +59842,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -59429,10 +59952,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -59542,10 +60063,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdlrisefall3methodsStream copy() {
+          @Override
+          public Cdlrisefall3methodsStream clone() {
              return new Cdlrisefall3methodsStream(this);
           }
        }
@@ -60269,11 +60798,11 @@ class Core {
         * Open with {@link Core#cdlseparatinglinesOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -60318,7 +60847,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -60510,10 +61039,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlseparatinglinesStream copy() {
+          @Override
+          public CdlseparatinglinesStream clone() {
              return new CdlseparatinglinesStream(this);
           }
        }
@@ -61213,11 +61750,11 @@ class Core {
         * Open with {@link Core#cdlshootingstarOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -61259,7 +61796,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -61446,10 +61983,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlshootingstarStream copy() {
+          @Override
+          public CdlshootingstarStream clone() {
              return new CdlshootingstarStream(this);
           }
        }
@@ -62112,11 +62657,11 @@ class Core {
         * Open with {@link Core#cdlshortlineOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -62149,7 +62694,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -62302,10 +62847,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlshortlineStream copy() {
+          @Override
+          public CdlshortlineStream clone() {
              return new CdlshortlineStream(this);
           }
        }
@@ -62869,11 +63422,11 @@ class Core {
         * Open with {@link Core#cdlspinningtopOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -62899,7 +63452,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -63029,10 +63582,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlspinningtopStream copy() {
+          @Override
+          public CdlspinningtopStream clone() {
              return new CdlspinningtopStream(this);
           }
        }
@@ -63688,11 +64249,11 @@ class Core {
         * Open with {@link Core#cdlstalledpatternOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -63750,7 +64311,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -63868,10 +64429,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -63988,10 +64547,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlstalledpatternStream copy() {
+          @Override
+          public CdlstalledpatternStream clone() {
              return new CdlstalledpatternStream(this);
           }
        }
@@ -64706,11 +65273,11 @@ class Core {
         * Open with {@link Core#cdlsticksandwichOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -64745,7 +65312,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -64904,10 +65471,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlsticksandwichStream copy() {
+          @Override
+          public CdlsticksandwichStream clone() {
              return new CdlsticksandwichStream(this);
           }
        }
@@ -65529,11 +66104,11 @@ class Core {
         * Open with {@link Core#cdltakuriOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -65573,7 +66148,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -65749,10 +66324,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdltakuriStream copy() {
+          @Override
+          public CdltakuriStream clone() {
              return new CdltakuriStream(this);
           }
        }
@@ -66384,11 +66967,11 @@ class Core {
         * Open with {@link Core#cdltasukigapOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -66421,7 +67004,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -66582,10 +67165,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdltasukigapStream copy() {
+          @Override
+          public CdltasukigapStream clone() {
              return new CdltasukigapStream(this);
           }
        }
@@ -67201,11 +67792,11 @@ class Core {
         * Open with {@link Core#cdlthrustingOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -67244,7 +67835,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -67413,10 +68004,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdlthrustingStream copy() {
+          @Override
+          public CdlthrustingStream clone() {
              return new CdlthrustingStream(this);
           }
        }
@@ -68030,11 +68629,11 @@ class Core {
         * Open with {@link Core#cdltristarOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -68068,7 +68667,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -68236,10 +68835,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CdltristarStream copy() {
+          @Override
+          public CdltristarStream clone() {
              return new CdltristarStream(this);
           }
        }
@@ -68854,11 +69461,11 @@ class Core {
         * Open with {@link Core#cdlunique3riverOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -68899,7 +69506,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -69085,10 +69692,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdlunique3riverStream copy() {
+          @Override
+          public Cdlunique3riverStream clone() {
              return new Cdlunique3riverStream(this);
           }
        }
@@ -69739,11 +70354,11 @@ class Core {
         * Open with {@link Core#cdlupsidegap2crowsOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -69784,7 +70399,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -69970,10 +70585,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdlupsidegap2crowsStream copy() {
+          @Override
+          public Cdlupsidegap2crowsStream clone() {
              return new Cdlupsidegap2crowsStream(this);
           }
        }
@@ -70562,11 +71185,11 @@ class Core {
         * Open with {@link Core#cdlxsidegap3methodsOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -70589,7 +71212,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -70715,10 +71338,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Cdlxsidegap3methodsStream copy() {
+          @Override
+          public Cdlxsidegap3methodsStream clone() {
              return new Cdlxsidegap3methodsStream(this);
           }
        }
@@ -71106,11 +71737,11 @@ class Core {
         * Open with {@link Core#ceilOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -71129,7 +71760,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -71226,10 +71857,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CeilStream copy() {
+          @Override
+          public CeilStream clone() {
              return new CeilStream(this);
           }
        }
@@ -71819,11 +72458,11 @@ class Core {
         * Open with {@link Core#cmfOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -71850,7 +72489,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -71987,10 +72626,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CmfStream copy() {
+          @Override
+          public CmfStream clone() {
              return new CmfStream(this);
           }
        }
@@ -72739,11 +73386,11 @@ class Core {
         * Open with {@link Core#cmoOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -72766,7 +73413,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -72893,10 +73540,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CmoStream copy() {
+          @Override
+          public CmoStream clone() {
              return new CmoStream(this);
           }
        }
@@ -73646,11 +74301,11 @@ class Core {
         * Open with {@link Core#cmouOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -73678,7 +74333,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -73844,10 +74499,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CmouStream copy() {
+          @Override
+          public CmouStream clone() {
              return new CmouStream(this);
           }
        }
@@ -74753,11 +75416,11 @@ class Core {
         * Open with {@link Core#correlOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -74795,7 +75458,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -75094,10 +75757,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CorrelStream copy() {
+          @Override
+          public CorrelStream clone() {
              return new CorrelStream(this);
           }
        }
@@ -75835,11 +76506,11 @@ class Core {
         * Open with {@link Core#cosOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -75858,7 +76529,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -75955,10 +76626,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CosStream copy() {
+          @Override
+          public CosStream clone() {
              return new CosStream(this);
           }
        }
@@ -76264,11 +76943,11 @@ class Core {
         * Open with {@link Core#coshOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -76287,7 +76966,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -76384,10 +77063,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public CoshStream copy() {
+          @Override
+          public CoshStream clone() {
              return new CoshStream(this);
           }
        }
@@ -76917,11 +77604,11 @@ class Core {
         * Open with {@link Core#demaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -76944,7 +77631,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -77053,10 +77740,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public DemaStream copy() {
+          @Override
+          public DemaStream clone() {
              return new DemaStream(this);
           }
        }
@@ -77522,11 +78217,11 @@ class Core {
         * Open with {@link Core#divOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -77545,7 +78240,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -77643,10 +78338,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public DivStream copy() {
+          @Override
+          public DivStream clone() {
              return new DivStream(this);
           }
        }
@@ -78475,11 +79178,11 @@ class Core {
         * Open with {@link Core#dxOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -78506,7 +79209,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -78672,10 +79375,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public DxStream copy() {
+          @Override
+          public DxStream clone() {
              return new DxStream(this);
           }
        }
@@ -79575,11 +80286,11 @@ class Core {
         * Open with {@link Core#efiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -79602,7 +80313,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -79718,10 +80429,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public EfiStream copy() {
+          @Override
+          public EfiStream clone() {
              return new EfiStream(this);
           }
        }
@@ -80390,11 +81109,11 @@ class Core {
         * Open with {@link Core#emaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -80416,7 +81135,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -80522,10 +81241,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public EmaStream copy() {
+          @Override
+          public EmaStream clone() {
              return new EmaStream(this);
           }
        }
@@ -80919,11 +81646,11 @@ class Core {
         * Open with {@link Core#expOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -80942,7 +81669,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -81039,10 +81766,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public ExpStream copy() {
+          @Override
+          public ExpStream clone() {
              return new ExpStream(this);
           }
        }
@@ -81346,11 +82081,11 @@ class Core {
         * Open with {@link Core#floorOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -81369,7 +82104,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -81466,10 +82201,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public FloorStream copy() {
+          @Override
+          public FloorStream clone() {
              return new FloorStream(this);
           }
        }
@@ -82424,11 +83167,11 @@ class Core {
         * Open with {@link Core#hmaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -82484,7 +83227,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -82813,10 +83556,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public HmaStream copy() {
+          @Override
+          public HmaStream clone() {
              return new HmaStream(this);
           }
        }
@@ -84456,11 +85207,11 @@ class Core {
         * Open with {@link Core#htDcperiodOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -84524,7 +85275,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -84643,12 +85394,9 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -84671,17 +85419,9 @@ class Core {
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
-             double[] Q1_Even = sp.Q1_Even.clone();
-             double[] Q1_Odd = sp.Q1_Odd.clone();
              double Re = sp.Re;
              double cur_outReal = sp.cur_outReal;
-             double[] detrender_Even = sp.detrender_Even.clone();
-             double[] detrender_Odd = sp.detrender_Odd.clone();
              int hilbertIdx = sp.hilbertIdx;
-             double[] jI_Even = sp.jI_Even.clone();
-             double[] jI_Odd = sp.jI_Odd.clone();
-             double[] jQ_Even = sp.jQ_Even.clone();
-             double[] jQ_Odd = sp.jQ_Odd.clone();
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
              double periodWMASum = sp.periodWMASum;
@@ -84724,8 +85464,7 @@ class Core {
              if( streamParity == 0 ) {
                 /* Do the Hilbert Transforms for even price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Even[hilbertIdx];
-                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Even[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -84733,8 +85472,7 @@ class Core {
                 prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Even[hilbertIdx];
-                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Even[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -84742,8 +85480,7 @@ class Core {
                 prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
-                jI = 0 - jI_Even[hilbertIdx];
-                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Even[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -84751,8 +85488,7 @@ class Core {
                 prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Even[hilbertIdx];
-                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Even[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -84775,8 +85511,7 @@ class Core {
              } else {
                 /* Do the Hilbert Transforms for odd price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Odd[hilbertIdx];
-                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Odd[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -84784,8 +85519,7 @@ class Core {
                 prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Odd[hilbertIdx];
-                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Odd[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -84793,8 +85527,7 @@ class Core {
                 prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
-                jI = 0 - jI_Odd[hilbertIdx];
-                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Odd[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -84802,8 +85535,7 @@ class Core {
                 prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Odd[hilbertIdx];
-                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Odd[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -84865,10 +85597,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public HtDcperiodStream copy() {
+          @Override
+          public HtDcperiodStream clone() {
              return new HtDcperiodStream(this);
           }
        }
@@ -86423,11 +87163,11 @@ class Core {
         * Open with {@link Core#htDcphaseOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -86497,7 +87237,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -86622,12 +87362,9 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -86657,17 +87394,9 @@ class Core {
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
-             double[] Q1_Even = sp.Q1_Even.clone();
-             double[] Q1_Odd = sp.Q1_Odd.clone();
              double Re = sp.Re;
              double cur_outReal = sp.cur_outReal;
-             double[] detrender_Even = sp.detrender_Even.clone();
-             double[] detrender_Odd = sp.detrender_Odd.clone();
              int hilbertIdx = sp.hilbertIdx;
-             double[] jI_Even = sp.jI_Even.clone();
-             double[] jI_Odd = sp.jI_Odd.clone();
-             double[] jQ_Even = sp.jQ_Even.clone();
-             double[] jQ_Odd = sp.jQ_Odd.clone();
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
              double periodWMASum = sp.periodWMASum;
@@ -86718,8 +87447,7 @@ class Core {
              if( streamParity == 0 ) {
                 /* Do the Hilbert Transforms for even price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Even[hilbertIdx];
-                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Even[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -86727,8 +87455,7 @@ class Core {
                 prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Even[hilbertIdx];
-                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Even[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -86736,8 +87463,7 @@ class Core {
                 prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
-                jI = 0 - jI_Even[hilbertIdx];
-                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Even[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -86745,8 +87471,7 @@ class Core {
                 prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Even[hilbertIdx];
-                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Even[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -86769,8 +87494,7 @@ class Core {
              } else {
                 /* Do the Hilbert Transforms for odd price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Odd[hilbertIdx];
-                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Odd[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -86778,8 +87502,7 @@ class Core {
                 prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Odd[hilbertIdx];
-                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Odd[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -86787,8 +87510,7 @@ class Core {
                 prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
-                jI = 0 - jI_Odd[hilbertIdx];
-                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Odd[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -86796,8 +87518,7 @@ class Core {
                 prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Odd[hilbertIdx];
-                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Odd[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -86902,10 +87623,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public HtDcphaseStream copy() {
+          @Override
+          public HtDcphaseStream clone() {
              return new HtDcphaseStream(this);
           }
        }
@@ -88491,11 +89220,11 @@ class Core {
         * Open with {@link Core#htPhasorOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -88560,7 +89289,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -88704,10 +89433,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -88730,18 +89457,10 @@ class Core {
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
-             double[] Q1_Even = sp.Q1_Even.clone();
-             double[] Q1_Odd = sp.Q1_Odd.clone();
              double Re = sp.Re;
              double cur_outInPhase = sp.cur_outInPhase;
              double cur_outQuadrature = sp.cur_outQuadrature;
-             double[] detrender_Even = sp.detrender_Even.clone();
-             double[] detrender_Odd = sp.detrender_Odd.clone();
              int hilbertIdx = sp.hilbertIdx;
-             double[] jI_Even = sp.jI_Even.clone();
-             double[] jI_Odd = sp.jI_Odd.clone();
-             double[] jQ_Even = sp.jQ_Even.clone();
-             double[] jQ_Odd = sp.jQ_Odd.clone();
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
              double periodWMASum = sp.periodWMASum;
@@ -88783,8 +89502,7 @@ class Core {
              if( streamParity == 0 ) {
                 /* Do the Hilbert Transforms for even price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Even[hilbertIdx];
-                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Even[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -88792,8 +89510,7 @@ class Core {
                 prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Even[hilbertIdx];
-                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Even[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -88803,8 +89520,7 @@ class Core {
                 cur_outQuadrature = Q1;
                 cur_outInPhase = I1ForEvenPrev3;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
-                jI = 0 - jI_Even[hilbertIdx];
-                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Even[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -88812,8 +89528,7 @@ class Core {
                 prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Even[hilbertIdx];
-                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Even[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -88836,8 +89551,7 @@ class Core {
              } else {
                 /* Do the Hilbert Transforms for odd price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Odd[hilbertIdx];
-                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Odd[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -88845,8 +89559,7 @@ class Core {
                 prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Odd[hilbertIdx];
-                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Odd[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -88856,8 +89569,7 @@ class Core {
                 cur_outQuadrature = Q1;
                 cur_outInPhase = I1ForOddPrev3;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
-                jI = 0 - jI_Odd[hilbertIdx];
-                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Odd[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -88865,8 +89577,7 @@ class Core {
                 prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Odd[hilbertIdx];
-                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Odd[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -88926,10 +89637,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public HtPhasorStream copy() {
+          @Override
+          public HtPhasorStream clone() {
              return new HtPhasorStream(this);
           }
        }
@@ -90510,11 +91229,11 @@ class Core {
         * Open with {@link Core#htSineOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -90587,7 +91306,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -90739,10 +91458,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -90772,18 +91489,10 @@ class Core {
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
-             double[] Q1_Even = sp.Q1_Even.clone();
-             double[] Q1_Odd = sp.Q1_Odd.clone();
              double Re = sp.Re;
              double cur_outLeadSine = sp.cur_outLeadSine;
              double cur_outSine = sp.cur_outSine;
-             double[] detrender_Even = sp.detrender_Even.clone();
-             double[] detrender_Odd = sp.detrender_Odd.clone();
              int hilbertIdx = sp.hilbertIdx;
-             double[] jI_Even = sp.jI_Even.clone();
-             double[] jI_Odd = sp.jI_Odd.clone();
-             double[] jQ_Even = sp.jQ_Even.clone();
-             double[] jQ_Odd = sp.jQ_Odd.clone();
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
              double periodWMASum = sp.periodWMASum;
@@ -90834,8 +91543,7 @@ class Core {
              if( streamParity == 0 ) {
                 /* Do the Hilbert Transforms for even price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Even[hilbertIdx];
-                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Even[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -90843,8 +91551,7 @@ class Core {
                 prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Even[hilbertIdx];
-                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Even[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -90852,8 +91559,7 @@ class Core {
                 prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
-                jI = 0 - jI_Even[hilbertIdx];
-                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Even[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -90861,8 +91567,7 @@ class Core {
                 prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Even[hilbertIdx];
-                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Even[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -90885,8 +91590,7 @@ class Core {
              } else {
                 /* Do the Hilbert Transforms for odd price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Odd[hilbertIdx];
-                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Odd[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -90894,8 +91598,7 @@ class Core {
                 prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Odd[hilbertIdx];
-                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Odd[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -90903,8 +91606,7 @@ class Core {
                 prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
-                jI = 0 - jI_Odd[hilbertIdx];
-                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Odd[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -90912,8 +91614,7 @@ class Core {
                 prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Odd[hilbertIdx];
-                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Odd[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -91019,10 +91720,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public HtSineStream copy() {
+          @Override
+          public HtSineStream clone() {
              return new HtSineStream(this);
           }
        }
@@ -92662,11 +93371,11 @@ class Core {
         * Open with {@link Core#htTrendlineOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -92736,7 +93445,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -92861,12 +93570,9 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -92892,20 +93598,12 @@ class Core {
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
-             double[] Q1_Even = sp.Q1_Even.clone();
-             double[] Q1_Odd = sp.Q1_Odd.clone();
              double Re = sp.Re;
              double cur_outReal = sp.cur_outReal;
-             double[] detrender_Even = sp.detrender_Even.clone();
-             double[] detrender_Odd = sp.detrender_Odd.clone();
              int hilbertIdx = sp.hilbertIdx;
              double iTrend1 = sp.iTrend1;
              double iTrend2 = sp.iTrend2;
              double iTrend3 = sp.iTrend3;
-             double[] jI_Even = sp.jI_Even.clone();
-             double[] jI_Odd = sp.jI_Odd.clone();
-             double[] jQ_Even = sp.jQ_Even.clone();
-             double[] jQ_Odd = sp.jQ_Odd.clone();
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
              double periodWMASum = sp.periodWMASum;
@@ -92953,8 +93651,7 @@ class Core {
              if( streamParity == 0 ) {
                 /* Do the Hilbert Transforms for even price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Even[hilbertIdx];
-                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Even[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -92962,8 +93659,7 @@ class Core {
                 prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Even[hilbertIdx];
-                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Even[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -92971,8 +93667,7 @@ class Core {
                 prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
-                jI = 0 - jI_Even[hilbertIdx];
-                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Even[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -92980,8 +93675,7 @@ class Core {
                 prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Even[hilbertIdx];
-                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Even[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -93004,8 +93698,7 @@ class Core {
              } else {
                 /* Do the Hilbert Transforms for odd price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Odd[hilbertIdx];
-                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Odd[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -93013,8 +93706,7 @@ class Core {
                 prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Odd[hilbertIdx];
-                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Odd[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -93022,8 +93714,7 @@ class Core {
                 prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
-                jI = 0 - jI_Odd[hilbertIdx];
-                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Odd[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -93031,8 +93722,7 @@ class Core {
                 prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Odd[hilbertIdx];
-                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Odd[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -93126,10 +93816,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public HtTrendlineStream copy() {
+          @Override
+          public HtTrendlineStream clone() {
              return new HtTrendlineStream(this);
           }
        }
@@ -94916,11 +95614,11 @@ class Core {
         * Open with {@link Core#htTrendmodeOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -95000,7 +95698,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -95135,12 +95833,9 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public int peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -95176,21 +95871,13 @@ class Core {
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
-             double[] Q1_Even = sp.Q1_Even.clone();
-             double[] Q1_Odd = sp.Q1_Odd.clone();
              double Re = sp.Re;
              int cur_outInteger = sp.cur_outInteger;
              int daysInTrend = sp.daysInTrend;
-             double[] detrender_Even = sp.detrender_Even.clone();
-             double[] detrender_Odd = sp.detrender_Odd.clone();
              int hilbertIdx = sp.hilbertIdx;
              double iTrend1 = sp.iTrend1;
              double iTrend2 = sp.iTrend2;
              double iTrend3 = sp.iTrend3;
-             double[] jI_Even = sp.jI_Even.clone();
-             double[] jI_Odd = sp.jI_Odd.clone();
-             double[] jQ_Even = sp.jQ_Even.clone();
-             double[] jQ_Odd = sp.jQ_Odd.clone();
              double leadSine = sp.leadSine;
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
@@ -95248,8 +95935,7 @@ class Core {
              if( streamParity == 0 ) {
                 /* Do the Hilbert Transforms for even price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Even[hilbertIdx];
-                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Even[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -95257,8 +95943,7 @@ class Core {
                 prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Even[hilbertIdx];
-                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Even[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -95266,8 +95951,7 @@ class Core {
                 prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
-                jI = 0 - jI_Even[hilbertIdx];
-                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Even[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -95275,8 +95959,7 @@ class Core {
                 prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Even[hilbertIdx];
-                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Even[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -95299,8 +95982,7 @@ class Core {
              } else {
                 /* Do the Hilbert Transforms for odd price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Odd[hilbertIdx];
-                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Odd[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -95308,8 +95990,7 @@ class Core {
                 prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Odd[hilbertIdx];
-                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Odd[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -95317,8 +95998,7 @@ class Core {
                 prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
-                jI = 0 - jI_Odd[hilbertIdx];
-                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Odd[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -95326,8 +96006,7 @@ class Core {
                 prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Odd[hilbertIdx];
-                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Odd[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -95489,10 +96168,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public HtTrendmodeStream copy() {
+          @Override
+          public HtTrendmodeStream clone() {
              return new HtTrendmodeStream(this);
           }
        }
@@ -96711,11 +97398,11 @@ class Core {
         * Open with {@link Core#imiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -96739,7 +97426,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -96875,10 +97562,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public ImiStream copy() {
+          @Override
+          public ImiStream clone() {
              return new ImiStream(this);
           }
        }
@@ -97657,11 +98352,11 @@ class Core {
         * Open with {@link Core#kamaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -97691,7 +98386,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -97864,10 +98559,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public KamaStream copy() {
+          @Override
+          public KamaStream clone() {
              return new KamaStream(this);
           }
        }
@@ -98739,11 +99442,11 @@ class Core {
         * Open with {@link Core#linearregOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -98776,7 +99479,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -98995,10 +99698,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public LinearregStream copy() {
+          @Override
+          public LinearregStream clone() {
              return new LinearregStream(this);
           }
        }
@@ -99875,11 +100586,11 @@ class Core {
         * Open with {@link Core#linearregAngleOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -99912,7 +100623,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -100129,10 +100840,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public LinearregAngleStream copy() {
+          @Override
+          public LinearregAngleStream clone() {
              return new LinearregAngleStream(this);
           }
        }
@@ -101003,11 +101722,11 @@ class Core {
         * Open with {@link Core#linearregInterceptOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -101040,7 +101759,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -101257,10 +101976,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public LinearregInterceptStream copy() {
+          @Override
+          public LinearregInterceptStream clone() {
              return new LinearregInterceptStream(this);
           }
        }
@@ -102127,11 +102854,11 @@ class Core {
         * Open with {@link Core#linearregSlopeOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -102164,7 +102891,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -102379,10 +103106,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public LinearregSlopeStream copy() {
+          @Override
+          public LinearregSlopeStream clone() {
              return new LinearregSlopeStream(this);
           }
        }
@@ -102980,11 +103715,11 @@ class Core {
         * Open with {@link Core#lnOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -103003,7 +103738,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -103100,10 +103835,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public LnStream copy() {
+          @Override
+          public LnStream clone() {
              return new LnStream(this);
           }
        }
@@ -103415,11 +104158,11 @@ class Core {
         * Open with {@link Core#log10Open}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -103438,7 +104181,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -103535,10 +104278,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Log10Stream copy() {
+          @Override
+          public Log10Stream clone() {
              return new Log10Stream(this);
           }
        }
@@ -104160,11 +104911,11 @@ class Core {
         * Open with {@link Core#maOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -104187,7 +104938,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -104374,10 +105125,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MaStream copy() {
+          @Override
+          public MaStream clone() {
              return new MaStream(this);
           }
        }
@@ -105478,11 +106237,11 @@ class Core {
         * Open with {@link Core#macdOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -105513,7 +106272,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -105624,9 +106383,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -105665,10 +106425,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MacdStream copy() {
+          @Override
+          public MacdStream clone() {
              return new MacdStream(this);
           }
        }
@@ -106569,11 +107337,11 @@ class Core {
         * Open with {@link Core#macdextOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -106604,7 +107372,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -106715,9 +107483,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -106750,10 +107519,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MacdextStream copy() {
+          @Override
+          public MacdextStream clone() {
              return new MacdextStream(this);
           }
        }
@@ -107530,11 +108307,11 @@ class Core {
         * Open with {@link Core#macdfixOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -107563,7 +108340,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -107672,9 +108449,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -107713,10 +108491,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MacdfixStream copy() {
+          @Override
+          public MacdfixStream clone() {
              return new MacdfixStream(this);
           }
        }
@@ -108965,11 +109751,11 @@ class Core {
         * Open with {@link Core#mamaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -109039,7 +109825,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -109190,10 +109976,8 @@ class Core {
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does clone this indicator's fixed-size
-           * per-bar accumulators — a few elements, a count fixed by the indicator and
-           * not by the period — so {@code peek} allocates a small bounded amount per
-           * call.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -109216,19 +110000,11 @@ class Core {
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
-             double[] Q1_Even = sp.Q1_Even.clone();
-             double[] Q1_Odd = sp.Q1_Odd.clone();
              double Re = sp.Re;
              double cur_outFAMA = sp.cur_outFAMA;
              double cur_outMAMA = sp.cur_outMAMA;
-             double[] detrender_Even = sp.detrender_Even.clone();
-             double[] detrender_Odd = sp.detrender_Odd.clone();
              double fama = sp.fama;
              int hilbertIdx = sp.hilbertIdx;
-             double[] jI_Even = sp.jI_Even.clone();
-             double[] jI_Odd = sp.jI_Odd.clone();
-             double[] jQ_Even = sp.jQ_Even.clone();
-             double[] jQ_Odd = sp.jQ_Odd.clone();
              double mama = sp.mama;
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
@@ -109272,8 +110048,7 @@ class Core {
              if( streamParity == 0 ) {
                 /* Do the Hilbert Transforms for even price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Even[hilbertIdx];
-                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Even[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -109281,8 +110056,7 @@ class Core {
                 prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Even[hilbertIdx];
-                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Even[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -109290,8 +110064,7 @@ class Core {
                 prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
-                jI = 0 - jI_Even[hilbertIdx];
-                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Even[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -109299,8 +110072,7 @@ class Core {
                 prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Even[hilbertIdx];
-                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Even[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -109329,8 +110101,7 @@ class Core {
              } else {
                 /* Do the Hilbert Transforms for odd price bar */
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0 - detrender_Odd[hilbertIdx];
-                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender = 0 - sp.detrender_Odd[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -109338,8 +110109,7 @@ class Core {
                 prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0 - Q1_Odd[hilbertIdx];
-                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 = 0 - sp.Q1_Odd[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -109347,8 +110117,7 @@ class Core {
                 prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
-                jI = 0 - jI_Odd[hilbertIdx];
-                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI = 0 - sp.jI_Odd[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -109356,8 +110125,7 @@ class Core {
                 prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0 - jQ_Odd[hilbertIdx];
-                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ = 0 - sp.jQ_Odd[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -109447,10 +110215,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MamaStream copy() {
+          @Override
+          public MamaStream clone() {
              return new MamaStream(this);
           }
        }
@@ -110455,11 +111231,11 @@ class Core {
         * Open with {@link Core#marketfiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -110478,7 +111254,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -110591,10 +111367,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MarketfiStream copy() {
+          @Override
+          public MarketfiStream clone() {
              return new MarketfiStream(this);
           }
        }
@@ -111433,11 +112217,11 @@ class Core {
         * Open with {@link Core#mavpOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -111461,7 +112245,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -111572,10 +112356,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MavpStream copy() {
+          @Override
+          public MavpStream clone() {
              return new MavpStream(this);
           }
        }
@@ -112230,11 +113022,11 @@ class Core {
         * Open with {@link Core#maxOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -112261,7 +113053,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -112401,10 +113193,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MaxStream copy() {
+          @Override
+          public MaxStream clone() {
              return new MaxStream(this);
           }
        }
@@ -112958,11 +113758,11 @@ class Core {
         * Open with {@link Core#maxindexOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -112989,7 +113789,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -113129,10 +113929,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MaxindexStream copy() {
+          @Override
+          public MaxindexStream clone() {
              return new MaxindexStream(this);
           }
        }
@@ -113567,11 +114375,11 @@ class Core {
         * Open with {@link Core#medpriceOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -113590,7 +114398,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -113688,10 +114496,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MedpriceStream copy() {
+          @Override
+          public MedpriceStream clone() {
              return new MedpriceStream(this);
           }
        }
@@ -114339,11 +115155,11 @@ class Core {
         * Open with {@link Core#mfiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -114372,7 +115188,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -114525,10 +115341,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MfiStream copy() {
+          @Override
+          public MfiStream clone() {
              return new MfiStream(this);
           }
        }
@@ -115370,11 +116194,11 @@ class Core {
         * Open with {@link Core#midpointOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -115403,7 +116227,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -115565,10 +116389,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MidpointStream copy() {
+          @Override
+          public MidpointStream clone() {
              return new MidpointStream(this);
           }
        }
@@ -116368,11 +117200,11 @@ class Core {
         * Open with {@link Core#midpriceOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -116402,7 +117234,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -116570,10 +117402,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MidpriceStream copy() {
+          @Override
+          public MidpriceStream clone() {
              return new MidpriceStream(this);
           }
        }
@@ -117288,11 +118128,11 @@ class Core {
         * Open with {@link Core#minOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -117319,7 +118159,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -117459,10 +118299,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MinStream copy() {
+          @Override
+          public MinStream clone() {
              return new MinStream(this);
           }
        }
@@ -118014,11 +118862,11 @@ class Core {
         * Open with {@link Core#minindexOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -118045,7 +118893,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -118185,10 +119033,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MinindexStream copy() {
+          @Override
+          public MinindexStream clone() {
              return new MinindexStream(this);
           }
        }
@@ -118925,11 +119781,11 @@ class Core {
         * Open with {@link Core#minmaxOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -118960,7 +119816,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -119068,9 +119924,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -119148,10 +120005,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MinmaxStream copy() {
+          @Override
+          public MinmaxStream clone() {
              return new MinmaxStream(this);
           }
        }
@@ -119821,11 +120686,11 @@ class Core {
         * Open with {@link Core#minmaxindexOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -119856,7 +120721,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -119964,9 +120829,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -120044,10 +120910,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MinmaxindexStream copy() {
+          @Override
+          public MinmaxindexStream clone() {
              return new MinmaxindexStream(this);
           }
        }
@@ -121051,11 +121925,11 @@ class Core {
         * Open with {@link Core#minusDiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -121080,7 +121954,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -121269,10 +122143,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MinusDiStream copy() {
+          @Override
+          public MinusDiStream clone() {
              return new MinusDiStream(this);
           }
        }
@@ -122441,11 +123323,11 @@ class Core {
         * Open with {@link Core#minusDmOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -122468,7 +123350,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -122613,10 +123495,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MinusDmStream copy() {
+          @Override
+          public MinusDmStream clone() {
              return new MinusDmStream(this);
           }
        }
@@ -123354,11 +124244,11 @@ class Core {
         * Open with {@link Core#momOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -123381,7 +124271,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -123493,10 +124383,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MomStream copy() {
+          @Override
+          public MomStream clone() {
              return new MomStream(this);
           }
        }
@@ -123894,11 +124792,11 @@ class Core {
         * Open with {@link Core#multOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -123917,7 +124815,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -124015,10 +124913,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public MultStream copy() {
+          @Override
+          public MultStream clone() {
              return new MultStream(this);
           }
        }
@@ -124687,11 +125593,11 @@ class Core {
         * Open with {@link Core#natrOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -124713,7 +125619,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -124852,10 +125758,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public NatrStream copy() {
+          @Override
+          public NatrStream clone() {
              return new NatrStream(this);
           }
        }
@@ -125489,11 +126403,11 @@ class Core {
         * Open with {@link Core#nviOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -125515,7 +126429,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -125648,10 +126562,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public NviStream copy() {
+          @Override
+          public NviStream clone() {
              return new NviStream(this);
           }
        }
@@ -126070,11 +126992,11 @@ class Core {
         * Open with {@link Core#obvOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -126095,7 +127017,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -126205,10 +127127,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public ObvStream copy() {
+          @Override
+          public ObvStream clone() {
              return new ObvStream(this);
           }
        }
@@ -127097,11 +128027,11 @@ class Core {
         * Open with {@link Core#plusDiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -127126,7 +128056,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -127315,10 +128245,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public PlusDiStream copy() {
+          @Override
+          public PlusDiStream clone() {
              return new PlusDiStream(this);
           }
        }
@@ -128486,11 +129424,11 @@ class Core {
         * Open with {@link Core#plusDmOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -128513,7 +129451,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -128658,10 +129596,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public PlusDmStream copy() {
+          @Override
+          public PlusDmStream clone() {
              return new PlusDmStream(this);
           }
        }
@@ -129487,11 +130433,11 @@ class Core {
         * Open with {@link Core#ppoOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -129515,7 +130461,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -129628,10 +130574,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public PpoStream copy() {
+          @Override
+          public PpoStream clone() {
              return new PpoStream(this);
           }
        }
@@ -130121,11 +131075,11 @@ class Core {
         * Open with {@link Core#pviOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -130147,7 +131101,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -130280,10 +131234,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public PviStream copy() {
+          @Override
+          public PviStream clone() {
              return new PviStream(this);
           }
        }
@@ -130850,11 +131812,11 @@ class Core {
         * Open with {@link Core#pvoOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -130878,7 +131840,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -130991,10 +131953,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public PvoStream copy() {
+          @Override
+          public PvoStream clone() {
              return new PvoStream(this);
           }
        }
@@ -131534,11 +132504,11 @@ class Core {
         * Open with {@link Core#qstickOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -131562,7 +132532,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -131681,10 +132651,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public QstickStream copy() {
+          @Override
+          public QstickStream clone() {
              return new QstickStream(this);
           }
        }
@@ -132199,11 +133177,11 @@ class Core {
         * Open with {@link Core#rocOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -132226,7 +133204,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -132344,10 +133322,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public RocStream copy() {
+          @Override
+          public RocStream clone() {
              return new RocStream(this);
           }
        }
@@ -132847,11 +133833,11 @@ class Core {
         * Open with {@link Core#rocpOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -132874,7 +133860,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -132992,10 +133978,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public RocpStream copy() {
+          @Override
+          public RocpStream clone() {
              return new RocpStream(this);
           }
        }
@@ -133498,11 +134492,11 @@ class Core {
         * Open with {@link Core#rocrOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -133525,7 +134519,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -133643,10 +134637,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public RocrStream copy() {
+          @Override
+          public RocrStream clone() {
              return new RocrStream(this);
           }
        }
@@ -134151,11 +135153,11 @@ class Core {
         * Open with {@link Core#rocr100Open}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -134178,7 +135180,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -134296,10 +135298,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public Rocr100Stream copy() {
+          @Override
+          public Rocr100Stream clone() {
              return new Rocr100Stream(this);
           }
        }
@@ -135007,11 +136017,11 @@ class Core {
         * Open with {@link Core#rsiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -135034,7 +136044,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -135161,10 +136171,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public RsiStream copy() {
+          @Override
+          public RsiStream clone() {
              return new RsiStream(this);
           }
        }
@@ -136078,11 +137096,11 @@ class Core {
         * Open with {@link Core#sarOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -136109,7 +137127,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -136335,10 +137353,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SarStream copy() {
+          @Override
+          public SarStream clone() {
              return new SarStream(this);
           }
        }
@@ -137660,11 +138686,11 @@ class Core {
         * Open with {@link Core#sarextOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -137698,7 +138724,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -137938,10 +138964,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SarextStream copy() {
+          @Override
+          public SarextStream clone() {
              return new SarextStream(this);
           }
        }
@@ -138705,11 +139739,11 @@ class Core {
         * Open with {@link Core#sinOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -138728,7 +139762,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -138825,10 +139859,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SinStream copy() {
+          @Override
+          public SinStream clone() {
              return new SinStream(this);
           }
        }
@@ -139132,11 +140174,11 @@ class Core {
         * Open with {@link Core#sinhOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -139155,7 +140197,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -139252,10 +140294,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SinhStream copy() {
+          @Override
+          public SinhStream clone() {
              return new SinhStream(this);
           }
        }
@@ -139674,11 +140724,11 @@ class Core {
         * Open with {@link Core#smaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -139702,7 +140752,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -139820,10 +140870,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SmaStream copy() {
+          @Override
+          public SmaStream clone() {
              return new SmaStream(this);
           }
        }
@@ -140831,11 +141889,11 @@ class Core {
         * Open with {@link Core#smiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -140879,7 +141937,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -141002,9 +142060,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -141124,10 +142183,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SmiStream copy() {
+          @Override
+          public SmiStream clone() {
              return new SmiStream(this);
           }
        }
@@ -141833,11 +142900,11 @@ class Core {
         * Open with {@link Core#sqrtOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -141856,7 +142923,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -141953,10 +143020,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SqrtStream copy() {
+          @Override
+          public SqrtStream clone() {
              return new SqrtStream(this);
           }
        }
@@ -142379,11 +143454,11 @@ class Core {
         * Open with {@link Core#stddevOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -142405,7 +143480,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -142512,10 +143587,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public StddevStream copy() {
+          @Override
+          public StddevStream clone() {
              return new StddevStream(this);
           }
        }
@@ -143382,11 +144465,11 @@ class Core {
         * Open with {@link Core#stochOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -143426,7 +144509,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -143545,9 +144628,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -143655,10 +144739,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public StochStream copy() {
+          @Override
+          public StochStream clone() {
              return new StochStream(this);
           }
        }
@@ -144729,11 +145821,11 @@ class Core {
         * Open with {@link Core#stochfOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -144770,7 +145862,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -144886,9 +145978,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -144995,10 +146088,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public StochfStream copy() {
+          @Override
+          public StochfStream clone() {
              return new StochfStream(this);
           }
        }
@@ -145868,11 +146969,11 @@ class Core {
         * Open with {@link Core#stochrsiOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -145899,7 +147000,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -146003,9 +147104,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public Value peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -146034,10 +147136,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public StochrsiStream copy() {
+          @Override
+          public StochrsiStream clone() {
              return new StochrsiStream(this);
           }
        }
@@ -146461,11 +147571,11 @@ class Core {
         * Open with {@link Core#subOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -146484,7 +147594,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -146582,10 +147692,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SubStream copy() {
+          @Override
+          public SubStream clone() {
              return new SubStream(this);
           }
        }
@@ -146987,11 +148105,11 @@ class Core {
         * Open with {@link Core#sumOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -147015,7 +148133,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -147133,10 +148251,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public SumStream copy() {
+          @Override
+          public SumStream clone() {
              return new SumStream(this);
           }
        }
@@ -147838,11 +148964,11 @@ class Core {
         * Open with {@link Core#t3Open}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -147875,7 +149001,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -148002,10 +149128,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public T3Stream copy() {
+          @Override
+          public T3Stream clone() {
              return new T3Stream(this);
           }
        }
@@ -148503,11 +149637,11 @@ class Core {
         * Open with {@link Core#tanOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -148526,7 +149660,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -148623,10 +149757,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public TanStream copy() {
+          @Override
+          public TanStream clone() {
              return new TanStream(this);
           }
        }
@@ -148932,11 +150074,11 @@ class Core {
         * Open with {@link Core#tanhOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -148955,7 +150097,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -149052,10 +150194,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public TanhStream copy() {
+          @Override
+          public TanhStream clone() {
              return new TanhStream(this);
           }
        }
@@ -149625,11 +150775,11 @@ class Core {
         * Open with {@link Core#temaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -149653,7 +150803,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -149765,10 +150915,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public TemaStream copy() {
+          @Override
+          public TemaStream clone() {
              return new TemaStream(this);
           }
        }
@@ -150353,11 +151511,11 @@ class Core {
         * Open with {@link Core#trangeOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -150377,7 +151535,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -150499,10 +151657,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public TrangeStream copy() {
+          @Override
+          public TrangeStream clone() {
              return new TrangeStream(this);
           }
        }
@@ -151285,11 +152451,11 @@ class Core {
         * Open with {@link Core#trimaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -151320,7 +152486,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -151513,10 +152679,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public TrimaStream copy() {
+          @Override
+          public TrimaStream clone() {
              return new TrimaStream(this);
           }
        }
@@ -152526,11 +153700,11 @@ class Core {
         * Open with {@link Core#trixOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -152554,7 +153728,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -152668,10 +153842,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public TrixStream copy() {
+          @Override
+          public TrixStream clone() {
              return new TrixStream(this);
           }
        }
@@ -153374,11 +154556,11 @@ class Core {
         * Open with {@link Core#tsfOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -153411,7 +154593,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -153630,10 +154812,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public TsfStream copy() {
+          @Override
+          public TsfStream clone() {
              return new TsfStream(this);
           }
        }
@@ -154258,11 +155448,11 @@ class Core {
         * Open with {@link Core#typpriceOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -154281,7 +155471,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -154380,10 +155570,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public TyppriceStream copy() {
+          @Override
+          public TyppriceStream clone() {
              return new TyppriceStream(this);
           }
        }
@@ -155258,11 +156456,11 @@ class Core {
         * Open with {@link Core#ultoscOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -155299,7 +156497,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -155531,10 +156729,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public UltoscStream copy() {
+          @Override
+          public UltoscStream clone() {
              return new UltoscStream(this);
           }
        }
@@ -156527,11 +157733,11 @@ class Core {
         * Open with {@link Core#varOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -156564,7 +157770,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -156803,10 +158009,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public VarStream copy() {
+          @Override
+          public VarStream clone() {
              return new VarStream(this);
           }
        }
@@ -157612,11 +158826,11 @@ class Core {
         * Open with {@link Core#vwapOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -157638,7 +158852,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -157831,10 +159045,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public VwapStream copy() {
+          @Override
+          public VwapStream clone() {
              return new VwapStream(this);
           }
        }
@@ -158548,11 +159770,11 @@ class Core {
         * Open with {@link Core#vwmaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -158578,7 +159800,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -158722,10 +159944,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public VwmaStream copy() {
+          @Override
+          public VwmaStream clone() {
              return new VwmaStream(this);
           }
        }
@@ -159334,11 +160564,11 @@ class Core {
         * Open with {@link Core#wadOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -159359,7 +160589,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -159479,10 +160709,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public WadStream copy() {
+          @Override
+          public WadStream clone() {
              return new WadStream(this);
           }
        }
@@ -159904,11 +161142,11 @@ class Core {
         * Open with {@link Core#wclpriceOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -159927,7 +161165,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -160026,10 +161264,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public WclpriceStream copy() {
+          @Override
+          public WclpriceStream clone() {
              return new WclpriceStream(this);
           }
        }
@@ -160699,11 +161945,11 @@ class Core {
         * Open with {@link Core#willrOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -160735,7 +161981,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -160920,10 +162166,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public WillrStream copy() {
+          @Override
+          public WillrStream clone() {
              return new WillrStream(this);
           }
        }
@@ -161714,11 +162968,11 @@ class Core {
         * Open with {@link Core#wmaOpen}; there is no close — the handle is
         * ordinary heap state, unreferenced handles are simply garbage-collected.
         * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-        * {@code value} and {@code copy} must not race with an {@code update} on
+        * {@code value} and {@code clone} must not race with an {@code update} on
         * the same handle. With no concurrent {@code update}, {@code peek}/
-        * {@code value}/{@code copy} never write the handle and may be called
-        * concurrently after safe publication. Independent handles (including
-        * {@code copy()} results) are fully independent.
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
         * <p>Not serializable by design: to checkpoint, retain the history and
         * re-open — the result is bit-identical by contract.
         */
@@ -161750,7 +163004,7 @@ class Core {
            * opener sets it to {@code (lookback, historyLen - lookback)}, every
            * {@code update} adds one to the count — a bar rejected for being
            * non-finite included, because it still happened — {@code peek} leaves
-           * it alone, and {@code copy()} carries it verbatim. A plain
+           * it alone, and {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
            */
@@ -161963,10 +163217,18 @@ class Core {
           }
 
           /**
-           * An independent deep copy of this stream: both evolve separately from
-           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
            */
-          public WmaStream copy() {
+          @Override
+          public WmaStream clone() {
              return new WmaStream(this);
           }
        }
@@ -191197,7 +192459,7 @@ public class TaCodegenServe {
                         Core.AcStream sA = c2.acOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.AcStream sB = sA.copy();
+                        Core.AcStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -191393,7 +192655,7 @@ public class TaCodegenServe {
                         Core.AccbandsStream sA = c2.accbandsOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.AccbandsStream sB = sA.copy();
+                        Core.AccbandsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.AccbandsStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             Core.AccbandsStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -191562,7 +192824,7 @@ public class TaCodegenServe {
                         Core.AcosStream sA = c2.acosOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.AcosStream sB = sA.copy();
+                        Core.AcosStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -191725,7 +192987,7 @@ public class TaCodegenServe {
                         Core.AdStream sA = c2.adOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        Core.AdStream sB = sA.copy();
+                        Core.AdStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -191886,7 +193148,7 @@ public class TaCodegenServe {
                         Core.AddStream sA = c2.addOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.AddStream sB = sA.copy();
+                        Core.AddStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -192052,7 +193314,7 @@ public class TaCodegenServe {
                         Core.AdoscStream sA = c2.adoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInFastPeriod, optInSlowPeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        Core.AdoscStream sB = sA.copy();
+                        Core.AdoscStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -192221,7 +193483,7 @@ public class TaCodegenServe {
                         Core.AdxStream sA = c2.adxOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.AdxStream sB = sA.copy();
+                        Core.AdxStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -192390,7 +193652,7 @@ public class TaCodegenServe {
                         Core.AdxrStream sA = c2.adxrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.AdxrStream sB = sA.copy();
+                        Core.AdxrStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -192558,7 +193820,7 @@ public class TaCodegenServe {
                         Core.AoStream sA = c2.aoOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.AoStream sB = sA.copy();
+                        Core.AoStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -192736,7 +193998,7 @@ public class TaCodegenServe {
                         Core.ApoStream sA = c2.apoOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.ApoStream sB = sA.copy();
+                        Core.ApoStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -192918,7 +194180,7 @@ public class TaCodegenServe {
                         Core.AroonStream sA = c2.aroonOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.AroonStream sB = sA.copy();
+                        Core.AroonStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.AroonStream.Value uA = sA.update(fz_h[t], fz_l[t]);
                             Core.AroonStream.Value uB = sB.update(fz_h[t], fz_l[t]);
@@ -193087,7 +194349,7 @@ public class TaCodegenServe {
                         Core.AroonoscStream sA = c2.aroonoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.AroonoscStream sB = sA.copy();
+                        Core.AroonoscStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -193252,7 +194514,7 @@ public class TaCodegenServe {
                         Core.AsinStream sA = c2.asinOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.AsinStream sB = sA.copy();
+                        Core.AsinStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -193412,7 +194674,7 @@ public class TaCodegenServe {
                         Core.AtanStream sA = c2.atanOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.AtanStream sB = sA.copy();
+                        Core.AtanStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -193576,7 +194838,7 @@ public class TaCodegenServe {
                         Core.AtrStream sA = c2.atrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.AtrStream sB = sA.copy();
+                        Core.AtrStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -193742,7 +195004,7 @@ public class TaCodegenServe {
                         Core.AvgdevStream sA = c2.avgdevOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.AvgdevStream sB = sA.copy();
+                        Core.AvgdevStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -193910,7 +195172,7 @@ public class TaCodegenServe {
                         Core.AvgpriceStream sA = c2.avgpriceOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.AvgpriceStream sB = sA.copy();
+                        Core.AvgpriceStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -194112,7 +195374,7 @@ public class TaCodegenServe {
                         Core.BbandsStream sA = c2.bbandsOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.BbandsStream sB = sA.copy();
+                        Core.BbandsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.BbandsStream.Value uA = sA.update(fz_c[t]);
                             Core.BbandsStream.Value uB = sB.update(fz_c[t]);
@@ -194283,7 +195545,7 @@ public class TaCodegenServe {
                         Core.BetaStream sA = c2.betaOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.BetaStream sB = sA.copy();
+                        Core.BetaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -194451,7 +195713,7 @@ public class TaCodegenServe {
                         Core.BopStream sA = c2.bopOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.BopStream sB = sA.copy();
+                        Core.BopStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -194614,7 +195876,7 @@ public class TaCodegenServe {
                         Core.CciStream sA = c2.cciOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CciStream sB = sA.copy();
+                        Core.CciStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -194784,7 +196046,7 @@ public class TaCodegenServe {
                         Core.Cdl2crowsStream sA = c2.cdl2crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdl2crowsStream sB = sA.copy();
+                        Core.Cdl2crowsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -194949,7 +196211,7 @@ public class TaCodegenServe {
                         Core.Cdl3blackcrowsStream sA = c2.cdl3blackcrowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdl3blackcrowsStream sB = sA.copy();
+                        Core.Cdl3blackcrowsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -195114,7 +196376,7 @@ public class TaCodegenServe {
                         Core.Cdl3insideStream sA = c2.cdl3insideOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdl3insideStream sB = sA.copy();
+                        Core.Cdl3insideStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -195279,7 +196541,7 @@ public class TaCodegenServe {
                         Core.Cdl3linestrikeStream sA = c2.cdl3linestrikeOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdl3linestrikeStream sB = sA.copy();
+                        Core.Cdl3linestrikeStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -195444,7 +196706,7 @@ public class TaCodegenServe {
                         Core.Cdl3outsideStream sA = c2.cdl3outsideOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdl3outsideStream sB = sA.copy();
+                        Core.Cdl3outsideStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -195609,7 +196871,7 @@ public class TaCodegenServe {
                         Core.Cdl3starsinsouthStream sA = c2.cdl3starsinsouthOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdl3starsinsouthStream sB = sA.copy();
+                        Core.Cdl3starsinsouthStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -195774,7 +197036,7 @@ public class TaCodegenServe {
                         Core.Cdl3whitesoldiersStream sA = c2.cdl3whitesoldiersOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdl3whitesoldiersStream sB = sA.copy();
+                        Core.Cdl3whitesoldiersStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -195940,7 +197202,7 @@ public class TaCodegenServe {
                         Core.CdlabandonedbabyStream sA = c2.cdlabandonedbabyOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlabandonedbabyStream sB = sA.copy();
+                        Core.CdlabandonedbabyStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -196105,7 +197367,7 @@ public class TaCodegenServe {
                         Core.CdladvanceblockStream sA = c2.cdladvanceblockOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdladvanceblockStream sB = sA.copy();
+                        Core.CdladvanceblockStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -196270,7 +197532,7 @@ public class TaCodegenServe {
                         Core.CdlbeltholdStream sA = c2.cdlbeltholdOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlbeltholdStream sB = sA.copy();
+                        Core.CdlbeltholdStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -196435,7 +197697,7 @@ public class TaCodegenServe {
                         Core.CdlbreakawayStream sA = c2.cdlbreakawayOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlbreakawayStream sB = sA.copy();
+                        Core.CdlbreakawayStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -196600,7 +197862,7 @@ public class TaCodegenServe {
                         Core.CdlclosingmarubozuStream sA = c2.cdlclosingmarubozuOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlclosingmarubozuStream sB = sA.copy();
+                        Core.CdlclosingmarubozuStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -196765,7 +198027,7 @@ public class TaCodegenServe {
                         Core.CdlconcealbabyswallStream sA = c2.cdlconcealbabyswallOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlconcealbabyswallStream sB = sA.copy();
+                        Core.CdlconcealbabyswallStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -196930,7 +198192,7 @@ public class TaCodegenServe {
                         Core.CdlcounterattackStream sA = c2.cdlcounterattackOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlcounterattackStream sB = sA.copy();
+                        Core.CdlcounterattackStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -197096,7 +198358,7 @@ public class TaCodegenServe {
                         Core.CdldarkcloudcoverStream sA = c2.cdldarkcloudcoverOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdldarkcloudcoverStream sB = sA.copy();
+                        Core.CdldarkcloudcoverStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -197261,7 +198523,7 @@ public class TaCodegenServe {
                         Core.CdldojiStream sA = c2.cdldojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdldojiStream sB = sA.copy();
+                        Core.CdldojiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -197426,7 +198688,7 @@ public class TaCodegenServe {
                         Core.CdldojistarStream sA = c2.cdldojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdldojistarStream sB = sA.copy();
+                        Core.CdldojistarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -197591,7 +198853,7 @@ public class TaCodegenServe {
                         Core.CdldragonflydojiStream sA = c2.cdldragonflydojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdldragonflydojiStream sB = sA.copy();
+                        Core.CdldragonflydojiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -197756,7 +199018,7 @@ public class TaCodegenServe {
                         Core.CdlengulfingStream sA = c2.cdlengulfingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlengulfingStream sB = sA.copy();
+                        Core.CdlengulfingStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -197922,7 +199184,7 @@ public class TaCodegenServe {
                         Core.CdleveningdojistarStream sA = c2.cdleveningdojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdleveningdojistarStream sB = sA.copy();
+                        Core.CdleveningdojistarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -198088,7 +199350,7 @@ public class TaCodegenServe {
                         Core.CdleveningstarStream sA = c2.cdleveningstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdleveningstarStream sB = sA.copy();
+                        Core.CdleveningstarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -198253,7 +199515,7 @@ public class TaCodegenServe {
                         Core.CdlgapsidesidewhiteStream sA = c2.cdlgapsidesidewhiteOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlgapsidesidewhiteStream sB = sA.copy();
+                        Core.CdlgapsidesidewhiteStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -198418,7 +199680,7 @@ public class TaCodegenServe {
                         Core.CdlgravestonedojiStream sA = c2.cdlgravestonedojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlgravestonedojiStream sB = sA.copy();
+                        Core.CdlgravestonedojiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -198583,7 +199845,7 @@ public class TaCodegenServe {
                         Core.CdlhammerStream sA = c2.cdlhammerOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlhammerStream sB = sA.copy();
+                        Core.CdlhammerStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -198748,7 +200010,7 @@ public class TaCodegenServe {
                         Core.CdlhangingmanStream sA = c2.cdlhangingmanOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlhangingmanStream sB = sA.copy();
+                        Core.CdlhangingmanStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -198913,7 +200175,7 @@ public class TaCodegenServe {
                         Core.CdlharamiStream sA = c2.cdlharamiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlharamiStream sB = sA.copy();
+                        Core.CdlharamiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -199078,7 +200340,7 @@ public class TaCodegenServe {
                         Core.CdlharamicrossStream sA = c2.cdlharamicrossOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlharamicrossStream sB = sA.copy();
+                        Core.CdlharamicrossStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -199243,7 +200505,7 @@ public class TaCodegenServe {
                         Core.CdlhighwaveStream sA = c2.cdlhighwaveOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlhighwaveStream sB = sA.copy();
+                        Core.CdlhighwaveStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -199408,7 +200670,7 @@ public class TaCodegenServe {
                         Core.CdlhikkakeStream sA = c2.cdlhikkakeOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlhikkakeStream sB = sA.copy();
+                        Core.CdlhikkakeStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -199573,7 +200835,7 @@ public class TaCodegenServe {
                         Core.CdlhikkakemodStream sA = c2.cdlhikkakemodOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlhikkakemodStream sB = sA.copy();
+                        Core.CdlhikkakemodStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -199738,7 +201000,7 @@ public class TaCodegenServe {
                         Core.CdlhomingpigeonStream sA = c2.cdlhomingpigeonOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlhomingpigeonStream sB = sA.copy();
+                        Core.CdlhomingpigeonStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -199903,7 +201165,7 @@ public class TaCodegenServe {
                         Core.Cdlidentical3crowsStream sA = c2.cdlidentical3crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdlidentical3crowsStream sB = sA.copy();
+                        Core.Cdlidentical3crowsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -200068,7 +201330,7 @@ public class TaCodegenServe {
                         Core.CdlinneckStream sA = c2.cdlinneckOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlinneckStream sB = sA.copy();
+                        Core.CdlinneckStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -200233,7 +201495,7 @@ public class TaCodegenServe {
                         Core.CdlinvertedhammerStream sA = c2.cdlinvertedhammerOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlinvertedhammerStream sB = sA.copy();
+                        Core.CdlinvertedhammerStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -200398,7 +201660,7 @@ public class TaCodegenServe {
                         Core.CdlkickingStream sA = c2.cdlkickingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlkickingStream sB = sA.copy();
+                        Core.CdlkickingStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -200563,7 +201825,7 @@ public class TaCodegenServe {
                         Core.CdlkickingbylengthStream sA = c2.cdlkickingbylengthOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlkickingbylengthStream sB = sA.copy();
+                        Core.CdlkickingbylengthStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -200728,7 +201990,7 @@ public class TaCodegenServe {
                         Core.CdlladderbottomStream sA = c2.cdlladderbottomOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlladderbottomStream sB = sA.copy();
+                        Core.CdlladderbottomStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -200893,7 +202155,7 @@ public class TaCodegenServe {
                         Core.CdllongleggeddojiStream sA = c2.cdllongleggeddojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdllongleggeddojiStream sB = sA.copy();
+                        Core.CdllongleggeddojiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -201058,7 +202320,7 @@ public class TaCodegenServe {
                         Core.CdllonglineStream sA = c2.cdllonglineOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdllonglineStream sB = sA.copy();
+                        Core.CdllonglineStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -201223,7 +202485,7 @@ public class TaCodegenServe {
                         Core.CdlmarubozuStream sA = c2.cdlmarubozuOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlmarubozuStream sB = sA.copy();
+                        Core.CdlmarubozuStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -201388,7 +202650,7 @@ public class TaCodegenServe {
                         Core.CdlmatchinglowStream sA = c2.cdlmatchinglowOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlmatchinglowStream sB = sA.copy();
+                        Core.CdlmatchinglowStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -201554,7 +202816,7 @@ public class TaCodegenServe {
                         Core.CdlmatholdStream sA = c2.cdlmatholdOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlmatholdStream sB = sA.copy();
+                        Core.CdlmatholdStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -201720,7 +202982,7 @@ public class TaCodegenServe {
                         Core.CdlmorningdojistarStream sA = c2.cdlmorningdojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlmorningdojistarStream sB = sA.copy();
+                        Core.CdlmorningdojistarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -201886,7 +203148,7 @@ public class TaCodegenServe {
                         Core.CdlmorningstarStream sA = c2.cdlmorningstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlmorningstarStream sB = sA.copy();
+                        Core.CdlmorningstarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -202051,7 +203313,7 @@ public class TaCodegenServe {
                         Core.CdlonneckStream sA = c2.cdlonneckOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlonneckStream sB = sA.copy();
+                        Core.CdlonneckStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -202216,7 +203478,7 @@ public class TaCodegenServe {
                         Core.CdlpiercingStream sA = c2.cdlpiercingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlpiercingStream sB = sA.copy();
+                        Core.CdlpiercingStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -202381,7 +203643,7 @@ public class TaCodegenServe {
                         Core.CdlrickshawmanStream sA = c2.cdlrickshawmanOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlrickshawmanStream sB = sA.copy();
+                        Core.CdlrickshawmanStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -202546,7 +203808,7 @@ public class TaCodegenServe {
                         Core.Cdlrisefall3methodsStream sA = c2.cdlrisefall3methodsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdlrisefall3methodsStream sB = sA.copy();
+                        Core.Cdlrisefall3methodsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -202711,7 +203973,7 @@ public class TaCodegenServe {
                         Core.CdlseparatinglinesStream sA = c2.cdlseparatinglinesOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlseparatinglinesStream sB = sA.copy();
+                        Core.CdlseparatinglinesStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -202876,7 +204138,7 @@ public class TaCodegenServe {
                         Core.CdlshootingstarStream sA = c2.cdlshootingstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlshootingstarStream sB = sA.copy();
+                        Core.CdlshootingstarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -203041,7 +204303,7 @@ public class TaCodegenServe {
                         Core.CdlshortlineStream sA = c2.cdlshortlineOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlshortlineStream sB = sA.copy();
+                        Core.CdlshortlineStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -203206,7 +204468,7 @@ public class TaCodegenServe {
                         Core.CdlspinningtopStream sA = c2.cdlspinningtopOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlspinningtopStream sB = sA.copy();
+                        Core.CdlspinningtopStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -203371,7 +204633,7 @@ public class TaCodegenServe {
                         Core.CdlstalledpatternStream sA = c2.cdlstalledpatternOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlstalledpatternStream sB = sA.copy();
+                        Core.CdlstalledpatternStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -203536,7 +204798,7 @@ public class TaCodegenServe {
                         Core.CdlsticksandwichStream sA = c2.cdlsticksandwichOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlsticksandwichStream sB = sA.copy();
+                        Core.CdlsticksandwichStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -203701,7 +204963,7 @@ public class TaCodegenServe {
                         Core.CdltakuriStream sA = c2.cdltakuriOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdltakuriStream sB = sA.copy();
+                        Core.CdltakuriStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -203866,7 +205128,7 @@ public class TaCodegenServe {
                         Core.CdltasukigapStream sA = c2.cdltasukigapOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdltasukigapStream sB = sA.copy();
+                        Core.CdltasukigapStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -204031,7 +205293,7 @@ public class TaCodegenServe {
                         Core.CdlthrustingStream sA = c2.cdlthrustingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdlthrustingStream sB = sA.copy();
+                        Core.CdlthrustingStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -204196,7 +205458,7 @@ public class TaCodegenServe {
                         Core.CdltristarStream sA = c2.cdltristarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.CdltristarStream sB = sA.copy();
+                        Core.CdltristarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -204361,7 +205623,7 @@ public class TaCodegenServe {
                         Core.Cdlunique3riverStream sA = c2.cdlunique3riverOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdlunique3riverStream sB = sA.copy();
+                        Core.Cdlunique3riverStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -204526,7 +205788,7 @@ public class TaCodegenServe {
                         Core.Cdlupsidegap2crowsStream sA = c2.cdlupsidegap2crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdlupsidegap2crowsStream sB = sA.copy();
+                        Core.Cdlupsidegap2crowsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -204691,7 +205953,7 @@ public class TaCodegenServe {
                         Core.Cdlxsidegap3methodsStream sA = c2.cdlxsidegap3methodsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        Core.Cdlxsidegap3methodsStream sB = sA.copy();
+                        Core.Cdlxsidegap3methodsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                             int uB = sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
@@ -204851,7 +206113,7 @@ public class TaCodegenServe {
                         Core.CeilStream sA = c2.ceilOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.CeilStream sB = sA.copy();
+                        Core.CeilStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -205015,7 +206277,7 @@ public class TaCodegenServe {
                         Core.CmfStream sA = c2.cmfOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        Core.CmfStream sB = sA.copy();
+                        Core.CmfStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -205182,7 +206444,7 @@ public class TaCodegenServe {
                         Core.CmoStream sA = c2.cmoOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.CmoStream sB = sA.copy();
+                        Core.CmoStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -205348,7 +206610,7 @@ public class TaCodegenServe {
                         Core.CmouStream sA = c2.cmouOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.CmouStream sB = sA.copy();
+                        Core.CmouStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -205515,7 +206777,7 @@ public class TaCodegenServe {
                         Core.CorrelStream sA = c2.correlOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.CorrelStream sB = sA.copy();
+                        Core.CorrelStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -205680,7 +206942,7 @@ public class TaCodegenServe {
                         Core.CosStream sA = c2.cosOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.CosStream sB = sA.copy();
+                        Core.CosStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -205840,7 +207102,7 @@ public class TaCodegenServe {
                         Core.CoshStream sA = c2.coshOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.CoshStream sB = sA.copy();
+                        Core.CoshStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -206002,7 +207264,7 @@ public class TaCodegenServe {
                         Core.DemaStream sA = c2.demaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.DemaStream sB = sA.copy();
+                        Core.DemaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -206168,7 +207430,7 @@ public class TaCodegenServe {
                         Core.DivStream sA = c2.divOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.DivStream sB = sA.copy();
+                        Core.DivStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -206332,7 +207594,7 @@ public class TaCodegenServe {
                         Core.DxStream sA = c2.dxOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.DxStream sB = sA.copy();
+                        Core.DxStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -206499,7 +207761,7 @@ public class TaCodegenServe {
                         Core.EfiStream sA = c2.efiOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.EfiStream sB = sA.copy();
+                        Core.EfiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -206666,7 +207928,7 @@ public class TaCodegenServe {
                         Core.EmaStream sA = c2.emaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.EmaStream sB = sA.copy();
+                        Core.EmaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -206831,7 +208093,7 @@ public class TaCodegenServe {
                         Core.ExpStream sA = c2.expOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.ExpStream sB = sA.copy();
+                        Core.ExpStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -206991,7 +208253,7 @@ public class TaCodegenServe {
                         Core.FloorStream sA = c2.floorOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.FloorStream sB = sA.copy();
+                        Core.FloorStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -207152,7 +208414,7 @@ public class TaCodegenServe {
                         Core.HmaStream sA = c2.hmaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.HmaStream sB = sA.copy();
+                        Core.HmaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -207318,7 +208580,7 @@ public class TaCodegenServe {
                         Core.HtDcperiodStream sA = c2.htDcperiodOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.HtDcperiodStream sB = sA.copy();
+                        Core.HtDcperiodStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -207479,7 +208741,7 @@ public class TaCodegenServe {
                         Core.HtDcphaseStream sA = c2.htDcphaseOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.HtDcphaseStream sB = sA.copy();
+                        Core.HtDcphaseStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -207655,7 +208917,7 @@ public class TaCodegenServe {
                         Core.HtPhasorStream sA = c2.htPhasorOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.HtPhasorStream sB = sA.copy();
+                        Core.HtPhasorStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.HtPhasorStream.Value uA = sA.update(fz_c[t]);
                             Core.HtPhasorStream.Value uB = sB.update(fz_c[t]);
@@ -207832,7 +209094,7 @@ public class TaCodegenServe {
                         Core.HtSineStream sA = c2.htSineOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.HtSineStream sB = sA.copy();
+                        Core.HtSineStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.HtSineStream.Value uA = sA.update(fz_c[t]);
                             Core.HtSineStream.Value uB = sB.update(fz_c[t]);
@@ -207994,7 +209256,7 @@ public class TaCodegenServe {
                         Core.HtTrendlineStream sA = c2.htTrendlineOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.HtTrendlineStream sB = sA.copy();
+                        Core.HtTrendlineStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -208153,7 +209415,7 @@ public class TaCodegenServe {
                         Core.HtTrendmodeStream sA = c2.htTrendmodeOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.HtTrendmodeStream sB = sA.copy();
+                        Core.HtTrendmodeStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_c[t]);
                             int uB = sB.update(fz_c[t]);
@@ -208315,7 +209577,7 @@ public class TaCodegenServe {
                         Core.ImiStream sA = c2.imiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_c[t]);
-                        Core.ImiStream sB = sA.copy();
+                        Core.ImiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_o[t], fz_c[t]);
                             double uB = sB.update(fz_o[t], fz_c[t]);
@@ -208482,7 +209744,7 @@ public class TaCodegenServe {
                         Core.KamaStream sA = c2.kamaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.KamaStream sB = sA.copy();
+                        Core.KamaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -208648,7 +209910,7 @@ public class TaCodegenServe {
                         Core.LinearregStream sA = c2.linearregOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.LinearregStream sB = sA.copy();
+                        Core.LinearregStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -208814,7 +210076,7 @@ public class TaCodegenServe {
                         Core.LinearregAngleStream sA = c2.linearregAngleOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.LinearregAngleStream sB = sA.copy();
+                        Core.LinearregAngleStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -208980,7 +210242,7 @@ public class TaCodegenServe {
                         Core.LinearregInterceptStream sA = c2.linearregInterceptOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.LinearregInterceptStream sB = sA.copy();
+                        Core.LinearregInterceptStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -209146,7 +210408,7 @@ public class TaCodegenServe {
                         Core.LinearregSlopeStream sA = c2.linearregSlopeOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.LinearregSlopeStream sB = sA.copy();
+                        Core.LinearregSlopeStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -209311,7 +210573,7 @@ public class TaCodegenServe {
                         Core.LnStream sA = c2.lnOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.LnStream sB = sA.copy();
+                        Core.LnStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -209471,7 +210733,7 @@ public class TaCodegenServe {
                         Core.Log10Stream sA = c2.log10Open(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.Log10Stream sB = sA.copy();
+                        Core.Log10Stream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -209643,7 +210905,7 @@ public class TaCodegenServe {
                         Core.MaStream sA = c2.maOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MaStream sB = sA.copy();
+                        Core.MaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -209840,7 +211102,7 @@ public class TaCodegenServe {
                         Core.MacdStream sA = c2.macdOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MacdStream sB = sA.copy();
+                        Core.MacdStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.MacdStream.Value uA = sA.update(fz_c[t]);
                             Core.MacdStream.Value uB = sB.update(fz_c[t]);
@@ -210065,7 +211327,7 @@ public class TaCodegenServe {
                         Core.MacdextStream sA = c2.macdextOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MacdextStream sB = sA.copy();
+                        Core.MacdextStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.MacdextStream.Value uA = sA.update(fz_c[t]);
                             Core.MacdextStream.Value uB = sB.update(fz_c[t]);
@@ -210264,7 +211526,7 @@ public class TaCodegenServe {
                         Core.MacdfixStream sA = c2.macdfixOpen(java.util.Arrays.copyOf(fz_c, p0), optInSignalPeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MacdfixStream sB = sA.copy();
+                        Core.MacdfixStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.MacdfixStream.Value uA = sA.update(fz_c[t]);
                             Core.MacdfixStream.Value uB = sB.update(fz_c[t]);
@@ -210451,7 +211713,7 @@ public class TaCodegenServe {
                         Core.MamaStream sA = c2.mamaOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastLimit, optInSlowLimit);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MamaStream sB = sA.copy();
+                        Core.MamaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.MamaStream.Value uA = sA.update(fz_c[t]);
                             Core.MamaStream.Value uB = sB.update(fz_c[t]);
@@ -210614,7 +211876,7 @@ public class TaCodegenServe {
                         Core.MarketfiStream sA = c2.marketfiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_v[t]);
-                        Core.MarketfiStream sB = sA.copy();
+                        Core.MarketfiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_v[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
@@ -210789,7 +212051,7 @@ public class TaCodegenServe {
                         Core.MavpStream sA = c2.mavpOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInMinPeriod, optInMaxPeriod, optInMAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.MavpStream sB = sA.copy();
+                        Core.MavpStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -210955,7 +212217,7 @@ public class TaCodegenServe {
                         Core.MaxStream sA = c2.maxOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MaxStream sB = sA.copy();
+                        Core.MaxStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -211119,7 +212381,7 @@ public class TaCodegenServe {
                         Core.MaxindexStream sA = c2.maxindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MaxindexStream sB = sA.copy();
+                        Core.MaxindexStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_c[t]);
                             int uB = sB.update(fz_c[t]);
@@ -211285,7 +212547,7 @@ public class TaCodegenServe {
                         Core.MedpriceStream sA = c2.medpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.MedpriceStream sB = sA.copy();
+                        Core.MedpriceStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -211449,7 +212711,7 @@ public class TaCodegenServe {
                         Core.MfiStream sA = c2.mfiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        Core.MfiStream sB = sA.copy();
+                        Core.MfiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -211615,7 +212877,7 @@ public class TaCodegenServe {
                         Core.MidpointStream sA = c2.midpointOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MidpointStream sB = sA.copy();
+                        Core.MidpointStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -211782,7 +213044,7 @@ public class TaCodegenServe {
                         Core.MidpriceStream sA = c2.midpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.MidpriceStream sB = sA.copy();
+                        Core.MidpriceStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -211948,7 +213210,7 @@ public class TaCodegenServe {
                         Core.MinStream sA = c2.minOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MinStream sB = sA.copy();
+                        Core.MinStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -212112,7 +213374,7 @@ public class TaCodegenServe {
                         Core.MinindexStream sA = c2.minindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MinindexStream sB = sA.copy();
+                        Core.MinindexStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             int uA = sA.update(fz_c[t]);
                             int uB = sB.update(fz_c[t]);
@@ -212293,7 +213555,7 @@ public class TaCodegenServe {
                         Core.MinmaxStream sA = c2.minmaxOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MinmaxStream sB = sA.copy();
+                        Core.MinmaxStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.MinmaxStream.Value uA = sA.update(fz_c[t]);
                             Core.MinmaxStream.Value uB = sB.update(fz_c[t]);
@@ -212473,7 +213735,7 @@ public class TaCodegenServe {
                         Core.MinmaxindexStream sA = c2.minmaxindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MinmaxindexStream sB = sA.copy();
+                        Core.MinmaxindexStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.MinmaxindexStream.Value uA = sA.update(fz_c[t]);
                             Core.MinmaxindexStream.Value uB = sB.update(fz_c[t]);
@@ -212644,7 +213906,7 @@ public class TaCodegenServe {
                         Core.MinusDiStream sA = c2.minusDiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.MinusDiStream sB = sA.copy();
+                        Core.MinusDiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -212812,7 +214074,7 @@ public class TaCodegenServe {
                         Core.MinusDmStream sA = c2.minusDmOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.MinusDmStream sB = sA.copy();
+                        Core.MinusDmStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -212978,7 +214240,7 @@ public class TaCodegenServe {
                         Core.MomStream sA = c2.momOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.MomStream sB = sA.copy();
+                        Core.MomStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -213144,7 +214406,7 @@ public class TaCodegenServe {
                         Core.MultStream sA = c2.multOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.MultStream sB = sA.copy();
+                        Core.MultStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -213308,7 +214570,7 @@ public class TaCodegenServe {
                         Core.NatrStream sA = c2.natrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.NatrStream sB = sA.copy();
+                        Core.NatrStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -213474,7 +214736,7 @@ public class TaCodegenServe {
                         Core.NviStream sA = c2.nviOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.NviStream sB = sA.copy();
+                        Core.NviStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -213635,7 +214897,7 @@ public class TaCodegenServe {
                         Core.ObvStream sA = c2.obvOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.ObvStream sB = sA.copy();
+                        Core.ObvStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -213799,7 +215061,7 @@ public class TaCodegenServe {
                         Core.PlusDiStream sA = c2.plusDiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.PlusDiStream sB = sA.copy();
+                        Core.PlusDiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -213967,7 +215229,7 @@ public class TaCodegenServe {
                         Core.PlusDmStream sA = c2.plusDmOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.PlusDmStream sB = sA.copy();
+                        Core.PlusDmStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -214145,7 +215407,7 @@ public class TaCodegenServe {
                         Core.PpoStream sA = c2.ppoOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.PpoStream sB = sA.copy();
+                        Core.PpoStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -214311,7 +215573,7 @@ public class TaCodegenServe {
                         Core.PviStream sA = c2.pviOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.PviStream sB = sA.copy();
+                        Core.PviStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -214484,7 +215746,7 @@ public class TaCodegenServe {
                         Core.PvoStream sA = c2.pvoOpen(java.util.Arrays.copyOf(fz_v, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_v[t]);
-                        Core.PvoStream sB = sA.copy();
+                        Core.PvoStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_v[t]);
                             double uB = sB.update(fz_v[t]);
@@ -214651,7 +215913,7 @@ public class TaCodegenServe {
                         Core.QstickStream sA = c2.qstickOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_c[t]);
-                        Core.QstickStream sB = sA.copy();
+                        Core.QstickStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_o[t], fz_c[t]);
                             double uB = sB.update(fz_o[t], fz_c[t]);
@@ -214817,7 +216079,7 @@ public class TaCodegenServe {
                         Core.RocStream sA = c2.rocOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.RocStream sB = sA.copy();
+                        Core.RocStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -214983,7 +216245,7 @@ public class TaCodegenServe {
                         Core.RocpStream sA = c2.rocpOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.RocpStream sB = sA.copy();
+                        Core.RocpStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -215149,7 +216411,7 @@ public class TaCodegenServe {
                         Core.RocrStream sA = c2.rocrOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.RocrStream sB = sA.copy();
+                        Core.RocrStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -215315,7 +216577,7 @@ public class TaCodegenServe {
                         Core.Rocr100Stream sA = c2.rocr100Open(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.Rocr100Stream sB = sA.copy();
+                        Core.Rocr100Stream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -215482,7 +216744,7 @@ public class TaCodegenServe {
                         Core.RsiStream sA = c2.rsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.RsiStream sB = sA.copy();
+                        Core.RsiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -215650,7 +216912,7 @@ public class TaCodegenServe {
                         Core.SarStream sA = c2.sarOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInAcceleration, optInMaximum);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.SarStream sB = sA.copy();
+                        Core.SarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -215819,7 +217081,7 @@ public class TaCodegenServe {
                         Core.SarextStream sA = c2.sarextOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
-                        Core.SarextStream sB = sA.copy();
+                        Core.SarextStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t]);
                             double uB = sB.update(fz_h[t], fz_l[t]);
@@ -215979,7 +217241,7 @@ public class TaCodegenServe {
                         Core.SinStream sA = c2.sinOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.SinStream sB = sA.copy();
+                        Core.SinStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -216139,7 +217401,7 @@ public class TaCodegenServe {
                         Core.SinhStream sA = c2.sinhOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.SinhStream sB = sA.copy();
+                        Core.SinhStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -216300,7 +217562,7 @@ public class TaCodegenServe {
                         Core.SmaStream sA = c2.smaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.SmaStream sB = sA.copy();
+                        Core.SmaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -216487,7 +217749,7 @@ public class TaCodegenServe {
                         Core.SmiStream sA = c2.smiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.SmiStream sB = sA.copy();
+                        Core.SmiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.SmiStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             Core.SmiStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -216654,7 +217916,7 @@ public class TaCodegenServe {
                         Core.SqrtStream sA = c2.sqrtOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.SqrtStream sB = sA.copy();
+                        Core.SqrtStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -216816,7 +218078,7 @@ public class TaCodegenServe {
                         Core.StddevStream sA = c2.stddevOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDev);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.StddevStream sB = sA.copy();
+                        Core.StddevStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -217019,7 +218281,7 @@ public class TaCodegenServe {
                         Core.StochStream sA = c2.stochOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.StochStream sB = sA.copy();
+                        Core.StochStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.StochStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             Core.StochStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -217216,7 +218478,7 @@ public class TaCodegenServe {
                         Core.StochfStream sA = c2.stochfOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInFastD_Period, optInFastD_MAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.StochfStream sB = sA.copy();
+                        Core.StochfStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.StochfStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             Core.StochfStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -217413,7 +218675,7 @@ public class TaCodegenServe {
                         Core.StochrsiStream sA = c2.stochrsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.StochrsiStream sB = sA.copy();
+                        Core.StochrsiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             Core.StochrsiStream.Value uA = sA.update(fz_c[t]);
                             Core.StochrsiStream.Value uB = sB.update(fz_c[t]);
@@ -217581,7 +218843,7 @@ public class TaCodegenServe {
                         Core.SubStream sA = c2.subOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.SubStream sB = sA.copy();
+                        Core.SubStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -217742,7 +219004,7 @@ public class TaCodegenServe {
                         Core.SumStream sA = c2.sumOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.SumStream sB = sA.copy();
+                        Core.SumStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -217910,7 +219172,7 @@ public class TaCodegenServe {
                         Core.T3Stream sA = c2.t3Open(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInVFactor);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.T3Stream sB = sA.copy();
+                        Core.T3Stream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -218075,7 +219337,7 @@ public class TaCodegenServe {
                         Core.TanStream sA = c2.tanOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.TanStream sB = sA.copy();
+                        Core.TanStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -218235,7 +219497,7 @@ public class TaCodegenServe {
                         Core.TanhStream sA = c2.tanhOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.TanhStream sB = sA.copy();
+                        Core.TanhStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -218397,7 +219659,7 @@ public class TaCodegenServe {
                         Core.TemaStream sA = c2.temaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.TemaStream sB = sA.copy();
+                        Core.TemaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -218564,7 +219826,7 @@ public class TaCodegenServe {
                         Core.TrangeStream sA = c2.trangeOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.TrangeStream sB = sA.copy();
+                        Core.TrangeStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -218725,7 +219987,7 @@ public class TaCodegenServe {
                         Core.TrimaStream sA = c2.trimaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.TrimaStream sB = sA.copy();
+                        Core.TrimaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -218892,7 +220154,7 @@ public class TaCodegenServe {
                         Core.TrixStream sA = c2.trixOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.TrixStream sB = sA.copy();
+                        Core.TrixStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -219058,7 +220320,7 @@ public class TaCodegenServe {
                         Core.TsfStream sA = c2.tsfOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.TsfStream sB = sA.copy();
+                        Core.TsfStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -219225,7 +220487,7 @@ public class TaCodegenServe {
                         Core.TyppriceStream sA = c2.typpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.TyppriceStream sB = sA.copy();
+                        Core.TyppriceStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -219390,7 +220652,7 @@ public class TaCodegenServe {
                         Core.UltoscStream sA = c2.ultoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.UltoscStream sB = sA.copy();
+                        Core.UltoscStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -219557,7 +220819,7 @@ public class TaCodegenServe {
                         Core.VarStream sA = c2.varOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDev);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.VarStream sB = sA.copy();
+                        Core.VarStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);
@@ -219725,7 +220987,7 @@ public class TaCodegenServe {
                         Core.VwapStream sA = c2.vwapOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        Core.VwapStream sB = sA.copy();
+                        Core.VwapStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
@@ -219887,7 +221149,7 @@ public class TaCodegenServe {
                         Core.VwmaStream sA = c2.vwmaOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
-                        Core.VwmaStream sB = sA.copy();
+                        Core.VwmaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t], fz_v[t]);
                             double uB = sB.update(fz_c[t], fz_v[t]);
@@ -220054,7 +221316,7 @@ public class TaCodegenServe {
                         Core.WadStream sA = c2.wadOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.WadStream sB = sA.copy();
+                        Core.WadStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -220216,7 +221478,7 @@ public class TaCodegenServe {
                         Core.WclpriceStream sA = c2.wclpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.WclpriceStream sB = sA.copy();
+                        Core.WclpriceStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -220379,7 +221641,7 @@ public class TaCodegenServe {
                         Core.WillrStream sA = c2.willrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.WillrStream sB = sA.copy();
+                        Core.WillrStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
                             double uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
@@ -220545,7 +221807,7 @@ public class TaCodegenServe {
                         Core.WmaStream sA = c2.wmaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
                         for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
-                        Core.WmaStream sB = sA.copy();
+                        Core.WmaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
                             double uA = sA.update(fz_c[t]);
                             double uB = sB.update(fz_c[t]);

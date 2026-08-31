@@ -276,6 +276,7 @@ pub struct MarketfiStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MarketfiStreamState {
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -299,6 +300,7 @@ impl Core {
         } else {
             (*outReal) = 0.0;
         }
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::marketfi_open_internal`]
@@ -363,6 +365,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = MarketfiStreamState {
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(MarketfiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -558,8 +561,8 @@ impl MarketfiStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -576,6 +579,7 @@ impl MarketfiStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut cur_outReal = sp.cur_outReal;
             // A zero-volume bar would divide by zero. Neither reference guards
             // it -- they emit +/-Inf, or NaN when the range is zero too -- but
             // issue #112 settled that a successful call never emits NaN or Inf,
@@ -590,8 +594,22 @@ impl MarketfiStream {
             } else {
                 (*outReal) = 0.0;
             }
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MARKETFI_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

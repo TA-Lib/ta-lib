@@ -247,6 +247,7 @@ pub struct AvgpriceStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct AvgpriceStreamState {
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -257,6 +258,7 @@ struct AvgpriceStreamState {
 impl Core {
     fn avgprice_step_impl(sp: &mut AvgpriceStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         (*outReal) = (inHigh + inLow + inClose + inOpen) / 4_f64;
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::avgprice_open_internal`]
@@ -296,6 +298,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = AvgpriceStreamState {
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(AvgpriceStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -497,8 +500,8 @@ impl AvgpriceStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -515,9 +518,24 @@ impl AvgpriceStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = (inHigh + inLow + inClose + inOpen) / 4_f64;
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_AVGPRICE_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

@@ -301,6 +301,7 @@ struct Cdlxsidegap3methodsStreamState {
     lag2_inOpen: f64,
     lag1_inClose: f64,
     lag2_inClose: f64,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -324,6 +325,7 @@ impl Core {
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+        sp.cur_outInteger = (*outInteger);
         sp.lag2_inOpen = sp.lag1_inOpen;
         sp.lag1_inOpen = inOpen;
         sp.lag2_inClose = sp.lag1_inClose;
@@ -408,6 +410,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = Cdlxsidegap3methodsStreamState {
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inClose: inClose[historyLen - 1],
@@ -612,8 +615,8 @@ impl Cdlxsidegap3methodsStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -630,6 +633,7 @@ impl Cdlxsidegap3methodsStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut lag1_inOpen = sp.lag1_inOpen;
             let mut lag2_inClose = sp.lag2_inClose;
@@ -648,12 +652,26 @@ impl Cdlxsidegap3methodsStream {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+            cur_outInteger = (*outInteger);
             lag2_inOpen = lag1_inOpen;
             lag1_inOpen = inOpen;
             lag2_inClose = lag1_inClose;
             lag1_inClose = inClose;
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has consumed, in the input series'

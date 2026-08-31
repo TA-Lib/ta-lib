@@ -380,6 +380,8 @@ struct TA_TRIX_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_TRIX_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double prevEMA1;
    double prevEMA2;
@@ -403,6 +405,7 @@ static void TA_TRIX_StepImpl( struct TA_TRIX_Stream *sp, double inReal, double *
    {
       *outReal= 0.0;
    }
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -588,6 +591,7 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
       sp->optInK_1 = optInK_1;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -668,6 +672,7 @@ TA_LIB_API TA_RetCode TA_TRIX_Peek( const TA_TRIX_Stream *stream, double inReal,
    {
       *outReal= 0.0;
    }
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -694,6 +699,27 @@ TA_LIB_API TA_RetCode TA_TRIX_UpdateAndFill( TA_TRIX_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_TRIX_Close( TA_TRIX_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TRIX_Value( const TA_TRIX_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TRIX_Clone( const TA_TRIX_Stream *stream, TA_TRIX_Stream **clone )
+{
+   struct TA_TRIX_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_TRIX_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

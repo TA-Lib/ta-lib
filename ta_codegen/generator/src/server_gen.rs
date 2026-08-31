@@ -1714,13 +1714,15 @@ const fn sv_range_mask(sites: &[SvRangeSite]) -> u32 {
 }
 
 /// C, Java and C# reach the anchored seam; Rust cannot — its server is a
-/// separate crate and `_OpenInternal` is `pub(crate)`. Java, C# and Rust can
-/// fork a live handle; C cannot.
+/// separate crate and `_OpenInternal` is `pub(crate)`. All four can fork a live
+/// stream since C gained `TA_<N>_Clone` (#287), so C is the only server that
+/// reaches every site.
 const SV_RANGE_MASK_C: u32 = sv_range_mask(&[
     SvRangeSite::Fill,
     SvRangeSite::Prefix,
     SvRangeSite::UpdateFill,
     SvRangeSite::Anchored,
+    SvRangeSite::Copy,
 ]);
 const SV_RANGE_MASK_JAVA: u32 = sv_range_mask(&[
     SvRangeSite::Fill,
@@ -1846,6 +1848,14 @@ fn emit_sv_update_fill_leg(
         "                urc = TA_{name}_UpdateAndFill( stu, {shifted}svN - P, {fill_args} );"
     );
     s.push_str("                if( urc != TA_SUCCESS ) ufillOk = 0;\n");
+    // UpdateAndFill retains `cur_` from its own indexed expression, distinct
+    // again from Update's scalar one, and read by no other leg.
+    s.push_str("                if( ufillOk && stu )\n");
+    emit_sv_value_probe(
+        s, name, out_is_int, "                ", "stu",
+        &fbuf.iter().map(|b| format!("{b}[svN - P - 1]")).collect::<Vec<_>>(),
+        "Value after UpdateAndFill is not the last bar it committed",
+    );
     s.push_str("                else for( ut = P; ufillOk && ut < svN; ut++ ) {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         if *is_int {
@@ -2007,6 +2017,184 @@ fn emit_sv_peek_noncommit(
 ");
 }
 
+/// One `TA_<N>_Value` probe: the accessor must answer `expect[i]` for every
+/// output, on the handle named by `handle`.
+///
+/// `TA_<N>_Value` retains a SEPARATE copy of the output — it is not the sink the
+/// step writes — so every site that seeds or refreshes `cur_` needs a probe of
+/// its own or it ships unread. The open-time seed, the strided `OpenAndFill`
+/// seed and the `UpdateAndFill` retain each write a different expression, and
+/// none is observable through any other leg.
+fn emit_sv_value_probe(
+    s: &mut String,
+    name: &str,
+    out_is_int: &[bool],
+    pad: &str,
+    handle: &str,
+    expect: &[String],
+    site: &str,
+) {
+    let n = out_is_int.len();
+    let decls: String = out_is_int
+        .iter()
+        .enumerate()
+        .map(|(i, b)| if *b { format!("int vq{i} = 0;") } else { format!("double vq{i} = 0.0;") })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let addrs: String = (0..n).map(|i| format!("&vq{i}")).collect::<Vec<_>>().join(", ");
+    let _ = writeln!(s, "{pad}{{");
+    let _ = writeln!(s, "{pad}   {decls}");
+    let _ = writeln!(s, "{pad}   valueChecked = 1; valueLegs++;");
+    let _ = writeln!(
+        s,
+        "{pad}   if( TA_{name}_Value( {handle}, {addrs} ) != TA_SUCCESS ) {{ valueOk = 0; valueBad = \"{site}: Value rejected a live stream\"; }}"
+    );
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let cmp = if *is_int {
+            format!("vq{i} != {}", expect[i])
+        } else {
+            format!("sv_bitne(vq{i}, {})", expect[i])
+        };
+        let _ = writeln!(
+            s,
+            "{pad}   if( {cmp} ) {{ valueOk = 0; valueBad = \"{site}\"; }}"
+        );
+    }
+    let _ = writeln!(s, "{pad}}}");
+}
+
+/// Clone-independence leg (#287): open at the earliest prefix, advance to mid,/// Clone-independence leg (#287): open at the earliest prefix, advance to mid,
+/// fork with `TA_<N>_Clone`, then drive BOTH to the end.
+///
+/// Two claims, and the second is the one that needs the whole run. Same-tier:
+/// the fork and the original agree with each other bitwise — no `+/-0` fold,
+/// they ran the identical arithmetic. Cross-tier: each agrees with batch.
+///
+/// **Why it drives to the end rather than a bar or two.** A fork that SHARES a
+/// ring is latent for exactly one bar: the step reads the trailing slot before
+/// it overwrites it, so the first update after the fork still answers correctly
+/// on both handles and only the running total is left wrong. The divergence
+/// surfaces on the next bar. A leg that stopped early would read green on the
+/// defect it exists to catch.
+///
+/// It also checks `TA_<N>_Value` on the fork, because a fork is the one caller
+/// that has no earlier call to have handed it a value — the case the accessor
+/// was added for.
+fn emit_sv_clone_leg(
+    s: &mut String,
+    name: &str,
+    input_arrays: &[&str],
+    in_args: &str,
+    opt_args: &str,
+    out_is_int: &[bool],
+    bbuf: &[String],
+    seed_shift: bool,
+) {
+    let n = out_is_int.len();
+    let decl_a: String = out_is_int
+        .iter()
+        .enumerate()
+        .map(|(i, b)| if *b { format!("int ca{i} = 0;") } else { format!("double ca{i} = 0.0;") })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let decl_b: String = out_is_int
+        .iter()
+        .enumerate()
+        .map(|(i, b)| if *b { format!("int cb{i} = 0;") } else { format!("double cb{i} = 0.0;") })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let decl_v: String = out_is_int
+        .iter()
+        .enumerate()
+        .map(|(i, b)| if *b { format!("int cv{i} = 0;") } else { format!("double cv{i} = 0.0;") })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let addr_a: String = (0..n).map(|i| format!("&ca{i}")).collect::<Vec<_>>().join(", ");
+    let addr_b: String = (0..n).map(|i| format!("&cb{i}")).collect::<Vec<_>>().join(", ");
+    let addr_v: String = (0..n).map(|i| format!("&cv{i}")).collect::<Vec<_>>().join(", ");
+    let mut bar_args = String::new();
+    for a in input_arrays {
+        bar_args.push_str(&format!("{a}[t], "));
+    }
+
+    s.push_str("        {\n");
+    let _ = writeln!(s, "            TA_{name}_Stream *cA = NULL, *cB = NULL;");
+    let _ = writeln!(s, "            {decl_a} {decl_b} {decl_v}");
+    // The earliest prefix the opener accepts — the same one the prefix leg
+    // uses. METASTOCK rewinds past the state at exactly lookback+1, so a
+    // seed-boundary function starts one bar later there or the open is
+    // legitimately rejected and the leg would read as a clone failure.
+    if seed_shift {
+        s.push_str("            int cp0 = lb + 1 + ((svCompat == 1) ? 1 : 0), cmid, t, cOk = 1;\n");
+    } else {
+        s.push_str("            int cp0 = lb + 1, cmid, t, cOk = 1;\n");
+    }
+    s.push_str("            if( cp0 <= svN - 1 )\n            {\n");
+    let _ = writeln!(
+        s,
+        "                if( TA_{name}_Open(&cA, {in_args}cp0, {opt_args}{addr_a}) != TA_SUCCESS || !cA ) {{ cOk = 0; cloneBad = \"open rejected the fork leg's prefix\"; }}"
+    );
+    s.push_str("                cmid = (cp0 + svN) / 2;\n");
+    s.push_str("                for( t = cp0; cOk && t < cmid; t++ )\n");
+    let _ = writeln!(s, "                    TA_{name}_Update(cA, {bar_args}{addr_a});");
+    s.push_str("                if( cOk )\n                {\n");
+    let _ = writeln!(
+        s,
+        "                    if( TA_{name}_Clone(cA, &cB) != TA_SUCCESS || !cB ) {{ cOk = 0; cloneBad = \"clone rejected\"; }}"
+    );
+    s.push_str("                    else if( cB == cA ) { cOk = 0; cloneBad = \"clone returned the original\"; }\n");
+    s.push_str("                }\n");
+    // The fork must answer for the bar it was forked at, with no call of its own.
+    s.push_str("                if( cOk )\n                {\n");
+    let _ = writeln!(s, "                    if( TA_{name}_Value(cB, {addr_v}) != TA_SUCCESS ) {{ cOk = 0; cloneBad = \"Value rejected the fork\"; }}");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let cmp = if *is_int { format!("cv{i} != ca{i}") } else { format!("sv_bitne(cv{i}, ca{i})") };
+        let _ = writeln!(s, "                    if( cOk && ({cmp}) ) {{ cOk = 0; cloneBad = \"the fork's Value is not the bar it forked at\"; }}");
+    }
+    s.push_str("                }\n");
+    // Drive both to the end. A shared buffer diverges here and nowhere earlier.
+    s.push_str("                for( t = cmid; cOk && t < svN; t++ )\n                {\n");
+    let _ = writeln!(s, "                    TA_{name}_Update(cA, {bar_args}{addr_a});");
+    let _ = writeln!(s, "                    TA_{name}_Update(cB, {bar_args}{addr_b});");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let same = if *is_int { format!("ca{i} != cb{i}") } else { format!("sv_bitne(ca{i}, cb{i})") };
+        let _ = writeln!(s, "                    if( {same} ) {{ cOk = 0; cloneBad = \"the fork and the original disagree\"; }}");
+        let b = &bbuf[i];
+        let cross = if *is_int {
+            format!("ca{i} != {b}[t - svBeg]")
+        } else {
+            format!("sv_xtier_ne(ca{i}, {b}[t - svBeg], &svZsign)")
+        };
+        let _ = writeln!(s, "                    if( {cross} ) {{ cOk = 0; cloneBad = \"the original left batch after the fork\"; }}");
+        let cross_b = if *is_int {
+            format!("cb{i} != {b}[t - svBeg]")
+        } else {
+            format!("sv_xtier_ne(cb{i}, {b}[t - svBeg], &svZsign)")
+        };
+        let _ = writeln!(s, "                    if( {cross_b} ) {{ cOk = 0; cloneBad = \"the fork left batch\"; }}");
+    }
+    s.push_str("                }\n");
+    s.push_str("                cloneChecked = 1; cloneLegs++;\n");
+    s.push_str("                if( !cOk ) cloneOk = 0;\n");
+    // Both consumed bars [cp0-1, svN-1], so both report the batch range. The
+    // original is the control: a failure on cA alone is the leg's own
+    // bookkeeping, not the fork.
+    s.push_str("                if( cOk )\n                {\n");
+    s.push_str("                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;\n");
+    let _ = writeln!(
+        s,
+        "                    rangeChecked = 1; rangeLegs++; rangeSites |= {};",
+        sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_C)
+    );
+    s.push_str("                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = \"the original's range moved\"; }\n");
+    s.push_str("                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = \"the fork's range is not the batch range\"; }\n");
+    s.push_str("                }\n");
+    let _ = writeln!(s, "                if( cA ) TA_{name}_Close(cA);");
+    let _ = writeln!(s, "                if( cB ) TA_{name}_Close(cB);");
+    s.push_str("            }\n");
+    s.push_str("        }\n");
+}
+
 /// The compare itself: the two handles have now consumed the same `svN` bars by
 /// different routes. Only when the value leg passed -- its loop breaks early on
 /// a mismatch, so the handle would be short of the reference.
@@ -2039,6 +2227,8 @@ fn emit_sv_state_report(s: &mut String, steq: bool) {
         return;
     }
     s.push_str("        if( stateChecked && !stateOk ) allOk = 0;\n");
+    s.push_str("        if( cloneChecked && !cloneOk ) allOk = 0;\n");
+    s.push_str("        if( valueChecked && !valueOk ) allOk = 0;\n");
     s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"state_checked\\\":%d,\\\"state_legs\\\":%d,\\\"state_ok\\\":%d,\\\"state_bad\\\":\\\"%s\\\"\", stateChecked, stateLegs, stateOk, stateWhat);\n");
 }
 
@@ -2181,6 +2371,12 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        TA_RetCode rc;\n");
         s.push_str("        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;\n");
         s.push_str("        int peekChecked = 0;\n");
+        // The fork leg's OWN counter: `range_ok` cannot say a fork leg died,
+        // and the value legs sit far above any threshold worth setting.
+        s.push_str("        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;\n");
+        s.push_str("        int valueChecked = 0, valueOk = 1, valueLegs = 0;\n");
+        s.push_str("        const char *valueBad = \"-\";\n");
+        s.push_str("        const char *cloneBad = \"-\";\n");
         s.push_str("        const char *peekBad = \"-\";\n");
         s.push_str("        int fillOk = 1, fillChecked = 0;\n");
         emit_sv_state_decls(&mut s, name, steq);
@@ -2336,6 +2532,14 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             ));
             s.push_str("            fillChecked = 1;\n");
             s.push_str("            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;\n");
+            // OpenAndFill seeds `cur_` through the STRIDED index, a different
+            // expression from the scalar Open's, and read by nothing else.
+            s.push_str("            if( fillOk && stf )\n");
+            emit_sv_value_probe(
+                &mut s, name, &out_is_int, "            ", "stf",
+                &fbuf.iter().map(|b| format!("{b}[svNb - 1]")).collect::<Vec<_>>(),
+                "Value after OpenAndFill is not the last filled bar",
+            );
             s.push_str("            else for( ft = 0; fillOk && ft < svNb; ft++ ) {\n");
             for (i, is_int) in out_is_int.iter().enumerate() {
                 if *is_int {
@@ -2470,6 +2674,13 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }\n");
         // Compare the open value (bar P-1).
         emit_sv_compare(&mut s, &out_is_int, &bbuf, "            ", "(P - 1) - svBeg", "P - 1", "ok &&");
+        // The opener SEEDS `cur_`; nothing else observes that write.
+        s.push_str("            if( ok && st )\n");
+        emit_sv_value_probe(
+            &mut s, name, &out_is_int, "            ", "st",
+            &(0..out_is_int.len()).map(|i| format!("v{i}")).collect::<Vec<_>>(),
+            "Value after Open is not the last history bar",
+        );
         // Update the remaining bars.
         let mut bar_args = String::new();
         for a in &input_arrays {
@@ -2497,6 +2708,13 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             peek_ne.join(" || ")
         ));
         emit_sv_compare(&mut s, &out_is_int, &bbuf, "                ", "t - svBeg", "t", "");
+        // Every accepted Update refreshes `cur_`; a Peek in between must not.
+        s.push_str("                if( ok )\n");
+        emit_sv_value_probe(
+            &mut s, name, &out_is_int, "                ", "st",
+            &(0..out_is_int.len()).map(|i| format!("v{i}")).collect::<Vec<_>>(),
+            "Value after Update is not the bar just committed",
+        );
         s.push_str("            }\n");
         emit_sv_state_compare(&mut s, name, steq);
         // Open(P) + (svN - P) updates: whatever P was, the handle has consumed
@@ -2519,6 +2737,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             &mut s, name, &input_arrays, &in_args, &opt_args, &out_is_int, &bbuf, &fbuf_names,
         );
         emit_sv_peek_noncommit(&mut s, name, steq, &out_is_int, &in_args, &opt_args, &input_arrays);
+        emit_sv_clone_leg(&mut s, name, &input_arrays, &in_args, &opt_args, &out_is_int, &bbuf, seed_shift);
         emit_sv_state_close(&mut s, name, steq);
         if candle {
             s.push_str("        }\n");
@@ -2574,9 +2793,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_report(&mut s, steq);
         emit_sv_range_report(&mut s);
         if candle {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         } else {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"benign\\\":%d}\", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         }
         s.push_str("        return;\n");
         s.push_str("    }\n");
@@ -6549,6 +6768,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // the same bars. Public API in every backend, so unlike the state leg this
     // one is not C-only.
     s.push_str("    let mut range_checked = 0i32;\n    let mut range_ok = true;\n    let mut range_legs = 0i64;\n    let mut range_sites = 0i32;\n");
+    s.push_str("    let mut value_checked = 0i32;\n    let mut value_ok = true;\n    let mut value_legs = 0i64;\n");
     // The n-bar filler's own leg (issue #246), reported apart from the
     // open-time fill so a regression names the entry point it is in.
     s.push_str("    let mut ufill_checked = 0i32;\n    let mut ufill_ok = true;\n");
@@ -6681,7 +6901,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    }\n");
     // fill_ok folds into ok as a safety net (mirrors the C gate), so a driver
     // reading only `ok` — e.g. the debug sweep — still fails on a fill regression.
-    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ufill_checked\\\":{},\\\"ufill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)\n");
+    s.push_str("    format!(\"{{\\\"retCode\\\":0,\\\"beg\\\":{},\\\"nb\\\":{},\\\"legs\\\":{},\\\"fill_checked\\\":{},\\\"fill_ok\\\":{},\\\"ufill_checked\\\":{},\\\"ufill_ok\\\":{},\\\"range_checked\\\":{},\\\"range_legs\\\":{},\\\"range_sites\\\":{},\\\"range_sites_all\\\":"); s.push_str(&SV_RANGE_MASK_RUST.to_string()); s.push_str(",\\\"range_ok\\\":{},\\\"value_checked\\\":{},\\\"value_legs\\\":{},\\\"value_ok\\\":{},\\\"ok\\\":{},\\\"peek_ok\\\":{},\\\"benign\\\":{}{}}}\", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)\n");
     s.push_str("}\n\n");
     s
 }
@@ -6831,6 +7051,21 @@ fn emit_rust_sv_clone_leg(
     let _ = writeln!(s, "            match c2.{fname_snake}_open({pfx_ins}{opts_tail}) {{");
     s.push_str("                Err(_) => { all_ok = false; if diag.is_empty() { diag = \",\\\"copyOpenReject\\\":1\".to_string(); } }\n");
     s.push_str("                Ok((mut sa, _v0)) => {\n");
+    // The opener seeds `value()`; nothing else in the Rust harness reads it.
+    {
+        let v_open = destructure("_v0");
+        let a_open = destructure("va");
+        s.push_str("                    { let va = sa.value(); value_checked = 1; value_legs += 1;\n");
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            let cmp = if *is_int {
+                format!("{} != {}", a_open[i], v_open[i])
+            } else {
+                format!("{}.to_bits() != {}.to_bits()", a_open[i], v_open[i])
+            };
+            let _ = writeln!(s, "                      if {cmp} {{ value_ok = false; if diag.is_empty() {{ diag = \",\\\"valueAfterOpen\\\":1\".to_string(); }} }}");
+        }
+        s.push_str("                    }\n");
+    }
     s.push_str("                    let mid = (p + svN) / 2;\n");
     s.push_str("                    let mut forked = true;\n");
     let _ = writeln!(s, "                    for t in p..mid {{ if sa.update({t_args}).is_err() {{ all_ok = false; forked = false; if diag.is_empty() {{ diag = format!(\",\\\"copyPreRejected\\\":{{}}\", t); }} break; }} }}");
@@ -6852,6 +7087,25 @@ fn emit_rust_sv_clone_leg(
             let _ = writeln!(s, "                        if {u_src}.to_bits() != {u_fork}.to_bits() {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
             let _ = writeln!(s, "                        if sv_xtier_ne({u_src}, b{i}[t - beg], &mut zsign) {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"copyDiverged\\\":{{}}\", t); }} }}");
         }
+    }
+    // Every accepted update refreshes `value()`, on the fork as much as on the
+    // original — the fork is the caller with no earlier call to have handed it one.
+    {
+        let src = destructure("u_src");
+        let fork = destructure("u_fork");
+        let va = destructure("va");
+        let vb = destructure("vb");
+        s.push_str("                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;\n");
+        for (i, is_int) in out_is_int.iter().enumerate() {
+            let (ca, cb) = if *is_int {
+                (format!("{} != {}", va[i], src[i]), format!("{} != {}", vb[i], fork[i]))
+            } else {
+                (format!("{}.to_bits() != {}.to_bits()", va[i], src[i]),
+                 format!("{}.to_bits() != {}.to_bits()", vb[i], fork[i]))
+            };
+            let _ = writeln!(s, "                          if {ca} || {cb} {{ value_ok = false; if diag.is_empty() {{ diag = \",\\\"valueAfterUpdate\\\":1\".to_string(); }} }}");
+        }
+        s.push_str("                        }\n");
     }
     s.push_str("                    }\n");
     s.push_str("                    }\n");
@@ -7565,7 +7819,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     );
     s.push_str("                        int mid = (p0 + svN) / 2;\n");
     let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t});");
-    let _ = writeln!(s, "                        Core.{class} sB = sA.copy();");
+    let _ = writeln!(s, "                        Core.{class} sB = sA.clone();");
     s.push_str("                        for (int t = mid; t < svN; t++) {\n");
     let _ = writeln!(s, "                            {up_ty} uA = sA.update({bars_t});");
     let _ = writeln!(s, "                            {up_ty} uB = sB.update({bars_t});");

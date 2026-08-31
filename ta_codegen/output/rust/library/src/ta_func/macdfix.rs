@@ -466,6 +466,9 @@ struct MacdfixStreamState {
     slowK: f64,
     fastK: f64,
     signalK: f64,
+    cur_outMACD: f64,
+    cur_outMACDSignal: f64,
+    cur_outMACDHist: f64,
 }
 
 #[allow(unused_variables)]
@@ -489,6 +492,9 @@ impl Core {
         (*outMACD) = macdValue;
         (*outMACDSignal) = sp.prevSignal;
         (*outMACDHist) = macdValue - sp.prevSignal;
+        sp.cur_outMACD = (*outMACD);
+        sp.cur_outMACDSignal = (*outMACDSignal);
+        sp.cur_outMACDHist = (*outMACDHist);
     }
 
     /// The single whole-history transcription behind [`Core::macdfix_open_internal`]
@@ -690,6 +696,9 @@ impl Core {
             slowK,
             fastK,
             signalK,
+            cur_outMACD: outMACD[(*outNBElement - 1) * outStride],
+            cur_outMACDSignal: outMACDSignal[(*outNBElement - 1) * outStride],
+            cur_outMACDHist: outMACDHist[(*outNBElement - 1) * outStride],
         };
         Ok(MacdfixStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -903,8 +912,8 @@ impl MacdfixStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -927,6 +936,9 @@ impl MacdfixStream {
             let outMACDHist = &mut outMACDHist;
             let mut macdValue: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut cur_outMACD = sp.cur_outMACD;
+            let mut cur_outMACDHist = sp.cur_outMACDHist;
+            let mut cur_outMACDSignal = sp.cur_outMACDSignal;
             let mut prevFast = sp.prevFast;
             let mut prevSignal = sp.prevSignal;
             let mut prevSlow = sp.prevSlow;
@@ -942,8 +954,24 @@ impl MacdfixStream {
             (*outMACD) = macdValue;
             (*outMACDSignal) = prevSignal;
             (*outMACDHist) = macdValue - prevSignal;
+            cur_outMACD = (*outMACD);
+            cur_outMACDSignal = (*outMACDSignal);
+            cur_outMACDHist = (*outMACDHist);
         }
         Ok((outMACD, outMACDSignal, outMACDHist))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MACDFIX_Value")]
+    pub fn value(&self) -> (f64, f64, f64) {
+        (self.state.cur_outMACD, self.state.cur_outMACDSignal, self.state.cur_outMACDHist)
     }
 
     /// The bars this stream has consumed, in the input series'

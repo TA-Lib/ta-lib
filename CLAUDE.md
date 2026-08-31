@@ -145,22 +145,29 @@ Assume the reader is an AI that can read the code faster than the prose about
 it. A comment or a `.md` earns its place only by saying something the code
 cannot:
 
-- **Guidance, not description.** Why this shape, what breaks if you change it,
-  which invariant is load-bearing. Not what the lines below do.
+- **Default to none.** Code shows *how*. Write a comment only for a *why* a
+  careful reader would not reach from the code in a minute.
+- **Guidance, not description.** Which invariant is load-bearing, what breaks if
+  you change it. Not what the lines below do.
+- **Never write these.** A restatement of the lines below. The reasoning that
+  led here. An alternative that was rejected. What the code used to be. "Fixed
+  X", "per review". A pointer to a doc instead of the fact itself. All of it
+  belongs in the issue and the commit message, which are timestamped and do not
+  pretend to be current.
 - **Never re-explain another file.** That copy goes stale the moment the
-  original moves, and a stale description costs a reader either a wrong belief
-  or a re-verification. When you find one that has drifted, delete it — do not
-  re-sync it. Drift is the symptom; the duplication is the defect.
-- **Delete the scaffolding of solved problems.** A workaround that is gone, a
-  bug that is fixed, a tier that was retired: the post-mortem belongs in the
-  issue and the commit message, which are timestamped and do not pretend to be
-  current.
-- **A real pitfall is worth writing down** — but state the rule, not the
-  history. "Keep every `(int)` cast the whole right-hand side" beats a paragraph
-  naming the emitter function that used to get it wrong.
+  original moves, and costs a reader either a wrong belief or a re-verification.
+  When you find one that has drifted, delete it — do not re-sync it. Drift is
+  the symptom; the duplication is the defect.
+- **A pitfall earns a sentence only if it fails SILENTLY** — and state the rule,
+  not the history. "Keep every `(int)` cast the whole right-hand side" beats a
+  paragraph naming the emitter that used to get it wrong. Loud failures get
+  rediscovered in minutes and need nothing.
 - **Named internals are the tell** — a function, a struct field, a symbol out of
-  a compiler error. They are the part most likely to be renamed out from under
-  the comment, and naming them is usually description wearing a rule's clothes.
+  a compiler error. Most likely to be renamed out from under the comment, and
+  naming them is usually description wearing a rule's clothes.
+- **Doc lines outnumbering the code they describe means cut, not balance.**
+  Writing less is the weaker half; re-reading and deleting before you commit is
+  the half that works.
 
 Applies to `ta_codegen/input/**` headers and `.md` files as much as to the
 generator's own source. `ta_codegen/generator/input_synth/README.md` states the

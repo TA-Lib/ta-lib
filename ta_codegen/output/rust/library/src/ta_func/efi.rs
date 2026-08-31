@@ -408,6 +408,7 @@ struct EfiStreamState {
     prevClose: f64,
     optInK_1: f64,
     prevMA: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -422,12 +423,14 @@ impl Core {
             force = (inClose - sp.prevClose) * inVolume;
             sp.prevClose = inClose;
             (*outReal) = force;
+            sp.cur_outReal = (*outReal);
         } else {
             let mut force: f64 = 0.0_f64;
             force = (inClose - sp.prevClose) * inVolume;
             sp.prevClose = inClose;
             sp.prevMA = (force - sp.prevMA as f64).mul_add(sp.optInK_1, sp.prevMA);
             (*outReal) = sp.prevMA;
+            sp.cur_outReal = (*outReal);
         }
     }
 
@@ -535,6 +538,7 @@ impl Core {
                 prevClose,
                 optInK_1,
                 prevMA,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
             Ok(EfiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
@@ -640,6 +644,7 @@ impl Core {
                 prevClose,
                 optInK_1,
                 prevMA,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
             Ok(EfiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
@@ -838,8 +843,8 @@ impl EfiStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -858,21 +863,38 @@ impl EfiStream {
             let outReal = &mut outReal;
             if sp.optInTimePeriod == 1 {
                 let mut force: f64 = 0.0_f64;
+                let mut cur_outReal = sp.cur_outReal;
                 let mut prevClose = sp.prevClose;
                 force = (inClose - prevClose) * inVolume;
                 prevClose = inClose;
                 (*outReal) = force;
+                cur_outReal = (*outReal);
             } else {
                 let mut force: f64 = 0.0_f64;
+                let mut cur_outReal = sp.cur_outReal;
                 let mut prevClose = sp.prevClose;
                 let mut prevMA = sp.prevMA;
                 force = (inClose - prevClose) * inVolume;
                 prevClose = inClose;
                 prevMA = (force - prevMA as f64).mul_add(sp.optInK_1, prevMA);
                 (*outReal) = prevMA;
+                cur_outReal = (*outReal);
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_EFI_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

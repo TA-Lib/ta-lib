@@ -4,10 +4,11 @@
 //! `src/ta_func/ta_<NAME>.c` gains a stream section after the batch variants:
 //!
 //! - `struct TA_<NAME>_Stream` — params, carried scalars, lag slots;
-//! - `static void TA_<NAME>_StepImpl(...)` — the ONE transition function
-//!   (the batch steady-loop body on rewritten IR); `Update` runs it on the
-//!   live state and `Peek` on a stack copy, so peek == update bit-for-bit by
-//!   construction;
+//! - `static void TA_<NAME>_StepImpl(...)` — the transition function (the batch
+//!   steady-loop body on rewritten IR) that `Update` runs on the live state;
+//!   `Peek` inlines the same transition rewritten to commit nothing into the
+//!   handle's BUFFERS, over a stack copy of the struct that carries the scalars
+//!   and the in-struct arrays;
 //! - `TA_LIB_API TA_RetCode TA_<NAME>_Open/Update/Peek/Close` — the public
 //!   lifecycle (proposal §"API shape per backend").
 //!
@@ -758,6 +759,259 @@ pub fn close_signature(func: &FuncDef) -> String {
     format!("TA_LIB_API TA_RetCode TA_{n}_Close( TA_{n}_Stream *stream )")
 }
 
+/// Public `Clone` prototype (no trailing `;`). Handle leads, out-handle after —
+/// the `Update`/`Peek` order; `Open` leads with its out-handle only because it
+/// has no in-handle to lead with.
+pub fn clone_signature(func: &FuncDef) -> String {
+    let n = uname(func);
+    format!(
+        "TA_LIB_API TA_RetCode TA_{n}_Clone( const TA_{n}_Stream *stream, TA_{n}_Stream **clone )"
+    )
+}
+
+/// The owned-heap inventory of one model as (disown, duplicate) line pairs.
+///
+/// Mirrors [`release_free_lines`] field for field, and that is the invariant:
+/// a buffer freed there and not duplicated here is a fork that shares state
+/// with its original. The disown half runs before the first allocation so a
+/// mid-way failure frees the COPY's buffers and never the source's.
+fn clone_buffer_lines(model: &StreamModel, n: &str) -> (Vec<String>, Vec<String>) {
+    let mut disown: Vec<String> = Vec::new();
+    let mut dup: Vec<String> = Vec::new();
+    let one = |field: String, count: String, ty: &str, disown: &mut Vec<String>, dup: &mut Vec<String>| {
+        disown.push(format!("   sp->{field} = NULL;"));
+        // NULL-guarded, exactly as `release_free_lines` guards every free and
+        // for the same reason: a buffer the active mode never allocated is NULL
+        // (the dual-mode union carries both arms' fields, and a cap can be 0),
+        // and a NULL source duplicates as NULL rather than as a read of nothing.
+        dup.push(format!(
+            "   if( stream->{field} )\n   {{ size_t copyN = (size_t)({count});\n     \
+             sp->{field} = ({ty} *)TA_Malloc( sizeof({ty}) * copyN );\n     \
+             if( !sp->{field} ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
+             memcpy( sp->{field}, stream->{field}, sizeof({ty}) * copyN ); }}"
+        ));
+    };
+    for ring in model.rings() {
+        let v = &ring.var;
+        for arr in &ring.arrays {
+            one(
+                format!("ring_{v}_{arr}"),
+                format!("sp->ringCap_{v} > 0 ? sp->ringCap_{v} : 1"),
+                "double",
+                &mut disown,
+                &mut dup,
+            );
+        }
+    }
+    for win in model.windows() {
+        let v = &win.var;
+        for arr in &win.arrays {
+            one(format!("win_{v}_{arr}"), format!("sp->winCap_{v}"), "double", &mut disown, &mut dup);
+        }
+    }
+    for circ in model.circs() {
+        let id = &circ.id;
+        for (storage, ty) in circ_storages(circ) {
+            let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
+            one(format!("cb_{storage}"), format!("sp->cbSize_{id}"), et, &mut disown, &mut dup);
+        }
+    }
+    if let Some(ex) = model.extrema() {
+        for arr in &ex.arrays {
+            one(format!("x_{arr}"), "sp->xPhys".to_string(), "double", &mut disown, &mut dup);
+        }
+    }
+    (disown, dup)
+}
+
+/// `TA_<N>_Clone`: an independent fork of a live handle, at the same bar.
+///
+/// The mirror of `TA_<N>_Close`, NOT of `TA_<N>_ReleaseImpl` — Release is only
+/// the leaf-buffer traversal and two tiers do not even have one, so Close is
+/// the total inventory of what a handle owns and therefore of what a fork has
+/// to duplicate. `*sp = *stream` carries the scalars and the fixed arrays; every
+/// pointer it also carried is disowned before the first allocation, so the
+/// failure path can hand the half-built copy to `Close` without touching the
+/// source's buffers.
+fn emit_clone(
+    o: &mut String,
+    func: &FuncDef,
+    plan: &StreamPlan,
+    enums: &HashMap<String, EnumDef>,
+) {
+    let n = uname(func);
+    let (disown, dup) = clone_owned_lines(plan, &n, enums);
+    let _ = writeln!(o, "{}\n{{", clone_signature(func));
+    let _ = writeln!(o, "   struct TA_{n}_Stream *sp;\n");
+    let _ = writeln!(o, "   if( !clone ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   *clone = NULL;");
+    let _ = writeln!(o, "   if( !stream ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
+    let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
+    let _ = writeln!(o, "   *sp = *stream;");
+    for line in disown.iter().chain(dup.iter()) {
+        let _ = writeln!(o, "{line}");
+    }
+    let _ = writeln!(o, "   *clone = sp;");
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+}
+
+/// Everything a handle of this tier owns, as (disown, duplicate) line lists.
+fn clone_owned_lines(
+    plan: &StreamPlan,
+    n: &str,
+    enums: &HashMap<String, EnumDef>,
+) -> (Vec<String>, Vec<String>) {
+    let mut disown: Vec<String> = Vec::new();
+    let mut dup: Vec<String> = Vec::new();
+
+    let add_model = |m: &StreamModel, disown: &mut Vec<String>, dup: &mut Vec<String>| {
+        let (d, c) = clone_buffer_lines(m, n);
+        disown.extend(d);
+        dup.extend(c);
+    };
+
+    match plan {
+        StreamPlan::Loop(model) => add_model(model, &mut disown, &mut dup),
+        StreamPlan::DualMode(dmp) => {
+            // One handle, the union of both arms' buffers — the inactive arm's
+            // pointers are NULL, and a NULL source duplicates as NULL.
+            let (d, c) = clone_buffer_lines(&dmp.mode_a, n);
+            disown.extend(d);
+            dup.extend(c);
+            let seen: std::collections::BTreeSet<String> = disown.iter().cloned().collect();
+            let (d2, c2) = clone_buffer_lines(&dmp.mode_b, n);
+            for (i, line) in d2.iter().enumerate() {
+                if !seen.contains(line) {
+                    disown.push(line.clone());
+                    dup.push(c2[i].clone());
+                }
+            }
+        }
+        StreamPlan::Composed(cp) => {
+            if let Some(m) = &cp.producer {
+                add_model(m, &mut disown, &mut dup);
+            }
+            for ring in &cp.sub_lag_rings {
+                let sr = &ring.series;
+                disown.push(format!("   sp->lagRing_{sr} = NULL;"));
+                dup.push(format!(
+                    "   if( stream->lagRing_{sr} )\n   {{ size_t copyN = (size_t)sp->lagRingCap_{sr};\n     \
+                     sp->lagRing_{sr} = (double *)TA_Malloc( sizeof(double) * copyN );\n     \
+                     if( !sp->lagRing_{sr} ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
+                     memcpy( sp->lagRing_{sr}, stream->lagRing_{sr}, sizeof(double) * copyN ); }}"
+                ));
+            }
+            for (i, sub) in cp.subs.iter().enumerate() {
+                let pre = callee_prefix(&sub.callee);
+                disown.push(format!("   sp->sub{i} = NULL;"));
+                dup.push(format!(
+                    "   if( stream->sub{i} )\n   {{ TA_RetCode subRc = {pre}_Clone( stream->sub{i}, &sp->sub{i} );\n     \
+                     if( subRc != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return subRc; }} }}"
+                ));
+            }
+        }
+        StreamPlan::Dispatch(dp) => {
+            disown.push("   sp->sub = NULL;".to_string());
+            let mut sw = String::new();
+            let _ = writeln!(sw, "   if( stream->sub )\n   {{");
+            let _ = writeln!(sw, "      TA_RetCode subRc;");
+            let _ = writeln!(sw, "      switch( stream->{} )\n      {{", dp.param);
+            for arm in dp.arms.iter().filter(|a| a.supported) {
+                let pre = callee_prefix(&arm.callee);
+                let _ = writeln!(sw, "      case {}:", render_c_switch_label(&arm.label, enums));
+                // Through a typed local, not `({pre}_Stream **)&sp->sub`:
+                // writing a typed pointer through a cast `void **` is a
+                // representation the standard does not promise, and the local
+                // costs nothing.
+                let _ = writeln!(sw, "         {{");
+                let _ = writeln!(sw, "            {pre}_Stream *subClone = NULL;");
+                let _ = writeln!(
+                    sw,
+                    "            subRc = {pre}_Clone( (const {pre}_Stream *)stream->sub, &subClone );"
+                );
+                let _ = writeln!(sw, "            sp->sub = subClone;");
+                let _ = writeln!(sw, "         }}");
+                let _ = writeln!(sw, "         break;");
+            }
+            let _ = writeln!(sw, "      default:");
+            let _ = writeln!(sw, "         subRc = TA_SUCCESS; /* identity arm: no sub-stream */");
+            let _ = writeln!(sw, "         break;");
+            let _ = writeln!(sw, "      }}");
+            let _ = writeln!(sw, "      if( subRc != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return subRc; }}");
+            let _ = write!(sw, "   }}");
+            dup.push(sw);
+        }
+        StreamPlan::PeriodBank(pbp) => {
+            let pre = callee_prefix(&pbp.callee);
+            disown.push("   sp->bank = NULL;".to_string());
+            disown.push("   sp->scratch = NULL;".to_string());
+            dup.push(format!(
+                "   {{ int k;\n     \
+                 sp->bank = (struct {pre}_Stream **)TA_Malloc( sizeof(struct {pre}_Stream *) * (size_t)sp->nBank );\n     \
+                 if( !sp->bank ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
+                 for( k = 0; k < sp->nBank; k++ ) sp->bank[k] = NULL;\n     \
+                 for( k = 0; k < sp->nBank; k++ )\n     \
+                 {{\n        if( !stream->bank[k] ) continue;\n        TA_RetCode subRc = {pre}_Clone( stream->bank[k], &sp->bank[k] );\n        \
+                 if( subRc != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return subRc; }}\n     }} }}"
+            ));
+            dup.push(format!(
+                "   if( stream->scratch )\n   {{ size_t copyN = (size_t)sp->nBank;\n     \
+                 sp->scratch = (double *)TA_Malloc( sizeof(double) * copyN );\n     \
+                 if( !sp->scratch ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
+                 memcpy( sp->scratch, stream->scratch, sizeof(double) * copyN ); }}"
+            ));
+        }
+    }
+
+    (disown, dup)
+}
+
+/// Public `Value` prototype (no trailing `;`). Const source, one out-pointer
+/// per output — the `Peek`/`Update` out-parameter shape, minus the bar.
+pub fn value_signature(func: &FuncDef) -> String {
+    let n = uname(func);
+    format!(
+        "TA_LIB_API TA_RetCode TA_{n}_Value( const TA_{n}_Stream *stream, {} )",
+        out_params_sig(func)
+    )
+}
+
+/// `TA_<N>_Value`: the value(s) at the last committed bar, read back without
+/// recomputing. Tier-independent — every tier retains into the same `cur_`
+/// fields — so it is emitted once for all five rather than per arm.
+///
+/// Total on a live handle: an Open that returned `TA_SUCCESS` produced at least
+/// one value and seeded these fields, so there is no "before the first update"
+/// answer to invent. A DECLINABLE output may be passed NULL here exactly as it
+/// may at `Update`.
+fn emit_value(o: &mut String, func: &FuncDef) {
+    let nullable = nullable_out_names(func);
+    let required: Vec<String> = func
+        .outputs
+        .iter()
+        .map(|out| out.name.clone())
+        .filter(|name| !nullable.contains(name))
+        .collect();
+    let _ = writeln!(o, "{}\n{{", value_signature(func));
+    let mut guard = String::from("   if( !stream");
+    for name in &required {
+        let _ = write!(guard, " || !{name}");
+    }
+    guard.push_str(" ) return TA_BAD_PARAM;");
+    let _ = writeln!(o, "{guard}");
+    for out in &func.outputs {
+        let name = &out.name;
+        if nullable.contains(name) {
+            let _ = writeln!(o, "   if( {name} != NULL )");
+            let _ = writeln!(o, "      *{name} = stream->cur_{name};");
+        } else {
+            let _ = writeln!(o, "   *{name} = stream->cur_{name};");
+        }
+    }
+    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
+}
+
 /// Header declarations for one streamable function (opaque handle typedef +
 /// the four lifecycle prototypes). Emitted into include/ta_func.h.
 /// Dispatch functions with unsupported arms (MA while TRIMA/MAMA lack
@@ -811,14 +1065,29 @@ pub fn header_decls(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Str
         "\n/*\n * UpdateAndFill: commit barCount closed bars and write the barCount values,\n * in one call — barCount back-to-back TA_{n}_Update calls, including the\n * per-bar rejection. A rejected bar k leaves the bars before it committed and\n * written, itself uncommitted and its output slot untouched; TA_StreamOutRange\n * then reports k+1, the rejected bar being the last one counted. Outputs must\n * not alias the inputs or each other.\n */\n{};\n",
         update_and_fill_signature(func)
     );
+    // Clone: an independent fork at the same bar. Declared unconditionally —
+    // every tier can duplicate what it owns.
+    let clone = format!(
+        "\n/*\n * Clone: fork the stream — an independent stream at the same bar, owning its\n * own copy of everything the original owns. Both must be closed. The fork\n * carries the value and the range verbatim.\n */\n{};\n",
+        clone_signature(func)
+    );
+    // Value: the last committed bar's value(s), re-read without recomputing.
+    // Declared unconditionally beside the rest — every tier retains them, so
+    // there is no shape that could lack it.
+    let value = format!(
+        "\n/*\n * Value: the value(s) at the last committed bar, without recomputing —\n * seeded by Open, refreshed by Update and UpdateAndFill, left alone by Peek.\n */\n{};\n",
+        value_signature(func)
+    );
     format!(
-        "\n/*\n * Streaming API for TA_{n} — incremental per-bar evaluation.\n * See docs/streaming-api-design.md.\n{note} */\ntypedef struct TA_{n}_Stream TA_{n}_Stream;\n\n{};\n\n{};\n\n{};\n\n{};\n{}{}",
+        "\n/*\n * Streaming API for TA_{n} — incremental per-bar evaluation.\n * See docs/streaming-api-design.md.\n{note} */\ntypedef struct TA_{n}_Stream TA_{n}_Stream;\n\n{};\n\n{};\n\n{};\n\n{};\n{}{}{}{}",
         open_signature(func),
         update_signature(func),
         peek_signature(func),
         close_signature(func),
         open_and_fill,
-        update_and_fill
+        update_and_fill,
+        value,
+        clone
     )
 }
 
@@ -925,6 +1194,14 @@ pub fn generate(
             emit_period_bank(&mut o, func, pbp, registry, helpers, &counter, enums);
         }
     }
+
+    // Tier-independent: every tier retains into the same `cur_` fields, so one
+    // call here covers all five and a new tier gets it without being asked.
+    emit_value(&mut o, func);
+    // Tier-DEPENDENT: what a handle owns differs per tier, so `emit_clone` takes
+    // the plan. It is still emitted here rather than per arm so that a tier
+    // cannot be added without one.
+    emit_clone(&mut o, func, &plan, enums);
 
     o
 }
@@ -1234,12 +1511,8 @@ fn emit_composed_frame_body(
         let transition = match frame {
             StepFrame::Commit => transition,
             StepFrame::Peek => {
-                let pt = streaming::peek_transition(
-                    &transition,
-                    &streaming::transition_buffers(model, &names),
-                    None,
-                )
-                .unwrap_or_else(|e| panic!("{}: {e}", func.name));
+                let pt = streaming::peek_transition_widest(model, &names, &transition, None)
+                    .unwrap_or_else(|e| panic!("{}: {e}", func.name));
                 decls.push_str(&peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3));
                 answer_bare_returns(&pt.body)
             }
@@ -1455,6 +1728,7 @@ fn emit_composed_struct_noproducer(o: &mut String, func: &FuncDef, extra: &str) 
     let n = uname(func);
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
     emit_range_head_fields(o);
+    emit_cur_fields(o, func);
     for p in &func.optional_inputs {
         let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
     }
@@ -1823,6 +2097,7 @@ fn emit_composed_open(
         }
     }
     emit_range_head_capture(o, "      ");
+    emit_cur_capture(o, "      ", func, true);
     let _ = writeln!(o, "      *stream = sp;");
     let _ = writeln!(o, "      return TA_SUCCESS;");
     let _ = writeln!(o, "   }}\n}}\n");
@@ -2257,11 +2532,20 @@ fn emit_dispatch_open(
         }
         if mode.fills() {
             emit_range_head_capture(o, "      ");
+            // The identity arm hands its input straight back, and this path has
+            // no stride variable to index the output with — seed from the same
+            // bar the fill above wrote.
+            for (out, inp) in &idp.pairs {
+                let _ = writeln!(o, "      sp->cur_{out} = {inp}[historyLen - 1];");
+            }
         } else {
             // Scalar has no out-param pair to copy, so the range is the anchor
             // resolved above — the same one the fills report.
             let _ = writeln!(o, "      sp->outRangeBegIdx = fillLb;");
             let _ = writeln!(o, "      sp->outRangeCount = historyLen - fillLb;");
+            for (out, inp) in &idp.pairs {
+                let _ = writeln!(o, "      sp->cur_{out} = {inp}[historyLen - 1];");
+            }
         }
         let _ = writeln!(o, "      *stream = sp;");
         let _ = writeln!(o, "      return TA_SUCCESS;");
@@ -2321,6 +2605,10 @@ fn emit_dispatch_open(
     let _ = writeln!(o, "   }}");
     if mode.fills() {
         emit_range_head_capture(o, "   ");
+        for out in &func.outputs {
+            let name = &out.name;
+            let _ = writeln!(o, "   sp->cur_{name} = {name}[*outNBElement - 1];");
+        }
     } else {
         // The arm's own handle already carries the resolved range, and its
         // struct is private to the callee's translation unit — so read it back
@@ -2329,6 +2617,13 @@ fn emit_dispatch_open(
             o,
             "   TA_StreamOutRange( sp->sub, &sp->outRangeBegIdx, &sp->outRangeCount );"
         );
+        // The value has no generic accessor to read back through — the callee's
+        // handle is untyped here — but the scalar open just wrote it into the
+        // caller's out-pointer, which is the same value.
+        for out in &func.outputs {
+            let name = &out.name;
+            let _ = writeln!(o, "   sp->cur_{name} = *{name};");
+        }
     }
     let _ = writeln!(o, "   *stream = sp;");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
@@ -2340,6 +2635,7 @@ fn emit_dispatch_struct(o: &mut String, func: &FuncDef, dp: &DispatchPlan) {
     let n = uname(func);
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
     emit_range_head_fields(o);
+    emit_cur_fields(o, func);
     for p in &func.optional_inputs {
         let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
     }
@@ -2427,6 +2723,7 @@ fn emit_dispatch(
                 let _ = writeln!(o, "      *{out} = {inp};");
             }
             if verb == "Update" {
+                emit_cur_retain(o, "      ", "stream", func, None);
                 emit_range_head_advance(o, "      ", "stream");
             }
             let _ = writeln!(o, "      return TA_SUCCESS;");
@@ -2457,6 +2754,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "   }}");
         if verb == "Update" {
             let _ = writeln!(o, "   if( retCode != TA_SUCCESS ) return retCode;");
+            emit_cur_retain(o, "   ", "stream", func, None);
             emit_range_head_advance(o, "   ", "stream");
             let _ = writeln!(o, "   return TA_SUCCESS;");
         }
@@ -2488,6 +2786,7 @@ fn emit_dispatch(
         for (out, inp) in &idp.pairs {
             let _ = writeln!(o, "         {out}[i] = {inp}[i];");
         }
+        emit_cur_retain(o, "         ", "stream", func, Some("i"));
         emit_range_head_advance(o, "         ", "stream");
         let _ = writeln!(o, "      }}");
         let _ = writeln!(o, "      return TA_SUCCESS;");
@@ -2529,6 +2828,7 @@ fn emit_dispatch(
     );
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      if( retCode != TA_SUCCESS ) return retCode;");
+    emit_cur_retain(o, "      ", "stream", func, Some("i"));
     emit_range_head_advance(o, "      ", "stream");
     let _ = writeln!(o, "   }}");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
@@ -2629,6 +2929,7 @@ fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: 
     let n = uname(func);
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
     emit_range_head_fields(o);
+    emit_cur_fields(o, func);
     for p in &func.optional_inputs {
         let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
     }
@@ -2990,6 +3291,21 @@ fn emit_range_head_fields(o: &mut String) {
     }
 }
 
+/// The `cur_<output>` fields: the value(s) at the most recently committed bar,
+/// which `TA_<N>_Value` hands back without recomputing. One per output, on
+/// every tier, emitted beside the range head so the two accessors' storage
+/// cannot come apart tier by tier.
+///
+/// Distinct from `lastOut_<output>` even where both exist (DX): `lastOut_` is
+/// the PREVIOUS bar's output, read by the body while computing this one, and
+/// it is emitted only for the outputs a body actually reads back.
+fn emit_cur_fields(o: &mut String, func: &FuncDef) {
+    let _ = writeln!(o, "   /* The value(s) at the last committed bar (see TA_{}_Value). */", uname(func));
+    for out in &func.outputs {
+        let _ = writeln!(o, "   {} cur_{};", out_c_type(func, &out.name), out.name);
+    }
+}
+
 /// The C declarations of the range head, in struct order. `TA_StreamRangeHead`
 /// (rendered into the private header by `server_gen`) is built from this same
 /// list, so the layout the accessor reads through and the layout every stream
@@ -3009,6 +3325,27 @@ fn range_head_advance(indent: &str, handle: &str) -> String {
     format!("{indent}if( {handle}->outRangeCount < TA_MAX_INDEX ) {handle}->outRangeCount++;\n")
 }
 
+/// Retain the value(s) this committed bar produced, for `TA_<N>_Value`.
+///
+/// Emitted only where the tier's step has no transition tail to ride on: the
+/// composed, dispatch and period-bank steps hand their outputs straight to the
+/// caller's pointers. Sits with the range advance because the two describe the
+/// same bar — a handle whose count moved but whose value did not is exactly the
+/// split `TA_<N>_Value` must never show.
+fn emit_cur_retain(o: &mut String, indent: &str, handle: &str, func: &FuncDef, idx: Option<&str>) {
+    for out in &func.outputs {
+        let n = &out.name;
+        match idx {
+            None => {
+                let _ = writeln!(o, "{indent}{handle}->cur_{n} = *{n};");
+            }
+            Some(i) => {
+                let _ = writeln!(o, "{indent}{handle}->cur_{n} = {n}[{i}];");
+            }
+        }
+    }
+}
+
 /// Record on the handle the range this open produced (issue #241): the pair the
 /// batch API reports for the same history, which every later `Update` extends.
 /// Emitted immediately before the handle is published, where `*outBegIdx` /
@@ -3017,6 +3354,31 @@ fn range_head_advance(indent: &str, handle: &str) -> String {
 fn emit_range_head_capture(o: &mut String, indent: &str) {
     let _ = writeln!(o, "{indent}sp->outRangeBegIdx = *outBegIdx;");
     let _ = writeln!(o, "{indent}sp->outRangeCount = *outNBElement;");
+}
+
+/// Seed the value accessor at the publish point, where every tier's outputs
+/// are written and `*outNBElement` is final. Sits with the range capture for
+/// the same reason the retain sits with the range advance: the two describe the
+/// same bar, and `Open(P)+updates` has to leave the handle where `Open(n)` does.
+///
+/// Declinable outputs are seeded earlier, from the body variable, because their
+/// array may be NULL — `nullable_out_names` is the exemption list.
+fn emit_cur_capture(o: &mut String, indent: &str, func: &FuncDef, strided: bool) {
+    let nullable = nullable_out_names(func);
+    for out in &func.outputs {
+        let name = &out.name;
+        if nullable.contains(name) {
+            continue;
+        }
+        // The period-bank opener fills at stride 1 and takes no `outStride`
+        // parameter, so its index is the bare count.
+        let idx = if strided {
+            stride_index("*outNBElement - 1")
+        } else {
+            "*outNBElement - 1".to_string()
+        };
+        let _ = writeln!(o, "{indent}sp->cur_{name} = {name}[{idx}];");
+    }
 }
 
 fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
@@ -3079,6 +3441,7 @@ fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, ext
     let n = uname(func);
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
     emit_range_head_fields(o);
+    emit_cur_fields(o, func);
     for p in &func.optional_inputs {
         let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
     }
@@ -3557,12 +3920,8 @@ fn emit_step_inner(
     let (transition, shadows, slot_temps) = match frame {
         StepFrame::Commit => (transition, Vec::new(), Vec::new()),
         StepFrame::Peek => {
-            let pt = streaming::peek_transition(
-                &transition,
-                &streaming::transition_buffers(model, &CNames),
-                None,
-            )
-            .unwrap_or_else(|e| panic!("{}: {e}", model.func.name));
+            let pt = streaming::peek_transition_widest(model, &CNames, &transition, None)
+                .unwrap_or_else(|e| panic!("{}: {e}", model.func.name));
             (answer_bare_returns(&pt.body), pt.shadows, pt.slot_temps)
         }
     };
@@ -3612,7 +3971,12 @@ fn emit_identity_step_branch(
     indent: usize,
     frame: StepFrame,
 ) {
-    if let Some(s) = streaming::identity_step_branch(model, &CNames) {
+    // Peek commits nothing, so its arm carries no value retain.
+    let built = match frame {
+        StepFrame::Commit => streaming::identity_step_branch(model, &CNames),
+        StepFrame::Peek => streaming::identity_peek_branch(model, &CNames),
+    };
+    if let Some(s) = built {
         // The short-circuit exits the transition, which is `void`; in a peek
         // frame it exits `Peek`, which answers a code.
         let s = match frame {
@@ -3771,6 +4135,7 @@ fn emit_period_bank_struct(o: &mut String, func: &FuncDef, plan: &streaming::Per
     let subty = format!("struct {}_Stream", callee_prefix(&plan.callee));
     let _ = writeln!(o, "struct TA_{n}_Stream {{");
     emit_range_head_fields(o);
+    emit_cur_fields(o, func);
     for p in &func.optional_inputs {
         let _ = writeln!(o, "   {} {};", opt_param_c_type(&p.param_type), p.name);
     }
@@ -3916,6 +4281,12 @@ fn emit_period_bank(
     // start by definition.
     let _ = writeln!(o, "\n   sp->outRangeBegIdx = subStart;");
     let _ = writeln!(o, "   sp->outRangeCount = historyLen - subStart;");
+    // The scalar open just wrote the clamped slot into the caller's
+    // out-pointer; that is the value at the last committed bar.
+    for out in &func.outputs {
+        let name = &out.name;
+        let _ = writeln!(o, "   sp->cur_{name} = *{name};");
+    }
     let _ = writeln!(o, "\n   *stream = sp;");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
     let _ = registry;
@@ -4015,6 +4386,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "\n   *outBegIdx = lookbackTotal;");
     let _ = writeln!(o, "   *outNBElement = historyLen - lookbackTotal;");
     emit_range_head_capture(o, "   ");
+    emit_cur_capture(o, "   ", func, false);
     let _ = writeln!(o, "   *stream = sp;");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 
@@ -4033,6 +4405,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "   else if( cpReal > stream->{max} ) cp = stream->{max};");
     let _ = writeln!(o, "   else cp = (int)cpReal;");
     let _ = writeln!(o, "   *{out} = stream->scratch[cp - stream->{min}];");
+    emit_cur_retain(o, "   ", "stream", func, None);
     emit_range_head_advance(o, "   ", "stream");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 
@@ -4071,6 +4444,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      else if( cpReal > stream->{max} ) cp = stream->{max};");
     let _ = writeln!(o, "      else cp = (int)cpReal;");
     let _ = writeln!(o, "      {out}[i] = stream->scratch[cp - stream->{min}];");
+    emit_cur_retain(o, "      ", "stream", func, Some("i"));
     emit_range_head_advance(o, "      ", "stream");
     let _ = writeln!(o, "   }}");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
@@ -4139,7 +4513,7 @@ fn emit_open_arm(
         }
     }
     emit_circ_capture(o, model, &n);
-    emit_open_tail(o);
+    emit_open_tail(o, func);
     let _ = writeln!(o, "   }}");
 }
 
@@ -4181,8 +4555,9 @@ fn emit_circ_capture(o: &mut String, model: &StreamModel, n: &str) {
 /// Scalar returns the last history value per output; Fill has already written
 /// the whole array plus `*outBegIdx`/`*outNBElement` in the transcribed body,
 /// so it only publishes the handle.
-fn emit_open_tail(o: &mut String) {
+fn emit_open_tail(o: &mut String, func: &FuncDef) {
     emit_range_head_capture(o, "      ");
+    emit_cur_capture(o, "      ", func, true);
     let _ = writeln!(o, "      *stream = sp;");
     let _ = writeln!(o, "      return TA_SUCCESS;");
 }
@@ -4332,6 +4707,16 @@ fn alloc_and_capture(
             // one expression for both callers.
             let idx = stride_index("*outNBElement - 1");
             let _ = writeln!(s, "{pad}sp->lastOut_{name} = {name}[{idx}];");
+        }
+        // A DECLINABLE output has no output slot to read at the publish point
+        // (its array may be NULL), so it is seeded here, from the body's own
+        // variable — the same one the step retains from. Every other output is
+        // seeded at the publish point, where all five tiers meet.
+        for out in &func.outputs {
+            let name = &out.name;
+            if let Some(var) = streaming::declinable_retain_var(model, name) {
+                let _ = writeln!(s, "{pad}sp->cur_{name} = {var};");
+            }
         }
         for (name, ty) in &model.state {
             if model.parity.as_ref().is_some_and(|p| &p.field == name) {
@@ -4549,6 +4934,7 @@ fn emit_identity_fast_path(
         let _ = writeln!(o, "         }}");
         let _ = writeln!(o, "      }}");
         emit_range_head_capture(o, "      ");
+    emit_cur_capture(o, "      ", func, true);
         let _ = writeln!(o, "      *stream = sp;");
         let _ = writeln!(o, "      return TA_SUCCESS;");
         let _ = writeln!(o, "   }}");
@@ -4789,6 +5175,7 @@ fn emit_update(o: &mut String, func: &FuncDef, step_ret: bool) {
     if step_ret {
         let _ = writeln!(o, "   retCode = TA_{n}_StepImpl( stream, {} );", args.join(", "));
         let _ = writeln!(o, "   if( retCode != TA_SUCCESS ) return retCode;");
+        emit_cur_retain(o, "   ", "stream", func, None);
         emit_range_head_advance(o, "   ", "stream");
         let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
     } else {
@@ -4829,6 +5216,9 @@ fn emit_update_and_fill(o: &mut String, func: &FuncDef, step_ret: bool) {
         let _ = writeln!(o, "      if( retCode != TA_SUCCESS ) return retCode;");
     } else {
         let _ = writeln!(o, "      TA_{n}_StepImpl( stream, {} );", args.join(", "));
+    }
+    if step_ret {
+        emit_cur_retain(o, "      ", "stream", func, Some("i"));
     }
     emit_range_head_advance(o, "      ", "stream");
     let _ = writeln!(o, "   }}");

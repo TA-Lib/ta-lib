@@ -419,6 +419,7 @@ struct WmaStreamState {
     winPos_j: usize,
     winCap_j: usize,
     win_j_inReal: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -433,6 +434,7 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
+            sp.cur_outReal = (*outReal);
             return;
         }
         if sp.ringCap_trailingIdx == 0 {
@@ -513,6 +515,7 @@ impl Core {
         (*outReal) = sp.periodSum / sp.divider;
         // Prepare the periodSum for the next iteration.
         sp.periodSum -= sp.periodSub;
+        sp.cur_outReal = (*outReal);
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
         if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
@@ -557,6 +560,7 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = WmaStreamState {
+                cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
                 lookbackWin: 0_usize,
                 barsSinceReseed: 0_usize,
@@ -759,6 +763,7 @@ impl Core {
             periodSub,
             trailingValue,
             divider,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
@@ -949,8 +954,8 @@ impl WmaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -971,6 +976,7 @@ impl WmaStream {
             let mut rw: usize = 0_usize;
             let mut tempReal: f64 = 0.0_f64;
             let mut barsSinceReseed = sp.barsSinceReseed;
+            let mut cur_outReal = sp.cur_outReal;
             let mut periodSub = sp.periodSub;
             let mut periodSum = sp.periodSum;
             let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
@@ -982,6 +988,7 @@ impl WmaStream {
             let mut pkVal1: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
+                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             if sp.ringCap_trailingIdx == 0 {
@@ -1064,6 +1071,7 @@ impl WmaStream {
             (*outReal) = periodSum / sp.divider;
             // Prepare the periodSum for the next iteration.
             periodSum -= periodSub;
+            cur_outReal = (*outReal);
             ringPos_trailingIdx = ringPos_trailingIdx + 1;
             if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
                 ringPos_trailingIdx = 0;
@@ -1074,6 +1082,19 @@ impl WmaStream {
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_WMA_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

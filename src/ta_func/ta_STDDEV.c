@@ -224,6 +224,8 @@ struct TA_STDDEV_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_STDDEV_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double optInNbDev;
    TA_VAR_Stream *sub0;
@@ -376,6 +378,7 @@ static TA_RetCode TA_STDDEV_OpenImpl( struct TA_STDDEV_Stream **stream, const do
       if( !outStride ) TA_Free( sc_outReal );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -435,6 +438,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal,
    }
    retCode = TA_STDDEV_StepImpl( stream, inReal, outReal );
    if( retCode != TA_SUCCESS ) return retCode;
+   stream->cur_outReal = *outReal;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -483,6 +487,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_UpdateAndFill( TA_STDDEV_Stream *stream, const d
       }
       retCode = TA_STDDEV_StepImpl( stream, inReal[i], &outReal[i] );
       if( retCode != TA_SUCCESS ) return retCode;
+      stream->cur_outReal = outReal[i];
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
    return TA_SUCCESS;
@@ -493,6 +498,31 @@ TA_LIB_API TA_RetCode TA_STDDEV_Close( TA_STDDEV_Stream *stream )
    if( !stream ) return TA_SUCCESS;
    TA_VAR_Close( stream->sub0 );
    TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STDDEV_Value( const TA_STDDEV_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STDDEV_Clone( const TA_STDDEV_Stream *stream, TA_STDDEV_Stream **clone )
+{
+   struct TA_STDDEV_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_STDDEV_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->sub0 = NULL;
+   if( stream->sub0 )
+   { TA_RetCode subRc = TA_VAR_Clone( stream->sub0, &sp->sub0 );
+     if( subRc != TA_SUCCESS ) { TA_STDDEV_Close( sp ); return subRc; } }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

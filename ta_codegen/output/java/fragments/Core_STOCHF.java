@@ -605,11 +605,11 @@
     * Open with {@link Core#stochfOpen}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
-    * {@code value} and {@code copy} must not race with an {@code update} on
+    * {@code value} and {@code clone} must not race with an {@code update} on
     * the same handle. With no concurrent {@code update}, {@code peek}/
-    * {@code value}/{@code copy} never write the handle and may be called
-    * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent.
+    * {@code value}/{@code clone} never write the stream and may be called
+    * concurrently after safe publication. Independent streams (a
+    * {@code clone()} result included) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -646,7 +646,7 @@
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * {@code update} adds one to the count — a bar rejected for being
        * non-finite included, because it still happened — {@code peek} leaves
-       * it alone, and {@code copy()} carries it verbatim. A plain
+       * it alone, and {@code clone()} carries it verbatim. A plain
        * {@code open} hands back only the last value, a subset of this range,
        * because the caller chose not to take the fill.
        */
@@ -762,9 +762,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+       * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
        * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * does not grow with the period. It does allocate a small bounded amount
+       * per call — a size fixed by the indicator, never by the period.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -871,10 +872,18 @@
       }
 
       /**
-       * An independent deep copy of this stream: both evolve separately from
-       * here on (the Java rendering of the Rust handle's {@code Clone}).
+       * An independent fork of this stream: both evolve separately from here
+       * on. Buffers are copied and sub-streams cloned recursively; the
+       * {@link Core} reference is shared, since a {@code Core} is immutable
+       * for a stream's lifetime.
+       *
+       * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+       * never {@code super.clone()}, so it throws nothing.
+       *
+       * @return an independent stream at the same bar
        */
-      public StochfStream copy() {
+      @Override
+      public StochfStream clone() {
          return new StochfStream(this);
       }
    }

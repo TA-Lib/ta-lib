@@ -471,6 +471,9 @@ struct MacdextStreamState {
     sub0: MaStream,
     sub1: MaStream,
     sub2: MaStream,
+    cur_outMACD: f64,
+    cur_outMACDSignal: f64,
+    cur_outMACDHist: f64,
 }
 
 #[allow(unused_variables)]
@@ -663,7 +666,10 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let state = MacdextStreamState {
+        let mut state = MacdextStreamState {
+            cur_outMACD: 0.0_f64,
+            cur_outMACDSignal: 0.0_f64,
+            cur_outMACDHist: 0.0_f64,
             optInFastPeriod,
             optInFastMAType,
             optInSlowPeriod,
@@ -674,6 +680,9 @@ impl Core {
             sub1,
             sub2,
         };
+        state.cur_outMACD = sc_outMACD[*outNBElement - 1];
+        state.cur_outMACDSignal = sc_outMACDSignal[*outNBElement - 1];
+        state.cur_outMACDHist = sc_outMACDHist[*outNBElement - 1];
         if outStride != 1 && *outNBElement > 0 {
             let last_sc_outMACD = sc_outMACD[*outNBElement - 1];
             outMACD[0] = last_sc_outMACD;
@@ -851,6 +860,9 @@ impl MacdextStream {
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
         Core::macdext_step_impl(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)?;
+        self.state.cur_outMACD = outMACD;
+        self.state.cur_outMACDSignal = outMACDSignal;
+        self.state.cur_outMACDHist = outMACDHist;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -888,6 +900,9 @@ impl MacdextStream {
                 return Err(RetCode::BadParam);
             }
             Core::macdext_step_impl(&mut self.state, inReal[i], &mut outMACD[i], &mut outMACDSignal[i], &mut outMACDHist[i])?;
+            self.state.cur_outMACD = outMACD[i];
+            self.state.cur_outMACDSignal = outMACDSignal[i];
+            self.state.cur_outMACDHist = outMACDHist[i];
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -898,8 +913,8 @@ impl MacdextStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -938,6 +953,19 @@ impl MacdextStream {
             (*outMACDHist) = cur_outMACDHist;
         }
         Ok((outMACD, outMACDSignal, outMACDHist))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MACDEXT_Value")]
+    pub fn value(&self) -> (f64, f64, f64) {
+        (self.state.cur_outMACD, self.state.cur_outMACDSignal, self.state.cur_outMACDHist)
     }
 
     /// The bars this stream has consumed, in the input series'

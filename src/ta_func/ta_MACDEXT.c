@@ -482,6 +482,10 @@ struct TA_MACDEXT_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_MACDEXT_Value). */
+   double cur_outMACD;
+   double cur_outMACDSignal;
+   double cur_outMACDHist;
    int optInFastPeriod;
    TA_MAType optInFastMAType;
    int optInSlowPeriod;
@@ -800,6 +804,9 @@ static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const 
       if( !outStride ) TA_Free( sc_outMACDHist );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outMACD = outMACD[(*outNBElement - 1) * outStride];
+      sp->cur_outMACDSignal = outMACDSignal[(*outNBElement - 1) * outStride];
+      sp->cur_outMACDHist = outMACDHist[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -863,6 +870,9 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inRea
    }
    retCode = TA_MACDEXT_StepImpl( stream, inReal, outMACD, outMACDSignal, outMACDHist );
    if( retCode != TA_SUCCESS ) return retCode;
+   stream->cur_outMACD = *outMACD;
+   stream->cur_outMACDSignal = *outMACDSignal;
+   stream->cur_outMACDHist = *outMACDHist;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -920,6 +930,9 @@ TA_LIB_API TA_RetCode TA_MACDEXT_UpdateAndFill( TA_MACDEXT_Stream *stream, const
       }
       retCode = TA_MACDEXT_StepImpl( stream, inReal[i], &outMACD[i], &outMACDSignal[i], &outMACDHist[i] );
       if( retCode != TA_SUCCESS ) return retCode;
+      stream->cur_outMACD = outMACD[i];
+      stream->cur_outMACDSignal = outMACDSignal[i];
+      stream->cur_outMACDHist = outMACDHist[i];
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
    return TA_SUCCESS;
@@ -932,6 +945,41 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Close( TA_MACDEXT_Stream *stream )
    TA_MA_Close( stream->sub1 );
    TA_MA_Close( stream->sub2 );
    TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MACDEXT_Value( const TA_MACDEXT_Stream *stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+{
+   if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   *outMACD = stream->cur_outMACD;
+   *outMACDSignal = stream->cur_outMACDSignal;
+   *outMACDHist = stream->cur_outMACDHist;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MACDEXT_Clone( const TA_MACDEXT_Stream *stream, TA_MACDEXT_Stream **clone )
+{
+   struct TA_MACDEXT_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MACDEXT_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->sub0 = NULL;
+   sp->sub1 = NULL;
+   sp->sub2 = NULL;
+   if( stream->sub0 )
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub0, &sp->sub0 );
+     if( subRc != TA_SUCCESS ) { TA_MACDEXT_Close( sp ); return subRc; } }
+   if( stream->sub1 )
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub1, &sp->sub1 );
+     if( subRc != TA_SUCCESS ) { TA_MACDEXT_Close( sp ); return subRc; } }
+   if( stream->sub2 )
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub2, &sp->sub2 );
+     if( subRc != TA_SUCCESS ) { TA_MACDEXT_Close( sp ); return subRc; } }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

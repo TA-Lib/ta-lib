@@ -461,6 +461,7 @@ struct CdlharamiStreamState {
     ringPos_BodyShortTrailingIdx: usize,
     ringCap_BodyShortTrailingIdx: usize,
     ring_BodyShortTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -573,6 +574,7 @@ impl Core {
             }
         }
         sp.BodyShortPeriodTotal += _candlerange_3 - sp.ring_BodyShortTrailingIdx_derived[sp.ringPos_BodyShortTrailingIdx];
+        sp.cur_outInteger = (*outInteger);
         sp.lag1_inOpen = inOpen;
         sp.lag1_inHigh = inHigh;
         sp.lag1_inLow = inLow;
@@ -860,6 +862,7 @@ impl Core {
         let state = CdlharamiStreamState {
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inHigh: inHigh[historyLen - 1],
             lag1_inLow: inLow[historyLen - 1],
@@ -1070,8 +1073,8 @@ impl CdlharamiStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -1090,6 +1093,7 @@ impl CdlharamiStream {
             let outInteger = &mut outInteger;
             let mut BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
             let mut BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut lag1_inHigh = sp.lag1_inHigh;
             let mut lag1_inLow = sp.lag1_inLow;
@@ -1205,6 +1209,7 @@ impl CdlharamiStream {
                 }
             }
             BodyShortPeriodTotal += _candlerange_15 - (if (ringPos_BodyShortTrailingIdx as usize) != pkSlot1 { sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] } else { pkVal1 });
+            cur_outInteger = (*outInteger);
             lag1_inOpen = inOpen;
             lag1_inHigh = inHigh;
             lag1_inLow = inLow;
@@ -1219,6 +1224,19 @@ impl CdlharamiStream {
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLHARAMI_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has consumed, in the input series'

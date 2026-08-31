@@ -252,6 +252,8 @@ struct TA_CDLBREAKAWAY_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLBREAKAWAY_Value). */
+   int cur_outInteger;
    double BodyLongPeriodTotal;
    double lag1_inOpen;
    double lag2_inOpen;
@@ -302,6 +304,7 @@ static void TA_CDLBREAKAWAY_StepImpl( struct TA_CDLBREAKAWAY_Stream *sp, double 
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,sp->lag4_inOpen,sp->lag4_inHigh,sp->lag4_inLow,sp->lag4_inClose) - sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - 4) % sp->ringCap_BodyLongTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->lag4_inOpen = sp->lag3_inOpen;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
@@ -457,6 +460,7 @@ static TA_RetCode TA_CDLBREAKAWAY_OpenImpl( struct TA_CDLBREAKAWAY_Stream **stre
       sp->lag4_inClose = inClose[historyLen - 4];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -544,6 +548,7 @@ TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Peek( const TA_CDLBREAKAWAY_Stream *stream
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,sp->lag4_inOpen,sp->lag4_inHigh,sp->lag4_inLow,sp->lag4_inClose) - (((sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - 4) % sp->ringCap_BodyLongTrailingIdx != pkSlot0) ? sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - 4) % sp->ringCap_BodyLongTrailingIdx] : pkVal0);
+   sp->cur_outInteger = *outInteger;
    sp->lag4_inOpen = sp->lag3_inOpen;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
@@ -591,6 +596,33 @@ TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_UpdateAndFill( TA_CDLBREAKAWAY_Stream *str
 TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Close( TA_CDLBREAKAWAY_Stream *stream )
 {
    TA_CDLBREAKAWAY_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Value( const TA_CDLBREAKAWAY_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Clone( const TA_CDLBREAKAWAY_Stream *stream, TA_CDLBREAKAWAY_Stream **clone )
+{
+   struct TA_CDLBREAKAWAY_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLBREAKAWAY_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyLongTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+     sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLBREAKAWAY_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

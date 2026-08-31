@@ -401,6 +401,9 @@ struct AccbandsStreamState {
     ring_trailingIdx_inHigh: Vec<f64>,
     ring_trailingIdx_inLow: Vec<f64>,
     ring_trailingIdx_inClose: Vec<f64>,
+    cur_outRealUpperBand: f64,
+    cur_outRealMiddleBand: f64,
+    cur_outRealLowerBand: f64,
 }
 
 #[allow(unused_variables)]
@@ -449,6 +452,9 @@ impl Core {
         (*outRealUpperBand) = tempUpper / (sp.optInTimePeriod as f64);
         (*outRealMiddleBand) = tempMiddle / (sp.optInTimePeriod as f64);
         (*outRealLowerBand) = tempLower / (sp.optInTimePeriod as f64);
+        sp.cur_outRealUpperBand = (*outRealUpperBand);
+        sp.cur_outRealMiddleBand = (*outRealMiddleBand);
+        sp.cur_outRealLowerBand = (*outRealLowerBand);
         sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
         sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
         sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
@@ -613,6 +619,9 @@ impl Core {
             periodTotalUpper,
             periodTotalMiddle,
             periodTotalLower,
+            cur_outRealUpperBand: outRealUpperBand[(*outNBElement - 1) * outStride],
+            cur_outRealMiddleBand: outRealMiddleBand[(*outNBElement - 1) * outStride],
+            cur_outRealLowerBand: outRealLowerBand[(*outNBElement - 1) * outStride],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inHigh,
@@ -842,8 +851,8 @@ impl AccbandsStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -868,6 +877,9 @@ impl AccbandsStream {
             let mut tempMiddle: f64 = 0.0_f64;
             let mut tempLower: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut cur_outRealLowerBand = sp.cur_outRealLowerBand;
+            let mut cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
+            let mut cur_outRealUpperBand = sp.cur_outRealUpperBand;
             let mut periodTotalLower = sp.periodTotalLower;
             let mut periodTotalMiddle = sp.periodTotalMiddle;
             let mut periodTotalUpper = sp.periodTotalUpper;
@@ -916,12 +928,28 @@ impl AccbandsStream {
             (*outRealUpperBand) = tempUpper / (sp.optInTimePeriod as f64);
             (*outRealMiddleBand) = tempMiddle / (sp.optInTimePeriod as f64);
             (*outRealLowerBand) = tempLower / (sp.optInTimePeriod as f64);
+            cur_outRealUpperBand = (*outRealUpperBand);
+            cur_outRealMiddleBand = (*outRealMiddleBand);
+            cur_outRealLowerBand = (*outRealLowerBand);
             ringPos_trailingIdx = ringPos_trailingIdx + 1;
             if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
                 ringPos_trailingIdx = 0;
             }
         }
         Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_ACCBANDS_Value")]
+    pub fn value(&self) -> (f64, f64, f64) {
+        (self.state.cur_outRealUpperBand, self.state.cur_outRealMiddleBand, self.state.cur_outRealLowerBand)
     }
 
     /// The bars this stream has consumed, in the input series'

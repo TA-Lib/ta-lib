@@ -463,6 +463,7 @@ struct MfiStreamState {
     cbSize_mflow: usize,
     cb_mflow_positive: Vec<f64>,
     cb_mflow_negative: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -512,6 +513,7 @@ impl Core {
         if sp.mflow_Idx > sp.maxIdx_mflow {
             sp.mflow_Idx = 0;
         }
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::mfi_open_internal`]
@@ -713,6 +715,7 @@ impl Core {
             nullRun,
             mflow_Idx,
             maxIdx_mflow,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             cbSize_mflow: cbSize_mflow,
             cb_mflow_positive: mflow_positive,
             cb_mflow_negative: mflow_negative,
@@ -917,8 +920,8 @@ impl MfiStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
@@ -942,6 +945,7 @@ impl MfiStream {
             let mut posFlow: f64 = 0.0_f64;
             let mut negFlow: f64 = 0.0_f64;
             let mut posClamped: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut mflow_Idx = sp.mflow_Idx;
             let mut negSumMF = sp.negSumMF;
             let mut nullRun = sp.nullRun;
@@ -978,8 +982,22 @@ impl MfiStream {
             if mflow_Idx > sp.maxIdx_mflow {
                 mflow_Idx = 0;
             }
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MFI_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has consumed, in the input series'

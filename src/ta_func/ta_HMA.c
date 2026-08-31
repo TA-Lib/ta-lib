@@ -798,6 +798,8 @@ struct TA_HMA_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_HMA_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double dividerFull;
    double periodSubFull;
@@ -855,6 +857,7 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
+      sp->cur_outReal = *outReal;
       return;
    }
    if( sp->optInTimePeriod == 2 || sp->optInTimePeriod == 3 )
@@ -893,6 +896,7 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       fullOut = sp->periodSumFull / sp->dividerFull;
       sp->periodSumFull -= sp->periodSubFull;
       *outReal= 2.0 * tempReal - fullOut;
+      sp->cur_outReal = *outReal;
       sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] = inReal;
       sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
       if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
@@ -1017,6 +1021,7 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       }
       *outReal= periodSumSqrt / sp->dividerSqrt;
       periodSumSqrt -= periodSubSqrt;
+      sp->cur_outReal = *outReal;
       sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] = inReal;
       sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
       if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
@@ -1116,6 +1121,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1274,6 +1280,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       sp->winPos_jFull = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1650,6 +1657,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       if( dRing != &local_dRing[0] ) TA_Free( dRing ); 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1768,6 +1776,7 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       fullOut = sp->periodSumFull / sp->dividerFull;
       sp->periodSumFull -= sp->periodSubFull;
       *outReal= 2.0 * tempReal - fullOut;
+      sp->cur_outReal = *outReal;
       sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
       if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
       {
@@ -1902,6 +1911,7 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       }
       *outReal= periodSumSqrt / sp->dividerSqrt;
       periodSumSqrt -= periodSubSqrt;
+      sp->cur_outReal = *outReal;
       sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
       if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
       {
@@ -1951,6 +1961,57 @@ TA_LIB_API TA_RetCode TA_HMA_UpdateAndFill( TA_HMA_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_HMA_Close( TA_HMA_Stream *stream )
 {
    TA_HMA_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HMA_Value( const TA_HMA_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HMA_Clone( const TA_HMA_Stream *stream, TA_HMA_Stream **clone )
+{
+   struct TA_HMA_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingIdxFull_inReal = NULL;
+   sp->win_jFull_inReal = NULL;
+   sp->ring_trailingIdxHalf_inReal = NULL;
+   sp->win_jHalf_inReal = NULL;
+   sp->cb_dRing = NULL;
+   if( stream->ring_trailingIdxFull_inReal )
+   { size_t copyN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
+     sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingIdxFull_inReal, stream->ring_trailingIdxFull_inReal, sizeof(double) * copyN ); }
+   if( stream->win_jFull_inReal )
+   { size_t copyN = (size_t)(sp->winCap_jFull);
+     sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->win_jFull_inReal ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->win_jFull_inReal, stream->win_jFull_inReal, sizeof(double) * copyN ); }
+   if( stream->ring_trailingIdxHalf_inReal )
+   { size_t copyN = (size_t)(sp->ringCap_trailingIdxHalf > 0 ? sp->ringCap_trailingIdxHalf : 1);
+     sp->ring_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingIdxHalf_inReal ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingIdxHalf_inReal, stream->ring_trailingIdxHalf_inReal, sizeof(double) * copyN ); }
+   if( stream->win_jHalf_inReal )
+   { size_t copyN = (size_t)(sp->winCap_jHalf);
+     sp->win_jHalf_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->win_jHalf_inReal ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->win_jHalf_inReal, stream->win_jHalf_inReal, sizeof(double) * copyN ); }
+   if( stream->cb_dRing )
+   { size_t copyN = (size_t)(sp->cbSize_dRing);
+     sp->cb_dRing = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_dRing ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_dRing, stream->cb_dRing, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -328,6 +328,9 @@ struct TA_AROON_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_AROON_Value). */
+   double cur_outAroonDown;
+   double cur_outAroonUp;
    int optInTimePeriod;
    double lowest;
    double highest;
@@ -420,6 +423,8 @@ static void TA_AROON_StepImpl( struct TA_AROON_Stream *sp, double inHigh, double
    *outAroonDown= sp->factor * (sp->optInTimePeriod - (sp->today - sp->lowestIdx));
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->cur_outAroonDown = *outAroonDown;
+   sp->cur_outAroonUp = *outAroonUp;
 }
 
 static TA_RetCode TA_AROON_OpenImpl( struct TA_AROON_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outAroonDown[], double outAroonUp[], int outStride )
@@ -585,6 +590,8 @@ static TA_RetCode TA_AROON_OpenImpl( struct TA_AROON_Stream **stream, const doub
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outAroonDown = outAroonDown[(*outNBElement - 1) * outStride];
+      sp->cur_outAroonUp = outAroonUp[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -724,6 +731,8 @@ TA_LIB_API TA_RetCode TA_AROON_Peek( const TA_AROON_Stream *stream, double inHig
    *outAroonDown= sp->factor * (sp->optInTimePeriod - (sp->today - sp->lowestIdx));
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->cur_outAroonDown = *outAroonDown;
+   sp->cur_outAroonUp = *outAroonUp;
    return TA_SUCCESS;
 }
 
@@ -750,6 +759,40 @@ TA_LIB_API TA_RetCode TA_AROON_UpdateAndFill( TA_AROON_Stream *stream, const dou
 TA_LIB_API TA_RetCode TA_AROON_Close( TA_AROON_Stream *stream )
 {
    TA_AROON_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AROON_Value( const TA_AROON_Stream *stream, double *outAroonDown, double *outAroonUp )
+{
+   if( !stream || !outAroonDown || !outAroonUp ) return TA_BAD_PARAM;
+   *outAroonDown = stream->cur_outAroonDown;
+   *outAroonUp = stream->cur_outAroonUp;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AROON_Clone( const TA_AROON_Stream *stream, TA_AROON_Stream **clone )
+{
+   struct TA_AROON_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_AROON_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inHigh = NULL;
+   sp->x_inLow = NULL;
+   if( stream->x_inHigh )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inHigh ) { TA_AROON_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inLow ) { TA_AROON_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inLow, stream->x_inLow, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 
