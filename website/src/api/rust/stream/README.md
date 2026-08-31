@@ -44,7 +44,7 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` the only thing they reject is invalid input such as NaN or ±Inf. The handle is left untouched on an error.
+`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` the only thing they reject is invalid input such as NaN or ±Inf. A rejected bar leaves the handle's **state** untouched — nothing is committed — but a rejected `update` still advances `out_range()` by one (see [Utility Calls](#utility-calls)); `peek` advances nothing.
 
 ## Rules
 
@@ -100,24 +100,26 @@ s.update_and_fill(&gap, &mut out)?;    // out[i] is the SMA at gap[i]
 `update_and_fill` has no second return value for the range it wrote — call
 `out_range()` afterward (see [Utility Calls](#utility-calls)).
 
-`Err(RetCode::BadParam)` before anything is committed if the input slices
-differ in length or an output is shorter than the bar count; a zero bar count
-is a successful no-op. An invalid bar (NaN or ±Inf) also returns
-`Err(RetCode::BadParam)`, exactly as `update` does, but commits the valid bars
-**before** it — their values are already written, and `s.out_range()` tells you
-how many.
+`Err(RetCode::BadParam)` before anything is committed or counted if the input
+slices differ in length or an output is shorter than the bar count; a zero bar
+count is a successful no-op. An invalid bar (NaN or ±Inf) also returns
+`Err(RetCode::BadParam)`, exactly as `update` does, and stops the call there:
+the bars **before** it are committed with their values written, and the invalid
+bar is counted but neither committed nor written to its output slot.
+`s.out_range()` says where it stopped — its last bar is the rejected one, so it
+counts one more than the values written.
 
 ## Utility Calls
 
 | Call | When | Does |
 |------|------|------|
-| `stream.out_range()` | any time | the bars this stream has a value for — the batch range over the same bars |
+| `stream.out_range()` | any time | the bars this stream has consumed — the batch range over the same bars |
 
 ```rust
 let r = s.out_range();   // the same range core.sma(0, nbBar - 1, ...) would report
 ```
 
-A stream opened over `history.len()` bars starts at `(lookback, history.len() - lookback)`; each accepted `update` adds one bar, and `peek` leaves it unchanged.
+A stream opened over `history.len()` bars starts at `(lookback, history.len() - lookback)`; every bar handed to `update` adds one — a bar rejected as non-finite included, since it happened and holds a position in the series, which is what keeps two streams on the same feed positionally aligned when one rejects a bar the other accepts. `peek` advances nothing.
 
 ## Discovering streamable functions
 

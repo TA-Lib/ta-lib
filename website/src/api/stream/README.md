@@ -100,7 +100,7 @@ TA_SMA_UpdateAndFill( s, gap, 64, out );   /* out[i] is the SMA at gap[i] */
 
 | Call | When | Does |
 |------|------|------|
-| `TA_StreamOutRange` | any time | the bars the stream has a value for — the batch range over the same bars |
+| `TA_StreamOutRange` | any time | the bars the stream has consumed — the batch range over the same bars |
 
 Unlike the calls above, `TA_StreamOutRange` takes any `TA_<NAME>_Stream *` — one accessor, not one per function:
 
@@ -109,15 +109,15 @@ int begIdx, nbElement;
 TA_StreamOutRange( s, &begIdx, &nbElement );
 ```
 
-A stream opened over `historyLen` bars starts at `(lookback, historyLen - lookback)`; each accepted `Update` adds one bar, and `Peek` leaves it unchanged — so after a stream has been fed `nbBar` bars, by any mix of `Open` and `Update`, this reports what the batch call over `(0, nbBar-1)` would. The count saturates at `TA_MAX_INDEX`.
+A stream opened over `historyLen` bars starts at `(lookback, historyLen - lookback)`; every bar handed to `Update` adds one — a bar rejected as non-finite included, since it happened and holds a position in the series, which is what keeps two streams on the same feed positionally aligned when one rejects a bar the other accepts. `Peek` advances nothing, and neither does a malformed call, which is a fault in the call rather than a bar. So after a stream has been fed `nbBar` bars, by any mix of `Open` and `Update`, this reports what the batch call over `(0, nbBar-1)` would. The count saturates at `TA_MAX_INDEX`.
 
 ## Error model
 
 | Call | Returns |
 |------|---------|
 | `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | <ul><li>`TA_INSUFFICIENT_HISTORY` when `historyLen` is below `lookback + 1` — the one failure worth retrying, since another bar might fix it</li><li>`TA_OUT_OF_RANGE_START_INDEX` when `historyLen` is 0</li><li>`TA_OUT_OF_RANGE_END_INDEX` when `historyLen` exceeds `TA_MAX_INDEX + 1`</li><li>`TA_BAD_PARAM` — a NULL pointer, or a parameter out of range</li><li>`TA_ALLOC_ERR` — a memory allocation failure</li></ul>On any of these, `*stream` is NULL. |
-| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf. The stream is left untouched on an error. |
-| `TA_<NAME>_UpdateAndFill` | `TA_BAD_PARAM` on NULL arguments, a negative `barCount`, or an output aliasing an input or another output — none of which commits anything. An invalid bar (NaN or ±Inf) also returns `TA_BAD_PARAM`, but commits the valid bars before it. |
+| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, or invalid input such as NaN or ±Inf. The stream's **state** is untouched either way — nothing is committed, and the next call sees exactly what the last accepted bar left — but an `Update` rejected for a non-finite bar still advances the range by one (see [Utility Calls](#utility-calls)). A NULL argument advances nothing, and `Peek` never does. |
+| `TA_<NAME>_UpdateAndFill` | `TA_BAD_PARAM` on NULL arguments, a negative `barCount`, or an output aliasing an input or another output — none of which commits or counts anything. An invalid bar (NaN or ±Inf) also returns `TA_BAD_PARAM` and stops the call there: the bars before it are committed with their values written, the invalid bar is counted but neither committed nor written to its output slot, and the bars after it are untouched. `TA_StreamOutRange` says where it stopped — its last bar is the rejected one. |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 | `TA_StreamOutRange` | `TA_BAD_PARAM` on a NULL argument |
 

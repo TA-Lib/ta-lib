@@ -332,7 +332,7 @@ TA_RetCode TA_S_MA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MA_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has consumed (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
@@ -753,7 +753,11 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
    TA_RetCode retCode;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    if( stream->optInTimePeriod == 1 || stream->optInMAType == TA_MAType_DISABLED )
    {
       *outReal = inReal;
@@ -850,7 +854,11 @@ TA_LIB_API TA_RetCode TA_MA_UpdateAndFill( TA_MA_Stream *stream, const double in
    {
       for( i = 0; i < barCount; i++ )
       {
-         if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+         if( !TA_IS_FINITE( inReal[i] ) )
+         {
+            if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+            return TA_BAD_PARAM;
+         }
          outReal[i] = inReal[i];
          if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
       }
@@ -858,7 +866,11 @@ TA_LIB_API TA_RetCode TA_MA_UpdateAndFill( TA_MA_Stream *stream, const double in
    }
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       switch( stream->optInMAType )
       {
       case TA_MAType_SMA:

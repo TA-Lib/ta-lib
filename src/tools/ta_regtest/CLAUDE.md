@@ -507,7 +507,7 @@ interchangeable, and the coverage they add is very uneven:
 | `OpenInternal` anchored leg | `OpenInternal(S)` vs `batch(S)` at the last bar | same — one more open, no update |
 | `Peek` | Peek vs the Update that immediately follows it | a defect in the step: both run it |
 | **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers (the batch transcription is one arm of the compare) |
-| `UpdateAndFill` (#246) | `Open(P)` then ONE call over the tail, every value vs batch, plus the canary slack above the run and the rejections each backend can express (an aliased or overlapping output, an output shorter than the run, a negative count, a zero-bar no-op) | the same thing every value family is blind to — that the handle knows how many bars it has produced, which is why the range leg has a site here too |
+| `UpdateAndFill` (#246) | `Open(P)` then ONE call over the tail, every value vs batch, plus the canary slack above the run and the rejections each backend can express (an aliased or overlapping output, an output shorter than the run, a negative count, a zero-bar no-op) | the same thing every value family is blind to — that the handle knows how many bars it has consumed, which is why the range leg has a site here too |
 | **range** (#241) | the handle's `OutRange` against the batch range over the same bars, at four sites: the `OpenAndFill` handle, `Open(P)` + updates, `Open(P)` + one `UpdateAndFill`, and the anchored `OpenInternal` (Rust reaches three — its server is a separate crate and cannot see `_OpenInternal`) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is unreachable from here (it is pinned in the generator instead) |
 
 So of the five value families, three delegate to the batch transcription and one
@@ -535,7 +535,7 @@ which is what no amount of extra data buys.
 The **range** leg is the odd one out twice over. It is the only family that is
 not C-only *and* not a value comparison: it compares a number pair, so it sees
 what every value leg is structurally blind to — an output is the same whether or
-not the handle knows how many of them it has produced. And it is the first
+not the handle knows how many bars it has consumed. And it is the first
 family with a per-SITE ratchet rather than a total: each server reports which of
 its own compare sites fired (`range_sites`) and how many it has
 (`range_sites_n`), and the driver ORs the mask across the run and demands every

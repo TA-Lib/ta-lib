@@ -139,7 +139,7 @@ TA_RetCode TA_S_MULT( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MULT_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has consumed (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
@@ -246,7 +246,11 @@ TA_RetCode TA_MULT_OpenAndFillInternal( struct TA_MULT_Stream **stream, const do
 TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_MULT_StepImpl( stream, inReal0, inReal1, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -274,7 +278,11 @@ TA_LIB_API TA_RetCode TA_MULT_UpdateAndFill( TA_MULT_Stream *stream, const doubl
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal0[i] ) || !TA_IS_FINITE( inReal1[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal0[i] ) || !TA_IS_FINITE( inReal1[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_MULT_StepImpl( stream, inReal0[i], inReal1[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

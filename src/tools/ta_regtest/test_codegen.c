@@ -3679,7 +3679,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
              * startIdx-anchored open. It ties the streaming tier to the batch
              * tier through one number pair, which no value leg does: every one
              * of those compares outputs, and an output is the same whether the
-             * handle knows how many of them it has produced. Checked before the
+             * handle knows how many bars it has consumed. Checked before the
              * generic ok flag so the failure names the leg; folded into ok
              * server-side too. */
             if( stream_flag(ctx->responseBuf, "\"range_checked\":") == 1 )

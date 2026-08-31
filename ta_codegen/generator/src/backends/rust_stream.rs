@@ -881,12 +881,12 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
          /// over the same series. Open with [`Core::{sn}_open`]; dropping the handle\n\
          /// closes the stream. Cloning it forks an independent stream.\n\
          ///\n\
-         /// [`Self::out_range`] reports the bars it has produced a value for.\n\
+         /// [`Self::out_range`] reports the bars it has consumed.\n\
          #[must_use = \"a stream does nothing unless updated; dropping it closes the stream\"]\n\
          #[derive(Debug, Clone)]\n\
          #[doc(alias = \"TA_{n}_Stream\")]\n\
          pub struct {handle} {{\n{cs_fields}    state: {state},\n\
-         \x20   /// The bars this handle has produced a value for — see [`Self::out_range`].\n\
+         \x20   /// The bars this handle has consumed — see [`Self::out_range`].\n\
          \x20   out: OutRange,\n}}\n"
     );
 }
@@ -1020,18 +1020,30 @@ fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> R
 /// whatever it is handed. A handle cannot do that, because its state is
 /// retained: one non-finite bar poisons every recursive accumulator in it for
 /// the rest of its life, long after the feed recovers.
-fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
+///
+/// `advance` belongs to the committing entry points only: the rejected bar is
+/// still a bar and is still counted, but `peek` takes `&self` and must count
+/// nothing — pass `false` there and the borrow checker keeps it honest.
+fn finite_bar_check(func: &FuncDef, indent: &str, advance: bool) -> String {
     let bars = streaming::input_array_names(func);
     if bars.is_empty() {
         return String::new();
     }
     let conds: Vec<String> = bars.iter().map(|b| format!("!{b}.is_finite()")).collect();
+    let inner = format!("{indent}    ");
+    let advance = if advance { advance_out_count(&inner) } else { String::new() };
     format!(
-        "{indent}if {} {{\n{indent}    return Err(RetCode::BadParam);\n{indent}}}\n",
+        "{indent}if {} {{\n{advance}{inner}return Err(RetCode::BadParam);\n{indent}}}\n",
         conds.join(" || ")
     )
 }
 
+/// The one spelling of the `OutRange` advance. The saturation guard is not
+/// optional: the count is an index like any other and `TA_MAX_INDEX` bounds it
+/// (#180), so a stream driven past it must stop counting rather than wrap.
+fn advance_out_count(indent: &str) -> String {
+    format!("{indent}if self.out.count < Core::MAX_INDEX {{\n{indent}    self.out.count += 1;\n{indent}}}\n")
+}
 
 
 /// The state fields a transition writes, and the transition with every mention
@@ -2807,33 +2819,33 @@ fn emit_update_and_peek(
          \x20   /// # Errors\n\
          \x20   ///\n\
          \x20   /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).\n\
-         \x20   /// That check runs before anything is written, so the handle is left\n\
-         \x20   /// exactly as it was and the stream stays usable:\n\
-         \x20   /// skip the bar, or close and re-open on a clean history. This is the\n\
-         \x20   /// one place the streaming tier is stricter than the batch API, which\n\
-         \x20   /// computes on whatever it is given — a handle retains its state, so a\n\
-         \x20   /// single non-finite bar would poison every later value it produces."
+         \x20   /// That check runs before anything is written, so the handle's state is\n\
+         \x20   /// left exactly as it was and the stream stays usable: skip the bar, or\n\
+         \x20   /// close and re-open on a clean history. This is the one place the\n\
+         \x20   /// streaming tier is stricter than the batch API, which computes on\n\
+         \x20   /// whatever it is given — a handle retains its state, so a single\n\
+         \x20   /// non-finite bar would poison every later value it produces.\n\
+         \x20   ///\n\
+         \x20   /// [`Self::out_range`] counts the rejected bar all the same: it happened,\n\
+         \x20   /// so two handles fed the same series stay positionally aligned even when\n\
+         \x20   /// one rejects a bar the other accepts."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Update\")]");
     let _ = writeln!(
         o,
         "    pub fn update(&mut self, {sig_bars}) -> Result<{vt}, RetCode> {{"
     );
-    o.push_str(&finite_bar_check(func, "        "));
+    o.push_str(&finite_bar_check(func, "        ", true));
     o.push_str(&out_decls);
     let _ = writeln!(
         o,
         "        Core::{sn}_step_impl(&mut self.state, {cs_args}{fwd_bars}{out_refs}){step_try};"
     );
-    // After the step, so a rejected bar (non-finite here, or a sub-stream's
-    // reject through `?`) leaves the range exactly where it was. `peek` runs the
-    // same step on a copy and so never reaches this.
-    let _ = writeln!(
-        o,
-        "        if self.out.count < Core::MAX_INDEX {{\n\
-         \x20           self.out.count += 1;\n\
-         \x20       }}"
-    );
+    // After the step, so a sub-stream's reject through `?` leaves the range
+    // where it was. The non-finite bar is the one rejection that still counts,
+    // and the check above owns that. `peek` runs the same step on a copy and so
+    // never reaches this.
+    o.push_str(&advance_out_count("        "));
     let _ = writeln!(o, "        Ok({ret})");
     let _ = writeln!(o, "    }}\n");
     // --- update_and_fill ------------------------------------------------------
@@ -2922,7 +2934,7 @@ fn emit_update_and_peek(
          \x20   /// hold at least that many. Never allocates.\n\
          {declinable}\
          \x20   ///\n\
-         \x20   /// [`Self::out_range`] counts what was committed, which is what makes the\n\
+         \x20   /// [`Self::out_range`] counts what this call took in, which is what makes the\n\
          \x20   /// rejection below readable: there is no second out-parameter for it.\n\
          \x20   ///\n\
          \x20   /// # Errors\n\
@@ -2932,7 +2944,8 @@ fn emit_update_and_peek(
          \x20   /// is not finite. A non-finite bar `k` is rejected exactly as `update`\n\
          \x20   /// rejects it: bars `0..k` stay committed and their values written, bar `k`\n\
          \x20   /// and everything after it is not, and `out_range().count` has advanced by\n\
-         \x20   /// `k`."
+         \x20   /// `k + 1` — the committed bars, plus the rejected one, which is counted\n\
+         \x20   /// but never written."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_UpdateAndFill\")]");
     let _ = writeln!(
@@ -2952,10 +2965,11 @@ fn emit_update_and_peek(
     let _ = writeln!(o, "        for i in 0..barCount {{");
     if !inputs.is_empty() {
         let conds: Vec<String> = inputs.iter().map(|a| format!("!{a}[i].is_finite()")).collect();
-        let _ = writeln!(
+        let _ = write!(
             o,
-            "            if {} {{\n                return Err(RetCode::BadParam);\n            }}",
-            conds.join(" || ")
+            "            if {} {{\n{}                return Err(RetCode::BadParam);\n            }}\n",
+            conds.join(" || "),
+            advance_out_count("                ")
         );
     }
     for out in &func.outputs {
@@ -2971,12 +2985,7 @@ fn emit_update_and_peek(
         o,
         "            Core::{sn}_step_impl(&mut self.state, {cs_args}{step_args}){step_try};"
     );
-    let _ = writeln!(
-        o,
-        "            if self.out.count < Core::MAX_INDEX {{\n\
-         \x20               self.out.count += 1;\n\
-         \x20           }}"
-    );
+    o.push_str(&advance_out_count("            "));
     let _ = writeln!(o, "        }}");
     let _ = writeln!(o, "        Ok(())");
     let _ = writeln!(o, "    }}\n");
@@ -2992,14 +3001,15 @@ fn emit_update_and_peek(
          \x20   ///\n\
          \x20   /// # Errors\n\
          \x20   ///\n\
-         \x20   /// [`RetCode::BadParam`] if any bar value is not finite, exactly as\n\
-         \x20   /// `update` rejects it."
+         \x20   /// [`RetCode::BadParam`] if any bar value is not finite, on the same test\n\
+         \x20   /// `update` applies — but a rejected peek changes nothing at all, where a\n\
+         \x20   /// rejected `update` still counts the bar in [`Self::out_range`]."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Peek\")]");
     let _ = writeln!(o, "    pub fn peek(&self, {sig_bars}) -> Result<{vt}, RetCode> {{");
     // Ahead of the frame, not left to the transition: a rejected bar must not
     // run any of it.
-    o.push_str(&finite_bar_check(func, "        "));
+    o.push_str(&finite_bar_check(func, "        ", false));
     // Not a fallback: every tier emits a frame, and a tier that could not is a
     // generator bug to fail on, not to ship a copying peek for. Java and C#
     // already answer that way, and the three must agree — a silent degradation
@@ -3014,12 +3024,13 @@ fn emit_update_and_peek(
     // after an update or off a plain `Open`.
     let _ = writeln!(
         o,
-        "    /// The bars this stream has produced a value for, in the input series'\n\
+        "    /// The bars this stream has consumed, in the input series'\n\
          \x20   /// coordinates: `[beg_idx, beg_idx + count)`.\n\
          \x20   ///\n\
          \x20   /// It is what [`Core::{n}`] reports over the same bars: the opener sets it\n\
-         \x20   /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one\n\
-         \x20   /// to the count, `peek` leaves it alone, and a clone carries it verbatim.\n\
+         \x20   /// to `(lookback, historyLen - lookback)`, every `update` adds one to the\n\
+         \x20   /// count — a bar rejected for being non-finite included, because it still\n\
+         \x20   /// happened — `peek` leaves it alone, and a clone carries it verbatim.\n\
          \x20   /// A plain `Open` hands back only the last value, a subset of this range,\n\
          \x20   /// because the caller chose not to take the fill.\n\
          \x20   #[doc(alias = \"TA_StreamOutRange\")]\n\

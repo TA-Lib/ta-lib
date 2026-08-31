@@ -113,7 +113,7 @@ undefined are collected in Part 3.
 | Rule | Condition | Result |
 |---|---|---|
 | N1 | A **valid range shorter than the lookback** | Success, zero values produced, an empty `OutRange`. Never an error. |
-| N2 | Anywhere outside the reported `OutRange` | Untouched. The library never pads, and never emits a fill value: only the reported `OutRange` is written. |
+| N2 | Anywhere outside the reported `OutRange` | Untouched. The library never pads, and never emits a fill value. The converse — everything *inside* the range was written — holds everywhere but one place: `UpdateAndFill` counts the bar it rejected under U3 without writing its slot, because it stops there the way a loop of `Update`s would (§2.4). |
 | N3 | An optional parameter set to its **default sentinel** | The documented default is substituted, then validated like any other value. |
 | N4 | An output buffer that **is** an input buffer (whole-buffer, in place) | Allowed, in the batch tier. Several bodies are written for it. |
 | N5 | A **negative** candlestick `factor` | Legal. It does not "never match" — it makes the comparison unconditionally true. |
@@ -346,16 +346,56 @@ borrow checker rejects the call at compile time.
 | U6a | (`UpdateAndFill`) an output is **declined** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | U7 | (`UpdateAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[12] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
-A rejected `Update` leaves the handle usable and unadvanced, its `OutRange`
-included — that is the whole point of rejecting rather than computing. `Peek`
-never writes the handle under any outcome.
+**Every bar handed to `Update` has an output for that bar and advances `OutRange`
+by one. A bar rejected under U3 is not an exception: its output is the previous
+output, held.** So `Value` always answers for bar `begIdx + count - 1`, however
+many times a value repeats, and the handle's *state* is what a rejection leaves
+untouched — no accumulator moves — which is the whole point of rejecting rather
+than computing. `Peek` produces no output and counts nothing, under any outcome.
 
-`UpdateAndFill` is `n` back-to-back `Update`s, so U3 applies **per bar** and is
-the one rule in this document whose rejection leaves output behind: bar `k`
+The failure is still reported, and it is reported *only* as a failure: no backend
+publishes the held value through the call's own result, because Rust's
+`Result<f64, RetCode>` cannot carry one alongside `Err` and a rule that three
+backends could honour and one could not would be worse than the accessor. `Value`
+is how a caller reaches the hold, and whether to accept it or override it is the
+caller's business, at the caller's layer — never the stream's internal state.
+
+**U3 is the one rejection that advances `OutRange`.** The others do not: U1/U2 and
+U4–U7 are faults in the *call* rather than in the data — no bar was ever handed
+over — and they leave the handle exactly as it was.
+
+The mirror case is a function whose *output* is legitimately non-finite: the seven
+carrying `TA_FUNC_FLG_NAN_INF_OUT` succeed, so the state **is** touched, `Value`
+answers that non-finite value, and `OutRange` advances by one exactly as above.
+Both directions leave the caller the same job — override the output at their own
+layer, or don't — which is why they are one model and not two rules.
+
+Advancing is what keeps two handles driven off the same feed positionally aligned
+when one rejects a bar the other accepts. Without it a caller composing indicators
+by hand — the upstream one legitimately producing NaN under `TA_FUNC_FLG_NAN_INF_OUT`,
+the downstream one rejecting it — ends up with two handles a bar apart, permanently,
+with no error to see and plausible numbers still coming out. It is also the more
+batch-like of the two rules: batch handed the same series emits a value at that bar
+and counts it, so advancing brings the stream's range *toward* the "the range
+matches batch too" contract in `docs/streaming-api-design.md`, not away from it.
+
+What the caller does about the non-finite value is the caller's, and the streaming
+tier deliberately does not decide it: the bar is counted, the error is reported,
+and the state is intact and usable for the next bar — so a transient bad print
+clears itself.
+
+`UpdateAndFill` is `n` back-to-back `Update`s **stopping at the first error**, the
+way a hand-written loop that acts on every failure would. So U3 applies **per bar**
+and is the one rule in this document whose rejection leaves output behind: bar `k`
 being non-finite commits bars `[0, k)` with their values written, leaves bar `k`
 and everything after it uncommitted, and advances the handle's `OutRange` by
-exactly `k`. U4–U7 are checked before any bar is committed, so those four leave
-the handle where it was, and a zero bar count is a success that does nothing.
+`k + 1` — `k` committed bars plus the rejected one. The caller reads the range to
+learn where it stopped (the rejected bar is the last one counted), decides what to
+do about it, and resumes with the remainder of the series. **Output slot `k` is not
+written**, exactly as the loop's final `update` would have written nothing before
+breaking; it holds whatever the caller put there. U4–U7 are checked before any bar
+is committed, so those four leave the handle where it was, and a zero bar count is
+a success that does nothing.
 Reading the `n` bars as an input array instead — never scanned, `count += n`
 unconditionally — was considered and rejected; `docs/streaming-api-design.md`,
 "Catching up n bars at once", says why.
@@ -413,7 +453,9 @@ object that cannot be absent.
 *public* entry points, so a sub-stream re-checks a value the library itself
 produced. If such an intermediate were ever non-finite the sub-stream would
 reject it, and the rejection would surface after earlier sub-streams in the
-pipeline had already advanced — leaving the handle partway through a bar.
+pipeline had already advanced — leaving the handle partway through a bar, and
+the rejecting sub-stream's own `OutRange` counting a bar its siblings' and the
+parent's do not.
 Reaching it requires an intermediate to overflow to ±Inf, i.e. input magnitudes
 around 1e306. Out of scope by the same reasoning as issue #191; recorded so it is
 not rediscovered. All four backends agree on the behaviour, and the reported
@@ -561,12 +603,12 @@ reason rule S2 is ⚠️ there (footnote [5]): reaching it needs a
 | any live stream | `TA_StreamOutRange(stream, &beg, &nb)` | `out_range()` | `outRange()` | `OutRange` |
 
 The stream accessor answers the same question in all four: the bars this handle
-has produced a value for. An open over `historyLen` bars starts at `(lookback,
-historyLen - lookback)`, each accepted `Update` adds one and saturates the count
-at `MAX_INDEX` rather than overflowing, and `Peek` — like a rejected bar —
-changes nothing. C has one accessor for every function, since every stream struct
-leads with the same two ints. `Open`, `Update` and `Peek` still hand back one
-value rather than a range. The range's two members are named for each language:
+has consumed. An open over `historyLen` bars starts at `(lookback,
+historyLen - lookback)`, and the count saturates at `MAX_INDEX` rather than
+overflowing. Which calls move it, and which do not, is rule U3's business in
+2.4; do not restate it here. C has one accessor for every function, since every
+stream struct leads with the same two ints. `Open`, `Update` and `Peek` still
+hand back one value rather than a range. The range's two members are named for each language:
 `beg_idx` / `count` in Rust, `begIdx` / `count` in Java, `BegIdx` / `Count` in
 C#.
 

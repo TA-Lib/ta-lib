@@ -42,7 +42,7 @@ double v = s.update(newClose);                  // throws only on a non-finite b
 double provisional = s.peek(formingClose);      // state left unchanged
 ```
 
-`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, the only thing `update` and `peek` reject is invalid input such as NaN or ±Inf. The handle is left untouched on an error.
+`open` returns the stream directly; its `value()` starts at the last history bar's value. After a successful `open`, the only thing `update` and `peek` reject is invalid input such as NaN or ±Inf. A rejected bar leaves the handle's **state** untouched — nothing is committed, and `value()` still answers the last accepted bar — but a rejected `update` still advances `outRange()` by one (see [Utility Calls](#utility-calls)); `peek` advances nothing.
 
 ## Rules
 
@@ -86,7 +86,7 @@ import io.github.talib.OutRange;
 double[] warmup = new double[history.length];
 
 Core.SmaStream s = core.smaOpenAndFill(history, 30, warmup);
-OutRange r = s.outRange();                      // the bars it has a value for
+OutRange r = s.outRange();                      // the bars it has consumed
 
 // warmup[0 .. r.count() - 1] is the SMA over all of history; then stream on:
 double v = s.update(newClose);
@@ -105,12 +105,15 @@ s.updateAndFill(gap, out);          // out[i] is the SMA at gap[i]
 `updateAndFill` has no second return value for the range it wrote — call
 `outRange()` afterward (see [Utility Calls](#utility-calls)).
 
-It throws `IllegalArgumentException` before committing anything if the input
-arrays differ in length, an output is shorter than the bar count, or an output
-is the same array as an input or as another output. A zero-length call does
-nothing. An invalid bar (NaN or ±Inf) also throws `IllegalArgumentException`,
-exactly as `update` does, but commits the valid bars **before** it — their
-values are already written, and the range tells you how many.
+It throws `IllegalArgumentException` before committing or counting anything if
+the input arrays differ in length, an output is shorter than the bar count, or
+an output is the same array as an input or as another output. A zero-length
+call does nothing. An invalid bar (NaN or ±Inf) also throws
+`IllegalArgumentException`, exactly as `update` does, and stops the call there:
+the bars **before** it are committed with their values written, and the invalid
+bar is counted but neither committed nor written to its output slot.
+`outRange()` says where it stopped — its last bar is the rejected one, so it
+counts one more than the values written.
 
 ## Utility Calls
 
@@ -118,17 +121,17 @@ values are already written, and the range tells you how many.
 |------|------|------|
 | `stream.value()` | any time | the most recently committed value |
 | `stream.copy()` | any time | an independent copy of the stream |
-| `stream.outRange()` | any time | the bars this stream has a value for — the batch range over the same bars |
+| `stream.outRange()` | any time | the bars this stream has consumed — the batch range over the same bars |
 
 `value()` re-reads the last committed value without recomputing. `copy()` returns an independent stream that can be updated separately from the original — see [Rules](#rules) for when concurrent reads of these are safe.
 
-`outRange()` holds the bars the stream has a value for: `(lookback, historyLen - lookback)` at `open`, one more per accepted `update`, unchanged by `peek`.
+`outRange()` holds the bars the stream has consumed: `(lookback, historyLen - lookback)` at `open`, then one more for every bar handed to `update` — a bar rejected as non-finite included, since it happened and holds a position in the series, which is what keeps two streams on the same feed positionally aligned when one rejects a bar the other accepts. `peek` advances nothing.
 
 ```java
 Core.SmaStream s = core.smaOpen(history, 30);
 double v = s.value();          // the value at the last history bar
 Core.SmaStream snapshot = s.copy();
-OutRange r = s.outRange();     // the bars s has a value for
+OutRange r = s.outRange();     // the bars s has consumed
 ```
 
 ## Error model
@@ -136,8 +139,8 @@ OutRange r = s.outRange();     // the bars s has a value for
 | Call | Behaviour |
 |------|-----------|
 | `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
-| `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. The handle is left untouched on an error. Nothing else throws after a successful `open` (see the note below for the one composed-indicator corner). |
-| `updateAndFill` | Ragged inputs, an output shorter than the bar count, or an output that is also an input or another output throw `IllegalArgumentException` — none of which commits anything. An invalid bar (NaN or ±Inf) also throws `IllegalArgumentException`, but commits the valid bars before it. |
+| `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. The handle's state is untouched — nothing is committed and `value()` still answers the last accepted bar — but a rejected `update` still advances `outRange()` by one; `peek` advances nothing. Nothing else throws after a successful `open` (see the note below for the one composed-indicator corner). |
+| `updateAndFill` | Ragged inputs, an output shorter than the bar count, or an output that is also an input or another output throw `IllegalArgumentException` — none of which commits or counts anything. An invalid bar (NaN or ±Inf) also throws `IllegalArgumentException`, having committed the bars before it and counted — but not committed — the invalid one. |
 | `value` / `copy` / `outRange` | Never throw. |
 
 ## Discovering streamable functions

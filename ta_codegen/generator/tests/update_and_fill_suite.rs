@@ -157,12 +157,15 @@ fn the_per_bar_check_is_updates_own_test_indexed() {
             bars.iter().map(|b| format!("!TA_IS_FINITE( {b}[i] )")).collect();
         let upd = body_of(&c, &format!("TA_RetCode TA_{upper}_Update( "));
         let fill = body_of(&c, &format!("TA_RetCode TA_{upper}_UpdateAndFill( "));
+        // The reject BODY is pinned by `out_range_advance_suite` (it counts the
+        // bar it turns down); what matters here is only that the two conditions
+        // are the same test.
         assert!(
-            upd.contains(&format!("if( {} ) return TA_BAD_PARAM;", want_c.join(" || "))),
+            upd.contains(&format!("if( {} )", want_c.join(" || "))),
             "{name}: C Update does not carry the expected finite test:\n{upd}"
         );
         assert!(
-            fill.contains(&format!("if( {} ) return TA_BAD_PARAM;", want_ci.join(" || "))),
+            fill.contains(&format!("if( {} )", want_ci.join(" || "))),
             "{name}: C UpdateAndFill's per-bar test is not Update's, indexed:\n{fill}"
         );
 
@@ -232,11 +235,13 @@ fn the_check_is_inside_the_loop_and_not_a_pre_scan() {
             "{name}: C emits the per-bar test {} times for {loops} loop(s) — a pre-scan or a missing check",
             checks.len()
         );
-        assert_eq!(advances.len(), loops, "{name}: C advances the count {} times for {loops} loop(s)", advances.len());
+        // Two advances per loop: the rejected bar counts itself (rule U3), then
+        // the committed one counts itself.
+        assert_eq!(advances.len(), 2 * loops, "{name}: C advances the count {} times for {loops} loop(s)", advances.len());
         for k in 0..loops {
             assert!(
-                heads[k] < checks[k] && checks[k] < advances[k],
-                "{name}: C loop {k} is not head -> check -> advance (a pre-scan, or a bar counted before it is checked)"
+                heads[k] < checks[k] && checks[k] < advances[2 * k] && advances[2 * k] < advances[2 * k + 1],
+                "{name}: C loop {k} is not head -> check -> reject advance -> commit advance (a pre-scan, or a bar counted before it is checked)"
             );
         }
 

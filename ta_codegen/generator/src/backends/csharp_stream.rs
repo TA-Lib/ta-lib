@@ -911,7 +911,7 @@ fn emit_handle_class_with_members(
         let _ = writeln!(o, "      internal {cty} {name}{init};");
     }
     o.push_str(extra_members);
-    // The bars this handle has produced a value for (issue #241). Two ints
+    // The bars this handle has consumed (issue #241). Two ints
     // rather than an `OutRange` field: `OutRange` is a readonly struct, so a
     // per-bar count bump would have to rebuild it, and `Update` is the hot path.
     let _ = writeln!(o, "      internal int outRangeBegIdx;");
@@ -921,16 +921,17 @@ fn emit_handle_class_with_members(
 
     let mut d = XmlDoc::new();
     d.summary(
-        "The bars this stream has produced a value for, in the input series' \
+        "The bars this stream has consumed, in the input series' \
          coordinates: <c>[BegIdx, BegIdx + Count)</c>.",
     );
     d.open("remarks");
     d.para(&format!(
         "It is what <c>Core.{base}</c> reports over the same bars: the opener sets it to \
-         <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c> adds one to \
-         the count, <c>Peek</c> leaves it alone, and <c>Clone</c> carries it verbatim. A \
-         plain <c>Open</c> hands back only the last value, a subset of this range, because \
-         the caller chose not to take the fill."
+         <c>(lookback, historyLen - lookback)</c>, every <c>Update</c> adds one to the count \
+         — a non-finite bar is rejected but still counted, because the bar happened — \
+         <c>Peek</c> leaves it alone, and <c>Clone</c> carries it verbatim. A plain \
+         <c>Open</c> hands back only the last value, a subset of this range, because the \
+         caller chose not to take the fill."
     ));
     d.close("remarks");
     o.push('\n');
@@ -1046,6 +1047,16 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
     }
 }
 
+/// The handle's produced-bar count, bumped by one.
+///
+/// Saturating: nothing bounds how many bars a live stream is fed, and past
+/// `MAX_INDEX` the count has left the batch index domain anyway. Every entry
+/// point that advances renders it from here, so the guard cannot drift between
+/// them.
+fn advance_out_range(indent: &str) -> String {
+    format!("{indent}if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;\n")
+}
+
 /// The per-bar finite-input rejection for `Update`/`Peek`: one `double.IsFinite`
 /// per scalar bar input, before the handle is touched.
 ///
@@ -1055,18 +1066,29 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
 /// retained: one non-finite bar poisons every recursive accumulator in it for
 /// the rest of its life, long after the feed recovers.
 ///
+/// `advance` is the U3 half of that contract: a committing entry point counts
+/// the rejected bar before it throws, because the bar happened and occupies a
+/// position in the series. Pass `false` only where nothing commits — `Peek`,
+/// whose receiver must stay untouched under every outcome.
+///
 /// Routed through `Core.StreamFailure` so the message prefix and the exception
 /// type match the open rejections exactly.
-fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
+fn finite_bar_check(func: &FuncDef, indent: &str, what: &str, advance: bool) -> String {
     let bars = streaming::input_array_names(func);
     if bars.is_empty() {
         return String::new();
     }
     let n = base_name(func);
     let conds: Vec<String> = bars.iter().map(|b| format!("!double.IsFinite({b})")).collect();
+    let cond = conds.join(" || ");
+    let throw = format!("throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.BadParam);");
+    if !advance {
+        return format!("{indent}if( {cond} ) {throw}\n");
+    }
+    let inner = format!("{indent}   ");
     format!(
-        "{indent}if( {} ) throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.BadParam);\n",
-        conds.join(" || ")
+        "{indent}if( {cond} )\n{indent}{{\n{}{inner}{throw}\n{indent}}}\n",
+        advance_out_range(&inner)
     )
 }
 
@@ -1094,11 +1116,14 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     );
     d.para(
         "Throws <see cref=\"System.ArgumentException\"/> if any bar value is not finite \
-         (NaN or an infinity). That check runs before anything is written, so the handle \
-         is left exactly as it was and the stream stays usable: skip the bar, or re-open \
-         on a clean history. This is the one place the streaming tier is stricter than \
-         the batch API, which computes on whatever it is given: a handle retains its \
-         state, so a single non-finite bar would poison every later value it produces.",
+         (NaN or an infinity). That check runs before anything is written, so no state \
+         moves, <see cref=\"Value\"/> still answers the previous value, and the stream \
+         stays usable — just carry on with the next bar. <see cref=\"OutRange\"/> does \
+         advance: the bar happened, so it is counted, which keeps two handles fed the \
+         same series positionally aligned when only one of them rejects a bar. This is \
+         the one place the streaming tier is stricter than the batch API, which computes \
+         on whatever it is given: a handle retains its state, so a single non-finite bar \
+         would poison every later value it produces.",
     );
     d.close("remarks");
     for input in &inputs {
@@ -1109,16 +1134,11 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public {vt} Update( {sig_bars} )");
     let _ = writeln!(o, "      {{");
-    o.push_str(&finite_bar_check(func, "         ", "update"));
+    o.push_str(&finite_bar_check(func, "         ", "update", true));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
-    // After the step and after the finite-bar reject, so a rejected bar leaves
-    // the range where it was. `Peek` runs a frame that commits nothing and so
-    // never reaches this. Saturating: nothing bounds how many bars a live stream
-    // is fed, and past MAX_INDEX it has left the batch index domain anyway.
-    let _ = writeln!(
-        o,
-        "         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;"
-    );
+    // The accepted bar's own bump; the rejected one is counted on the reject
+    // path above. `Peek` runs a frame that commits nothing and reaches neither.
+    o.push_str(&advance_out_range("         "));
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, ""));
     let _ = writeln!(o, "      }}");
 }
@@ -1169,7 +1189,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     let _ = writeln!(o, "      {{");
     // Ahead of the frame, not left to the transition: a rejected bar must not
     // run any of it.
-    o.push_str(&finite_bar_check(func, "         ", "peek"));
+    o.push_str(&finite_bar_check(func, "         ", "peek", false));
     let body = frame.expect("every tier emits a peek frame");
     let _ = writeln!(o, "         {class} sp = this;");
     o.push_str(body);
@@ -1191,11 +1211,12 @@ fn update_and_fill_doc(func: &FuncDef, inputs: &[String]) -> XmlDoc {
          values and must not overlap an input or each other.",
     );
     d.para(
-        "<see cref=\"OutRange\"/> counts what was committed, which is what makes a \
+        "<see cref=\"OutRange\"/> counts what this call took in, which is what makes a \
          rejection readable: a non-finite bar <c>k</c> throws \
          <see cref=\"System.ArgumentException\"/> exactly as <see cref=\"Update\"/> would, \
-         with bars <c>0..k</c> committed and written, bar <c>k</c> and everything after it \
-         not, and the count advanced by <c>k</c>.",
+         with the bars before <c>k</c> committed and written, bar <c>k</c> and everything \
+         after it not written, and the count advanced by <c>k + 1</c> — the committed bars \
+         plus the rejected one, so the last bar counted is the one that failed.",
     );
     // Rule U6a reads the same as S6a, and a caller of this tier needs telling in
     // the same place a caller of the opener is told.
@@ -1287,11 +1308,17 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
             .iter()
             .map(|b| format!("!double.IsFinite({b}[i])"))
             .collect();
+        // Rule U3 per bar: the rejected bar is counted, its output slot is not
+        // written, and the loop stops — so the caller reads the range to learn
+        // which bar it was.
+        let _ = writeln!(o, "            if( {} )", conds.join(" || "));
+        let _ = writeln!(o, "            {{");
+        o.push_str(&advance_out_range("               "));
         let _ = writeln!(
             o,
-            "            if( {} ) throw Core.StreamFailure(\"{raw}\", \"updateAndFill\", RetCode.BadParam);",
-            conds.join(" || ")
+            "               throw Core.StreamFailure(\"{raw}\", \"updateAndFill\", RetCode.BadParam);"
         );
+        let _ = writeln!(o, "            }}");
     }
     let idx_bars: Vec<String> = inputs.iter().map(|a| format!("{a}[i]")).collect();
     let _ = writeln!(o, "            core.{base}StepImpl(this, {});", idx_bars.join(", "));
@@ -1300,7 +1327,7 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
         let guard = if nullable.contains(name) { format!("if( !{name}.IsEmpty ) ") } else { String::new() };
         let _ = writeln!(o, "            {guard}{name}[i] = cur_{name};");
     }
-    let _ = writeln!(o, "            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;");
+    o.push_str(&advance_out_range("            "));
     let _ = writeln!(o, "         }}");
     let _ = writeln!(o, "      }}");
 }

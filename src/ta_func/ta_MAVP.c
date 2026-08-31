@@ -747,7 +747,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MAVP_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has consumed (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
@@ -921,7 +921,11 @@ TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, dou
    int k, cp;
    double cpReal;
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    for( k = 0; k < stream->nBank; k++ )
       TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );
    cpReal = inPeriods;
@@ -957,7 +961,11 @@ TA_LIB_API TA_RetCode TA_MAVP_UpdateAndFill( TA_MAVP_Stream *stream, const doubl
    if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inPeriods ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) || !TA_IS_FINITE( inPeriods[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) || !TA_IS_FINITE( inPeriods[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       for( k = 0; k < stream->nBank; k++ )
          TA_MA_Update( stream->bank[k], inReal[i], &stream->scratch[k] );
       cpReal = inPeriods[i];

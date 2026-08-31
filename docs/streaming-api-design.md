@@ -56,10 +56,9 @@ Every stream, in every language, is the same lifecycle:
    in managed languages (Rust/Java).
 
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
-it has produced a value for, in the input series' coordinates. An `open` over
-`historyLen` bars starts at `(lookback, historyLen - lookback)`, every accepted
-`update` adds one, and `peek` and a rejected bar change nothing. The accessor is
-`TA_StreamOutRange` in C — one function, any handle — `out_range()` in Rust,
+it has consumed, in the input series' coordinates. Which calls move it, and which
+do not, is rule U3's business (`docs/error-handling-spec.md` §2.4). The accessor
+is `TA_StreamOutRange` in C — one function, any handle — `out_range()` in Rust,
 `outRange()` in Java, `OutRange` in C#.
 
 Parameters and history are fixed at `open`; changing a parameter means a new stream.
@@ -220,14 +219,18 @@ There is no `outBegIdx`/`outNBElement` pair: the range rides on the handle, so
 afterwards — and answers it for a partial run too, which is the whole reason the
 next paragraph is expressible at all.
 
-**A rejected bar commits the bars before it.** `n` bars in one call is `n`
-`update`s and nothing else, so bar `k` being non-finite is rejected the way
+**A rejected bar commits the bars before it.** `n` bars in one call is a loop of
+`n` `update`s that stops at the first error — what a caller acting on every
+failure would write by hand — so bar `k` being non-finite is rejected the way
 `update` rejects it: bars `0..k` stay committed with their values written, bar
-`k` and everything after it does not, and the handle's range has advanced by
-exactly `k`. This is the one call in the library that returns a failure *and*
+`k` and everything after it does not, output slot `k` is left alone, and the
+handle's range has advanced by `k + 1` (the `k` committed bars, plus the rejected
+one, which `update` counts too). The caller reads the range to learn where it
+stopped — the rejected bar is the last one counted — and resumes with the rest of
+the series. This is the one call in the library that returns a failure *and*
 leaves output behind, so what it leaves is specified rather than merely allowed,
-and the gate compares it against a control handle driven over the same `k` bars
-one at a time.
+and the gate compares it against a control handle driven over the same bars one at
+a time.
 
 The alternative was to read the `n` bars as an input *array* — never scanned,
 `count += n` unconditionally, marginally faster. It was rejected because the two
@@ -315,8 +318,12 @@ Notes that make this precise:
 
   **What "the handle is unchanged" does and does not cover.** For the rejection
   a caller can actually provoke — a non-finite bar handed to `Update` or `Peek` —
-  the check runs before anything is written, so the guarantee is unconditional
-  and that is what the generated docs promise.
+  the check runs before any *state* is written, so the guarantee is unconditional
+  and that is what the generated docs promise. The handle's `OutRange` is the one
+  thing that does move on an `Update` rejection, deliberately: the bar is counted
+  so that handles driven off the same feed stay positionally aligned even when one
+  rejects a bar another accepts (`docs/error-handling-spec.md` §2.4). `Peek` moves
+  nothing at all.
 
   There is one path where it does not hold, and it is worth being precise rather
   than silent about it. A composed function drives its sub-streams through their
@@ -394,9 +401,9 @@ TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream,
                                      double        *outReal );
 
 /* update_and_fill: barCount closed bars in, barCount values out — exactly
- * barCount back-to-back Update calls. No out-meta pair: read the range off
- * the handle, which also reports how many bars a rejected call committed.
- * Outputs must not alias the inputs or each other. */
+ * barCount back-to-back Update calls, stopping at the first error. No out-meta
+ * pair: read the range off the handle, whose last counted bar is the one that
+ * failed. Outputs must not alias the inputs or each other. */
 TA_LIB_API TA_RetCode TA_SMA_UpdateAndFill( TA_SMA_Stream *stream,
                                             const double   inReal[],
                                             int            barCount,
@@ -410,7 +417,7 @@ TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
 
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
 
-/* out_range: the bars this handle has produced a value for. One accessor for
+/* out_range: the bars this handle has consumed. One accessor for
  * every function — it takes any TA_<N>_Stream *, because every stream struct
  * leads with the same two ints. */
 TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream,
@@ -481,7 +488,9 @@ OutRange r = s2.outRange();                      // bars produced so far, on the
   index faults, and carry the range codes (`docs/error-handling-spec.md` §2.3). Messages carry the
   stable prefix `"<NAME> open:"`. Post-open, `update`/`peek` throw only
   `IllegalArgumentException` on a non-finite bar (prefix `"<NAME> update:"` /
-  `"<NAME> peek:"`), leaving the handle untouched.
+  `"<NAME> peek:"`), leaving the handle's *state* untouched — `update` still
+  counts the bar in `outRange()`, `peek` moves nothing
+  (`docs/error-handling-spec.md` §2.4).
 - `value()` re-reads the last committed value(s) without recomputing (seeded by
   open, refreshed by `update`, untouched by `peek`); multi-output `update`
   caches the immutable `Value` it returns, so `value()` is allocation-free.
