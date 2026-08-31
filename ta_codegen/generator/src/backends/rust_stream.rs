@@ -910,6 +910,7 @@ fn cur_ctor_defaults(func: &FuncDef, sep: &str) -> String {
 /// The `cur_<output>` initializer lines for a capture literal: the value(s) the
 /// opener just produced, so `value()` is right the instant the handle exists.
 fn cur_capture_fields(func: &FuncDef, model: &StreamModel, typing: &Typing) -> String {
+    let nullable = super::common::nullable_output_names(func);
     let mut t = String::new();
     for out in &func.outputs {
         let name = &out.name;
@@ -920,6 +921,14 @@ fn cur_capture_fields(func: &FuncDef, model: &StreamModel, typing: &Typing) -> S
             // A composed producer holds the caller's slice through the stride
             // alias, so the output name itself is mutably borrowed here.
             let _ = writeln!(t, "            cur_{name}: sc_{name}[*outNBElement - 1],");
+        } else if nullable.contains(name.as_str()) {
+            // Stored straight into the caller's array (not through a retained
+            // local), so it is still `Option<&mut [_]>` here. A declined output
+            // has no slot to read; 0.0 matches the field's own zero default.
+            let _ = writeln!(
+                t,
+                "            cur_{name}: {name}.as_deref().map_or(0.0, |s| s[(*outNBElement - 1) * outStride]),"
+            );
         } else {
             let _ = writeln!(
                 t,
