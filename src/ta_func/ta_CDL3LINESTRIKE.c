@@ -262,11 +262,11 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDL3LINESTRIKE_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_CDL3LINESTRIKE_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_CDL3LINESTRIKE_Value). */
    int cur_outInteger;
    double NearPeriodTotal[4];
    double lag1_inOpen;
@@ -529,7 +529,11 @@ TA_RetCode TA_CDL3LINESTRIKE_OpenAndFillInternal( struct TA_CDL3LINESTRIKE_Strea
 TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Update( TA_CDL3LINESTRIKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CDL3LINESTRIKE_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -599,7 +603,11 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_UpdateAndFill( TA_CDL3LINESTRIKE_Stream 
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CDL3LINESTRIKE_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

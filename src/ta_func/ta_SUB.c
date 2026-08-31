@@ -132,11 +132,11 @@ TA_RetCode TA_S_SUB( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_SUB_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_SUB_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_SUB_Value). */
    double cur_outReal;
 };
 
@@ -240,7 +240,11 @@ TA_RetCode TA_SUB_OpenAndFillInternal( struct TA_SUB_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_SUB_Update( TA_SUB_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_SUB_StepImpl( stream, inReal0, inReal1, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -269,7 +273,11 @@ TA_LIB_API TA_RetCode TA_SUB_UpdateAndFill( TA_SUB_Stream *stream, const double 
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal0[i] ) || !TA_IS_FINITE( inReal1[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal0[i] ) || !TA_IS_FINITE( inReal1[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_SUB_StepImpl( stream, inReal0[i], inReal1[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

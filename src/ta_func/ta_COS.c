@@ -125,11 +125,11 @@ TA_RetCode TA_S_COS( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_COS_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_COS_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_COS_Value). */
    double cur_outReal;
 };
 
@@ -232,7 +232,11 @@ TA_RetCode TA_COS_OpenAndFillInternal( struct TA_COS_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_COS_Update( TA_COS_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_COS_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -261,7 +265,11 @@ TA_LIB_API TA_RetCode TA_COS_UpdateAndFill( TA_COS_Stream *stream, const double 
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_COS_StepImpl( stream, inReal[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

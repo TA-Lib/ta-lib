@@ -609,11 +609,12 @@
       KamaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has produced a value for, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#KAMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
-       * accepted {@code update} adds one to the count, {@code peek} leaves
+       * {@code update} adds one to the count — a bar rejected for being
+       * non-finite included, because it still happened — {@code peek} leaves
        * it alone, and {@code clone()} carries it verbatim. A plain
        * {@code open} hands back only the last value, a subset of this range,
        * because the caller chose not to take the fill.
@@ -643,16 +644,22 @@
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the handle is left exactly as it was —
-       * the stream stays usable, so skip the bar or re-open on a clean
-       * history. This is the one place the streaming tier is stricter than
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
+       * history. {@link #outRange()} does advance: the bar happened and
+       * occupies a position in the series, so the handle counts it, which is
+       * what keeps two handles on one feed aligned when only one rejects.
+       * This is the one place the streaming tier is stricter than
        * the batch API, which computes on whatever it is given: a handle
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
       public double update( double inReal ) {
-         if( !Double.isFinite(inReal) )
+         if( !Double.isFinite(inReal) ) {
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("KAMA update: BadParam", RetCode.BadParam);
+         }
          core.kamaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          return this.cur_outReal;
@@ -664,11 +671,12 @@
        * set of argument checks instead of {@code n}. {@code n} is
        * {@code inReal.length}; the outputs must hold at least that many, and must
        * not be the same array as an input or as each other.
-       * <p>{@link #outRange()} counts what was committed, which is what makes a
+       * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k}.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("KAMA updateAndFill", "inReal", inReal);
@@ -677,8 +685,10 @@
          if( outReal.length < barCount || (Object)outReal == (Object)inReal )
             throw new TaLibArgumentException("KAMA updateAndFill: BadParam", RetCode.BadParam);
          for( int i = 0; i < barCount; i++ ) {
-            if( !Double.isFinite(inReal[i]) )
+            if( !Double.isFinite(inReal[i]) ) {
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                throw new TaLibArgumentException("KAMA updateAndFill: BadParam", RetCode.BadParam);
+            }
             core.kamaStepImpl(this, inReal[i]);
             outReal[i] = this.cur_outReal;
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
@@ -769,8 +779,9 @@
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {

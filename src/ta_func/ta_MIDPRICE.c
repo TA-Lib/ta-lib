@@ -547,11 +547,11 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
 /* Using midprice_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 struct TA_MIDPRICE_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_MIDPRICE_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_MIDPRICE_Value). */
    double cur_outReal;
    int optInTimePeriod;
    double lowest;
@@ -869,7 +869,11 @@ TA_RetCode TA_MIDPRICE_OpenAndFillInternal( struct TA_MIDPRICE_Stream **stream, 
 TA_LIB_API TA_RetCode TA_MIDPRICE_Update( TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_MIDPRICE_StepImpl( stream, inHigh, inLow, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -960,7 +964,11 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_UpdateAndFill( TA_MIDPRICE_Stream *stream, con
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_MIDPRICE_StepImpl( stream, inHigh[i], inLow[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

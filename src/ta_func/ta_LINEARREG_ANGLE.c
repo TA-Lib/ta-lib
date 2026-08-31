@@ -393,11 +393,11 @@ TA_RetCode TA_S_LINEARREG_ANGLE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_LINEARREG_ANGLE_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_LINEARREG_ANGLE_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_LINEARREG_ANGLE_Value). */
    double cur_outReal;
    int optInTimePeriod;
    int lookbackTotal;
@@ -819,7 +819,11 @@ TA_RetCode TA_LINEARREG_ANGLE_OpenAndFillInternal( struct TA_LINEARREG_ANGLE_Str
 TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Update( TA_LINEARREG_ANGLE_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_LINEARREG_ANGLE_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -948,7 +952,11 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_UpdateAndFill( TA_LINEARREG_ANGLE_Strea
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_LINEARREG_ANGLE_StepImpl( stream, inReal[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

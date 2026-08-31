@@ -224,11 +224,11 @@ TA_RetCode TA_S_ROCR100( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ROCR100_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_ROCR100_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_ROCR100_Value). */
    double cur_outReal;
    int optInTimePeriod;
    int ringPos_trailingIdx;
@@ -434,7 +434,11 @@ TA_RetCode TA_ROCR100_OpenAndFillInternal( struct TA_ROCR100_Stream **stream, co
 TA_LIB_API TA_RetCode TA_ROCR100_Update( TA_ROCR100_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_ROCR100_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -482,7 +486,11 @@ TA_LIB_API TA_RetCode TA_ROCR100_UpdateAndFill( TA_ROCR100_Stream *stream, const
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_ROCR100_StepImpl( stream, inReal[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

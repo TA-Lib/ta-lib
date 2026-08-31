@@ -310,11 +310,11 @@ TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MINMAXINDEX_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_MINMAXINDEX_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_MINMAXINDEX_Value). */
    int cur_outMinIdx;
    int cur_outMaxIdx;
    int optInTimePeriod;
@@ -612,7 +612,11 @@ TA_RetCode TA_MINMAXINDEX_OpenAndFillInternal( struct TA_MINMAXINDEX_Stream **st
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_Update( TA_MINMAXINDEX_Stream *stream, double inReal, int *outMinIdx, int *outMaxIdx )
 {
    if( !stream || !outMinIdx || !outMaxIdx ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_MINMAXINDEX_StepImpl( stream, inReal, outMinIdx, outMaxIdx );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -701,7 +705,11 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_UpdateAndFill( TA_MINMAXINDEX_Stream *strea
    if( (const void *)outMinIdx == (const void *)inReal || (const void *)outMaxIdx == (const void *)inReal || (const void *)outMinIdx == (const void *)outMaxIdx ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_MINMAXINDEX_StepImpl( stream, inReal[i], &outMinIdx[i], &outMaxIdx[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

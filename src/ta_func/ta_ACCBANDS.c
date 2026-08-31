@@ -367,11 +367,11 @@ TA_RetCode TA_S_ACCBANDS( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ACCBANDS_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_ACCBANDS_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_ACCBANDS_Value). */
    double cur_outRealUpperBand;
    double cur_outRealMiddleBand;
    double cur_outRealLowerBand;
@@ -689,7 +689,11 @@ TA_RetCode TA_ACCBANDS_OpenAndFillInternal( struct TA_ACCBANDS_Stream **stream, 
 TA_LIB_API TA_RetCode TA_ACCBANDS_Update( TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_ACCBANDS_StepImpl( stream, inHigh, inLow, inClose, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -776,7 +780,11 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_UpdateAndFill( TA_ACCBANDS_Stream *stream, con
    if( (const void *)outRealUpperBand == (const void *)inHigh || (const void *)outRealUpperBand == (const void *)inLow || (const void *)outRealUpperBand == (const void *)inClose || (const void *)outRealMiddleBand == (const void *)inHigh || (const void *)outRealMiddleBand == (const void *)inLow || (const void *)outRealMiddleBand == (const void *)inClose || (const void *)outRealLowerBand == (const void *)inHigh || (const void *)outRealLowerBand == (const void *)inLow || (const void *)outRealLowerBand == (const void *)inClose || (const void *)outRealUpperBand == (const void *)outRealMiddleBand || (const void *)outRealUpperBand == (const void *)outRealLowerBand || (const void *)outRealMiddleBand == (const void *)outRealLowerBand ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_ACCBANDS_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outRealUpperBand[i], &outRealMiddleBand[i], &outRealLowerBand[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

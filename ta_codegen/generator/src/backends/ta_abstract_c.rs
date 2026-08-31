@@ -2958,12 +2958,13 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
     // TA_<N>_Stream, so 172 typed accessors would add 172 public entry points
     // for the same pair.
     o.push_str(
-        "/* The range of bars a live stream has produced a value for, in the\n\
+        "/* The range of bars a live stream has an output for, in the\n\
          \x20* input series' coordinates: [*outBegIdx, *outBegIdx + *outNBElement).\n\
          \x20*\n\
          \x20* It is what the batch call over the same bars reports. A handle opened\n\
          \x20* over `historyLen` bars starts at (lookback, historyLen - lookback) and\n\
-         \x20* each accepted Update adds one; Peek changes nothing. So after a handle\n\
+         \x20* each Update adds one — a bar rejected for being non-finite included,\n\
+         \x20* because it still happened; Peek changes nothing. So after a handle\n\
          \x20* has been fed nbBar bars, by any mix of Open and Update, this reports\n\
          \x20* what the batch call over ( 0, nbBar-1 ) does. The count saturates at\n\
          \x20* TA_MAX_INDEX.\n\

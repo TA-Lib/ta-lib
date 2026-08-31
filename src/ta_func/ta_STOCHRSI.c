@@ -302,11 +302,11 @@ TA_RetCode TA_S_STOCHRSI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_STOCHRSI_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_STOCHRSI_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_STOCHRSI_Value). */
    double cur_outFastK;
    double cur_outFastD;
    int optInTimePeriod;
@@ -575,7 +575,11 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inR
    TA_RetCode retCode;
 
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    retCode = TA_STOCHRSI_StepImpl( stream, inReal, outFastK, outFastD );
    if( retCode != TA_SUCCESS ) return retCode;
    stream->cur_outFastK = *outFastK;
@@ -620,7 +624,11 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_UpdateAndFill( TA_STOCHRSI_Stream *stream, con
    if( (const void *)outFastK == (const void *)inReal || (const void *)outFastD == (const void *)inReal || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       retCode = TA_STOCHRSI_StepImpl( stream, inReal[i], &outFastK[i], &outFastD[i] );
       if( retCode != TA_SUCCESS ) return retCode;
       stream->cur_outFastK = outFastK[i];

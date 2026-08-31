@@ -731,11 +731,11 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_BBANDS_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_BBANDS_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_BBANDS_Value). */
    double cur_outRealUpperBand;
    double cur_outRealMiddleBand;
    double cur_outRealLowerBand;
@@ -1068,7 +1068,11 @@ TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal,
    TA_RetCode retCode;
 
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    retCode = TA_BBANDS_StepImpl( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
    if( retCode != TA_SUCCESS ) return retCode;
    stream->cur_outRealUpperBand = *outRealUpperBand;
@@ -1131,7 +1135,11 @@ TA_LIB_API TA_RetCode TA_BBANDS_UpdateAndFill( TA_BBANDS_Stream *stream, const d
    if( (const void *)outRealUpperBand == (const void *)inReal || (const void *)outRealMiddleBand == (const void *)inReal || (const void *)outRealLowerBand == (const void *)inReal || (const void *)outRealUpperBand == (const void *)outRealMiddleBand || (const void *)outRealUpperBand == (const void *)outRealLowerBand || (const void *)outRealMiddleBand == (const void *)outRealLowerBand ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       retCode = TA_BBANDS_StepImpl( stream, inReal[i], &outRealUpperBand[i], &outRealMiddleBand[i], &outRealLowerBand[i] );
       if( retCode != TA_SUCCESS ) return retCode;
       stream->cur_outRealUpperBand = outRealUpperBand[i];

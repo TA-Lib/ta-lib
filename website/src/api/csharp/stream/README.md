@@ -42,7 +42,7 @@ double v = s.Update(newClose);                   // throws only on a non-finite 
 double provisional = s.Peek(formingClose);       // state left unchanged
 ```
 
-`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf. The stream is left untouched on an error.
+`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf. A rejected bar leaves the stream's **state** untouched — nothing is committed — but a rejected `Update` still advances `OutRange` by one, its output being the previous one, held; `Value` answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)). `Peek` advances nothing.
 
 ## Rules
 
@@ -88,7 +88,7 @@ var outReal = new double[history.Length];
 
 Core.SmaStream s = core.SmaOpenAndFill(history, 30, outReal);
 
-OutRange r = s.OutRange;    // the bars it has a value for
+OutRange r = s.OutRange;    // the bars it has an output for
 // outReal[0 .. r.Count - 1] == what core.SMA(0, history.Length - 1, ...) writes
 // ...and s is live, ready for Update.
 ```
@@ -106,35 +106,37 @@ s.UpdateAndFill(gap, outReal);      // outReal[i] is the SMA at gap[i]
 `UpdateAndFill` has no second return value for the range it wrote — read
 `OutRange` afterward (see [Utility Calls](#utility-calls)).
 
-It throws `ArgumentException` before committing anything if the input spans
-differ in length, an output is shorter than the bar count, or an output
-overlaps an input or another output. An empty call does nothing. An invalid bar
-(NaN or ±Inf) also throws `ArgumentException`, exactly as `Update` does, but
-commits the valid bars **before** it — their values are already written, and the
-range tells you how many.
+It throws `ArgumentException` before committing or counting anything if the
+input spans differ in length, an output is shorter than the bar count, or an
+output overlaps an input or another output. An empty call does nothing. An
+invalid bar (NaN or ±Inf) also throws `ArgumentException`, exactly as `Update`
+does, and stops the call there: the bars **before** it are committed with their
+values written, and the invalid bar is counted but neither committed nor
+written to its output slot. `OutRange` says where it stopped — its last bar is
+the rejected one, so it counts one more than the values written.
 
 ## Utility Calls
 
 | Call | When | Does |
 |------|------|------|
-| `stream.Value` | any time | the value(s) at the last committed bar, without recomputing |
+| `stream.Value` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.Clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.OutRange` | any time | the bars the stream has a value for — the batch range over the same bars |
+| `stream.OutRange` | any time | the bars the stream has an output for — the batch range over the same bars |
 
 ```csharp
 Core.SmaStream s = core.SmaOpen(history, 30);
 
-double v = s.Value;                 // the value at the last committed bar
+double v = s.Value;                 // the value at the last bar s counted
 Core.SmaStream fork = s.Clone();    // independent from here on
-OutRange r = s.OutRange;            // the bars s has a value for
+OutRange r = s.OutRange;            // the bars s has an output for
 ```
 
 `Value` hands back what `Open` or the last `Update` already gave you: it recomputes
 nothing and takes no bar. A single-output function returns `double`; a multi-output
 one returns its `<Name>Value` readonly record struct, so all its outputs come back
-at once. It is seeded by `Open`, refreshed by every accepted `Update` and
-`UpdateAndFill`, and left alone by `Peek`, so it always names the bar `OutRange`
-reports.
+at once. `Open` seeds it, an accepted bar replaces it, and a rejected bar holds it —
+a held value is that bar's output — while `Peek` leaves it alone. So it always names
+the bar `OutRange` reports.
 
 `Clone()` gives a second, independent stream at the same bar: arrays are copied and
 sub-streams cloned recursively, and the fork carries the value and the range
@@ -145,14 +147,19 @@ neither. It is the only way to fork a live stream — the warm-up history is gon
 once `Open` returns — and it is what makes `Value` worth having, since a fork has
 no call that handed you its value.
 
-`OutRange` reports the bars the stream has a value for: `(lookback, historyLen -
-lookback)` at `Open`, one more per accepted `Update`, unchanged by `Peek`.
+`OutRange` reports the bars the stream has an output for: `(lookback,
+historyLen - lookback)` at `Open`, then one more for every bar the call accepts
+as data, whether the step computes on it or it is turned down as non-finite — it
+happened and holds a position in the series, and its output is the previous one,
+held. That is what keeps two streams on the same feed positionally aligned when
+one rejects a bar the other accepts. `Peek` counts nothing, and neither does a
+malformed call — a fault in the call is not a bar.
 
 See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `UpdateAndFill` adds ragged inputs, an output shorter than the bar count and an overlapping output, all three before it commits anything. The stream is left untouched on an error. `Value`, `Clone()` and `OutRange` never throw.
+`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `UpdateAndFill` adds ragged inputs, an output shorter than the bar count and an overlapping output, all three before it commits or counts anything. A rejected bar leaves the stream's state untouched — nothing is committed — but a rejected `Update` still advances `OutRange` by one, and `Value` answers the value(s) at the last bar the stream counted. `Value`, `Clone()` and `OutRange` never throw.
 
 | Condition | Exception |
 |---|---|

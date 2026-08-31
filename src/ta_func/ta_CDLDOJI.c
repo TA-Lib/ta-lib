@@ -238,11 +238,11 @@ TA_RetCode TA_S_CDLDOJI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLDOJI_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_CDLDOJI_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_CDLDOJI_Value). */
    int cur_outInteger;
    double BodyDojiPeriodTotal;
    int ringPos_BodyDojiTrailingIdx;
@@ -442,7 +442,11 @@ TA_RetCode TA_CDLDOJI_OpenAndFillInternal( struct TA_CDLDOJI_Stream **stream, co
 TA_LIB_API TA_RetCode TA_CDLDOJI_Update( TA_CDLDOJI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CDLDOJI_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -492,7 +496,11 @@ TA_LIB_API TA_RetCode TA_CDLDOJI_UpdateAndFill( TA_CDLDOJI_Stream *stream, const
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CDLDOJI_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

@@ -1055,11 +1055,11 @@ TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_HT_TRENDMODE_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_HT_TRENDMODE_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_HT_TRENDMODE_Value). */
    int cur_outInteger;
    double period;
    double periodWMASum;
@@ -2100,7 +2100,11 @@ TA_RetCode TA_HT_TRENDMODE_OpenAndFillInternal( struct TA_HT_TRENDMODE_Stream **
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_HT_TRENDMODE_StepImpl( stream, inReal, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -2427,7 +2431,11 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_UpdateAndFill( TA_HT_TRENDMODE_Stream *str
    if( (const void *)outInteger == (const void *)inReal ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_HT_TRENDMODE_StepImpl( stream, inReal[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

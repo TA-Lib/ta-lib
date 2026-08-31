@@ -478,11 +478,11 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MACDEXT_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_MACDEXT_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_MACDEXT_Value). */
    double cur_outMACD;
    double cur_outMACDSignal;
    double cur_outMACDHist;
@@ -863,7 +863,11 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inRea
    TA_RetCode retCode;
 
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    retCode = TA_MACDEXT_StepImpl( stream, inReal, outMACD, outMACDSignal, outMACDHist );
    if( retCode != TA_SUCCESS ) return retCode;
    stream->cur_outMACD = *outMACD;
@@ -919,7 +923,11 @@ TA_LIB_API TA_RetCode TA_MACDEXT_UpdateAndFill( TA_MACDEXT_Stream *stream, const
    if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       retCode = TA_MACDEXT_StepImpl( stream, inReal[i], &outMACD[i], &outMACDSignal[i], &outMACDHist[i] );
       if( retCode != TA_SUCCESS ) return retCode;
       stream->cur_outMACD = outMACD[i];

@@ -278,11 +278,11 @@ TA_RetCode TA_S_VWAP( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_VWAP_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_VWAP_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_VWAP_Value). */
    double cur_outReal;
    double sumPV;
    double sumV;
@@ -588,7 +588,11 @@ TA_RetCode TA_VWAP_OpenAndFillInternal( struct TA_VWAP_Stream **stream, const do
 TA_LIB_API TA_RetCode TA_VWAP_Update( TA_VWAP_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_VWAP_StepImpl( stream, inHigh, inLow, inClose, inVolume, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -705,7 +709,11 @@ TA_LIB_API TA_RetCode TA_VWAP_UpdateAndFill( TA_VWAP_Stream *stream, const doubl
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) || !TA_IS_FINITE( inVolume[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) || !TA_IS_FINITE( inVolume[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_VWAP_StepImpl( stream, inHigh[i], inLow[i], inClose[i], inVolume[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

@@ -56,11 +56,10 @@ Every stream, in every language, is the same lifecycle:
    in managed languages (Rust/Java).
 
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
-it has produced a value for, in the input series' coordinates. An `open` over
-`historyLen` bars starts at `(lookback, historyLen - lookback)`, every accepted
-`update` adds one, and `peek` and a rejected bar change nothing. The accessor is
-`TA_StreamOutRange` in C — one function, any handle — `out_range()` in Rust,
-`outRange()` in Java, `OutRange` in C#.
+this handle has an output for, in the input series' coordinates. Which calls
+move it, and which do not, is `docs/error-handling-spec.md` §2.4's business.
+The accessor is `TA_StreamOutRange` in C — one function, any handle —
+`out_range()` in Rust, `outRange()` in Java, `OutRange` in C#.
 
 Parameters and history are fixed at `open`; changing a parameter means a new stream.
 
@@ -231,14 +230,23 @@ There is no `outBegIdx`/`outNBElement` pair: the range rides on the handle, so
 afterwards — and answers it for a partial run too, which is the whole reason the
 next paragraph is expressible at all.
 
-**A rejected bar commits the bars before it.** `n` bars in one call is `n`
-`update`s and nothing else, so bar `k` being non-finite is rejected the way
-`update` rejects it: bars `0..k` stay committed with their values written, bar
-`k` and everything after it does not, and the handle's range has advanced by
-exactly `k`. This is the one call in the library that returns a failure *and*
-leaves output behind, so what it leaves is specified rather than merely allowed,
-and the gate compares it against a control handle driven over the same `k` bars
-one at a time.
+**A rejected bar commits the bars before it.** `n` bars in one call is a loop of
+`n` `update`s that stops at the first error — what a caller acting on every
+failure would write by hand — so bar `k` being non-finite is rejected the way
+`update` rejects it: bars `[0, k)` stay committed with their values written, bar
+`k` and everything after it does not, output slot `k` is left alone, and the
+handle's range has advanced by `k + 1` (the `k` committed bars, plus the rejected
+one, which `update` counts too). The caller reads the range to learn where it
+stopped — the rejected bar is the last one counted — and resumes with the rest of
+the series. This is the one call in the library that returns a failure *and*
+leaves output behind, so what it leaves is specified rather than merely allowed.
+
+The advance is gated absolutely — one rejected `Update` counts exactly one bar, a
+`Peek` none — by a leg in each backend's own stream suite, and by
+`out_range_advance_suite` over the emitted text of every streamable function in
+all four. Comparing an `UpdateAndFill` against a control handle driven one bar at
+a time cannot gate it: that compare is symmetric, and stays green with the advance
+deleted from both arms.
 
 The alternative was to read the `n` bars as an input *array* — never scanned,
 `count += n` unconditionally, marginally faster. It was rejected because the two
@@ -285,7 +293,9 @@ Notes that make this precise:
   fed `N` bars, by any mixture of `open` / `openAndFill`, `update` and
   `updateAndFill`, its `OutRange` is what the batch call over those same bars
   reports. `stream_verify` carries a range leg for this in all four servers, with
-  one compare site per opener and one for the n-bar filler.
+  one compare site per opener and one for the n-bar filler — it feeds only finite
+  bars, so a rejected bar's advance is invisible to it and is gated where
+  *Catching up n bars at once* says.
 - **The history given to `open` defines bar 0.** The stream matches batch
   over exactly the series it has seen; for some seedings (e.g. EMA under
   Metastock compatibility) values depend on the whole history — by design.
@@ -324,29 +334,16 @@ Notes that make this precise:
   the feed recovers. Rejecting the bar and leaving the handle usable is strictly
   more useful than accepting it and going permanently NaN.
 
-  **What "the handle is unchanged" does and does not cover.** For the rejection
-  a caller can actually provoke — a non-finite bar handed to `Update` or `Peek` —
-  the check runs before anything is written, so the guarantee is unconditional
-  and that is what the generated docs promise.
+  **What "the handle is unchanged" does and does not cover.** The finite check
+  runs before any *state* is written, so the state half of the promise is
+  unconditional and is what the generated docs say; `OutRange` is the one thing
+  an `Update` rejection does move (`docs/error-handling-spec.md` §2.4).
 
-  There is one path where it does not hold, and it is worth being precise rather
-  than silent about it. A composed function drives its sub-streams through their
-  *public* `Update`/`Peek`, so a sub-stream re-checks a value the library itself
-  computed. If such an intermediate were ever non-finite, the sub would reject
-  it, and the composed step would surface that rejection **after** the earlier
-  sub-streams in the pipeline had already advanced — a rejection from a bar the
-  caller supplied in good faith, with the handle partway through the bar. All
-  four backends now agree on that (C propagates the sub-call's return code
-  rather than continuing on an unwritten value, which was undefined behaviour
-  before it was made to propagate), and the reported error names the sub-stage.
-
-  Reaching it requires an intermediate to overflow to ±Inf, i.e. input
-  magnitudes around 1e306 and up — the input-overflow class #191 deliberately
-  leaves out of scope as a property of `double` rather than of the indicator.
-  Closing it properly means giving every function an internal, unchecked
-  per-bar entry point for composition to call, which is real work and buys
-  nothing inside the supported input range; the note is here so that whoever
-  needs it later does not have to rediscover why.
+  Composition is where even the state half fails: a sub-stream re-checks an
+  intermediate the library itself computed and rejects it after its siblings
+  have advanced. Closing it means giving every function an internal, unchecked
+  per-bar entry point for composition to call, which buys nothing inside the
+  supported input range.
 
   Outputs are unchanged by all of this: a successful call still never produces
   NaN, except from the seven functions flagged `nan_inf_output` (#191), which
@@ -405,9 +402,9 @@ TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream,
                                      double        *outReal );
 
 /* update_and_fill: barCount closed bars in, barCount values out — exactly
- * barCount back-to-back Update calls. No out-meta pair: read the range off
- * the handle, which also reports how many bars a rejected call committed.
- * Outputs must not alias the inputs or each other. */
+ * barCount back-to-back Update calls, stopping at the first error. No out-meta
+ * pair: read the range off the handle, whose last counted bar is the one that
+ * failed. Outputs must not alias the inputs or each other. */
 TA_LIB_API TA_RetCode TA_SMA_UpdateAndFill( TA_SMA_Stream *stream,
                                             const double   inReal[],
                                             int            barCount,
@@ -421,7 +418,7 @@ TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
 
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
 
-/* out_range: the bars this handle has produced a value for. One accessor for
+/* out_range: the bars this handle has an output for. One accessor for
  * every function — it takes any TA_<N>_Stream *, because every stream struct
  * leads with the same two ints. */
 TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream,
@@ -454,8 +451,8 @@ s.update_and_fill(&gap_bars, &mut out)?;            // n bars, n values, one cal
 let provisional = s.peek(forming_bar_close)?;      // &self: the same
                                                   // transition, committing
                                                   // nothing
-let r = s.out_range();                             // bars produced so far —
-                                                  // what batch reports for them
+let r = s.out_range();                             // the bars this handle has
+                                                  // an output for
 ```
 
 Java/.NET: small handle objects with the same `open(history, params)` +
@@ -474,8 +471,8 @@ Core.SmaStream t = s.clone();                   // independent stream fork
 Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
 Core.MacdStream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
 Core.SmaStream s2 = core.smaOpenAndFill(history, 14, warmup);
-OutRange r = s2.outRange();                      // bars produced so far, on the
-                                                 // handle — what batch reports
+OutRange r = s2.outRange();                      // the bars this handle has an
+                                                 // output for
 ```
 
 - Handles are `public static final` classes **nested in `Core`** (`Core.SmaStream`),
@@ -492,9 +489,10 @@ OutRange r = s2.outRange();                      // bars produced so far, on the
   index faults, and carry the range codes (`docs/error-handling-spec.md` §2.3). Messages carry the
   stable prefix `"<NAME> open:"`. Post-open, `update`/`peek` throw only
   `IllegalArgumentException` on a non-finite bar (prefix `"<NAME> update:"` /
-  `"<NAME> peek:"`), leaving the handle untouched.
-- `value()` re-reads the last committed value(s) without recomputing (seeded by
-  open, refreshed by `update`, untouched by `peek`); multi-output `update`
+  `"<NAME> peek:"`), leaving the handle's *state* untouched
+  (`docs/error-handling-spec.md` §2.4).
+- `value()` re-reads the value(s) at the last bar the stream counted — the bar
+  `outRange()` ends on — without recomputing; multi-output `update`
   caches the immutable `Value` it returns, so `value()` is allocation-free.
 - `clone()` is the universal deep copy (arrays cloned, sub-handles copied
   recursively, the `Core` reference shared), and it is spelled the same in all

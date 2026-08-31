@@ -283,11 +283,11 @@ TA_RetCode TA_S_EMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_EMA_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_EMA_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_EMA_Value). */
    double cur_outReal;
    int optInTimePeriod;
    double optInK_1;
@@ -504,7 +504,11 @@ TA_RetCode TA_EMA_OpenAndFillInternal( struct TA_EMA_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_EMA_Update( TA_EMA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_EMA_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -539,7 +543,11 @@ TA_LIB_API TA_RetCode TA_EMA_UpdateAndFill( TA_EMA_Stream *stream, const double 
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_EMA_StepImpl( stream, inReal[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }

@@ -264,7 +264,7 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     // function. Rendered from the same field list the structs are, so the two
     // cannot drift.
     s.push_str("/* The leading members of every struct TA_<N>_Stream, in order: the range of\n");
-    s.push_str(" * bars the handle has produced a value for. TA_StreamOutRange (ta_utility.c)\n");
+    s.push_str(" * bars the handle has an output for. TA_StreamOutRange (ta_utility.c)\n");
     s.push_str(" * copies a handle's head out through this type. */\n");
     s.push_str("typedef struct\n{\n");
     for decl in crate::backends::c_stream::RANGE_HEAD_FIELDS {

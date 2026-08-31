@@ -339,14 +339,34 @@ pub fn open_internal_signature(func: &FuncDef) -> String {
 /// that, because its state is retained: one non-finite bar poisons every
 /// recursive accumulator in it for the rest of the handle's life, long after the
 /// feed recovers. So the streaming tier rejects instead, and rejects *before*
-/// mutating anything, leaving the handle exactly as it was.
-fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
+/// mutating any state, leaving the handle's accumulators exactly as they were.
+fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str, advance: Option<&str>) -> String {
     let bars = streaming::input_array_names(func);
     if bars.is_empty() {
         return String::new();
     }
     let conds: Vec<String> = bars.iter().map(|b| format!("!TA_IS_FINITE( {b} )")).collect();
-    format!("{indent}if( {} ) return {fail};\n", conds.join(" || "))
+    reject_on(&conds.join(" || "), indent, fail, advance)
+}
+
+/// The rejection a finite-bar check renders: a bare early return, or — pass the
+/// handle in `advance` — the same return behind one advance of its produced-bar
+/// count.
+///
+/// **Only rule U3 advances.** A non-finite bar still happened and still occupies
+/// a position in the series, so an `Update` counts it and two handles driven off
+/// one feed stay positionally aligned when one rejects a bar the other accepts
+/// (`docs/error-handling-spec.md` §2.4). Every other streaming rejection — the
+/// presence guards, and `UpdateAndFill`'s pre-loop checks — leaves the handle
+/// untouched, and `Peek` never advances at all.
+fn reject_on(cond: &str, indent: &str, fail: &str, advance: Option<&str>) -> String {
+    match advance {
+        None => format!("{indent}if( {cond} ) return {fail};\n"),
+        Some(handle) => format!(
+            "{indent}if( {cond} )\n{indent}{{\n{}{indent}   return {fail};\n{indent}}}\n",
+            range_head_advance(&format!("{indent}   "), handle)
+        ),
+    }
 }
 
 /// Rules S1 and S2 — the opener's implied index pair — ahead of every presence
@@ -713,8 +733,15 @@ fn indexed_out_args(func: &FuncDef, idx: &str) -> Vec<String> {
 /// would buy the check at the price of a cross-TU call per bar — the one cost
 /// this entry point exists to remove. It is a per-bar test in the loop, NOT a
 /// pre-scan: the rejected bar is not committed, every bar before it is, and the
-/// handle's count says how many.
-fn finite_bar_check_indexed(func: &FuncDef, indent: &str, idx: &str, fail: &str) -> String {
+/// handle's count reaches the rejected bar — it is the last one counted, which
+/// is how the caller locates where the loop stopped.
+fn finite_bar_check_indexed(
+    func: &FuncDef,
+    indent: &str,
+    idx: &str,
+    fail: &str,
+    advance: Option<&str>,
+) -> String {
     let bars = streaming::input_array_names(func);
     if bars.is_empty() {
         return String::new();
@@ -723,7 +750,7 @@ fn finite_bar_check_indexed(func: &FuncDef, indent: &str, idx: &str, fail: &str)
         .iter()
         .map(|b| format!("!TA_IS_FINITE( {b}[{idx}] )"))
         .collect();
-    format!("{indent}if( {} ) return {fail};\n", conds.join(" || "))
+    reject_on(&conds.join(" || "), indent, fail, advance)
 }
 
 /// Public `Close` prototype (no trailing `;`).
@@ -950,9 +977,9 @@ pub fn value_signature(func: &FuncDef) -> String {
     )
 }
 
-/// `TA_<N>_Value`: the value(s) at the last committed bar, read back without
-/// recomputing. Tier-independent — every tier retains into the same `cur_`
-/// fields — so it is emitted once for all five rather than per arm.
+/// `TA_<N>_Value`: the value(s) at the last bar the stream counted, read back
+/// without recomputing. Tier-independent — every tier retains into the same
+/// `cur_` fields — so it is emitted once for all five rather than per arm.
 ///
 /// Total on a live handle: an Open that returned `TA_SUCCESS` produced at least
 /// one value and seeded these fields, so there is no "before the first update"
@@ -1035,7 +1062,7 @@ pub fn header_decls(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Str
     // UpdateAndFill: the same relationship to Update that OpenAndFill has to
     // Open, so it is declared unconditionally beside it for the same reason.
     let update_and_fill = format!(
-        "\n/*\n * UpdateAndFill: commit barCount closed bars and write the barCount values,\n * in one call — barCount back-to-back TA_{n}_Update calls, including the\n * per-bar rejection. A rejected bar leaves the bars before it committed;\n * TA_StreamOutRange then reports how many. Outputs must not alias the inputs\n * or each other.\n */\n{};\n",
+        "\n/*\n * UpdateAndFill: commit barCount closed bars and write the barCount values,\n * in one call — barCount back-to-back TA_{n}_Update calls, including the\n * per-bar rejection. A rejected bar k leaves the bars before it committed and\n * written, itself uncommitted and its output slot untouched; TA_StreamOutRange\n * then reports k+1, the rejected bar being the last one counted. Outputs must\n * not alias the inputs or each other.\n */\n{};\n",
         update_and_fill_signature(func)
     );
     // Clone: an independent fork at the same bar. Declared unconditionally —
@@ -1044,11 +1071,10 @@ pub fn header_decls(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Str
         "\n/*\n * Clone: fork the stream — an independent stream at the same bar, owning its\n * own copy of everything the original owns. Both must be closed. The fork\n * carries the value and the range verbatim.\n */\n{};\n",
         clone_signature(func)
     );
-    // Value: the last committed bar's value(s), re-read without recomputing.
-    // Declared unconditionally beside the rest — every tier retains them, so
-    // there is no shape that could lack it.
+    // Value: declared unconditionally beside the rest — every tier retains the
+    // `cur_` fields, so there is no shape that could lack it.
     let value = format!(
-        "\n/*\n * Value: the value(s) at the last committed bar, without recomputing —\n * seeded by Open, refreshed by Update and UpdateAndFill, left alone by Peek.\n */\n{};\n",
+        "\n/*\n * Value: the value(s) at the last bar the stream counted — the bar\n * TA_StreamOutRange ends on — without recomputing. Seeded by Open, refreshed by\n * every accepted Update and UpdateAndFill, left alone by Peek.\n */\n{};\n",
         value_signature(func)
     );
     format!(
@@ -2688,7 +2714,8 @@ fn emit_dispatch(
         // Checked here rather than left to the sub-stream's own Update/Peek: the
         // identity arm below never reaches a sub-stream at all, it copies the bar
         // straight to the output.
-        o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
+        let advance = (verb == "Update").then_some("stream");
+        o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM", advance));
         if let (Some(cond), Some(idp)) = (&identity_handle_cond, &dp.identity) {
             let _ = writeln!(o, "   if( {cond} )\n   {{");
             for (out, inp) in &idp.pairs {
@@ -2754,7 +2781,7 @@ fn emit_dispatch(
     if let (Some(cond), Some(idp)) = (&identity_handle_cond, &dp.identity) {
         let _ = writeln!(o, "   if( {cond} )\n   {{");
         let _ = writeln!(o, "      for( i = 0; i < barCount; i++ )\n      {{");
-        o.push_str(&finite_bar_check_indexed(func, "         ", "i", "TA_BAD_PARAM"));
+        o.push_str(&finite_bar_check_indexed(func, "         ", "i", "TA_BAD_PARAM", Some("stream")));
         for (out, inp) in &idp.pairs {
             let _ = writeln!(o, "         {out}[i] = {inp}[i];");
         }
@@ -2765,7 +2792,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "   }}");
     }
     let _ = writeln!(o, "   for( i = 0; i < barCount; i++ )\n   {{");
-    o.push_str(&finite_bar_check_indexed(func, "      ", "i", "TA_BAD_PARAM"));
+    o.push_str(&finite_bar_check_indexed(func, "      ", "i", "TA_BAD_PARAM", Some("stream")));
     let _ = writeln!(o, "      switch( stream->{} )", dp.param);
     let _ = writeln!(o, "      {{");
     let indexed_bar_args: String = inputs
@@ -3243,7 +3270,7 @@ fn emit_dual_frame_body(
 }
 
 /// The two leading members every `struct TA_<N>_Stream` carries: the range of
-/// bars the handle has produced a value for (issue #241).
+/// bars the handle has an output for (issue #241).
 ///
 /// First, and in this order, in every tier — `TA_StreamOutRange` reads the pair
 /// through a `const void *`, which is what lets ONE public accessor serve all
@@ -3256,14 +3283,14 @@ fn emit_dual_frame_body(
 /// otherwise on the handle, so there is nothing to derive it from at accessor
 /// time.
 fn emit_range_head_fields(o: &mut String) {
-    let _ = writeln!(o, "   /* The bars this handle has a value for (see TA_StreamOutRange).");
+    let _ = writeln!(o, "   /* The bars this handle has an output for (see TA_StreamOutRange).");
     let _ = writeln!(o, "    * Kept first, and in this order, in every stream struct. */");
     for decl in RANGE_HEAD_FIELDS {
         let _ = writeln!(o, "   {decl}");
     }
 }
 
-/// The `cur_<output>` fields: the value(s) at the most recently committed bar,
+/// The `cur_<output>` fields: the value(s) at the last bar the stream counted,
 /// which `TA_<N>_Value` hands back without recomputing. One per output, on
 /// every tier, emitted beside the range head so the two accessors' storage
 /// cannot come apart tier by tier.
@@ -3272,7 +3299,7 @@ fn emit_range_head_fields(o: &mut String) {
 /// the PREVIOUS bar's output, read by the body while computing this one, and
 /// it is emitted only for the outputs a body actually reads back.
 fn emit_cur_fields(o: &mut String, func: &FuncDef) {
-    let _ = writeln!(o, "   /* The value(s) at the last committed bar (see TA_{}_Value). */", uname(func));
+    let _ = writeln!(o, "   /* The value(s) at the last bar the stream counted (see TA_{}_Value). */", uname(func));
     for out in &func.outputs {
         let _ = writeln!(o, "   {} cur_{};", out_c_type(func, &out.name), out.name);
     }
@@ -3284,14 +3311,18 @@ fn emit_cur_fields(o: &mut String, func: &FuncDef) {
 /// struct leads with cannot come apart.
 pub const RANGE_HEAD_FIELDS: [&str; 2] = ["int outRangeBegIdx;", "int outRangeCount;"];
 
-/// Advance the handle's produced-bar count by one committed bar (issue #241).
+/// Advance the handle's count by one bar it has an output for (issue #241);
+/// the U3 reject path calls this too, not only the committing steps.
 /// Saturates at `TA_MAX_INDEX`: past that the stream has left the index domain
 /// the batch tier addresses at all, and a signed overflow would be undefined.
 fn emit_range_head_advance(o: &mut String, indent: &str, handle: &str) {
-    let _ = writeln!(
-        o,
-        "{indent}if( {handle}->outRangeCount < TA_MAX_INDEX ) {handle}->outRangeCount++;"
-    );
+    o.push_str(&range_head_advance(indent, handle));
+}
+
+/// [`emit_range_head_advance`] as a statement, for the emitters that inline it
+/// into a larger one. One spelling of the saturation guard, two shapes.
+fn range_head_advance(indent: &str, handle: &str) -> String {
+    format!("{indent}if( {handle}->outRangeCount < TA_MAX_INDEX ) {handle}->outRangeCount++;\n")
 }
 
 /// Retain the value(s) this committed bar produced, for `TA_<N>_Value`.
@@ -4366,7 +4397,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "   if( !stream || !{out} ) return TA_BAD_PARAM;");
     // inPeriods is checked here too: a non-finite period would reach `(int)`, and
     // the conversion of NaN or an infinity to int is undefined behaviour.
-    o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
+    o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM", Some("stream")));
     let _ = writeln!(o, "   for( k = 0; k < stream->nBank; k++ )");
     let _ = writeln!(o, "      {pre}_Update( stream->bank[k], {price}, &stream->scratch[k] );");
     let _ = writeln!(o, "   cpReal = {period};");
@@ -4385,7 +4416,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "   int cp;");
     let _ = writeln!(o, "   double cpReal;");
     let _ = writeln!(o, "   if( !stream || !{out} ) return TA_BAD_PARAM;");
-    o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
+    o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM", None));
     let _ = writeln!(o, "   cpReal = {period};");
     let _ = writeln!(o, "   if( !(cpReal >= stream->{min}) ) cp = stream->{min};");
     let _ = writeln!(o, "   else if( cpReal > stream->{max} ) cp = stream->{max};");
@@ -4405,7 +4436,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "   double cpReal;\n");
     o.push_str(&update_and_fill_guards(func));
     let _ = writeln!(o, "   for( i = 0; i < barCount; i++ )\n   {{");
-    o.push_str(&finite_bar_check_indexed(func, "      ", "i", "TA_BAD_PARAM"));
+    o.push_str(&finite_bar_check_indexed(func, "      ", "i", "TA_BAD_PARAM", Some("stream")));
     let _ = writeln!(o, "      for( k = 0; k < stream->nBank; k++ )");
     let _ = writeln!(o, "         {pre}_Update( stream->bank[k], {price}[i], &stream->scratch[k] );");
     let _ = writeln!(o, "      cpReal = {period}[i];");
@@ -5133,7 +5164,7 @@ fn emit_update(o: &mut String, func: &FuncDef, step_ret: bool) {
         let _ = writeln!(o, "   TA_RetCode retCode;\n");
     }
     o.push_str(&presence_guard(func, Frame::Step));
-    o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
+    o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM", Some("stream")));
     let args: Vec<String> = bars
         .iter()
         .cloned()
@@ -5172,7 +5203,7 @@ fn emit_update_and_fill(o: &mut String, func: &FuncDef, step_ret: bool) {
     let _ = writeln!(o);
     o.push_str(&update_and_fill_guards(func));
     let _ = writeln!(o, "   for( i = 0; i < barCount; i++ )\n   {{");
-    o.push_str(&finite_bar_check_indexed(func, "      ", "i", "TA_BAD_PARAM"));
+    o.push_str(&finite_bar_check_indexed(func, "      ", "i", "TA_BAD_PARAM", Some("stream")));
     let args: Vec<String> = bars
         .iter()
         .map(|b| format!("{b}[i]"))
@@ -5221,7 +5252,7 @@ fn emit_peek(
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp = &scratch;");
     o.push_str(frame_decls);
     let _ = write!(o, "\n{}", presence_guard(func, guard_frame));
-    o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
+    o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM", None));
     let _ = writeln!(o, "   scratch = *stream;");
     o.push_str(frame_body);
     if !fallible {

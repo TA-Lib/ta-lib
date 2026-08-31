@@ -530,11 +530,11 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_STOCHF_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_STOCHF_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_STOCHF_Value). */
    double cur_outFastK;
    double cur_outFastD;
    int optInFastK_Period;
@@ -1046,7 +1046,11 @@ TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh,
    TA_RetCode retCode;
 
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    retCode = TA_STOCHF_StepImpl( stream, inHigh, inLow, inClose, outFastK, outFastD );
    if( retCode != TA_SUCCESS ) return retCode;
    stream->cur_outFastK = *outFastK;
@@ -1171,7 +1175,11 @@ TA_LIB_API TA_RetCode TA_STOCHF_UpdateAndFill( TA_STOCHF_Stream *stream, const d
    if( (const void *)outFastK == (const void *)inHigh || (const void *)outFastK == (const void *)inLow || (const void *)outFastK == (const void *)inClose || (const void *)outFastD == (const void *)inHigh || (const void *)outFastD == (const void *)inLow || (const void *)outFastD == (const void *)inClose || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       retCode = TA_STOCHF_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outFastK[i], &outFastD[i] );
       if( retCode != TA_SUCCESS ) return retCode;
       stream->cur_outFastK = outFastK[i];

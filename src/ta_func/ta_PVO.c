@@ -281,11 +281,11 @@ TA_RetCode TA_S_PVO( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_PVO_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_PVO_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_PVO_Value). */
    double cur_outReal;
    int optInFastPeriod;
    int optInSlowPeriod;
@@ -546,7 +546,11 @@ TA_LIB_API TA_RetCode TA_PVO_Update( TA_PVO_Stream *stream, double inVolume, dou
    TA_RetCode retCode;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inVolume ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    retCode = TA_PVO_StepImpl( stream, inVolume, outReal );
    if( retCode != TA_SUCCESS ) return retCode;
    stream->cur_outReal = *outReal;
@@ -598,7 +602,11 @@ TA_LIB_API TA_RetCode TA_PVO_UpdateAndFill( TA_PVO_Stream *stream, const double 
    if( (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inVolume[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inVolume[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       retCode = TA_PVO_StepImpl( stream, inVolume[i], &outReal[i] );
       if( retCode != TA_SUCCESS ) return retCode;
       stream->cur_outReal = outReal[i];
