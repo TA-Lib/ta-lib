@@ -714,17 +714,21 @@ fn body_name(base: &str) -> String {
 /// when the lookback signals one, which rule L2 makes exactly the batch tier's own
 /// B3 decision on the same parameters.
 ///
-/// The `_assertStart > endIdx ||` escape in front of the Rust asserts is applied
-/// to the OUTPUT bound only. A range shorter than the lookback produces no values,
-/// so any output length will do — including none. The input bound does NOT take
-/// the escape: `endIdx` past the end of the series the caller supplied is a caller
-/// bug in every range, and the only reason C answers it with `TA_SUCCESS` is that
-/// it has no size to check against. Reporting it beats an empty `OutRange` that
-/// reads as "no data yet".
+/// The `_assertStart > endIdx ||` escape is applied to the OUTPUT bound only. A
+/// range shorter than the lookback produces no values, so any output length will
+/// do — including none. The input bound does NOT take the escape: `endIdx` past
+/// the end of the series the caller supplied is a caller bug in every range, and
+/// the only reason C answers it with `TA_SUCCESS` is that it has no size to check
+/// against. Reporting it beats an empty `OutRange` that reads as "no data yet".
 ///
-/// This is the one bound where Java checks more than C and Rust do. It is not
-/// load-bearing for memory safety — `NoPhantomIoTest` pins that no core reads
-/// anything on a sub-lookback range — it is a diagnostic.
+/// That is `rust_lang::gen_argument_checks`'s rule as well as this one, so Rust's
+/// public tier and Java's reach the same verdict. Rust's `<N>_Impl` assertion
+/// preamble does take the escape on both bounds, but it is `pub(crate)` and off
+/// the public path since #267. This is therefore the one bound where Java checks
+/// more than **C** — not more than Rust. It is not load-bearing for memory safety
+/// — `NoPhantomIoTest` pins that no core reads anything on a sub-lookback range —
+/// it is a diagnostic. The rows are pinned in the Rust crate's
+/// `tests/empty_range.rs`.
 ///
 /// A null array is rejected either way — the length check is conditional, the
 /// contract that an argument exists is not.

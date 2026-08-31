@@ -406,10 +406,14 @@ public final class Core {
     * reach {@code endIdx}, an output must hold {@code endIdx - clampedStart(..)
     * + 1} values — the count actually produced, which for a range starting below
     * the lookback is shorter than the range. Rust applies its
-    * {@code _assertStart > endIdx ||} escape to both bounds; this input bound is
-    * the one place Java checks more than C and Rust do. It is a diagnostic, not
-    * a safety net — {@code NoPhantomIoTest} pins that no core reads anything on
-    * a sub-lookback range, so there is nothing here for it to catch.
+    * {@code _assertStart > endIdx ||} escape to both bounds in the {@code <N>_Impl}
+    * assertion preamble, which is {@code pub(crate)} and off the public path since
+    * #267; its public wrapper takes the escape on the output bound alone and
+    * rejects a short input exactly as this does. So this input bound is the one
+    * place Java checks more than <b>C</b> — not more than Rust. It is a
+    * diagnostic, not a safety net — {@code NoPhantomIoTest} pins that no core
+    * reads anything on a sub-lookback range, so there is nothing here for it to
+    * catch.
     */
    static int clampedStart(String funcName, int startIdx, int lookback) {
       if (lookback < 0) {
