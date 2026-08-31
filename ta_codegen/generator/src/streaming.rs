@@ -7245,9 +7245,11 @@ pub struct PeekTransition {
     pub slot_temps: Vec<String>,
 }
 
-/// Every handle buffer a transition can index, with `true` for integer
-/// elements. Composed lag rings are absent by design: the composed tier emits
-/// its own push as text and drops it in peek mode.
+/// The handle's HEAP buffers a transition can index, with `true` for integer
+/// elements. Fixed-size array state fields are not here — see
+/// [`transition_buffers_with_state_arrays`]. Composed lag rings are absent by
+/// design: the composed tier emits its own push as text and drops it in peek
+/// mode.
 #[must_use]
 pub fn transition_buffers(model: &StreamModel, names: &dyn NameMap) -> Vec<(String, bool)> {
     let mut out: Vec<(String, bool)> = Vec::new();
@@ -7274,6 +7276,51 @@ pub fn transition_buffers(model: &StreamModel, names: &dyn NameMap) -> Vec<(Stri
     out.sort();
     out.dedup();
     out
+}
+
+/// [`transition_buffers`] plus the fixed-size REAL array state fields, so a
+/// peek frame can drop a dead store into one instead of cloning the field.
+///
+/// Offer it from every backend or from none: shadowing rewrites a store's
+/// target, which `canonicalize_accumulator_add` matches by string equality, so
+/// one backend shadowing where another does not can move an FMA site — a ~1 ULP
+/// cross-language divergence nothing points at.
+///
+/// Integer arrays are excluded deliberately: none exist in the corpus, so an
+/// integer shadow would be ungated.
+#[must_use]
+pub fn transition_buffers_with_state_arrays(
+    model: &StreamModel,
+    names: &dyn NameMap,
+) -> Vec<(String, bool)> {
+    let mut out = transition_buffers(model, names);
+    for (name, ty) in &model.state {
+        if matches!(ty, VarType::RealArray(_)) {
+            out.push((names.state(name), false));
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// [`peek_transition`] against the widest buffer set that accepts it. The retry
+/// is all-or-nothing: one refusing accumulator takes the whole function back to
+/// [`transition_buffers`].
+///
+/// # Errors
+/// Only when [`transition_buffers`] itself is refused; see [`peek_transition`].
+pub fn peek_transition_widest(
+    model: &StreamModel,
+    names: &dyn NameMap,
+    transition: &[Statement],
+    slot_cast: Option<VarType>,
+) -> Result<PeekTransition, String> {
+    let wide = transition_buffers_with_state_arrays(model, names);
+    if let Ok(pt) = peek_transition(transition, &wide, slot_cast.clone()) {
+        return Ok(pt);
+    }
+    peek_transition(transition, &transition_buffers(model, names), slot_cast)
 }
 
 /// The statement lists nested inside `s`, and whether entering them crosses a

@@ -125,9 +125,11 @@ static int codegen_lang_has_stream_state_probe(const char *lang)
  * inert. The TOTAL gate for the property is structural, in the generator:
  * tests/peek_suite.rs asserts no peek frame stores into a handle buffer at all.
  *
- * C only: its peek runs a frame that commits nothing, where the other three
- * peek a copy of the handle and the property is structural. Widen this the
- * moment one of them converts. */
+ * C only, for the same structural reason the state-equivalence leg above is:
+ * the probe compares the handle field-by-field around a peek, and only the C
+ * server has the struct as a complete type. All four backends run a
+ * non-committing frame, so what is C-only here is the OBSERVER, not the
+ * property — which is why each backend also carries its own generator sweep. */
 static int codegen_lang_has_peek_probe(const char *lang)
 {
     return lang && strcmp(lang, "c") == 0;

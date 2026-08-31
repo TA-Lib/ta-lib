@@ -487,10 +487,8 @@
        * Never writes this handle, so peeks may
        * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
        * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period. It does clone this indicator's fixed-size
-       * per-bar accumulators — a few elements, a count fixed by the indicator and
-       * not by the period — so {@code peek} allocates a small bounded amount per
-       * call.
+       * does not grow with the period. It does allocate a small bounded amount
+       * per call — a size fixed by the indicator, never by the period.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )

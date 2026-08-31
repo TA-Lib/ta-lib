@@ -69,7 +69,7 @@
 //! - Rings stay `double[]`/`int[]` fields. `Span<T>` cannot be a field (CS8345)
 //!   and `Memory<T>` costs a span materialization per access.
 //! - The copy constructor uses `new T[n]` + `Array.Copy`, never
-//!   `(double[])x.Clone()` — 2.3x, and it is on `Peek`'s path for ~86 functions.
+//!   `(double[])x.Clone()` — 2.3x.
 //! - Dispatch is a `switch` + cast, but *not* because virtual calls are slow:
 //!   an interface call measured 4.41–4.74 against the switch's 5.55–5.72
 //!   ns/bar. The switch wins on cross-language parity and on not adding a type
@@ -944,9 +944,9 @@ fn emit_handle_class_with_members(
     );
 
     // Deep-copy constructor: scalars assign, arrays are allocated and copied
-    // (never `(double[])x.Clone()` — 2.3x slower, and this is on Peek's path),
-    // sub-handles copy recursively; the Core reference is shared (settings
-    // identity is the contract).
+    // (never `(double[])x.Clone()` — 2.3x slower), sub-handles copy
+    // recursively; the Core reference is shared (settings identity is the
+    // contract).
     let _ = writeln!(o, "\n      internal {class}( {class} other )");
     let _ = writeln!(o, "      {{");
     let _ = writeln!(o, "         this.core = other.core;");
@@ -1138,11 +1138,11 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          return — the same transition, with every store it would make carried in a local \
          instead. Never writes this handle, so peeks may run concurrently with each other.",
     );
-    // Conditional, because for 21 handles the unconditional claim was false: a
-    // C# array field is a reference, so a frame that writes a fixed-size
-    // accumulator has to copy it, and that copy is a real per-call allocation.
-    // The flat-in-period cost — the claim the frame exists to keep — holds
-    // either way, and is what both sentences lead with.
+    // Conditional, because for the handles whose accumulator the frame still
+    // copies the unconditional claim was false: a C# array field is a
+    // reference, so a frame that writes one has to copy it, and that copy is a
+    // real per-call allocation. The flat-in-period cost — the claim the frame
+    // exists to keep — holds either way, and is what both sentences lead with.
     if frame.is_some_and(|f| f.contains("Array.Copy(")) {
         d.para(
             "It copies no buffer: the frame runs against this handle, reading its buffers \
@@ -1585,7 +1585,8 @@ fn peek_frame_arm(
 }
 
 /// One model's peek frame: the transition rewritten to commit nothing, run
-/// against the live handle at `indent`.
+/// against the live handle at `indent`. `None` where it cannot be built, which
+/// the caller turns into a panic — every tier emits a frame.
 #[allow(clippy::too_many_arguments)]
 fn peek_frame_arm_named(
     func: &FuncDef,
@@ -1603,8 +1604,7 @@ fn peek_frame_arm_named(
 ) -> Option<String> {
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, names).ok()?;
-    let bufs = streaming::transition_buffers(model, names);
-    let pt = streaming::peek_transition(&transition, &bufs, None).ok()?;
+    let pt = streaming::peek_transition_widest(model, names, &transition, None).ok()?;
     // The extrema rebase moves the cursor before the first store, so its
     // targets localize with the transition's own.
     let mut rebased: Vec<String> = Vec::new();
@@ -1613,6 +1613,7 @@ fn peek_frame_arm_named(
         rebased.push(ex.trailing.clone());
         rebased.extend(ex.index_vars.iter().cloned());
     }
+    let bufs = streaming::transition_buffers(model, names);
     let (locals, body_ir) = localize_state_writes(func, &pt.body, &rebased, &bufs)?;
     // The transition's own early exit — the param-degenerate identity
     // short-circuit — is valueless, because a step returns `void`. Inline in
@@ -1638,10 +1639,11 @@ fn peek_frame_arm_named(
         }
         let cty = types.get(name.as_str()).copied()?;
         // A C# array field is a reference: taking it plain would write the
-        // handle through it. These are the fixed-size per-bar accumulators —
-        // two to five elements — never a period-sized buffer, which the frame
-        // only ever reads. Allocate and `Array.Copy` rather than `Clone()`, the
-        // same shape the copy constructor states its case for.
+        // handle through it. Only the accumulators `peek_transition_widest`
+        // refused reach here — two to five elements, never a period-sized
+        // buffer, which the frame only ever reads. Allocate and `Array.Copy`
+        // rather than `Clone()`, the same shape the copy constructor states its
+        // case for.
         if let Some(elem) = cty.strip_suffix("[]") {
             let _ = writeln!(out, "{pad}{cty} {name} = new {elem}[sp.{name}.Length];");
             let _ = writeln!(out, "{pad}Array.Copy( sp.{name}, {name}, sp.{name}.Length );");
@@ -3884,8 +3886,8 @@ fn emit_period_bank(
 // sub-handles, mirroring java_stream's emit_composed with the same managed
 // simplifications: GC replaces every cleanup ladder and series-free replay,
 // `free()` renders as a no-op so lag-ring seeding reads the still-live
-// intermediate array, and copy-peek needs no sub-call routing at all (sub handles
-// deep-copy through their copy constructors).
+// intermediate array, and the peek frame drives each sub-stream's own public
+// peek rather than committing anything.
 // ---------------------------------------------------------------------------
 
 /// Composed producer name map: identical to [`CsStreamNames`] except the
