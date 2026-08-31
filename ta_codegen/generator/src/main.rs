@@ -2612,8 +2612,51 @@ path = "src/lib.rs"
 //! performs via `target_clones`); both paths are correctly rounded, so results
 //! are bit-identical either way. The streaming tier stays single-path.
 //!
+//! # Live data
+//!
+//! The calls above take a whole series at once. For a feed that arrives one bar
+//! at a time, each indicator also has a *streaming* form: an `*_open` method
+//! ([`Core::sma_open`], [`Core::rsi_open`], …) warms a handle up on the history
+//! you already have, and from then on one bar in gives that bar's value out,
+//! with no re-scan of the series and no allocation per bar.
+//!
+//! ```
+//! use ta_lib::Core;
+//!
+//! let history = [11.0, 12.0, 13.0, 14.0, 15.0];
+//! let core = Core::new();
+//! let (mut sma, last) = core.sma_open(&history, 3)?;
+//!
+//! assert_eq!(last, 14.0); // (13 + 14 + 15) / 3, the last history bar
+//! assert_eq!(sma.out_range().count, 3);
+//!
+//! // A bar that has not closed yet: ask without committing it.
+//! assert_eq!(sma.peek(16.0)?, 15.0);
+//! assert_eq!(sma.out_range().count, 3);
+//!
+//! // Once it closes, commit it — same value, and the range advances.
+//! assert_eq!(sma.update(16.0)?, 15.0);
+//! assert_eq!(sma.out_range().count, 4);
+//!
+//! // A non-finite bar is rejected, and still counted: the handle's output for
+//! // it is the previous one, held, and its state is untouched.
+//! assert!(sma.update(f64::NAN).is_err());
+//! assert_eq!(sma.out_range().count, 5);
+//! # Ok::<(), ta_lib::RetCode>(())
+//! ```
+//!
+//! The handle's value at every bar is bit-identical to what the batch call
+//! reports for that bar. [`SmaStream::out_range`] carries the same
+//! [`OutRange`] the batch tier returns — the bars the handle has an output for
+//! — and every bar handed to [`SmaStream::update`] advances it by one, a bar
+//! rejected as non-finite included: its output is the previous one, held.
+//! [`SmaStream::peek`] leaves it alone; cloning a handle forks an independent
+//! stream, and dropping it closes the stream.
+//!
 //! The full function reference, grouped by category, is at
-//! [ta-lib.org/functions](https://ta-lib.org/functions/).
+//! [ta-lib.org/functions](https://ta-lib.org/functions/); the guides are at
+//! [ta-lib.org/api/rust](https://ta-lib.org/api/rust/) and, for the streaming
+//! tier, [ta-lib.org/api/rust/stream](https://ta-lib.org/api/rust/stream/).
 //!
 //! # Indicators by category
 //!
@@ -2747,9 +2790,51 @@ Because a configured `Core` only ever reads its settings, it is `Send + Sync` an
 can be shared read-only across threads (e.g. an `Arc<Core>` with concurrent
 indicator calls) without locking. To change a setting, build a new `Core`.
 
+## Live data
+
+The calls above take a whole series at once. For a feed that arrives one bar at
+a time, each indicator also has a **streaming** form: an `*_open` method warms a
+handle up on the history you already have, and from then on one bar in gives
+that bar's value out — no re-scan of the series, no allocation per bar, and
+bit-identical to what the batch call reports for the same bar.
+
+```rust
+use ta_lib::{Core, RetCode};
+
+fn main() -> Result<(), RetCode> {
+    let history = [11.0, 12.0, 13.0, 14.0, 15.0];
+    let core = Core::new();
+    let (mut sma, last) = core.sma_open(&history, 3)?;
+
+    assert_eq!(last, 14.0); // (13 + 14 + 15) / 3, the last history bar
+    assert_eq!(sma.out_range().count, 3);
+
+    // A bar that has not closed yet: ask without committing it.
+    assert_eq!(sma.peek(16.0)?, 15.0);
+    assert_eq!(sma.out_range().count, 3);
+
+    // Once it closes, commit it — same value, and the range advances.
+    assert_eq!(sma.update(16.0)?, 15.0);
+    assert_eq!(sma.out_range().count, 4);
+
+    // A non-finite bar is rejected, and still counted: the handle's output for
+    // it is the previous one, held, and its state is untouched.
+    assert!(sma.update(f64::NAN).is_err());
+    assert_eq!(sma.out_range().count, 5);
+    Ok(())
+}
+```
+
+`out_range()` carries the same `OutRange` the batch tier returns — the bars the
+handle has an output for — and every bar handed to `update` advances it by one,
+a bar rejected as non-finite included: its output is the previous one, held.
+`peek` leaves it alone. Cloning a handle forks an independent stream, and
+dropping it closes the stream.
+
 ## Documentation
 
 - API reference: <https://docs.rs/ta-lib>
+- Rust guide: <https://ta-lib.org/api/rust/> — and the streaming tier: <https://ta-lib.org/api/rust/stream/>
 - Per-function reference (formulas, notes, sources): <https://ta-lib.org/functions/>
 - Project home: <https://ta-lib.org>
 
