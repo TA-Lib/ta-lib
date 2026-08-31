@@ -328,10 +328,12 @@ TA_RetCode TA_S_EFI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_EFI_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_EFI_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double prevClose;
    double optInK_1;
@@ -348,6 +350,7 @@ static void TA_EFI_StepImpl( struct TA_EFI_Stream *sp, double inClose, double in
       force = (inClose - sp->prevClose) * inVolume;
       sp->prevClose = inClose;
       *outReal= force;
+      sp->cur_outReal = *outReal;
    }
    else
    {
@@ -357,6 +360,7 @@ static void TA_EFI_StepImpl( struct TA_EFI_Stream *sp, double inClose, double in
       sp->prevClose = inClose;
       sp->prevMA = fma(force - sp->prevMA, sp->optInK_1, sp->prevMA);
       *outReal= sp->prevMA;
+      sp->cur_outReal = *outReal;
    }
 }
 
@@ -470,6 +474,7 @@ static TA_RetCode TA_EFI_OpenImpl( struct TA_EFI_Stream **stream, const double i
       sp->prevClose = prevClose;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -593,6 +598,7 @@ static TA_RetCode TA_EFI_OpenImpl( struct TA_EFI_Stream **stream, const double i
       sp->prevClose = prevClose;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -646,7 +652,11 @@ TA_RetCode TA_EFI_OpenAndFillInternal( struct TA_EFI_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_EFI_Update( TA_EFI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_EFI_StepImpl( stream, inClose, inVolume, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -667,6 +677,7 @@ TA_LIB_API TA_RetCode TA_EFI_Peek( const TA_EFI_Stream *stream, double inClose, 
       force = (inClose - sp->prevClose) * inVolume;
       sp->prevClose = inClose;
       *outReal= force;
+      sp->cur_outReal = *outReal;
    }
    else
    {
@@ -676,6 +687,7 @@ TA_LIB_API TA_RetCode TA_EFI_Peek( const TA_EFI_Stream *stream, double inClose, 
       sp->prevClose = inClose;
       sp->prevMA = fma(force - sp->prevMA, sp->optInK_1, sp->prevMA);
       *outReal= sp->prevMA;
+      sp->cur_outReal = *outReal;
    }
    return TA_SUCCESS;
 }
@@ -689,7 +701,11 @@ TA_LIB_API TA_RetCode TA_EFI_UpdateAndFill( TA_EFI_Stream *stream, const double 
    if( (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inClose[i] ) || !TA_IS_FINITE( inVolume[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inClose[i] ) || !TA_IS_FINITE( inVolume[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_EFI_StepImpl( stream, inClose[i], inVolume[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -699,6 +715,27 @@ TA_LIB_API TA_RetCode TA_EFI_UpdateAndFill( TA_EFI_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_EFI_Close( TA_EFI_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_EFI_Value( const TA_EFI_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_EFI_Clone( const TA_EFI_Stream *stream, TA_EFI_Stream **clone )
+{
+   struct TA_EFI_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_EFI_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

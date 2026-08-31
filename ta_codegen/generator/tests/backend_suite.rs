@@ -9704,39 +9704,45 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
 
 /// The #241 range leg's per-site ratchet, pinned across all four servers at once.
 ///
-/// The driver ORs the `range_sites` mask across the run and requires every bit
-/// below the `range_sites_n` the server declares. Two drifts fail OPEN and are
-/// what this catches:
+/// Each server declares the SET of range-compare sites it has as
+/// `range_sites_all`; the driver ORs what actually fired across the run and
+/// requires exactly that set. Two drifts fail OPEN and are what this catches:
 ///
-///   * a site added without bumping the count — the mask then carries a bit the
-///     ratchet never demands, so the new site can die unnoticed;
+///   * a site emitted but left out of the declared set — the fired mask then
+///     carries a bit the ratchet never demands, so the new site can die
+///     unnoticed;
 ///   * a site that reuses an existing bit — its death is masked by the other.
 ///
-/// Neither is visible at run time: both leave a full mask. So the check is on
-/// the emitted text — the set of bits a server actually ORs in must be exactly
-/// `{1, 2, .., 2^(n-1)}` for the `n` it declares. C, Java and C# reach the
-/// anchored `_OpenInternal` seam and declare 4; Rust's server is a separate
-/// crate and cannot, so it declares 3 and says so.
+/// Neither is visible at run time: both leave a mask that satisfies the driver.
+/// So the check is on the emitted text — the set of bits a server actually ORs
+/// in must be exactly the set it declares.
+///
+/// The sets differ, which is why the declaration is a mask and not a count (see
+/// `SvRangeSite`): C, Java and C# reach the anchored `_OpenInternal` seam and
+/// Rust's server, a separate crate, cannot. All four can fork a live stream
+/// since C gained `TA_<N>_Clone` (#287), so Rust is the one server whose set is
+/// a strict subset — and a count still could not say WHICH four it has.
 #[test]
-fn sv_range_sites_mask_matches_the_declared_count() {
+fn sv_range_sites_mask_matches_the_declared_set() {
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
     let enums = parser::enums::load_enums(&base.join("enums.yaml"));
     let funcs: Vec<ir::FuncDef> = discover_indicators().iter().map(|n| load_indicator(n).0).collect();
 
+    // Fill = 1, Prefix = 2, UpdateFill = 4, Anchored = 8, Copy = 16.
     let servers = [
-        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 4usize),
-        ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 4),
-        ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 4),
-        ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 3),
+        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16u32),
+        ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
+        ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
+        ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 1 | 2 | 4 | 16),
     ];
 
-    for (lang, src, want_n) in servers {
+    for (lang, src, want_all) in servers {
         // What the server tells the driver about itself.
-        let decl = format!("\\\"range_sites_n\\\":{want_n}");
-        let decl_plain = format!("\"range_sites_n\":{want_n}");
+        let decl = format!("\\\"range_sites_all\\\":{want_all}");
+        let decl_plain = format!("\"range_sites_all\":{want_all}");
         assert!(
             src.contains(&decl) || src.contains(&decl_plain),
-            "{lang}: server does not declare range_sites_n = {want_n}"
+            "{lang}: server does not declare range_sites_all = {want_all}"
         );
 
         // What it actually ORs in. Collect every `rangeSites |= N` / `range_sites |= N`.
@@ -9751,11 +9757,12 @@ fn sv_range_sites_mask_matches_the_declared_count() {
                 from = at;
             }
         }
-        let want: std::collections::BTreeSet<u32> = (0..want_n as u32).map(|b| 1u32 << b).collect();
+        let want: std::collections::BTreeSet<u32> =
+            (0..32u32).map(|b| 1u32 << b).filter(|b| want_all & b != 0).collect();
         assert_eq!(
             bits, want,
-            "{lang}: the site bits the server sets do not match the {want_n} sites it declares. \
-             A bit above the count is a site the ratchet never demands; a missing bit is a site \
+            "{lang}: the site bits the server sets do not match the set it declares. \
+             A bit outside the set is a site the ratchet never demands; a missing bit is a site \
              whose death nothing would see."
         );
     }
@@ -9895,9 +9902,19 @@ fn test_c_mama_two_outputs_and_params() {
     // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
     // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
     assert!(step.contains("*outMAMA= mama;"), "MAMA line written unconditionally");
+    // The GUARD is the invariant, not the right-hand side's spelling: FAMA is
+    // carried as a local since the value accessor reads it back (#287), and a
+    // future carry could move it again without weakening anything here.
     assert!(
-        step.contains("if( outFAMA != NULL )") && step.contains("*outFAMA= sp->fama;"),
+        step.contains("if( outFAMA != NULL )")
+            && (step.contains("*outFAMA= fama;") || step.contains("*outFAMA= sp->fama;")),
         "FAMA is nullable (#125): its write is NULL-guarded"
+    );
+    // The retained copy must NOT be guarded — a declined FAMA is still computed,
+    // and `TA_MAMA_Value` has to report it (that is what the accessor is for).
+    assert!(
+        step.contains("sp->cur_outFAMA = fama;") || step.contains("sp->cur_outFAMA = sp->fama;"),
+        "the value retain reads the body's own variable, never the declinable sink"
     );
     assert!(step.contains("sp->optInFastLimit") && step.contains("sp->optInSlowLimit"), "params drive the adaptive alpha");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
@@ -13318,6 +13335,48 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
 }
 
 
+/// A store `validate_peekable` refuses: a compound one, which renders as a
+/// store reading its own target. A refusal drops the whole function back to the
+/// narrow set, so one such store justifies every copy in it. The other two
+/// refusals (a store in a loop, a counter-moving index) have no instance here;
+/// one would surface as an offender below rather than be waved through.
+fn csharp_refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool {
+    body.lines().any(|l| {
+        l.split_once('=').is_some_and(|(lhs, rhs)| {
+            // `!rhs.starts_with('=')`: `X[i] == X[j]` splits the same way a store
+            // does, and comparing two slots is not a store into either.
+            lhs.trim_end().ends_with(']')
+                && !rhs.starts_with('=')
+                && fields.iter().any(|f| {
+                    let sub = format!("{f}[");
+                    lhs.contains(&sub) && rhs.contains(&sub)
+                })
+        })
+    })
+}
+
+/// The handle's fixed-size accumulator fields: an array the BATCH body declares
+/// with a literal size. Off the emitted code, never a name list.
+fn csharp_accumulator_fields(section: &str, batch: &str) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for line in section.lines() {
+        let Some(d) = line.trim().strip_prefix("internal ") else { continue };
+        let Some((ty, rest)) = d.split_once(' ') else { continue };
+        // A field carries its initializer (`internal double[] x = [];`).
+        let name = rest.trim_end_matches(';').split(" =").next().unwrap_or(rest);
+        if !ty.ends_with("[]") || !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+            continue;
+        }
+        let decl = format!("{ty} {name} = new {}[", ty.trim_end_matches("[]"));
+        if batch.match_indices(&decl).any(|(i, _)| {
+            batch[i + decl.len()..].split_once(']').is_some_and(|(n, _)| n.parse::<u32>().is_ok())
+        }) {
+            out.insert(name.to_string());
+        }
+    }
+    out
+}
+
 /// No C# `Peek` copies the handle: every one runs a frame against `this`, and
 /// what it allocates never grows with the period.
 ///
@@ -13466,6 +13525,7 @@ fn no_csharp_peek_copies_the_handle() {
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
     let (mut swept, mut frames, mut clones, mut writes) = (0usize, 0usize, 0usize, 0usize);
+    let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
 
     for name in discover_indicators() {
@@ -13485,6 +13545,7 @@ fn no_csharp_peek_copies_the_handle() {
             }
             let end = s[start..].find("\n      }").map_or(s.len(), |e| start + e);
             let peek = &s[start..end];
+            let mut copying: BTreeSet<String> = BTreeSet::new();
             swept += 1;
             if peek.contains("Stream sp = this;") {
                 frames += 1;
@@ -13524,28 +13585,50 @@ fn no_csharp_peek_copies_the_handle() {
                     .split_once("= new ")
                     .and_then(|(_, rhs)| rhs.split_once("[sp."))
                     .and_then(|(elem, tail)| tail.split_once(".Length];").map(|(f, _)| (elem, f)))
-                    .is_some_and(|(elem, f)| {
+                    .filter(|(elem, f)| {
                         let decl = format!("{elem}[] {f} = new {elem}[");
                         batch.match_indices(&decl).any(|(i, _)| {
                             batch[i + decl.len()..]
                                 .split_once(']')
                                 .is_some_and(|(n, _)| n.parse::<u32>().is_ok())
                         })
-                    });
-                if ok {
-                    clones += 1;
-                } else {
-                    offenders.push(format!("{name}: {l}"));
+                    })
+                    .map(|(_, f)| f);
+                match ok {
+                    Some(f) => {
+                        clones += 1;
+                        copying.insert(f.to_string());
+                    }
+                    None => offenders.push(format!("{name}: {l}")),
                 }
+            }
+            // A frame that copies with nothing refused was never offered the
+            // wide set, and allocates per Peek for nothing.
+            let accs = csharp_accumulator_fields(&s, &batch);
+            if !copying.is_empty() && !csharp_refused_accumulator_store(peek, &accs) {
+                offenders.push(format!(
+                    "{name}: copies {copying:?} but no accumulator store is refusable"
+                ));
+            }
+            // The other half of the split. The frame must TOUCH an accumulator:
+            // a field it never names is evidence either way.
+            if copying.is_empty() && accs.iter().any(|f| peek.contains(&format!("{f}["))) {
+                fully_shadowed.insert(name.clone());
             }
         }
     }
 
     assert!(swept > 170, "only {swept} Peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} Peek(s) run a frame");
-    // A floor on the exemption itself: if the clone shape stopped being emitted
-    // the branch above would be dead and would stop discriminating.
-    assert!(clones >= 20, "only {clones} accumulator clones seen — the exemption is untested");
+    // Both sides of the split are floored, because the corpus has both and a
+    // sweep that stopped finding either would read green while measuring one.
+    assert!(clones >= 1, "no accumulator copy seen — the exemption is untested");
+    assert!(
+        fully_shadowed.len() >= 7,
+        "only {} handle(s) hold an accumulator the frame copies nothing of — the widened \
+         buffer set is no longer reaching them and Peek allocates again",
+        fully_shadowed.len()
+    );
     assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
     assert!(offenders.is_empty(), "a Peek copies:\n{}", offenders.join("\n"));
 }

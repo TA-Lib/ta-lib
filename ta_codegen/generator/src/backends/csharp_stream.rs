@@ -69,7 +69,7 @@
 //! - Rings stay `double[]`/`int[]` fields. `Span<T>` cannot be a field (CS8345)
 //!   and `Memory<T>` costs a span materialization per access.
 //! - The copy constructor uses `new T[n]` + `Array.Copy`, never
-//!   `(double[])x.Clone()` — 2.3x, and it is on `Peek`'s path for ~86 functions.
+//!   `(double[])x.Clone()` — 2.3x.
 //! - Dispatch is a `switch` + cast, but *not* because virtual calls are slow:
 //!   an interface call measured 4.41–4.74 against the switch's 5.55–5.72
 //!   ns/bar. The switch wins on cross-language parity and on not adding a type
@@ -911,7 +911,7 @@ fn emit_handle_class_with_members(
         let _ = writeln!(o, "      internal {cty} {name}{init};");
     }
     o.push_str(extra_members);
-    // The bars this handle has produced a value for (issue #241). Two ints
+    // The bars this handle has an output for (issue #241). Two ints
     // rather than an `OutRange` field: `OutRange` is a readonly struct, so a
     // per-bar count bump would have to rebuild it, and `Update` is the hot path.
     let _ = writeln!(o, "      internal int outRangeBegIdx;");
@@ -921,16 +921,17 @@ fn emit_handle_class_with_members(
 
     let mut d = XmlDoc::new();
     d.summary(
-        "The bars this stream has produced a value for, in the input series' \
+        "The bars this stream has an output for, in the input series' \
          coordinates: <c>[BegIdx, BegIdx + Count)</c>.",
     );
     d.open("remarks");
     d.para(&format!(
         "It is what <c>Core.{base}</c> reports over the same bars: the opener sets it to \
-         <c>(lookback, historyLen - lookback)</c>, every accepted <c>Update</c> adds one to \
-         the count, <c>Peek</c> leaves it alone, and <c>Clone</c> carries it verbatim. A \
-         plain <c>Open</c> hands back only the last value, a subset of this range, because \
-         the caller chose not to take the fill."
+         <c>(lookback, historyLen - lookback)</c>, every <c>Update</c> adds one to the count \
+         — a non-finite bar is rejected but still counted, because the bar happened — \
+         <c>Peek</c> leaves it alone, and <c>Clone</c> carries it verbatim. A plain \
+         <c>Open</c> hands back only the last value, a subset of this range, because the \
+         caller chose not to take the fill."
     ));
     d.close("remarks");
     o.push('\n');
@@ -944,9 +945,9 @@ fn emit_handle_class_with_members(
     );
 
     // Deep-copy constructor: scalars assign, arrays are allocated and copied
-    // (never `(double[])x.Clone()` — 2.3x slower, and this is on Peek's path),
-    // sub-handles copy recursively; the Core reference is shared (settings
-    // identity is the contract).
+    // (never `(double[])x.Clone()` — 2.3x slower), sub-handles copy
+    // recursively; the Core reference is shared (settings identity is the
+    // contract).
     let _ = writeln!(o, "\n      internal {class}( {class} other )");
     let _ = writeln!(o, "      {{");
     let _ = writeln!(o, "         this.core = other.core;");
@@ -1046,6 +1047,16 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
     }
 }
 
+/// The handle's produced-bar count, bumped by one.
+///
+/// Saturating: nothing bounds how many bars a live stream is fed, and past
+/// `MAX_INDEX` the count has left the batch index domain anyway. Every entry
+/// point that advances renders it from here, so the guard cannot drift between
+/// them.
+fn advance_out_range(indent: &str) -> String {
+    format!("{indent}if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;\n")
+}
+
 /// The per-bar finite-input rejection for `Update`/`Peek`: one `double.IsFinite`
 /// per scalar bar input, before the handle is touched.
 ///
@@ -1055,18 +1066,29 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
 /// retained: one non-finite bar poisons every recursive accumulator in it for
 /// the rest of its life, long after the feed recovers.
 ///
+/// `advance` is the U3 half of that contract: a committing entry point counts
+/// the rejected bar before it throws, because the bar happened and occupies a
+/// position in the series. Pass `false` only where nothing commits — `Peek`,
+/// whose receiver must stay untouched under every outcome.
+///
 /// Routed through `Core.StreamFailure` so the message prefix and the exception
 /// type match the open rejections exactly.
-fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
+fn finite_bar_check(func: &FuncDef, indent: &str, what: &str, advance: bool) -> String {
     let bars = streaming::input_array_names(func);
     if bars.is_empty() {
         return String::new();
     }
     let n = base_name(func);
     let conds: Vec<String> = bars.iter().map(|b| format!("!double.IsFinite({b})")).collect();
+    let cond = conds.join(" || ");
+    let throw = format!("throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.BadParam);");
+    if !advance {
+        return format!("{indent}if( {cond} ) {throw}\n");
+    }
+    let inner = format!("{indent}   ");
     format!(
-        "{indent}if( {} ) throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.BadParam);\n",
-        conds.join(" || ")
+        "{indent}if( {cond} )\n{indent}{{\n{}{inner}{throw}\n{indent}}}\n",
+        advance_out_range(&inner)
     )
 }
 
@@ -1094,11 +1116,14 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     );
     d.para(
         "Throws <see cref=\"System.ArgumentException\"/> if any bar value is not finite \
-         (NaN or an infinity). That check runs before anything is written, so the handle \
-         is left exactly as it was and the stream stays usable: skip the bar, or re-open \
-         on a clean history. This is the one place the streaming tier is stricter than \
-         the batch API, which computes on whatever it is given: a handle retains its \
-         state, so a single non-finite bar would poison every later value it produces.",
+         (NaN or an infinity). That check runs before anything is written, so no state \
+         moves, <see cref=\"Value\"/> still answers the previous value, and the stream \
+         stays usable — just carry on with the next bar. <see cref=\"OutRange\"/> does \
+         advance: the bar happened, so it is counted, which keeps two handles fed the \
+         same series positionally aligned when only one of them rejects a bar. This is \
+         the one place the streaming tier is stricter than the batch API, which computes \
+         on whatever it is given: a handle retains its state, so a single non-finite bar \
+         would poison every later value it produces.",
     );
     d.close("remarks");
     for input in &inputs {
@@ -1109,16 +1134,11 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public {vt} Update( {sig_bars} )");
     let _ = writeln!(o, "      {{");
-    o.push_str(&finite_bar_check(func, "         ", "update"));
+    o.push_str(&finite_bar_check(func, "         ", "update", true));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
-    // After the step and after the finite-bar reject, so a rejected bar leaves
-    // the range where it was. `Peek` runs a frame that commits nothing and so
-    // never reaches this. Saturating: nothing bounds how many bars a live stream
-    // is fed, and past MAX_INDEX it has left the batch index domain anyway.
-    let _ = writeln!(
-        o,
-        "         if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;"
-    );
+    // The accepted bar's own bump; the rejected one is counted on the reject
+    // path above. `Peek` runs a frame that commits nothing and reaches neither.
+    o.push_str(&advance_out_range("         "));
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, ""));
     let _ = writeln!(o, "      }}");
 }
@@ -1138,11 +1158,11 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          return — the same transition, with every store it would make carried in a local \
          instead. Never writes this handle, so peeks may run concurrently with each other.",
     );
-    // Conditional, because for 21 handles the unconditional claim was false: a
-    // C# array field is a reference, so a frame that writes a fixed-size
-    // accumulator has to copy it, and that copy is a real per-call allocation.
-    // The flat-in-period cost — the claim the frame exists to keep — holds
-    // either way, and is what both sentences lead with.
+    // Conditional, because for the handles whose accumulator the frame still
+    // copies the unconditional claim was false: a C# array field is a
+    // reference, so a frame that writes one has to copy it, and that copy is a
+    // real per-call allocation. The flat-in-period cost — the claim the frame
+    // exists to keep — holds either way, and is what both sentences lead with.
     if frame.is_some_and(|f| f.contains("Array.Copy(")) {
         d.para(
             "It copies no buffer: the frame runs against this handle, reading its buffers \
@@ -1169,7 +1189,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     let _ = writeln!(o, "      {{");
     // Ahead of the frame, not left to the transition: a rejected bar must not
     // run any of it.
-    o.push_str(&finite_bar_check(func, "         ", "peek"));
+    o.push_str(&finite_bar_check(func, "         ", "peek", false));
     let body = frame.expect("every tier emits a peek frame");
     let _ = writeln!(o, "         {class} sp = this;");
     o.push_str(body);
@@ -1191,11 +1211,12 @@ fn update_and_fill_doc(func: &FuncDef, inputs: &[String]) -> XmlDoc {
          values and must not overlap an input or each other.",
     );
     d.para(
-        "<see cref=\"OutRange\"/> counts what was committed, which is what makes a \
+        "<see cref=\"OutRange\"/> counts what this call took in, which is what makes a \
          rejection readable: a non-finite bar <c>k</c> throws \
          <see cref=\"System.ArgumentException\"/> exactly as <see cref=\"Update\"/> would, \
-         with bars <c>0..k</c> committed and written, bar <c>k</c> and everything after it \
-         not, and the count advanced by <c>k</c>.",
+         with the bars before <c>k</c> committed and written, bar <c>k</c> and everything \
+         after it not written, and the count advanced by <c>k + 1</c> — the committed bars \
+         plus the rejected one, so the last bar counted is the one that failed.",
     );
     // Rule U6a reads the same as S6a, and a caller of this tier needs telling in
     // the same place a caller of the opener is told.
@@ -1287,11 +1308,17 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
             .iter()
             .map(|b| format!("!double.IsFinite({b}[i])"))
             .collect();
+        // Rule U3 per bar: the rejected bar is counted, its output slot is not
+        // written, and the loop stops — so the caller reads the range to learn
+        // which bar it was.
+        let _ = writeln!(o, "            if( {} )", conds.join(" || "));
+        let _ = writeln!(o, "            {{");
+        o.push_str(&advance_out_range("               "));
         let _ = writeln!(
             o,
-            "            if( {} ) throw Core.StreamFailure(\"{raw}\", \"updateAndFill\", RetCode.BadParam);",
-            conds.join(" || ")
+            "               throw Core.StreamFailure(\"{raw}\", \"updateAndFill\", RetCode.BadParam);"
         );
+        let _ = writeln!(o, "            }}");
     }
     let idx_bars: Vec<String> = inputs.iter().map(|a| format!("{a}[i]")).collect();
     let _ = writeln!(o, "            core.{base}StepImpl(this, {});", idx_bars.join(", "));
@@ -1300,7 +1327,7 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
         let guard = if nullable.contains(name) { format!("if( !{name}.IsEmpty ) ") } else { String::new() };
         let _ = writeln!(o, "            {guard}{name}[i] = cur_{name};");
     }
-    let _ = writeln!(o, "            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;");
+    o.push_str(&advance_out_range("            "));
     let _ = writeln!(o, "         }}");
     let _ = writeln!(o, "      }}");
 }
@@ -1311,8 +1338,9 @@ fn emit_value_property(o: &mut String, func: &FuncDef) {
 
     let mut d = XmlDoc::new();
     d.summary(
-        "The value at the most recently committed bar — the last history bar right after \
-         open, then whatever the latest <see cref=\"Update\"/> returned.",
+        "The value at the last bar this stream counted — the bar <see cref=\"OutRange\"/> \
+         ends on. The last history bar right after open, then whatever the latest \
+         accepted <see cref=\"Update\"/> returned.",
     );
     d.open("remarks");
     d.para("<see cref=\"Peek\"/> does not change it.");
@@ -1469,7 +1497,7 @@ fn localize_state_writes(
 /// value. It sits above the mode predicate, so the outputs it names are
 /// declared by the frame rather than by either arm.
 fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<Statement>> {
-    let st = streaming::identity_step_branch(model, &CsStreamNames)?;
+    let st = streaming::identity_peek_branch(model, &CsStreamNames)?;
     let answer = fresh_value_expr(func, "");
     let bare: HashMap<String, String> = func
         .outputs
@@ -1585,7 +1613,8 @@ fn peek_frame_arm(
 }
 
 /// One model's peek frame: the transition rewritten to commit nothing, run
-/// against the live handle at `indent`.
+/// against the live handle at `indent`. `None` where it cannot be built, which
+/// the caller turns into a panic — every tier emits a frame.
 #[allow(clippy::too_many_arguments)]
 fn peek_frame_arm_named(
     func: &FuncDef,
@@ -1603,8 +1632,7 @@ fn peek_frame_arm_named(
 ) -> Option<String> {
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, names).ok()?;
-    let bufs = streaming::transition_buffers(model, names);
-    let pt = streaming::peek_transition(&transition, &bufs, None).ok()?;
+    let pt = streaming::peek_transition_widest(model, names, &transition, None).ok()?;
     // The extrema rebase moves the cursor before the first store, so its
     // targets localize with the transition's own.
     let mut rebased: Vec<String> = Vec::new();
@@ -1613,6 +1641,7 @@ fn peek_frame_arm_named(
         rebased.push(ex.trailing.clone());
         rebased.extend(ex.index_vars.iter().cloned());
     }
+    let bufs = streaming::transition_buffers(model, names);
     let (locals, body_ir) = localize_state_writes(func, &pt.body, &rebased, &bufs)?;
     // The transition's own early exit — the param-degenerate identity
     // short-circuit — is valueless, because a step returns `void`. Inline in
@@ -1638,10 +1667,11 @@ fn peek_frame_arm_named(
         }
         let cty = types.get(name.as_str()).copied()?;
         // A C# array field is a reference: taking it plain would write the
-        // handle through it. These are the fixed-size per-bar accumulators —
-        // two to five elements — never a period-sized buffer, which the frame
-        // only ever reads. Allocate and `Array.Copy` rather than `Clone()`, the
-        // same shape the copy constructor states its case for.
+        // handle through it. Only the accumulators `peek_transition_widest`
+        // refused reach here — two to five elements, never a period-sized
+        // buffer, which the frame only ever reads. Allocate and `Array.Copy`
+        // rather than `Clone()`, the same shape the copy constructor states its
+        // case for.
         if let Some(elem) = cty.strip_suffix("[]") {
             let _ = writeln!(out, "{pad}{cty} {name} = new {elem}[sp.{name}.Length];");
             let _ = writeln!(out, "{pad}Array.Copy( sp.{name}, {name}, sp.{name}.Length );");
@@ -3884,8 +3914,8 @@ fn emit_period_bank(
 // sub-handles, mirroring java_stream's emit_composed with the same managed
 // simplifications: GC replaces every cleanup ladder and series-free replay,
 // `free()` renders as a no-op so lag-ring seeding reads the still-live
-// intermediate array, and copy-peek needs no sub-call routing at all (sub handles
-// deep-copy through their copy constructors).
+// intermediate array, and the peek frame drives each sub-stream's own public
+// peek rather than committing anything.
 // ---------------------------------------------------------------------------
 
 /// Composed producer name map: identical to [`CsStreamNames`] except the

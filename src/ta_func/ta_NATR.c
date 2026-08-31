@@ -484,10 +484,12 @@ TA_RetCode TA_S_NATR( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_NATR_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_NATR_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double prevATR;
    double lag1_inClose;
@@ -538,6 +540,7 @@ static void TA_NATR_StepImpl( struct TA_NATR_Stream *sp, double inHigh, double i
          *outReal= 0.0;
       }
    }
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
 }
 
@@ -789,6 +792,7 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -839,7 +843,11 @@ TA_RetCode TA_NATR_OpenAndFillInternal( struct TA_NATR_Stream **stream, const do
 TA_LIB_API TA_RetCode TA_NATR_Update( TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_NATR_StepImpl( stream, inHigh, inLow, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -894,6 +902,7 @@ TA_LIB_API TA_RetCode TA_NATR_Peek( const TA_NATR_Stream *stream, double inHigh,
          *outReal= 0.0;
       }
    }
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
@@ -907,7 +916,11 @@ TA_LIB_API TA_RetCode TA_NATR_UpdateAndFill( TA_NATR_Stream *stream, const doubl
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_NATR_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -917,6 +930,27 @@ TA_LIB_API TA_RetCode TA_NATR_UpdateAndFill( TA_NATR_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_NATR_Close( TA_NATR_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_NATR_Value( const TA_NATR_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_NATR_Clone( const TA_NATR_Stream *stream, TA_NATR_Stream **clone )
+{
+   struct TA_NATR_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_NATR_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -279,10 +279,12 @@ TA_RetCode TA_S_CDL3INSIDE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDL3INSIDE_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_CDL3INSIDE_Value). */
+   int cur_outInteger;
    double BodyShortPeriodTotal;
    double BodyLongPeriodTotal;
    double lag1_inOpen;
@@ -337,6 +339,7 @@ static void TA_CDL3INSIDE_StepImpl( struct TA_CDL3INSIDE_Stream *sp, double inOp
     */
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) - sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx];
    sp->BodyShortPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_BodyShortTrailingIdx_derived[sp->ringPos_BodyShortTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag2_inHigh = sp->lag1_inHigh;
@@ -505,6 +508,7 @@ static TA_RetCode TA_CDL3INSIDE_OpenImpl( struct TA_CDL3INSIDE_Stream **stream, 
       sp->lag2_inClose = inClose[historyLen - 2];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -555,7 +559,11 @@ TA_RetCode TA_CDL3INSIDE_OpenAndFillInternal( struct TA_CDL3INSIDE_Stream **stre
 TA_LIB_API TA_RetCode TA_CDL3INSIDE_Update( TA_CDL3INSIDE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CDL3INSIDE_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -599,6 +607,7 @@ TA_LIB_API TA_RetCode TA_CDL3INSIDE_Peek( const TA_CDL3INSIDE_Stream *stream, do
     */
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) - ((sp->ringPos_BodyLongTrailingIdx != pkSlot0) ? sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] : pkVal0);
    sp->BodyShortPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - ((sp->ringPos_BodyShortTrailingIdx != pkSlot1) ? sp->ring_BodyShortTrailingIdx_derived[sp->ringPos_BodyShortTrailingIdx] : pkVal1);
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag2_inHigh = sp->lag1_inHigh;
@@ -629,7 +638,11 @@ TA_LIB_API TA_RetCode TA_CDL3INSIDE_UpdateAndFill( TA_CDL3INSIDE_Stream *stream,
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CDL3INSIDE_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -639,6 +652,39 @@ TA_LIB_API TA_RetCode TA_CDL3INSIDE_UpdateAndFill( TA_CDL3INSIDE_Stream *stream,
 TA_LIB_API TA_RetCode TA_CDL3INSIDE_Close( TA_CDL3INSIDE_Stream *stream )
 {
    TA_CDL3INSIDE_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDL3INSIDE_Value( const TA_CDL3INSIDE_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDL3INSIDE_Clone( const TA_CDL3INSIDE_Stream *stream, TA_CDL3INSIDE_Stream **clone )
+{
+   struct TA_CDL3INSIDE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDL3INSIDE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyLongTrailingIdx_derived = NULL;
+   sp->ring_BodyShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+     sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDL3INSIDE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_BodyShortTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
+     sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDL3INSIDE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyShortTrailingIdx_derived, stream->ring_BodyShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -579,10 +579,12 @@ TA_RetCode TA_S_WILLR( int    startIdx,
 /* Using willr_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 struct TA_WILLR_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_WILLR_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double lowest;
    double highest;
@@ -684,6 +686,7 @@ static void TA_WILLR_StepImpl( struct TA_WILLR_Stream *sp, double inHigh, double
    }
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -876,6 +879,7 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -926,7 +930,11 @@ TA_RetCode TA_WILLR_OpenAndFillInternal( struct TA_WILLR_Stream **stream, const 
 TA_LIB_API TA_RetCode TA_WILLR_Update( TA_WILLR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_WILLR_StepImpl( stream, inHigh, inLow, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -1019,6 +1027,7 @@ TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHig
    }
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -1031,7 +1040,11 @@ TA_LIB_API TA_RetCode TA_WILLR_UpdateAndFill( TA_WILLR_Stream *stream, const dou
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_WILLR_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -1041,6 +1054,45 @@ TA_LIB_API TA_RetCode TA_WILLR_UpdateAndFill( TA_WILLR_Stream *stream, const dou
 TA_LIB_API TA_RetCode TA_WILLR_Close( TA_WILLR_Stream *stream )
 {
    TA_WILLR_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_WILLR_Value( const TA_WILLR_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_WILLR_Clone( const TA_WILLR_Stream *stream, TA_WILLR_Stream **clone )
+{
+   struct TA_WILLR_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_WILLR_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inHigh = NULL;
+   sp->x_inLow = NULL;
+   sp->x_inClose = NULL;
+   if( stream->x_inHigh )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inHigh ) { TA_WILLR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inLow ) { TA_WILLR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inLow, stream->x_inLow, sizeof(double) * copyN ); }
+   if( stream->x_inClose )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inClose ) { TA_WILLR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inClose, stream->x_inClose, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

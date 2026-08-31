@@ -257,22 +257,38 @@ fn a_clone_carries_the_range_and_then_diverges() {
     );
 }
 
-/// A rejected bar must leave the range where it was — the same property the
-/// non-finite gate asserts about the rest of the handle, for the one field that
-/// gate cannot see (it compares the next value, and a moved count changes none).
+/// A rejected bar is still a bar: `update` refuses it, the handle's state does
+/// not move, and the count advances anyway (rule U3). That is what keeps two
+/// handles fed the same series positionally aligned when one rejects a bar the
+/// other accepts — the reason a caller can chain them at all.
+///
+/// `peek` is the mirror and is asserted here too, because a peek that counted a
+/// bar would be a peek that writes the handle, and `&self` is the whole contract.
 #[test]
-fn a_rejected_bar_does_not_advance_the_range() {
+fn a_rejected_bar_is_counted_by_update_and_never_by_peek() {
     let core = Core::new();
     let (_, _, close, _, _) = series(N);
 
     let (mut s, _) = core.sma_open(&close[..WARM], 14).expect("open");
-    let before = s.out_range();
+    let mut expect = s.out_range();
     for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        let held = s.value();
+        let before = s.out_range();
+        assert!(matches!(s.peek(bad), Err(RetCode::BadParam)), "a non-finite bar is rejected");
+        assert_eq!(s.out_range(), before, "peek counts nothing, rejected or not");
+
         assert!(matches!(s.update(bad), Err(RetCode::BadParam)), "a non-finite bar is rejected");
-        assert_eq!(s.out_range(), before, "a rejected bar must not advance the count");
+        expect.count += 1;
+        assert_eq!(s.out_range(), expect, "a rejected bar is counted");
+        assert_eq!(
+            s.value().to_bits(),
+            held.to_bits(),
+            "the rejected bar's output is the previous output, held"
+        );
     }
     s.update(close[WARM]).expect("finite bar");
-    assert_eq!(s.out_range(), OutRange { beg_idx: before.beg_idx, count: before.count + 1 });
+    expect.count += 1;
+    assert_eq!(s.out_range(), expect, "and the handle is still usable");
 }
 
 /// The anchored openers: `<N>_OpenInternal` begins at `max(startIdx, lookback)`,

@@ -144,10 +144,12 @@ TA_RetCode TA_S_TYPPRICE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_TYPPRICE_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_TYPPRICE_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -155,6 +157,7 @@ static void TA_TYPPRICE_StepImpl( struct TA_TYPPRICE_Stream *sp, double inHigh, 
 {
    (void)sp;
    *outReal= (inHigh + inLow + inClose) / 3.0;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_TYPPRICE_OpenImpl( struct TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -199,6 +202,7 @@ static TA_RetCode TA_TYPPRICE_OpenImpl( struct TA_TYPPRICE_Stream **stream, cons
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -249,7 +253,11 @@ TA_RetCode TA_TYPPRICE_OpenAndFillInternal( struct TA_TYPPRICE_Stream **stream, 
 TA_LIB_API TA_RetCode TA_TYPPRICE_Update( TA_TYPPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_TYPPRICE_StepImpl( stream, inHigh, inLow, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -265,6 +273,7 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_Peek( const TA_TYPPRICE_Stream *stream, double
    scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow + inClose) / 3.0;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -277,7 +286,11 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_UpdateAndFill( TA_TYPPRICE_Stream *stream, con
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_TYPPRICE_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -287,6 +300,27 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_UpdateAndFill( TA_TYPPRICE_Stream *stream, con
 TA_LIB_API TA_RetCode TA_TYPPRICE_Close( TA_TYPPRICE_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Value( const TA_TYPPRICE_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Clone( const TA_TYPPRICE_Stream *stream, TA_TYPPRICE_Stream **clone )
+{
+   struct TA_TYPPRICE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_TYPPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

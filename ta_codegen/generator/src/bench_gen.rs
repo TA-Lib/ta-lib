@@ -256,9 +256,9 @@ pub fn write_c_bench(funcs: &[FuncDef], output_dir: &Path) {
 //   (opened over the full history once, outside timing). Input scalars rotate
 //   over the first MASK+1 bars — CSE-proof; write-plus-compute per call, an
 //   apples-to-apples throughput comparison with batch@last.
-// - peek_ns       : one `TA_XXX_Peek` (deep-copy of the handle + one transition,
-//   never commits) — the same rotating feed and index cost as update, so the
-//   peek-minus-update delta is exactly the throwaway-copy overhead.
+// - peek_ns       : one `TA_XXX_Peek` (the same transition, rewritten to commit
+//   nothing) — the same rotating feed and index cost as update, so the
+//   peek-minus-update delta is what running it non-committing costs.
 // - lookback      : `TA_XXX_Lookback(defaults)` — contextualises batch_last.
 // - handle_bytes  : retained bytes of the open handle, measured by overriding
 //   TA_Malloc/TA_Free with a registry and taking the net-live delta across

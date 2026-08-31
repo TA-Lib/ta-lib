@@ -21064,6 +21064,9 @@ fn sv_ac(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -21148,11 +21151,41 @@ fn sv_ac(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ac_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ac_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_accbands(core: &Core, params: &Value) -> String {
@@ -21192,6 +21225,9 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -21296,11 +21332,49 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.accbands_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.2.to_bits() != _v0.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.accbands_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_acos(core: &Core, params: &Value) -> String {
@@ -21337,6 +21411,9 @@ fn sv_acos(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -21421,11 +21498,41 @@ fn sv_acos(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.acos_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.acos_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ad(core: &Core, params: &Value) -> String {
@@ -21462,6 +21569,9 @@ fn sv_ad(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -21546,11 +21656,41 @@ fn sv_ad(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ad_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ad_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_add(core: &Core, params: &Value) -> String {
@@ -21587,6 +21727,9 @@ fn sv_add(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -21671,11 +21814,41 @@ fn sv_add(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.add_open(&fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.add_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_adosc(core: &Core, params: &Value) -> String {
@@ -21714,6 +21887,9 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -21799,11 +21975,41 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.adosc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInFastPeriod, optInSlowPeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.adosc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_adx(core: &Core, params: &Value) -> String {
@@ -21841,6 +22047,9 @@ fn sv_adx(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -21926,11 +22135,41 @@ fn sv_adx(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.adx_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.adx_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_adxr(core: &Core, params: &Value) -> String {
@@ -21968,6 +22207,9 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -22053,11 +22295,41 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.adxr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.adxr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ao(core: &Core, params: &Value) -> String {
@@ -22096,6 +22368,9 @@ fn sv_ao(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -22180,11 +22455,41 @@ fn sv_ao(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ao_open(&fz_h[..p], &fz_l[..p], optInFastPeriod, optInSlowPeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ao_open(&fz_h[..lb], &fz_l[..lb], optInFastPeriod, optInSlowPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_apo(core: &Core, params: &Value) -> String {
@@ -22228,6 +22533,9 @@ fn sv_apo(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -22316,11 +22624,41 @@ fn sv_apo(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.apo_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.apo_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_aroon(core: &Core, params: &Value) -> String {
@@ -22359,6 +22697,9 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -22453,11 +22794,45 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.aroon_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.aroon_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_aroonosc(core: &Core, params: &Value) -> String {
@@ -22495,6 +22870,9 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -22579,11 +22957,41 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.aroonosc_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.aroonosc_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_asin(core: &Core, params: &Value) -> String {
@@ -22620,6 +23028,9 @@ fn sv_asin(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -22704,11 +23115,41 @@ fn sv_asin(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.asin_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.asin_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_atan(core: &Core, params: &Value) -> String {
@@ -22745,6 +23186,9 @@ fn sv_atan(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -22829,11 +23273,41 @@ fn sv_atan(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.atan_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.atan_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_atr(core: &Core, params: &Value) -> String {
@@ -22871,6 +23345,9 @@ fn sv_atr(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -22956,11 +23433,41 @@ fn sv_atr(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.atr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.atr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_avgdev(core: &Core, params: &Value) -> String {
@@ -22998,6 +23505,9 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -23082,11 +23592,41 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.avgdev_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.avgdev_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_avgprice(core: &Core, params: &Value) -> String {
@@ -23123,6 +23663,9 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -23207,11 +23750,41 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.avgprice_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.avgprice_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_bbands(core: &Core, params: &Value) -> String {
@@ -23258,6 +23831,9 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -23366,11 +23942,49 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.bbands_open(&fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.2.to_bits() != _v0.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.bbands_open(&fz_c[..lb], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_beta(core: &Core, params: &Value) -> String {
@@ -23408,6 +24022,9 @@ fn sv_beta(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -23492,11 +24109,41 @@ fn sv_beta(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.beta_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.beta_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_bop(core: &Core, params: &Value) -> String {
@@ -23533,6 +24180,9 @@ fn sv_bop(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -23617,11 +24267,41 @@ fn sv_bop(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.bop_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.bop_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cci(core: &Core, params: &Value) -> String {
@@ -23659,6 +24339,9 @@ fn sv_cci(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -23743,11 +24426,41 @@ fn sv_cci(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cci_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cci_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl2crows(core: &Core, params: &Value) -> String {
@@ -23785,6 +24498,9 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -23872,11 +24588,41 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdl2crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdl2crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
@@ -23914,6 +24660,9 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -24001,11 +24750,41 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdl3blackcrows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdl3blackcrows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3inside(core: &Core, params: &Value) -> String {
@@ -24043,6 +24822,9 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -24130,11 +24912,41 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdl3inside_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdl3inside_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
@@ -24172,6 +24984,9 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -24259,11 +25074,41 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdl3linestrike_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdl3linestrike_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3outside(core: &Core, params: &Value) -> String {
@@ -24301,6 +25146,9 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -24388,11 +25236,41 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdl3outside_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdl3outside_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
@@ -24430,6 +25308,9 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -24517,11 +25398,41 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdl3starsinsouth_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdl3starsinsouth_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
@@ -24559,6 +25470,9 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -24646,11 +25560,41 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdl3whitesoldiers_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdl3whitesoldiers_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
@@ -24689,6 +25633,9 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -24776,11 +25723,41 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlabandonedbaby_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlabandonedbaby_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
@@ -24818,6 +25795,9 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -24905,11 +25885,41 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdladvanceblock_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdladvanceblock_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
@@ -24947,6 +25957,9 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -25034,11 +26047,41 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlbelthold_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlbelthold_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
@@ -25076,6 +26119,9 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -25163,11 +26209,41 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlbreakaway_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlbreakaway_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
@@ -25205,6 +26281,9 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -25292,11 +26371,41 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlclosingmarubozu_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlclosingmarubozu_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
@@ -25334,6 +26443,9 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -25421,11 +26533,41 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlconcealbabyswall_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlconcealbabyswall_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
@@ -25463,6 +26605,9 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -25550,11 +26695,41 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlcounterattack_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlcounterattack_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
@@ -25593,6 +26768,9 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -25680,11 +26858,41 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdldarkcloudcover_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdldarkcloudcover_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdldoji(core: &Core, params: &Value) -> String {
@@ -25722,6 +26930,9 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -25809,11 +27020,41 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdldoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdldoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdldojistar(core: &Core, params: &Value) -> String {
@@ -25851,6 +27092,9 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -25938,11 +27182,41 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdldojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdldojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
@@ -25980,6 +27254,9 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -26067,11 +27344,41 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdldragonflydoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdldragonflydoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
@@ -26109,6 +27416,9 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -26196,11 +27506,41 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlengulfing_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlengulfing_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
@@ -26239,6 +27579,9 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -26326,11 +27669,41 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdleveningdojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdleveningdojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
@@ -26369,6 +27742,9 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -26456,11 +27832,41 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdleveningstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdleveningstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
@@ -26498,6 +27904,9 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -26585,11 +27994,41 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlgapsidesidewhite_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlgapsidesidewhite_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
@@ -26627,6 +28066,9 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -26714,11 +28156,41 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlgravestonedoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlgravestonedoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhammer(core: &Core, params: &Value) -> String {
@@ -26756,6 +28228,9 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -26843,11 +28318,41 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlhammer_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlhammer_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
@@ -26885,6 +28390,9 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -26972,11 +28480,41 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlhangingman_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlhangingman_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlharami(core: &Core, params: &Value) -> String {
@@ -27014,6 +28552,9 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -27101,11 +28642,41 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlharami_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlharami_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
@@ -27143,6 +28714,9 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -27230,11 +28804,41 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlharamicross_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlharamicross_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
@@ -27272,6 +28876,9 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -27359,11 +28966,41 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlhighwave_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlhighwave_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
@@ -27401,6 +29038,9 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -27488,11 +29128,41 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlhikkake_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlhikkake_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
@@ -27530,6 +29200,9 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -27617,11 +29290,41 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlhikkakemod_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlhikkakemod_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
@@ -27659,6 +29362,9 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -27746,11 +29452,41 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlhomingpigeon_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlhomingpigeon_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
@@ -27788,6 +29524,9 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -27875,11 +29614,41 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlidentical3crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlidentical3crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlinneck(core: &Core, params: &Value) -> String {
@@ -27917,6 +29686,9 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -28004,11 +29776,41 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlinneck_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlinneck_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
@@ -28046,6 +29848,9 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -28133,11 +29938,41 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlinvertedhammer_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlinvertedhammer_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlkicking(core: &Core, params: &Value) -> String {
@@ -28175,6 +30010,9 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -28262,11 +30100,41 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlkicking_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlkicking_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
@@ -28304,6 +30172,9 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -28391,11 +30262,41 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlkickingbylength_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlkickingbylength_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
@@ -28433,6 +30334,9 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -28520,11 +30424,41 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlladderbottom_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlladderbottom_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
@@ -28562,6 +30496,9 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -28649,11 +30586,41 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdllongleggeddoji_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdllongleggeddoji_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdllongline(core: &Core, params: &Value) -> String {
@@ -28691,6 +30658,9 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -28778,11 +30748,41 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdllongline_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdllongline_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
@@ -28820,6 +30820,9 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -28907,11 +30910,41 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlmarubozu_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlmarubozu_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
@@ -28949,6 +30982,9 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -29036,11 +31072,41 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlmatchinglow_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlmatchinglow_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmathold(core: &Core, params: &Value) -> String {
@@ -29079,6 +31145,9 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -29166,11 +31235,41 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlmathold_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlmathold_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
@@ -29209,6 +31308,9 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -29296,11 +31398,41 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlmorningdojistar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlmorningdojistar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
@@ -29339,6 +31471,9 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -29426,11 +31561,41 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlmorningstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p], optInPenetration) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlmorningstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInPenetration).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlonneck(core: &Core, params: &Value) -> String {
@@ -29468,6 +31633,9 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -29555,11 +31723,41 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlonneck_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlonneck_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
@@ -29597,6 +31795,9 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -29684,11 +31885,41 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlpiercing_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlpiercing_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
@@ -29726,6 +31957,9 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -29813,11 +32047,41 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlrickshawman_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlrickshawman_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
@@ -29855,6 +32119,9 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -29942,11 +32209,41 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlrisefall3methods_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlrisefall3methods_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
@@ -29984,6 +32281,9 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -30071,11 +32371,41 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlseparatinglines_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlseparatinglines_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
@@ -30113,6 +32443,9 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -30200,11 +32533,41 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlshootingstar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlshootingstar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlshortline(core: &Core, params: &Value) -> String {
@@ -30242,6 +32605,9 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -30329,11 +32695,41 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlshortline_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlshortline_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
@@ -30371,6 +32767,9 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -30458,11 +32857,41 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlspinningtop_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlspinningtop_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
@@ -30500,6 +32929,9 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -30587,11 +33019,41 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlstalledpattern_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlstalledpattern_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
@@ -30629,6 +33091,9 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -30716,11 +33181,41 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlsticksandwich_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlsticksandwich_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdltakuri(core: &Core, params: &Value) -> String {
@@ -30758,6 +33253,9 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -30845,11 +33343,41 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdltakuri_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdltakuri_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
@@ -30887,6 +33415,9 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -30974,11 +33505,41 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdltasukigap_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdltasukigap_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
@@ -31016,6 +33577,9 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -31103,11 +33667,41 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlthrusting_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlthrusting_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdltristar(core: &Core, params: &Value) -> String {
@@ -31145,6 +33739,9 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -31232,11 +33829,41 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdltristar_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdltristar_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
@@ -31274,6 +33901,9 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -31361,11 +33991,41 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlunique3river_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlunique3river_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
@@ -31403,6 +34063,9 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -31490,11 +34153,41 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlupsidegap2crows_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlupsidegap2crows_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
@@ -31532,6 +34225,9 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -31619,11 +34315,41 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cdlxsidegap3methods_open(&fz_o[..p], &fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cdlxsidegap3methods_open(&fz_o[..lb], &fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ceil(core: &Core, params: &Value) -> String {
@@ -31660,6 +34386,9 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -31744,11 +34473,41 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ceil_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ceil_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cmf(core: &Core, params: &Value) -> String {
@@ -31786,6 +34545,9 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -31870,11 +34632,41 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cmf_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cmf_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cmo(core: &Core, params: &Value) -> String {
@@ -31912,6 +34704,9 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -31997,11 +34792,41 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cmo_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cmo_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cmou(core: &Core, params: &Value) -> String {
@@ -32039,6 +34864,9 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -32123,11 +34951,41 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cmou_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cmou_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_correl(core: &Core, params: &Value) -> String {
@@ -32165,6 +35023,9 @@ fn sv_correl(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -32249,11 +35110,41 @@ fn sv_correl(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.correl_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.correl_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cos(core: &Core, params: &Value) -> String {
@@ -32290,6 +35181,9 @@ fn sv_cos(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -32374,11 +35268,41 @@ fn sv_cos(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cos_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cos_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_cosh(core: &Core, params: &Value) -> String {
@@ -32415,6 +35339,9 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -32499,11 +35426,41 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.cosh_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.cosh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_dema(core: &Core, params: &Value) -> String {
@@ -32541,6 +35498,9 @@ fn sv_dema(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -32626,11 +35586,41 @@ fn sv_dema(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.dema_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.dema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_div(core: &Core, params: &Value) -> String {
@@ -32667,6 +35657,9 @@ fn sv_div(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -32751,11 +35744,41 @@ fn sv_div(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.div_open(&fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.div_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_dx(core: &Core, params: &Value) -> String {
@@ -32793,6 +35816,9 @@ fn sv_dx(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -32878,11 +35904,41 @@ fn sv_dx(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.dx_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.dx_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_efi(core: &Core, params: &Value) -> String {
@@ -32920,6 +35976,9 @@ fn sv_efi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -33004,11 +36063,41 @@ fn sv_efi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.efi_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.efi_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ema(core: &Core, params: &Value) -> String {
@@ -33046,6 +36135,9 @@ fn sv_ema(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -33131,11 +36223,41 @@ fn sv_ema(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ema_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_exp(core: &Core, params: &Value) -> String {
@@ -33172,6 +36294,9 @@ fn sv_exp(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -33256,11 +36381,41 @@ fn sv_exp(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.exp_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.exp_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_floor(core: &Core, params: &Value) -> String {
@@ -33297,6 +36452,9 @@ fn sv_floor(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -33381,11 +36539,41 @@ fn sv_floor(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.floor_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.floor_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_hma(core: &Core, params: &Value) -> String {
@@ -33423,6 +36611,9 @@ fn sv_hma(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -33507,11 +36698,41 @@ fn sv_hma(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.hma_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.hma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
@@ -33548,6 +36769,9 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -33633,11 +36857,41 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ht_dcperiod_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ht_dcperiod_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
@@ -33674,6 +36928,9 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -33759,11 +37016,41 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ht_dcphase_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ht_dcphase_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_phasor(core: &Core, params: &Value) -> String {
@@ -33801,6 +37088,9 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -33896,11 +37186,45 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ht_phasor_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ht_phasor_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_sine(core: &Core, params: &Value) -> String {
@@ -33938,6 +37262,9 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -34033,11 +37360,45 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ht_sine_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ht_sine_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_trendline(core: &Core, params: &Value) -> String {
@@ -34074,6 +37435,9 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -34159,11 +37523,41 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ht_trendline_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ht_trendline_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
@@ -34200,6 +37594,9 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -34285,11 +37682,41 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ht_trendmode_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ht_trendmode_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_imi(core: &Core, params: &Value) -> String {
@@ -34327,6 +37754,9 @@ fn sv_imi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -34411,11 +37841,41 @@ fn sv_imi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.imi_open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.imi_open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_kama(core: &Core, params: &Value) -> String {
@@ -34453,6 +37913,9 @@ fn sv_kama(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -34538,11 +38001,41 @@ fn sv_kama(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.kama_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.kama_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_linearreg(core: &Core, params: &Value) -> String {
@@ -34580,6 +38073,9 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -34664,11 +38160,41 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.linearreg_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.linearreg_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
@@ -34706,6 +38232,9 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -34790,11 +38319,41 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.linearreg_angle_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.linearreg_angle_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
@@ -34832,6 +38391,9 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -34916,11 +38478,41 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.linearreg_intercept_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.linearreg_intercept_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
@@ -34958,6 +38550,9 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -35042,11 +38637,41 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.linearreg_slope_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.linearreg_slope_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ln(core: &Core, params: &Value) -> String {
@@ -35083,6 +38708,9 @@ fn sv_ln(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -35167,11 +38795,41 @@ fn sv_ln(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ln_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ln_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_log10(core: &Core, params: &Value) -> String {
@@ -35208,6 +38866,9 @@ fn sv_log10(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -35292,11 +38953,41 @@ fn sv_log10(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.log10_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.log10_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ma(core: &Core, params: &Value) -> String {
@@ -35339,6 +39030,9 @@ fn sv_ma(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -35427,11 +39121,41 @@ fn sv_ma(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ma_open(&fz_c[..p], optInTimePeriod, optInMAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ma_open(&fz_c[..lb], optInTimePeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_macd(core: &Core, params: &Value) -> String {
@@ -35473,6 +39197,9 @@ fn sv_macd(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -35578,11 +39305,49 @@ fn sv_macd(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.macd_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.2.to_bits() != _v0.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.macd_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_macdext(core: &Core, params: &Value) -> String {
@@ -35639,6 +39404,9 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -35747,11 +39515,49 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.macdext_open(&fz_c[..p], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.2.to_bits() != _v0.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.macdext_open(&fz_c[..lb], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_macdfix(core: &Core, params: &Value) -> String {
@@ -35791,6 +39597,9 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -35896,11 +39705,49 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.macdfix_open(&fz_c[..p], optInSignalPeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.2.to_bits() != _v0.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.macdfix_open(&fz_c[..lb], optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mama(core: &Core, params: &Value) -> String {
@@ -35940,6 +39787,9 @@ fn sv_mama(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -36035,11 +39885,45 @@ fn sv_mama(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.mama_open(&fz_c[..p], optInFastLimit, optInSlowLimit) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.mama_open(&fz_c[..lb], optInFastLimit, optInSlowLimit).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_marketfi(core: &Core, params: &Value) -> String {
@@ -36076,6 +39960,9 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -36160,11 +40047,41 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.marketfi_open(&fz_h[..p], &fz_l[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.marketfi_open(&fz_h[..lb], &fz_l[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mavp(core: &Core, params: &Value) -> String {
@@ -36209,6 +40126,9 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -36297,11 +40217,41 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.mavp_open(&fz_c[..p], &fz_v[..p], optInMinPeriod, optInMaxPeriod, optInMAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.mavp_open(&fz_c[..lb], &fz_v[..lb], optInMinPeriod, optInMaxPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_max(core: &Core, params: &Value) -> String {
@@ -36339,6 +40289,9 @@ fn sv_max(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -36423,11 +40376,41 @@ fn sv_max(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.max_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.max_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_maxindex(core: &Core, params: &Value) -> String {
@@ -36465,6 +40448,9 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -36549,11 +40535,41 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.maxindex_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.maxindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_medprice(core: &Core, params: &Value) -> String {
@@ -36590,6 +40606,9 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -36674,11 +40693,41 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.medprice_open(&fz_h[..p], &fz_l[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.medprice_open(&fz_h[..lb], &fz_l[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mfi(core: &Core, params: &Value) -> String {
@@ -36716,6 +40765,9 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -36800,11 +40852,41 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.mfi_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.mfi_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_midpoint(core: &Core, params: &Value) -> String {
@@ -36842,6 +40924,9 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -36926,11 +41011,41 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.midpoint_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.midpoint_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_midprice(core: &Core, params: &Value) -> String {
@@ -36968,6 +41083,9 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -37052,11 +41170,41 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.midprice_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.midprice_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_min(core: &Core, params: &Value) -> String {
@@ -37094,6 +41242,9 @@ fn sv_min(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -37178,11 +41329,41 @@ fn sv_min(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.min_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.min_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minindex(core: &Core, params: &Value) -> String {
@@ -37220,6 +41401,9 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -37304,11 +41488,41 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.minindex_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va != _v0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src != u_fork { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va != u_src || vb != u_fork { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.minindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minmax(core: &Core, params: &Value) -> String {
@@ -37347,6 +41561,9 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -37441,11 +41658,45 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.minmax_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.minmax_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minmaxindex(core: &Core, params: &Value) -> String {
@@ -37484,6 +41735,9 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let zsign = 0i64;
@@ -37578,11 +41832,45 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.minmaxindex_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0 != _v0.0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1 != _v0.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0 != u_fork.0 { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.0 != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1 != u_fork.1 { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0 != u_src.0 || vb.0 != u_fork.0 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1 != u_src.1 || vb.1 != u_fork.1 { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.minmaxindex_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minus_di(core: &Core, params: &Value) -> String {
@@ -37620,6 +41908,9 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -37705,11 +41996,41 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.minus_di_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.minus_di_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_minus_dm(core: &Core, params: &Value) -> String {
@@ -37747,6 +42068,9 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -37832,11 +42156,41 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.minus_dm_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.minus_dm_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mom(core: &Core, params: &Value) -> String {
@@ -37874,6 +42228,9 @@ fn sv_mom(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -37958,11 +42315,41 @@ fn sv_mom(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.mom_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.mom_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_mult(core: &Core, params: &Value) -> String {
@@ -37999,6 +42386,9 @@ fn sv_mult(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -38083,11 +42473,41 @@ fn sv_mult(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.mult_open(&fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.mult_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_natr(core: &Core, params: &Value) -> String {
@@ -38125,6 +42545,9 @@ fn sv_natr(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -38210,11 +42633,41 @@ fn sv_natr(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.natr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.natr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_nvi(core: &Core, params: &Value) -> String {
@@ -38251,6 +42704,9 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -38335,11 +42791,41 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.nvi_open(&fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.nvi_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_obv(core: &Core, params: &Value) -> String {
@@ -38376,6 +42862,9 @@ fn sv_obv(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -38460,11 +42949,41 @@ fn sv_obv(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.obv_open(&fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.obv_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_plus_di(core: &Core, params: &Value) -> String {
@@ -38502,6 +43021,9 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -38587,11 +43109,41 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.plus_di_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.plus_di_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_plus_dm(core: &Core, params: &Value) -> String {
@@ -38629,6 +43181,9 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -38714,11 +43269,41 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.plus_dm_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.plus_dm_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ppo(core: &Core, params: &Value) -> String {
@@ -38762,6 +43347,9 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -38850,11 +43438,41 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ppo_open(&fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ppo_open(&fz_c[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_pvi(core: &Core, params: &Value) -> String {
@@ -38891,6 +43509,9 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -38975,11 +43596,41 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.pvi_open(&fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.pvi_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_pvo(core: &Core, params: &Value) -> String {
@@ -39023,6 +43674,9 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -39111,11 +43765,41 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.pvo_open(&fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.pvo_open(&fz_v[..lb], optInFastPeriod, optInSlowPeriod, optInMAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_qstick(core: &Core, params: &Value) -> String {
@@ -39153,6 +43837,9 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -39237,11 +43924,41 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.qstick_open(&fz_o[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_o[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_o[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.qstick_open(&fz_o[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_roc(core: &Core, params: &Value) -> String {
@@ -39279,6 +43996,9 @@ fn sv_roc(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -39363,11 +44083,41 @@ fn sv_roc(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.roc_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.roc_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_rocp(core: &Core, params: &Value) -> String {
@@ -39405,6 +44155,9 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -39489,11 +44242,41 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.rocp_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.rocp_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_rocr(core: &Core, params: &Value) -> String {
@@ -39531,6 +44314,9 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -39615,11 +44401,41 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.rocr_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.rocr_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_rocr100(core: &Core, params: &Value) -> String {
@@ -39657,6 +44473,9 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -39741,11 +44560,41 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.rocr100_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.rocr100_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_rsi(core: &Core, params: &Value) -> String {
@@ -39783,6 +44632,9 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -39868,11 +44720,41 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.rsi_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.rsi_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sar(core: &Core, params: &Value) -> String {
@@ -39911,6 +44793,9 @@ fn sv_sar(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -39995,11 +44880,41 @@ fn sv_sar(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.sar_open(&fz_h[..p], &fz_l[..p], optInAcceleration, optInMaximum) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.sar_open(&fz_h[..lb], &fz_l[..lb], optInAcceleration, optInMaximum).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sarext(core: &Core, params: &Value) -> String {
@@ -40044,6 +44959,9 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -40128,11 +45046,41 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.sarext_open(&fz_h[..p], &fz_l[..p], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.sarext_open(&fz_h[..lb], &fz_l[..lb], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sin(core: &Core, params: &Value) -> String {
@@ -40169,6 +45117,9 @@ fn sv_sin(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -40253,11 +45204,41 @@ fn sv_sin(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.sin_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.sin_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sinh(core: &Core, params: &Value) -> String {
@@ -40294,6 +45275,9 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -40378,11 +45362,41 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.sinh_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.sinh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sma(core: &Core, params: &Value) -> String {
@@ -40420,6 +45434,9 @@ fn sv_sma(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -40504,11 +45521,41 @@ fn sv_sma(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.sma_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.sma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_smi(core: &Core, params: &Value) -> String {
@@ -40550,6 +45597,9 @@ fn sv_smi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -40645,11 +45695,45 @@ fn sv_smi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.smi_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.smi_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sqrt(core: &Core, params: &Value) -> String {
@@ -40686,6 +45770,9 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -40770,11 +45857,41 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.sqrt_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.sqrt_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_stddev(core: &Core, params: &Value) -> String {
@@ -40813,6 +45930,9 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -40897,11 +46017,41 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.stddev_open(&fz_c[..p], optInTimePeriod, optInNbDev) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.stddev_open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_stoch(core: &Core, params: &Value) -> String {
@@ -40952,6 +46102,9 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -41050,11 +46203,45 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.stoch_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.stoch_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_stochf(core: &Core, params: &Value) -> String {
@@ -41099,6 +46286,9 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -41197,11 +46387,45 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.stochf_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.stochf_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_stochrsi(core: &Core, params: &Value) -> String {
@@ -41247,6 +46471,9 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -41346,11 +46573,45 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.stochrsi_open(&fz_c[..p], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.stochrsi_open(&fz_c[..lb], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sub(core: &Core, params: &Value) -> String {
@@ -41387,6 +46648,9 @@ fn sv_sub(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -41471,11 +46735,41 @@ fn sv_sub(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.sub_open(&fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.sub_open(&fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_sum(core: &Core, params: &Value) -> String {
@@ -41513,6 +46807,9 @@ fn sv_sum(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -41597,11 +46894,41 @@ fn sv_sum(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.sum_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.sum_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_t3(core: &Core, params: &Value) -> String {
@@ -41640,6 +46967,9 @@ fn sv_t3(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -41725,11 +47055,41 @@ fn sv_t3(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.t3_open(&fz_c[..p], optInTimePeriod, optInVFactor) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.t3_open(&fz_c[..lb], optInTimePeriod, optInVFactor).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_tan(core: &Core, params: &Value) -> String {
@@ -41766,6 +47126,9 @@ fn sv_tan(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -41850,11 +47213,41 @@ fn sv_tan(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.tan_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.tan_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_tanh(core: &Core, params: &Value) -> String {
@@ -41891,6 +47284,9 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -41975,11 +47371,41 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.tanh_open(&fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.tanh_open(&fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_tema(core: &Core, params: &Value) -> String {
@@ -42017,6 +47443,9 @@ fn sv_tema(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -42102,11 +47531,41 @@ fn sv_tema(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.tema_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.tema_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_trange(core: &Core, params: &Value) -> String {
@@ -42143,6 +47602,9 @@ fn sv_trange(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -42227,11 +47689,41 @@ fn sv_trange(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.trange_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.trange_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_trima(core: &Core, params: &Value) -> String {
@@ -42269,6 +47761,9 @@ fn sv_trima(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -42353,11 +47848,41 @@ fn sv_trima(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.trima_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.trima_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_trix(core: &Core, params: &Value) -> String {
@@ -42395,6 +47920,9 @@ fn sv_trix(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -42480,11 +48008,41 @@ fn sv_trix(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.trix_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.trix_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_tsf(core: &Core, params: &Value) -> String {
@@ -42522,6 +48080,9 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -42606,11 +48167,41 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.tsf_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.tsf_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_typprice(core: &Core, params: &Value) -> String {
@@ -42647,6 +48238,9 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -42731,11 +48325,41 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.typprice_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.typprice_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_ultosc(core: &Core, params: &Value) -> String {
@@ -42775,6 +48399,9 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -42859,11 +48486,41 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.ultosc_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.ultosc_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_var(core: &Core, params: &Value) -> String {
@@ -42902,6 +48559,9 @@ fn sv_var(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -42986,11 +48646,41 @@ fn sv_var(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.var_open(&fz_c[..p], optInTimePeriod, optInNbDev) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.var_open(&fz_c[..lb], optInTimePeriod, optInNbDev).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_vwap(core: &Core, params: &Value) -> String {
@@ -43027,6 +48717,9 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -43111,11 +48804,41 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.vwap_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], &fz_v[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.vwap_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], &fz_v[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_vwma(core: &Core, params: &Value) -> String {
@@ -43153,6 +48876,9 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -43237,11 +48963,41 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.vwma_open(&fz_c[..p], &fz_v[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t], fz_v[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t], fz_v[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.vwma_open(&fz_c[..lb], &fz_v[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_wad(core: &Core, params: &Value) -> String {
@@ -43278,6 +49034,9 @@ fn sv_wad(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -43362,11 +49121,41 @@ fn sv_wad(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.wad_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.wad_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_wclprice(core: &Core, params: &Value) -> String {
@@ -43403,6 +49192,9 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -43487,11 +49279,41 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.wclprice_open(&fz_h[..p], &fz_l[..p], &fz_c[..p]) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.wclprice_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb]).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_willr(core: &Core, params: &Value) -> String {
@@ -43529,6 +49351,9 @@ fn sv_willr(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -43613,11 +49438,41 @@ fn sv_willr(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.willr_open(&fz_h[..p], &fz_l[..p], &fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t], fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.willr_open(&fz_h[..lb], &fz_l[..lb], &fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn sv_wma(core: &Core, params: &Value) -> String {
@@ -43655,6 +49510,9 @@ fn sv_wma(core: &Core, params: &Value) -> String {
     let mut range_ok = true;
     let mut range_legs = 0i64;
     let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
     let mut ufill_checked = 0i32;
     let mut ufill_ok = true;
     let mut zsign = 0i64;
@@ -43739,11 +49597,41 @@ fn sv_wma(core: &Core, params: &Value) -> String {
                 }
             }
         }
+        if let Some(&p) = pcs.first() {
+            match c2.wma_open(&fz_c[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.to_bits() != _v0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_c[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_c[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.to_bits() != u_fork.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.to_bits() != u_src.to_bits() || vb.to_bits() != u_fork.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
         if lb >= 1 && lb < svN {
             if c2.wma_open(&fz_c[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
         }
     }
-    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_n\":3,\"range_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok), i32::from(peek_all), zsign, diag)
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), zsign, diag)
 }
 
 fn handle_stream_verify(core: &Core, params: &Value) -> String {

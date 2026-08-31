@@ -490,13 +490,13 @@ impl Core {
 /// over the same series. Open with [`Core::trima_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
-/// [`Self::out_range`] reports the bars it has produced a value for.
+/// [`Self::out_range`] reports the bars this handle has an output for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TRIMA_Stream")]
 pub struct TrimaStream {
     state: TrimaStreamState,
-    /// The bars this handle has produced a value for — see [`Self::out_range`].
+    /// The bars this handle has an output for — see [`Self::out_range`].
     out: OutRange,
 }
 
@@ -515,6 +515,7 @@ struct TrimaStreamState {
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -546,6 +547,7 @@ impl Core {
             // Step (4)
             sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             (*outReal) = sp.numerator * sp.factor;
+            sp.cur_outReal = (*outReal);
             sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
             sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
             if sp.ringPos_middleIdx >= sp.ringCap_middleIdx {
@@ -578,6 +580,7 @@ impl Core {
             // Step (4)
             sp.tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
             (*outReal) = sp.numerator * sp.factor;
+            sp.cur_outReal = (*outReal);
             sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] = inReal;
             sp.ringPos_middleIdx = sp.ringPos_middleIdx + 1;
             if sp.ringPos_middleIdx >= sp.ringCap_middleIdx {
@@ -838,6 +841,7 @@ impl Core {
                 numeratorAdd,
                 factor,
                 tempReal,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
                 ringPos_middleIdx: 0_usize,
                 ringCap_middleIdx: cap_middleIdx as usize,
                 ring_middleIdx_inReal,
@@ -1046,6 +1050,7 @@ impl Core {
                 numeratorAdd,
                 factor,
                 tempReal,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
                 ringPos_middleIdx: 0_usize,
                 ringCap_middleIdx: cap_middleIdx as usize,
                 ring_middleIdx_inReal,
@@ -1170,15 +1175,22 @@ impl TrimaStream {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
-    /// That check runs before anything is written, so the handle is left
-    /// exactly as it was and the stream stays usable:
-    /// skip the bar, or close and re-open on a clean history. This is the
-    /// one place the streaming tier is stricter than the batch API, which
-    /// computes on whatever it is given — a handle retains its state, so a
-    /// single non-finite bar would poison every later value it produces.
+    /// That check runs before anything is written, so the handle's state is
+    /// left exactly as it was and the stream stays usable: skip the bar, or
+    /// close and re-open on a clean history. This is the one place the
+    /// streaming tier is stricter than the batch API, which computes on
+    /// whatever it is given — a handle retains its state, so a single
+    /// non-finite bar would poison every later value it produces.
+    ///
+    /// [`Self::out_range`] counts the rejected bar all the same: it happened,
+    /// so two handles fed the same series stay positionally aligned even when
+    /// one rejects a bar the other accepts.
     #[doc(alias = "TA_TRIMA_Update")]
     pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {
         if !inReal.is_finite() {
+            if self.out.count < Core::MAX_INDEX {
+                self.out.count += 1;
+            }
             return Err(RetCode::BadParam);
         }
         let mut outReal: f64 = 0.0_f64;
@@ -1194,7 +1206,7 @@ impl TrimaStream {
     /// argument checks instead of `n`. `n` is `inReal.len()`; the outputs must
     /// hold at least that many. Never allocates.
     ///
-    /// [`Self::out_range`] counts what was committed, which is what makes the
+    /// [`Self::out_range`] counts what this call took in, which is what makes the
     /// rejection below readable: there is no second out-parameter for it.
     ///
     /// # Errors
@@ -1204,7 +1216,8 @@ impl TrimaStream {
     /// is not finite. A non-finite bar `k` is rejected exactly as `update`
     /// rejects it: bars `0..k` stay committed and their values written, bar `k`
     /// and everything after it is not, and `out_range().count` has advanced by
-    /// `k`.
+    /// `k + 1` — the committed bars, plus the rejected one, which is counted
+    /// but never written.
     #[doc(alias = "TA_TRIMA_UpdateAndFill")]
     pub fn update_and_fill(&mut self, inReal: &[f64], outReal: &mut [f64]) -> Result<(), RetCode> {
         let barCount = inReal.len();
@@ -1213,6 +1226,9 @@ impl TrimaStream {
         }
         for i in 0..barCount {
             if !inReal[i].is_finite() {
+                if self.out.count < Core::MAX_INDEX {
+                    self.out.count += 1;
+                }
                 return Err(RetCode::BadParam);
             }
             Core::trima_step_impl(&mut self.state, inReal[i], &mut outReal[i]);
@@ -1226,14 +1242,15 @@ impl TrimaStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
-    /// `update` rejects it.
+    /// [`RetCode::BadParam`] if any bar value is not finite, on the same test
+    /// `update` applies — but a rejected peek changes nothing at all, where a
+    /// rejected `update` still counts the bar in [`Self::out_range`].
     #[doc(alias = "TA_TRIMA_Peek")]
     pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {
         if !inReal.is_finite() {
@@ -1244,6 +1261,7 @@ impl TrimaStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             if sp.optInTimePeriod % 2 == 1 {
+                let mut cur_outReal = sp.cur_outReal;
                 let mut numerator = sp.numerator;
                 let mut numeratorAdd = sp.numeratorAdd;
                 let mut numeratorSub = sp.numeratorSub;
@@ -1277,6 +1295,7 @@ impl TrimaStream {
                 // Step (4)
                 tempReal = (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal1 });
                 (*outReal) = numerator * sp.factor;
+                cur_outReal = (*outReal);
                 ringPos_middleIdx = ringPos_middleIdx + 1;
                 if ringPos_middleIdx >= sp.ringCap_middleIdx {
                     ringPos_middleIdx = 0;
@@ -1286,6 +1305,7 @@ impl TrimaStream {
                     ringPos_trailingIdx = 0;
                 }
             } else {
+                let mut cur_outReal = sp.cur_outReal;
                 let mut numerator = sp.numerator;
                 let mut numeratorAdd = sp.numeratorAdd;
                 let mut numeratorSub = sp.numeratorSub;
@@ -1319,6 +1339,7 @@ impl TrimaStream {
                 // Step (4)
                 tempReal = (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal1 });
                 (*outReal) = numerator * sp.factor;
+                cur_outReal = (*outReal);
                 ringPos_middleIdx = ringPos_middleIdx + 1;
                 if ringPos_middleIdx >= sp.ringCap_middleIdx {
                     ringPos_middleIdx = 0;
@@ -1332,12 +1353,26 @@ impl TrimaStream {
         Ok(outReal)
     }
 
-    /// The bars this stream has produced a value for, in the input series'
+    /// The value(s) at the last bar the stream counted — the bar
+    /// [`Self::out_range`] ends on — without recomputing. Seeded by the opener,
+    /// refreshed by every accepted `update` and `update_and_fill`, and left
+    /// alone by `peek`.
+    ///
+    /// A clone carries them verbatim, so a forked handle can be asked its
+    /// current value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_TRIMA_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
+    }
+
+    /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
     /// It is what [`Core::TRIMA`] reports over the same bars: the opener sets it
-    /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one
-    /// to the count, `peek` leaves it alone, and a clone carries it verbatim.
+    /// to `(lookback, historyLen - lookback)`, every `update` adds one to the
+    /// count — a bar rejected for being non-finite included, because it still
+    /// happened — `peek` leaves it alone, and a clone carries it verbatim.
     /// A plain `Open` hands back only the last value, a subset of this range,
     /// because the caller chose not to take the fill.
     #[doc(alias = "TA_StreamOutRange")]

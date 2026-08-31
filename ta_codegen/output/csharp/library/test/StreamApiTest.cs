@@ -887,6 +887,56 @@ public static class StreamApiTest
         Check(after == before, $"Update allocates nothing ({after - before} bytes over {closes.Length - 400} bars)");
     }
 
+    /// <summary>
+    /// Peek allocates nothing on a handle whose accumulator stores the frame
+    /// could delete.
+    /// </summary>
+    /// <remarks>
+    /// <para>This is the C# half of a property no value gate can see, and the
+    /// only backend where it is worth measuring at runtime: a C# array field is
+    /// a reference, so a frame that copied one would allocate — and RyuJIT does
+    /// not stack-allocate arrays, so the bytes are real. Java's escape analysis
+    /// can hide the same copy, and C and Rust never had it.</para>
+    /// <para>HT_DCPERIOD is the sharpest case in the corpus, with eight
+    /// <c>double[3]</c> accumulators — 384 B per call when they are copied. SMA
+    /// is the control: no accumulator, so it reads zero either way, and a run
+    /// that reported zero for both would still fail if the sweep stopped
+    /// running.</para>
+    /// </remarks>
+    private static void PeekDoesNotAllocate()
+    {
+        var core = new Core();
+        double[] closes = Closes(4000);
+
+        Core.HtDcperiodStream ht = core.HtDcperiodOpen(closes[..200]);
+        Core.SmaStream sma = core.SmaOpen(closes[..40], 30);
+
+        // Warm up: first-call JIT and any lazy init must not be attributed.
+        double sink = 0;
+        int calls = 0;
+        for (int t = 200; t < 600; t++)
+        {
+            sink += ht.Peek(closes[t]) + sma.Peek(closes[t]);
+        }
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int t = 600; t < closes.Length; t++)
+        {
+            sink += ht.Peek(closes[t]) + sma.Peek(closes[t]);
+            calls += 2;
+        }
+        long after = GC.GetAllocatedBytesForCurrentThread();
+
+        // A byte count of zero reads the same whether the sweep ran or not, so
+        // both are asserted: the call count, and a sink no run of these two
+        // functions can leave at its initial value.
+        Check(calls >= 6000, $"the Peek sweep ran ({calls} calls)");
+        Check(sink != 0 && !double.IsNaN(sink), "the Peek sweep produced values");
+        Check(after == before,
+              $"Peek allocates nothing ({after - before} bytes over {calls} calls, half "
+              + "of them HT_DCPERIOD's eight fixed-size accumulators)");
+    }
+
     /// <summary>Multi-output handles return a value type, not a fresh object.</summary>
     private static void MultiOutputValueIsAStruct()
     {
@@ -1193,8 +1243,8 @@ public static class StreamApiTest
     private static void UfRangeEq(string what, OutRange a, OutRange b)
     {
         Check(a.BegIdx == b.BegIdx && a.Count == b.Count,
-              $"{what}: UpdateAndFill committed ({a.BegIdx},{a.Count}), "
-              + $"{UfBad} Updates committed ({b.BegIdx},{b.Count})");
+              $"{what}: UpdateAndFill reports ({a.BegIdx},{a.Count}), the control "
+              + $"({UfBad} Updates then the rejected bar) reports ({b.BegIdx},{b.Count})");
         _ufCommits++;
     }
 
@@ -1217,10 +1267,14 @@ public static class StreamApiTest
     /// exactly as <c>Update</c> would — and the bars before it stay committed with
     /// their values written. That is the one place in the API where a call fails
     /// AND leaves output behind, so what it leaves is pinned against a CONTROL
-    /// handle driven over the same first <c>k</c> bars one at a time: same
-    /// <c>OutRange</c>, same values, same answer on the next good bar, and nothing
-    /// written at or above <c>k</c>. A whole-array pre-scan would satisfy "it
-    /// throws" and fail every one of those.</para>
+    /// handle driven the way the loop itself runs: the first <c>k</c> bars one at
+    /// a time, then bar <c>k</c>, which the control must reject too. Offer the
+    /// control only the good bars and the range assertion stops being an
+    /// equivalence — a rejected bar is still counted, so the filler advances by
+    /// <c>k + 1</c>. What the two must then agree on: <c>OutRange</c>, the values
+    /// written below <c>k</c>, the next good bar's answer, and nothing written at
+    /// or above <c>k</c>. A whole-array pre-scan would satisfy "it throws" and
+    /// fail every one of those.</para>
     /// <para>Coverage is by the emitter each tier's <c>UpdateAndFill</c> comes
     /// from: SMA stands for the whole step-loop family, BBANDS adds three outputs,
     /// MA both dispatch arms, MAVP the period bank and CDLDOJI an integer output
@@ -1269,6 +1323,7 @@ public static class StreamApiTest
             {
                 want[i] = sb.Update(bars[i]);
             }
+            BarMustReject("SMA.Update(control)", () => sb.Update(bars[UfBad]));
             double[] outp = new double[UfN];
             Array.Fill(outp, UfCanary);
             BarMustReject("SMA.UpdateAndFill", () => sa.UpdateAndFill(bars, outp));
@@ -1293,6 +1348,7 @@ public static class StreamApiTest
                 var w = bb.Update(bars[i]);
                 wantB[i] = (w.RealUpperBand, w.RealMiddleBand, w.RealLowerBand);
             }
+            BarMustReject("BBANDS.Update(control)", () => bb.Update(bars[UfBad]));
             double[] bu = new double[UfN];
             double[] bm = new double[UfN];
             double[] bl = new double[UfN];
@@ -1331,6 +1387,7 @@ public static class StreamApiTest
                 {
                     wantM[i] = mb.Update(bars[i]);
                 }
+                BarMustReject($"MA({period}).Update(control)", () => mb.Update(bars[UfBad]));
                 double[] mo = new double[UfN];
                 Array.Fill(mo, UfCanary);
                 BarMustReject($"MA({period}).UpdateAndFill", () => ma.UpdateAndFill(bars, mo));
@@ -1360,6 +1417,7 @@ public static class StreamApiTest
             {
                 wantV[i] = vb.Update(goodBars[i], pers[i]);
             }
+            BarMustReject("MAVP.Update(control)", () => vb.Update(goodBars[UfBad], pers[UfBad]));
             double[] vo = new double[UfN];
             Array.Fill(vo, UfCanary);
             BarMustReject("MAVP.UpdateAndFill", () => va.UpdateAndFill(goodBars, pers, vo));
@@ -1391,6 +1449,8 @@ public static class StreamApiTest
             {
                 wantJ[i] = jb.Update(os[i], hs[i], ls[i], goodBars[i]);
             }
+            BarMustReject("CDLDOJI.Update(control)",
+                () => jb.Update(os[UfBad], hs[UfBad], ls[UfBad], goodBars[UfBad]));
             int[] jo = new int[UfN];
             Array.Fill(jo, UfCanaryI);
             BarMustReject("CDLDOJI.UpdateAndFill",
@@ -1457,6 +1517,273 @@ public static class StreamApiTest
               + $"({_ufCommits}/{_ufValues}/{_ufSlots})");
     }
 
+    /* ---- rule U3, stated absolutely (docs/error-handling-spec.md 2.4) ---- */
+
+    /* Advance counters, one per property, each incremented AT its assertion. */
+    private static int _advRejects;
+    private static int _advHolds;
+    private static int _advResumes;
+    private static int _advValues;
+    private static int _advPeekStills;
+
+    private static void AdvReject(string what, Func<OutRange> range, Action bad)
+    {
+        OutRange before = range();
+        ThrowsBadParam(what + ": Update must reject a non-finite bar", bad);
+        OutRange after = range();
+        Check(after.BegIdx == before.BegIdx && after.Count == before.Count + 1,
+              $"{what}: a rejected Update left ({after.BegIdx},{after.Count}), "
+              + $"expected ({before.BegIdx},{before.Count + 1})");
+        _advRejects++;
+    }
+
+    private static void AdvHeld(string what, double before, double after)
+    {
+        Check(Bits(before) == Bits(after),
+              $"{what}: a rejected call moved Value ({before} -> {after})");
+        _advHolds++;
+    }
+
+    private static void AdvResume(string what, Func<OutRange> range, Action good)
+    {
+        OutRange before = range();
+        try
+        {
+            good();
+        }
+        catch (Exception e)
+        {
+            Check(false, $"{what}: the good bar after a rejection threw {e.GetType().Name}");
+        }
+        OutRange after = range();
+        Check(after.BegIdx == before.BegIdx && after.Count == before.Count + 1,
+              $"{what}: a committed Update left ({after.BegIdx},{after.Count}), "
+              + $"expected ({before.BegIdx},{before.Count + 1})");
+        _advResumes++;
+    }
+
+    /* The resumed bar produced a value AND the handle kept it — so the "Value
+       did not move" assertions above cannot be passing because the handle
+       stopped producing anything at all. */
+    private static void AdvProduced(string what, double returned, double held)
+    {
+        Check(double.IsFinite(returned) && Bits(returned) == Bits(held),
+              $"{what}: after the rejected bar, Update returned {returned} and "
+              + $"Value reports {held}");
+        _advValues++;
+    }
+
+    private static void AdvPeekStill(string what, Func<OutRange> range, Action c, bool mustReject)
+    {
+        OutRange before = range();
+        if (mustReject)
+        {
+            ThrowsBadParam(what + ": Peek must reject a non-finite bar", c);
+        }
+        else
+        {
+            try
+            {
+                c();
+            }
+            catch (Exception e)
+            {
+                Check(false, $"{what}: a Peek of a good bar must not throw {e.GetType().Name}");
+            }
+        }
+        OutRange after = range();
+        Check(after.BegIdx == before.BegIdx && after.Count == before.Count,
+              $"{what}: Peek moved the range ({before.BegIdx},{before.Count}) -> "
+              + $"({after.BegIdx},{after.Count})");
+        _advPeekStills++;
+    }
+
+    /// <summary>What ONE rejected <c>Update</c> costs, in absolute numbers.</summary>
+    /// <remarks>
+    /// <para><see cref="UpdateAndFillCommitsThePrefix"/> pins <c>UpdateAndFill</c>
+    /// against a loop of <c>Update</c>s. That is an EQUIVALENCE, and therefore
+    /// symmetric: it cannot see a change that moves both sides equally. Delete the
+    /// advance from BOTH of a function's reject arms and the whole suite — here, in
+    /// C and in Java — stays green, leaving the rule pinned only by the generator's
+    /// source-text gate. This method compares against no control at all: it reads
+    /// <c>OutRange</c>, offers one bad bar, and demands the exact numbers.</para>
+    /// <para>Both halves of U3 are asserted on the SAME call — the count moved by
+    /// exactly one AND <c>Value</c> did not move. A change that stepped the state
+    /// without counting, or counted while stepping, satisfies either half alone;
+    /// only the pair pins "counted, not committed".</para>
+    /// <para>Then a good bar, which must still produce a value and advance by one:
+    /// refusing a bar beats computing on it only if the handle survives the refusal.
+    /// And the mirror — <c>Peek</c> advances NOTHING, rejected or not. That half
+    /// regresses silently, because a counting Peek breaks no value anywhere.</para>
+    /// <para>Coverage is by stream TIER, as everywhere else in this file: the loop
+    /// tier, dual-mode, both dispatch arms, the period bank, two composed
+    /// multi-output functions, and an integer output over four price inputs.</para>
+    /// </remarks>
+    private static void ARejectedUpdateCostsExactlyOneBar()
+    {
+        var core = new Core();
+        const int warm = 60;
+        double[] closes = Closes(warm + 2);
+        double[] highs = new double[closes.Length];
+        double[] lows = new double[closes.Length];
+        double[] opens = new double[closes.Length];
+        double[] periods = new double[closes.Length];
+        for (int i = 0; i < closes.Length; i++)
+        {
+            highs[i] = closes[i] + 1.5;
+            lows[i] = closes[i] - 1.5;
+            opens[i] = closes[i] - 0.4;
+            periods[i] = 5.0 + (i % 11);
+        }
+
+        double[] bad = { double.NaN, double.PositiveInfinity, double.NegativeInfinity };
+
+        foreach (double v in bad)
+        {
+            var c = closes[..warm].ToArray();
+            var h = highs[..warm].ToArray();
+            var l = lows[..warm].ToArray();
+            var o = opens[..warm].ToArray();
+            var p = periods[..warm].ToArray();
+
+            /* --- loop tier --------------------------------------------------- */
+            var s = core.SmaOpen(c, 14);
+            double sPeekHeld = s.Value;
+            AdvPeekStill("SMA(bad)", () => s.OutRange, () => s.Peek(v), true);
+            AdvHeld("SMA(peek)", sPeekHeld, s.Value);
+            AdvPeekStill("SMA(good)", () => s.OutRange, () => s.Peek(closes[warm]), false);
+            double sHeld = s.Value;
+            AdvReject("SMA", () => s.OutRange, () => s.Update(v));
+            AdvHeld("SMA", sHeld, s.Value);
+            double sGot = 0.0;
+            AdvResume("SMA", () => s.OutRange, () => sGot = s.Update(closes[warm]));
+            AdvProduced("SMA", sGot, s.Value);
+
+            /* --- dual-mode tier, three price inputs -------------------------- */
+            var d = core.MinusDiOpen(h, l, c, 14);
+            double dPeekHeld = d.Value;
+            AdvPeekStill("MINUS_DI(bad)", () => d.OutRange,
+                () => d.Peek(highs[warm], v, closes[warm]), true);
+            AdvHeld("MINUS_DI(peek)", dPeekHeld, d.Value);
+            AdvPeekStill("MINUS_DI(good)", () => d.OutRange,
+                () => d.Peek(highs[warm], lows[warm], closes[warm]), false);
+            double dHeld = d.Value;
+            AdvReject("MINUS_DI", () => d.OutRange,
+                () => d.Update(highs[warm], lows[warm], v));
+            AdvHeld("MINUS_DI", dHeld, d.Value);
+            double dGot = 0.0;
+            AdvResume("MINUS_DI", () => d.OutRange,
+                () => dGot = d.Update(highs[warm], lows[warm], closes[warm]));
+            AdvProduced("MINUS_DI", dGot, d.Value);
+
+            /* --- dispatch, both arms; period 1 is the identity loop, which never
+               reaches a sub-stream and carries its own advance ---------------- */
+            foreach (int period in new[] { 1, 14 })
+            {
+                var m = core.MaOpen(c, period, MAType.SMA);
+                double mPeekHeld = m.Value;
+                AdvPeekStill($"MA({period},bad)", () => m.OutRange, () => m.Peek(v), true);
+                AdvHeld($"MA({period},peek)", mPeekHeld, m.Value);
+                AdvPeekStill($"MA({period},good)", () => m.OutRange,
+                    () => m.Peek(closes[warm]), false);
+                double mHeld = m.Value;
+                AdvReject($"MA({period})", () => m.OutRange, () => m.Update(v));
+                AdvHeld($"MA({period})", mHeld, m.Value);
+                double mGot = 0.0;
+                AdvResume($"MA({period})", () => m.OutRange, () => mGot = m.Update(closes[warm]));
+                AdvProduced($"MA({period})", mGot, m.Value);
+            }
+
+            /* --- period bank; the poisoned slot is the PERIOD, the input that
+               reaches an (int) cast -------------------------------------------- */
+            var vp = core.MavpOpen(c, p, 2, 30, MAType.SMA);
+            double vPeekHeld = vp.Value;
+            AdvPeekStill("MAVP(bad)", () => vp.OutRange, () => vp.Peek(closes[warm], v), true);
+            AdvHeld("MAVP(peek)", vPeekHeld, vp.Value);
+            AdvPeekStill("MAVP(good)", () => vp.OutRange,
+                () => vp.Peek(closes[warm], p[0]), false);
+            double vHeld = vp.Value;
+            AdvReject("MAVP", () => vp.OutRange, () => vp.Update(closes[warm], v));
+            AdvHeld("MAVP", vHeld, vp.Value);
+            double vGot = 0.0;
+            AdvResume("MAVP", () => vp.OutRange, () => vGot = vp.Update(closes[warm], p[0]));
+            AdvProduced("MAVP", vGot, vp.Value);
+
+            /* --- composed, three outputs: all three must be left alone ------- */
+            var b = core.BbandsOpen(c, 20, 2.0, 2.0, MAType.SMA);
+            var bPeekHeld = b.Value;
+            AdvPeekStill("BBANDS(bad)", () => b.OutRange, () => b.Peek(v), true);
+            AdvHeld("BBANDS.upper(peek)", bPeekHeld.RealUpperBand, b.Value.RealUpperBand);
+            AdvHeld("BBANDS.middle(peek)", bPeekHeld.RealMiddleBand, b.Value.RealMiddleBand);
+            AdvHeld("BBANDS.lower(peek)", bPeekHeld.RealLowerBand, b.Value.RealLowerBand);
+            AdvPeekStill("BBANDS(good)", () => b.OutRange, () => b.Peek(closes[warm]), false);
+            var bHeld = b.Value;
+            AdvReject("BBANDS", () => b.OutRange, () => b.Update(v));
+            AdvHeld("BBANDS.upper", bHeld.RealUpperBand, b.Value.RealUpperBand);
+            AdvHeld("BBANDS.middle", bHeld.RealMiddleBand, b.Value.RealMiddleBand);
+            AdvHeld("BBANDS.lower", bHeld.RealLowerBand, b.Value.RealLowerBand);
+            Core.BbandsValue bGot = default;
+            AdvResume("BBANDS", () => b.OutRange, () => bGot = b.Update(closes[warm]));
+            AdvProduced("BBANDS.upper", bGot.RealUpperBand, b.Value.RealUpperBand);
+            AdvProduced("BBANDS.middle", bGot.RealMiddleBand, b.Value.RealMiddleBand);
+            AdvProduced("BBANDS.lower", bGot.RealLowerBand, b.Value.RealLowerBand);
+
+            /* --- composed, one sub feeding the next -------------------------- */
+            var k = core.StochOpen(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
+            var kPeekHeld = k.Value;
+            AdvPeekStill("STOCH(bad)", () => k.OutRange,
+                () => k.Peek(highs[warm], v, closes[warm]), true);
+            AdvHeld("STOCH.slowK(peek)", kPeekHeld.SlowK, k.Value.SlowK);
+            AdvHeld("STOCH.slowD(peek)", kPeekHeld.SlowD, k.Value.SlowD);
+            AdvPeekStill("STOCH(good)", () => k.OutRange,
+                () => k.Peek(highs[warm], lows[warm], closes[warm]), false);
+            var kHeld = k.Value;
+            AdvReject("STOCH", () => k.OutRange, () => k.Update(v, lows[warm], closes[warm]));
+            AdvHeld("STOCH.slowK", kHeld.SlowK, k.Value.SlowK);
+            AdvHeld("STOCH.slowD", kHeld.SlowD, k.Value.SlowD);
+            Core.StochValue kGot = default;
+            AdvResume("STOCH", () => k.OutRange,
+                () => kGot = k.Update(highs[warm], lows[warm], closes[warm]));
+            AdvProduced("STOCH.slowK", kGot.SlowK, k.Value.SlowK);
+            AdvProduced("STOCH.slowD", kGot.SlowD, k.Value.SlowD);
+
+            /* --- integer output over four price inputs ----------------------- */
+            var j = core.CdldojiOpen(o, h, l, c);
+            int jPeekHeld = j.Value;
+            AdvPeekStill("CDLDOJI(bad)", () => j.OutRange,
+                () => j.Peek(opens[warm], highs[warm], lows[warm], v), true);
+            Check(j.Value == jPeekHeld, "CDLDOJI: a rejected Peek moved Value");
+            _advHolds++;
+            AdvPeekStill("CDLDOJI(good)", () => j.OutRange,
+                () => j.Peek(opens[warm], highs[warm], lows[warm], closes[warm]), false);
+            int jHeld = j.Value;
+            AdvReject("CDLDOJI", () => j.OutRange,
+                () => j.Update(opens[warm], highs[warm], v, closes[warm]));
+            Check(j.Value == jHeld, "CDLDOJI: a rejected Update moved Value");
+            _advHolds++;
+            /* A zero-bodied bar, so the resumed value is 100 — distinguishable
+               from the 0 an unwritten slot would also read. */
+            int jGot = 0;
+            AdvResume("CDLDOJI", () => j.OutRange,
+                () => jGot = j.Update(closes[warm], highs[warm], lows[warm], closes[warm]));
+            Check(jGot == 100 && j.Value == jGot,
+                  $"CDLDOJI: the bar after the rejection produced {jGot}");
+            _advValues++;
+        }
+
+        Console.WriteLine($"  Rejected-Update advance gate (U3, absolute): {_advRejects} "
+            + $"rejection(s) counted once, {_advHolds} untouched value(s), {_advResumes} "
+            + $"resumed bar(s), {_advValues} value(s) produced, {_advPeekStills} "
+            + "Peek(s) that moved nothing");
+
+        /* Non-vacuity. Literal floors, every counter incremented at its own
+           assertion. */
+        Check(_advRejects >= 24 && _advHolds >= 66 && _advResumes >= 24
+              && _advValues >= 33 && _advPeekStills >= 48,
+              "the rejected-Update advance gate ran fewer checks than it was written "
+              + $"with ({_advRejects}/{_advHolds}/{_advResumes}/{_advValues}/{_advPeekStills})");
+    }
+
     public static int Run()
     {
         StreamMatchesBatch();
@@ -1479,10 +1806,12 @@ public static class StreamApiTest
         IntegerSentinelSelectsTheDocumentedDefault();
         SettingsAreCapturedFromTheOpeningCore();
         UpdateDoesNotAllocate();
+        PeekDoesNotAllocate();
         MultiOutputValueIsAStruct();
         CatalogueAgreesWithTheEmittedSurface();
         NonFiniteInputsAreRejected();
         UpdateAndFillCommitsThePrefix();
+        ARejectedUpdateCostsExactlyOneBar();
 
         if (_failures == 0)
         {

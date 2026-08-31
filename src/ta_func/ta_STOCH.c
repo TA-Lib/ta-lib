@@ -590,10 +590,13 @@ TA_RetCode TA_S_STOCH( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_STOCH_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_STOCH_Value). */
+   double cur_outSlowK;
+   double cur_outSlowD;
    int optInFastK_Period;
    int optInSlowK_Period;
    TA_MAType optInSlowK_MAType;
@@ -1101,6 +1104,8 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       if( !outStride ) TA_Free( sc_outSlowD );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outSlowK = outSlowK[(*outNBElement - 1) * outStride];
+      sp->cur_outSlowD = outSlowD[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1155,9 +1160,15 @@ TA_LIB_API TA_RetCode TA_STOCH_Update( TA_STOCH_Stream *stream, double inHigh, d
    TA_RetCode retCode;
 
    if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    retCode = TA_STOCH_StepImpl( stream, inHigh, inLow, inClose, outSlowK, outSlowD );
    if( retCode != TA_SUCCESS ) return retCode;
+   stream->cur_outSlowK = *outSlowK;
+   stream->cur_outSlowD = *outSlowD;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -1282,9 +1293,15 @@ TA_LIB_API TA_RetCode TA_STOCH_UpdateAndFill( TA_STOCH_Stream *stream, const dou
    if( (const void *)outSlowK == (const void *)inHigh || (const void *)outSlowK == (const void *)inLow || (const void *)outSlowK == (const void *)inClose || (const void *)outSlowD == (const void *)inHigh || (const void *)outSlowD == (const void *)inLow || (const void *)outSlowD == (const void *)inClose || (const void *)outSlowK == (const void *)outSlowD ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       retCode = TA_STOCH_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outSlowK[i], &outSlowD[i] );
       if( retCode != TA_SUCCESS ) return retCode;
+      stream->cur_outSlowK = outSlowK[i];
+      stream->cur_outSlowD = outSlowD[i];
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
    return TA_SUCCESS;
@@ -1296,6 +1313,54 @@ TA_LIB_API TA_RetCode TA_STOCH_Close( TA_STOCH_Stream *stream )
    TA_MA_Close( stream->sub0 );
    TA_MA_Close( stream->sub1 );
    TA_STOCH_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STOCH_Value( const TA_STOCH_Stream *stream, double *outSlowK, double *outSlowD )
+{
+   if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
+   *outSlowK = stream->cur_outSlowK;
+   *outSlowD = stream->cur_outSlowD;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STOCH_Clone( const TA_STOCH_Stream *stream, TA_STOCH_Stream **clone )
+{
+   struct TA_STOCH_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_STOCH_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inHigh = NULL;
+   sp->x_inLow = NULL;
+   sp->x_inClose = NULL;
+   sp->sub0 = NULL;
+   sp->sub1 = NULL;
+   if( stream->x_inHigh )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inHigh ) { TA_STOCH_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inLow ) { TA_STOCH_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inLow, stream->x_inLow, sizeof(double) * copyN ); }
+   if( stream->x_inClose )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inClose ) { TA_STOCH_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inClose, stream->x_inClose, sizeof(double) * copyN ); }
+   if( stream->sub0 )
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub0, &sp->sub0 );
+     if( subRc != TA_SUCCESS ) { TA_STOCH_Close( sp ); return subRc; } }
+   if( stream->sub1 )
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub1, &sp->sub1 );
+     if( subRc != TA_SUCCESS ) { TA_STOCH_Close( sp ); return subRc; } }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

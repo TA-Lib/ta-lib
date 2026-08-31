@@ -1032,15 +1032,15 @@ public partial class Core
 
       internal HtDcphaseStream( Core core ) { this.core = core; }
 
-      /// <summary>The bars this stream has produced a value for, in the input series'
-      /// coordinates: <c>[BegIdx, BegIdx + Count)</c>.</summary>
+      /// <summary>The bars this stream has an output for, in the input series' coordinates:
+      /// <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
       /// <para>It is what <c>Core.HtDcphase</c> reports over the same bars: the opener
-      /// sets it to <c>(lookback, historyLen - lookback)</c>, every accepted
-      /// <c>Update</c> adds one to the count, <c>Peek</c> leaves it alone, and
-      /// <c>Clone</c> carries it verbatim. A plain <c>Open</c> hands back only the
-      /// last value, a subset of this range, because the caller chose not to take
-      /// the fill.</para>
+      /// sets it to <c>(lookback, historyLen - lookback)</c>, every <c>Update</c>
+      /// adds one to the count — a non-finite bar is rejected but still counted,
+      /// because the bar happened — <c>Peek</c> leaves it alone, and <c>Clone</c>
+      /// carries it verbatim. A plain <c>Open</c> hands back only the last value, a
+      /// subset of this range, because the caller chose not to take the fill.</para>
       /// </remarks>
       public OutRange OutRange => new OutRange(outRangeBegIdx, outRangeCount);
 
@@ -1118,17 +1118,24 @@ public partial class Core
       /// <para>Allocates nothing — neither handle state nor a return value.</para>
       /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
       /// finite (NaN or an infinity). That check runs before anything is written,
-      /// so the handle is left exactly as it was and the stream stays usable: skip
-      /// the bar, or re-open on a clean history. This is the one place the
-      /// streaming tier is stricter than the batch API, which computes on whatever
-      /// it is given: a handle retains its state, so a single non-finite bar would
-      /// poison every later value it produces.</para>
+      /// so no state moves, <see cref="Value"/> still answers the previous value,
+      /// and the stream stays usable — just carry on with the next bar.
+      /// <see cref="OutRange"/> does advance: the bar happened, so it is counted,
+      /// which keeps two handles fed the same series positionally aligned when only
+      /// one of them rejects a bar. This is the one place the streaming tier is
+      /// stricter than the batch API, which computes on whatever it is given: a
+      /// handle retains its state, so a single non-finite bar would poison every
+      /// later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal )
       {
-         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_DCPHASE", "update", RetCode.BadParam);
+         if( !double.IsFinite(inReal) )
+         {
+            if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
+            throw Core.StreamFailure("HT_DCPHASE", "update", RetCode.BadParam);
+         }
          core.HtDcphaseStepImpl(this, inReal);
          if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          return cur_outReal;
@@ -1140,11 +1147,9 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies no buffer: the frame runs against this handle, reading its
-      /// buffers and holding what the step would commit in locals, so the cost does
-      /// not grow with the period. It does copy this indicator's fixed-size per-bar
-      /// accumulators — a few elements, a count fixed by the indicator and not by
-      /// the period — so <c>Peek</c> allocates a small bounded amount per call.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
@@ -1176,25 +1181,9 @@ public partial class Core
          double I1ForOddPrev2 = sp.I1ForOddPrev2;
          double I1ForOddPrev3 = sp.I1ForOddPrev3;
          double Im = sp.Im;
-         double[] Q1_Even = new double[sp.Q1_Even.Length];
-         Array.Copy( sp.Q1_Even, Q1_Even, sp.Q1_Even.Length );
-         double[] Q1_Odd = new double[sp.Q1_Odd.Length];
-         Array.Copy( sp.Q1_Odd, Q1_Odd, sp.Q1_Odd.Length );
          double Re = sp.Re;
          double cur_outReal = sp.cur_outReal;
-         double[] detrender_Even = new double[sp.detrender_Even.Length];
-         Array.Copy( sp.detrender_Even, detrender_Even, sp.detrender_Even.Length );
-         double[] detrender_Odd = new double[sp.detrender_Odd.Length];
-         Array.Copy( sp.detrender_Odd, detrender_Odd, sp.detrender_Odd.Length );
          int hilbertIdx = sp.hilbertIdx;
-         double[] jI_Even = new double[sp.jI_Even.Length];
-         Array.Copy( sp.jI_Even, jI_Even, sp.jI_Even.Length );
-         double[] jI_Odd = new double[sp.jI_Odd.Length];
-         Array.Copy( sp.jI_Odd, jI_Odd, sp.jI_Odd.Length );
-         double[] jQ_Even = new double[sp.jQ_Even.Length];
-         Array.Copy( sp.jQ_Even, jQ_Even, sp.jQ_Even.Length );
-         double[] jQ_Odd = new double[sp.jQ_Odd.Length];
-         Array.Copy( sp.jQ_Odd, jQ_Odd, sp.jQ_Odd.Length );
          double period = sp.period;
          double periodWMASub = sp.periodWMASub;
          double periodWMASum = sp.periodWMASum;
@@ -1245,8 +1234,7 @@ public partial class Core
          if( streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
-            detrender = 0 - detrender_Even[hilbertIdx];
-            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender = 0 - sp.detrender_Even[hilbertIdx];
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Even;
             prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -1254,8 +1242,7 @@ public partial class Core
             prev_detrender_input_Even = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * detrender;
-            Q1 = 0 - Q1_Even[hilbertIdx];
-            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 = 0 - sp.Q1_Even[hilbertIdx];
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Even;
             prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -1263,8 +1250,7 @@ public partial class Core
             prev_Q1_input_Even = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * I1ForEvenPrev3;
-            jI = 0 - jI_Even[hilbertIdx];
-            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI = 0 - sp.jI_Even[hilbertIdx];
             jI += hilbertTempReal;
             jI -= prev_jI_Even;
             prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -1272,8 +1258,7 @@ public partial class Core
             prev_jI_input_Even = I1ForEvenPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * Q1;
-            jQ = 0 - jQ_Even[hilbertIdx];
-            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ = 0 - sp.jQ_Even[hilbertIdx];
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Even;
             prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -1296,8 +1281,7 @@ public partial class Core
          } else {
             /* Do the Hilbert Transforms for odd price bar */
             hilbertTempReal = sp.a * smoothedValue;
-            detrender = 0 - detrender_Odd[hilbertIdx];
-            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender = 0 - sp.detrender_Odd[hilbertIdx];
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Odd;
             prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -1305,8 +1289,7 @@ public partial class Core
             prev_detrender_input_Odd = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * detrender;
-            Q1 = 0 - Q1_Odd[hilbertIdx];
-            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 = 0 - sp.Q1_Odd[hilbertIdx];
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Odd;
             prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -1314,8 +1297,7 @@ public partial class Core
             prev_Q1_input_Odd = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * I1ForOddPrev3;
-            jI = 0 - jI_Odd[hilbertIdx];
-            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI = 0 - sp.jI_Odd[hilbertIdx];
             jI += hilbertTempReal;
             jI -= prev_jI_Odd;
             prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -1323,8 +1305,7 @@ public partial class Core
             prev_jI_input_Odd = I1ForOddPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * Q1;
-            jQ = 0 - jQ_Odd[hilbertIdx];
-            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ = 0 - sp.jQ_Odd[hilbertIdx];
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Odd;
             prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -1424,11 +1405,13 @@ public partial class Core
       /// <para>Exactly <c>n</c> back-to-back <see cref="Update"/> calls, with one set of
       /// argument checks instead of <c>n</c>. The outputs must hold at least
       /// <c>n</c> values and must not overlap an input or each other.</para>
-      /// <para><see cref="OutRange"/> counts what was committed, which is what makes a
-      /// rejection readable: a non-finite bar <c>k</c> throws
+      /// <para><see cref="OutRange"/> counts what this call took in, which is what makes
+      /// a rejection readable: a non-finite bar <c>k</c> throws
       /// <see cref="System.ArgumentException"/> exactly as <see cref="Update"/>
-      /// would, with bars <c>0..k</c> committed and written, bar <c>k</c> and
-      /// everything after it not, and the count advanced by <c>k</c>.</para>
+      /// would, with the bars before <c>k</c> committed and written, bar <c>k</c>
+      /// and everything after it not written, and the count advanced by <c>k +
+      /// 1</c> — the committed bars plus the rejected one, so the last bar counted
+      /// is the one that failed.</para>
       /// </remarks>
       /// <param name="inReal">Closed bars for <c>inReal</c>, oldest first.</param>
       /// <param name="outReal">Receives one <c>outReal</c> value per bar committed.</param>
@@ -1438,15 +1421,20 @@ public partial class Core
          if( outReal.Length < barCount || outReal.Overlaps(inReal) ) throw Core.StreamFailure("HT_DCPHASE", "updateAndFill", RetCode.BadParam);
          for( int i = 0; i < barCount; i++ )
          {
-            if( !double.IsFinite(inReal[i]) ) throw Core.StreamFailure("HT_DCPHASE", "updateAndFill", RetCode.BadParam);
+            if( !double.IsFinite(inReal[i]) )
+            {
+               if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
+               throw Core.StreamFailure("HT_DCPHASE", "updateAndFill", RetCode.BadParam);
+            }
             core.HtDcphaseStepImpl(this, inReal[i]);
             outReal[i] = cur_outReal;
             if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;
          }
       }
 
-      /// <summary>The value at the most recently committed bar — the last history bar right
-      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <summary>The value at the last bar this stream counted — the bar
+      /// <see cref="OutRange"/> ends on. The last history bar right after open,
+      /// then whatever the latest accepted <see cref="Update"/> returned.</summary>
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>

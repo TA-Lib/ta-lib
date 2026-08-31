@@ -325,10 +325,12 @@ TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLMATHOLD_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_CDLMATHOLD_Value). */
+   int cur_outInteger;
    double optInPenetration;
    double BodyPeriodTotal[5];
    double lag1_inOpen;
@@ -403,6 +405,7 @@ static void TA_CDLMATHOLD_StepImpl( struct TA_CDLMATHOLD_Stream *sp, double inOp
    {
       sp->BodyPeriodTotal[totIdx] = sp->BodyPeriodTotal[totIdx] + (sp->ring_BodyShortTrailingIdx_derived[(sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx >= sp->ringCap_BodyShortTrailingIdx) ? sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx - sp->ringCap_BodyShortTrailingIdx : sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx] - sp->ring_BodyShortTrailingIdx_derived[(sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - sp->ringLag_BodyShortTrailingIdx - totIdx) % sp->ringCap_BodyShortTrailingIdx]);
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag4_inOpen = sp->lag3_inOpen;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
@@ -615,6 +618,7 @@ static TA_RetCode TA_CDLMATHOLD_OpenImpl( struct TA_CDLMATHOLD_Stream **stream, 
       sp->lag4_inClose = inClose[historyLen - 4];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -665,7 +669,11 @@ TA_RetCode TA_CDLMATHOLD_OpenAndFillInternal( struct TA_CDLMATHOLD_Stream **stre
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_Update( TA_CDLMATHOLD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CDLMATHOLD_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -718,6 +726,7 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_Peek( const TA_CDLMATHOLD_Stream *stream, do
    {
       sp->BodyPeriodTotal[totIdx] = sp->BodyPeriodTotal[totIdx] + (((((sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx >= sp->ringCap_BodyShortTrailingIdx) ? sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx - sp->ringCap_BodyShortTrailingIdx : sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx) != pkSlot1) ? sp->ring_BodyShortTrailingIdx_derived[(sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx >= sp->ringCap_BodyShortTrailingIdx) ? sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx - sp->ringCap_BodyShortTrailingIdx : sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx] : pkVal1) - (((sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - sp->ringLag_BodyShortTrailingIdx - totIdx) % sp->ringCap_BodyShortTrailingIdx != pkSlot1) ? sp->ring_BodyShortTrailingIdx_derived[(sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - sp->ringLag_BodyShortTrailingIdx - totIdx) % sp->ringCap_BodyShortTrailingIdx] : pkVal1));
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag4_inOpen = sp->lag3_inOpen;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
@@ -756,7 +765,11 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_UpdateAndFill( TA_CDLMATHOLD_Stream *stream,
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CDLMATHOLD_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -766,6 +779,39 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_UpdateAndFill( TA_CDLMATHOLD_Stream *stream,
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_Close( TA_CDLMATHOLD_Stream *stream )
 {
    TA_CDLMATHOLD_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATHOLD_Value( const TA_CDLMATHOLD_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATHOLD_Clone( const TA_CDLMATHOLD_Stream *stream, TA_CDLMATHOLD_Stream **clone )
+{
+   struct TA_CDLMATHOLD_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLMATHOLD_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyLongTrailingIdx_derived = NULL;
+   sp->ring_BodyShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+     sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLMATHOLD_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_BodyShortTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
+     sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDLMATHOLD_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyShortTrailingIdx_derived, stream->ring_BodyShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 
