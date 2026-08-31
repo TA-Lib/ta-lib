@@ -223,10 +223,12 @@ TA_RetCode TA_S_CDLENGULFING( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLENGULFING_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_CDLENGULFING_Value). */
+   int cur_outInteger;
    double lag1_inOpen;
    double lag1_inClose;
 };
@@ -249,6 +251,7 @@ static void TA_CDLENGULFING_StepImpl( struct TA_CDLENGULFING_Stream *sp, double 
    {
       *outInteger= 0;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inClose = inClose;
 }
@@ -345,6 +348,7 @@ static TA_RetCode TA_CDLENGULFING_OpenImpl( struct TA_CDLENGULFING_Stream **stre
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -395,7 +399,11 @@ TA_RetCode TA_CDLENGULFING_OpenAndFillInternal( struct TA_CDLENGULFING_Stream **
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Update( TA_CDLENGULFING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CDLENGULFING_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -424,6 +432,7 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream
    {
       *outInteger= 0;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inClose = inClose;
    return TA_SUCCESS;
@@ -438,7 +447,11 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_UpdateAndFill( TA_CDLENGULFING_Stream *str
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CDLENGULFING_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -448,6 +461,27 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_UpdateAndFill( TA_CDLENGULFING_Stream *str
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Close( TA_CDLENGULFING_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Value( const TA_CDLENGULFING_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Clone( const TA_CDLENGULFING_Stream *stream, TA_CDLENGULFING_Stream **clone )
+{
+   struct TA_CDLENGULFING_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLENGULFING_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

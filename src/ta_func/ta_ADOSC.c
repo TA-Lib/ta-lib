@@ -374,10 +374,12 @@ TA_RetCode TA_S_ADOSC( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ADOSC_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_ADOSC_Value). */
+   double cur_outReal;
    int optInFastPeriod;
    int optInSlowPeriod;
    double slowEMA;
@@ -408,6 +410,7 @@ static void TA_ADOSC_StepImpl( struct TA_ADOSC_Stream *sp, double inHigh, double
    sp->fastEMA = fma(sp->one_minus_fastk, sp->fastEMA, sp->fastk * sp->ad);
    sp->slowEMA = fma(sp->one_minus_slowk, sp->slowEMA, sp->slowk * sp->ad);
    *outReal= sp->fastEMA - sp->slowEMA;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_ADOSC_OpenImpl( struct TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -582,6 +585,7 @@ static TA_RetCode TA_ADOSC_OpenImpl( struct TA_ADOSC_Stream **stream, const doub
       sp->ad = ad;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -632,7 +636,11 @@ TA_RetCode TA_ADOSC_OpenAndFillInternal( struct TA_ADOSC_Stream **stream, const 
 TA_LIB_API TA_RetCode TA_ADOSC_Update( TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_ADOSC_StepImpl( stream, inHigh, inLow, inClose, inVolume, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -661,6 +669,7 @@ TA_LIB_API TA_RetCode TA_ADOSC_Peek( const TA_ADOSC_Stream *stream, double inHig
    sp->fastEMA = fma(sp->one_minus_fastk, sp->fastEMA, sp->fastk * sp->ad);
    sp->slowEMA = fma(sp->one_minus_slowk, sp->slowEMA, sp->slowk * sp->ad);
    *outReal= sp->fastEMA - sp->slowEMA;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -673,7 +682,11 @@ TA_LIB_API TA_RetCode TA_ADOSC_UpdateAndFill( TA_ADOSC_Stream *stream, const dou
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) || !TA_IS_FINITE( inVolume[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) || !TA_IS_FINITE( inVolume[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_ADOSC_StepImpl( stream, inHigh[i], inLow[i], inClose[i], inVolume[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -683,6 +696,27 @@ TA_LIB_API TA_RetCode TA_ADOSC_UpdateAndFill( TA_ADOSC_Stream *stream, const dou
 TA_LIB_API TA_RetCode TA_ADOSC_Close( TA_ADOSC_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADOSC_Value( const TA_ADOSC_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADOSC_Clone( const TA_ADOSC_Stream *stream, TA_ADOSC_Stream **clone )
+{
+   struct TA_ADOSC_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_ADOSC_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -547,10 +547,12 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
 /* Using midprice_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 struct TA_MIDPRICE_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_MIDPRICE_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double lowest;
    double highest;
@@ -637,6 +639,7 @@ static void TA_MIDPRICE_StepImpl( struct TA_MIDPRICE_Stream *sp, double inHigh, 
    *outReal= (sp->highest + sp->lowest) / 2.0;
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_MIDPRICE_OpenImpl( struct TA_MIDPRICE_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -815,6 +818,7 @@ static TA_RetCode TA_MIDPRICE_OpenImpl( struct TA_MIDPRICE_Stream **stream, cons
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -865,7 +869,11 @@ TA_RetCode TA_MIDPRICE_OpenAndFillInternal( struct TA_MIDPRICE_Stream **stream, 
 TA_LIB_API TA_RetCode TA_MIDPRICE_Update( TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_MIDPRICE_StepImpl( stream, inHigh, inLow, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -943,6 +951,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double
    *outReal= (sp->highest + sp->lowest) / 2.0;
    sp->trailingIdx += 1;
    sp->today += 1;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -955,7 +964,11 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_UpdateAndFill( TA_MIDPRICE_Stream *stream, con
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_MIDPRICE_StepImpl( stream, inHigh[i], inLow[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -965,6 +978,39 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_UpdateAndFill( TA_MIDPRICE_Stream *stream, con
 TA_LIB_API TA_RetCode TA_MIDPRICE_Close( TA_MIDPRICE_Stream *stream )
 {
    TA_MIDPRICE_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MIDPRICE_Value( const TA_MIDPRICE_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MIDPRICE_Clone( const TA_MIDPRICE_Stream *stream, TA_MIDPRICE_Stream **clone )
+{
+   struct TA_MIDPRICE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MIDPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inHigh = NULL;
+   sp->x_inLow = NULL;
+   if( stream->x_inHigh )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inHigh ) { TA_MIDPRICE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inLow ) { TA_MIDPRICE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inLow, stream->x_inLow, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

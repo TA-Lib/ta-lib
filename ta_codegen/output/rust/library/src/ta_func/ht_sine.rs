@@ -642,13 +642,13 @@ impl Core {
 /// over the same series. Open with [`Core::ht_sine_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
-/// [`Self::out_range`] reports the bars it has produced a value for.
+/// [`Self::out_range`] reports the bars this handle has an output for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_SINE_Stream")]
 pub struct HtSineStream {
     state: HtSineStreamState,
-    /// The bars this handle has produced a value for — see [`Self::out_range`].
+    /// The bars this handle has an output for — see [`Self::out_range`].
     out: OutRange,
 }
 
@@ -707,6 +707,8 @@ struct HtSineStreamState {
     ring_trailingWMAIdx_inReal: Vec<f64>,
     cbSize_smoothPrice: usize,
     cb_smoothPrice: Vec<f64>,
+    cur_outSine: f64,
+    cur_outLeadSine: f64,
 }
 
 #[allow(unused_variables)]
@@ -918,6 +920,8 @@ impl Core {
         if sp.smoothPrice_Idx > sp.maxIdx_smoothPrice {
             sp.smoothPrice_Idx = 0;
         }
+        sp.cur_outSine = (*outSine);
+        sp.cur_outLeadSine = (*outLeadSine);
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
         if sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
@@ -1401,6 +1405,8 @@ impl Core {
             smoothPrice_Idx,
             maxIdx_smoothPrice,
             streamParity: historyLen % 2,
+            cur_outSine: outSine[(*outNBElement - 1) * outStride],
+            cur_outLeadSine: outLeadSine[(*outNBElement - 1) * outStride],
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
@@ -1535,15 +1541,22 @@ impl HtSineStream {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
-    /// That check runs before anything is written, so the handle is left
-    /// exactly as it was and the stream stays usable:
-    /// skip the bar, or close and re-open on a clean history. This is the
-    /// one place the streaming tier is stricter than the batch API, which
-    /// computes on whatever it is given — a handle retains its state, so a
-    /// single non-finite bar would poison every later value it produces.
+    /// That check runs before anything is written, so the handle's state is
+    /// left exactly as it was and the stream stays usable: skip the bar, or
+    /// close and re-open on a clean history. This is the one place the
+    /// streaming tier is stricter than the batch API, which computes on
+    /// whatever it is given — a handle retains its state, so a single
+    /// non-finite bar would poison every later value it produces.
+    ///
+    /// [`Self::out_range`] counts the rejected bar all the same: it happened,
+    /// so two handles fed the same series stay positionally aligned even when
+    /// one rejects a bar the other accepts.
     #[doc(alias = "TA_HT_SINE_Update")]
     pub fn update(&mut self, inReal: f64) -> Result<(f64, f64), RetCode> {
         if !inReal.is_finite() {
+            if self.out.count < Core::MAX_INDEX {
+                self.out.count += 1;
+            }
             return Err(RetCode::BadParam);
         }
         let mut outSine: f64 = 0.0_f64;
@@ -1560,7 +1573,7 @@ impl HtSineStream {
     /// argument checks instead of `n`. `n` is `inReal.len()`; the outputs must
     /// hold at least that many. Never allocates.
     ///
-    /// [`Self::out_range`] counts what was committed, which is what makes the
+    /// [`Self::out_range`] counts what this call took in, which is what makes the
     /// rejection below readable: there is no second out-parameter for it.
     ///
     /// # Errors
@@ -1570,7 +1583,8 @@ impl HtSineStream {
     /// is not finite. A non-finite bar `k` is rejected exactly as `update`
     /// rejects it: bars `0..k` stay committed and their values written, bar `k`
     /// and everything after it is not, and `out_range().count` has advanced by
-    /// `k`.
+    /// `k + 1` — the committed bars, plus the rejected one, which is counted
+    /// but never written.
     #[doc(alias = "TA_HT_SINE_UpdateAndFill")]
     pub fn update_and_fill(&mut self, inReal: &[f64], outSine: &mut [f64], outLeadSine: &mut [f64]) -> Result<(), RetCode> {
         let barCount = inReal.len();
@@ -1579,6 +1593,9 @@ impl HtSineStream {
         }
         for i in 0..barCount {
             if !inReal[i].is_finite() {
+                if self.out.count < Core::MAX_INDEX {
+                    self.out.count += 1;
+                }
                 return Err(RetCode::BadParam);
             }
             Core::ht_sine_step_impl(&mut self.state, inReal[i], &mut outSine[i], &mut outLeadSine[i]);
@@ -1592,14 +1609,15 @@ impl HtSineStream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return: the same transition,
     /// rewritten so every store it would make lives in a local instead. It
-    /// copies nothing and never allocates, so its cost does not grow with the
-    /// period, and it writes no part of the handle — peeks may run
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
     /// concurrently with each other.
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
-    /// `update` rejects it.
+    /// [`RetCode::BadParam`] if any bar value is not finite, on the same test
+    /// `update` applies — but a rejected peek changes nothing at all, where a
+    /// rejected `update` still counts the bar in [`Self::out_range`].
     #[doc(alias = "TA_HT_SINE_Peek")]
     pub fn peek(&self, inReal: f64) -> Result<(f64, f64), RetCode> {
         if !inReal.is_finite() {
@@ -1635,16 +1653,10 @@ impl HtSineStream {
             let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
             let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
             let mut Im = sp.Im;
-            let mut Q1_Even = sp.Q1_Even;
-            let mut Q1_Odd = sp.Q1_Odd;
             let mut Re = sp.Re;
-            let mut detrender_Even = sp.detrender_Even;
-            let mut detrender_Odd = sp.detrender_Odd;
+            let mut cur_outLeadSine = sp.cur_outLeadSine;
+            let mut cur_outSine = sp.cur_outSine;
             let mut hilbertIdx = sp.hilbertIdx;
-            let mut jI_Even = sp.jI_Even;
-            let mut jI_Odd = sp.jI_Odd;
-            let mut jQ_Even = sp.jQ_Even;
-            let mut jQ_Odd = sp.jQ_Odd;
             let mut period = sp.period;
             let mut periodWMASub = sp.periodWMASub;
             let mut periodWMASum = sp.periodWMASum;
@@ -1694,8 +1706,7 @@ impl HtSineStream {
             if streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0_f64 - detrender_Even[hilbertIdx];
-                detrender_Even[hilbertIdx] = hilbertTempReal;
+                detrender = 0_f64 - sp.detrender_Even[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Even;
                 prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -1703,8 +1714,7 @@ impl HtSineStream {
                 prev_detrender_input_Even = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0_f64 - Q1_Even[hilbertIdx];
-                Q1_Even[hilbertIdx] = hilbertTempReal;
+                Q1 = 0_f64 - sp.Q1_Even[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Even;
                 prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -1712,8 +1722,7 @@ impl HtSineStream {
                 prev_Q1_input_Even = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForEvenPrev3;
-                jI = 0_f64 - jI_Even[hilbertIdx];
-                jI_Even[hilbertIdx] = hilbertTempReal;
+                jI = 0_f64 - sp.jI_Even[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Even;
                 prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -1721,8 +1730,7 @@ impl HtSineStream {
                 prev_jI_input_Even = I1ForEvenPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0_f64 - jQ_Even[hilbertIdx];
-                jQ_Even[hilbertIdx] = hilbertTempReal;
+                jQ = 0_f64 - sp.jQ_Even[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Even;
                 prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -1744,8 +1752,7 @@ impl HtSineStream {
             } else {
                 // Do the Hilbert Transforms for odd price bar
                 hilbertTempReal = sp.a * smoothedValue;
-                detrender = 0_f64 - detrender_Odd[hilbertIdx];
-                detrender_Odd[hilbertIdx] = hilbertTempReal;
+                detrender = 0_f64 - sp.detrender_Odd[hilbertIdx];
                 detrender += hilbertTempReal;
                 detrender -= prev_detrender_Odd;
                 prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -1753,8 +1760,7 @@ impl HtSineStream {
                 prev_detrender_input_Odd = smoothedValue;
                 detrender *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * detrender;
-                Q1 = 0_f64 - Q1_Odd[hilbertIdx];
-                Q1_Odd[hilbertIdx] = hilbertTempReal;
+                Q1 = 0_f64 - sp.Q1_Odd[hilbertIdx];
                 Q1 += hilbertTempReal;
                 Q1 -= prev_Q1_Odd;
                 prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -1762,8 +1768,7 @@ impl HtSineStream {
                 prev_Q1_input_Odd = detrender;
                 Q1 *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * I1ForOddPrev3;
-                jI = 0_f64 - jI_Odd[hilbertIdx];
-                jI_Odd[hilbertIdx] = hilbertTempReal;
+                jI = 0_f64 - sp.jI_Odd[hilbertIdx];
                 jI += hilbertTempReal;
                 jI -= prev_jI_Odd;
                 prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -1771,8 +1776,7 @@ impl HtSineStream {
                 prev_jI_input_Odd = I1ForOddPrev3;
                 jI *= adjustedPrevPeriod;
                 hilbertTempReal = sp.a * Q1;
-                jQ = 0_f64 - jQ_Odd[hilbertIdx];
-                jQ_Odd[hilbertIdx] = hilbertTempReal;
+                jQ = 0_f64 - sp.jQ_Odd[hilbertIdx];
                 jQ += hilbertTempReal;
                 jQ -= prev_jQ_Odd;
                 prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
@@ -1861,6 +1865,8 @@ impl HtSineStream {
             if smoothPrice_Idx > sp.maxIdx_smoothPrice {
                 smoothPrice_Idx = 0;
             }
+            cur_outSine = (*outSine);
+            cur_outLeadSine = (*outLeadSine);
             ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
             if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
                 ringPos_trailingWMAIdx = 0;
@@ -1870,12 +1876,26 @@ impl HtSineStream {
         Ok((outSine, outLeadSine))
     }
 
-    /// The bars this stream has produced a value for, in the input series'
+    /// The value(s) at the last bar the stream counted — the bar
+    /// [`Self::out_range`] ends on — without recomputing. Seeded by the opener,
+    /// refreshed by every accepted `update` and `update_and_fill`, and left
+    /// alone by `peek`.
+    ///
+    /// A clone carries them verbatim, so a forked handle can be asked its
+    /// current value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_HT_SINE_Value")]
+    pub fn value(&self) -> (f64, f64) {
+        (self.state.cur_outSine, self.state.cur_outLeadSine)
+    }
+
+    /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
     /// It is what [`Core::HT_SINE`] reports over the same bars: the opener sets it
-    /// to `(lookback, historyLen - lookback)`, every accepted `update` adds one
-    /// to the count, `peek` leaves it alone, and a clone carries it verbatim.
+    /// to `(lookback, historyLen - lookback)`, every `update` adds one to the
+    /// count — a bar rejected for being non-finite included, because it still
+    /// happened — `peek` leaves it alone, and a clone carries it verbatim.
     /// A plain `Open` hands back only the last value, a subset of this range,
     /// because the caller chose not to take the fill.
     #[doc(alias = "TA_StreamOutRange")]

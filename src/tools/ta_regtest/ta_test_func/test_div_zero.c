@@ -431,7 +431,7 @@ static ErrorNumber dz_stream( void )
       }
    }
 
-   /* The handle knows how many bars it has produced a value for -- the one
+   /* The handle knows how many bars it has consumed -- the one
     * thing no value comparison can see. Rust, Java and C# assert it too. */
    g_dzChecked++;
    outBegIdx = outNbElement = -1;

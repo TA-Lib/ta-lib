@@ -746,10 +746,12 @@ TA_RetCode TA_S_ADX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ADX_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_ADX_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double prevHigh;
    double prevLow;
@@ -821,6 +823,7 @@ static void TA_ADX_StepImpl( struct TA_ADX_Stream *sp, double inHigh, double inL
    }
    /* Output the ADX */
    *outReal= sp->prevADX;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -1249,6 +1252,7 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
       sp->prevADX = prevADX;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1299,7 +1303,11 @@ TA_RetCode TA_ADX_OpenAndFillInternal( struct TA_ADX_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_ADX_Update( TA_ADX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_ADX_StepImpl( stream, inHigh, inLow, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -1370,6 +1378,7 @@ TA_LIB_API TA_RetCode TA_ADX_Peek( const TA_ADX_Stream *stream, double inHigh, d
    }
    /* Output the ADX */
    *outReal= sp->prevADX;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -1382,7 +1391,11 @@ TA_LIB_API TA_RetCode TA_ADX_UpdateAndFill( TA_ADX_Stream *stream, const double 
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_ADX_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -1392,6 +1405,27 @@ TA_LIB_API TA_RetCode TA_ADX_UpdateAndFill( TA_ADX_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_ADX_Close( TA_ADX_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADX_Value( const TA_ADX_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADX_Clone( const TA_ADX_Stream *stream, TA_ADX_Stream **clone )
+{
+   struct TA_ADX_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_ADX_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

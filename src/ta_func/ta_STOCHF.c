@@ -530,10 +530,13 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_STOCHF_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_STOCHF_Value). */
+   double cur_outFastK;
+   double cur_outFastD;
    int optInFastK_Period;
    int optInFastD_Period;
    TA_MAType optInFastD_MAType;
@@ -987,6 +990,8 @@ static TA_RetCode TA_STOCHF_OpenImpl( struct TA_STOCHF_Stream **stream, const do
       if( !outStride ) TA_Free( sc_outFastD );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outFastK = outFastK[(*outNBElement - 1) * outStride];
+      sp->cur_outFastD = outFastD[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1041,9 +1046,15 @@ TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh,
    TA_RetCode retCode;
 
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    retCode = TA_STOCHF_StepImpl( stream, inHigh, inLow, inClose, outFastK, outFastD );
    if( retCode != TA_SUCCESS ) return retCode;
+   stream->cur_outFastK = *outFastK;
+   stream->cur_outFastD = *outFastD;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -1164,9 +1175,15 @@ TA_LIB_API TA_RetCode TA_STOCHF_UpdateAndFill( TA_STOCHF_Stream *stream, const d
    if( (const void *)outFastK == (const void *)inHigh || (const void *)outFastK == (const void *)inLow || (const void *)outFastK == (const void *)inClose || (const void *)outFastD == (const void *)inHigh || (const void *)outFastD == (const void *)inLow || (const void *)outFastD == (const void *)inClose || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       retCode = TA_STOCHF_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outFastK[i], &outFastD[i] );
       if( retCode != TA_SUCCESS ) return retCode;
+      stream->cur_outFastK = outFastK[i];
+      stream->cur_outFastD = outFastD[i];
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
    return TA_SUCCESS;
@@ -1177,6 +1194,50 @@ TA_LIB_API TA_RetCode TA_STOCHF_Close( TA_STOCHF_Stream *stream )
    if( !stream ) return TA_SUCCESS;
    TA_MA_Close( stream->sub0 );
    TA_STOCHF_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STOCHF_Value( const TA_STOCHF_Stream *stream, double *outFastK, double *outFastD )
+{
+   if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   *outFastK = stream->cur_outFastK;
+   *outFastD = stream->cur_outFastD;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STOCHF_Clone( const TA_STOCHF_Stream *stream, TA_STOCHF_Stream **clone )
+{
+   struct TA_STOCHF_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_STOCHF_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inHigh = NULL;
+   sp->x_inLow = NULL;
+   sp->x_inClose = NULL;
+   sp->sub0 = NULL;
+   if( stream->x_inHigh )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inHigh ) { TA_STOCHF_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inLow ) { TA_STOCHF_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inLow, stream->x_inLow, sizeof(double) * copyN ); }
+   if( stream->x_inClose )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inClose ) { TA_STOCHF_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inClose, stream->x_inClose, sizeof(double) * copyN ); }
+   if( stream->sub0 )
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub0, &sp->sub0 );
+     if( subRc != TA_SUCCESS ) { TA_STOCHF_Close( sp ); return subRc; } }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

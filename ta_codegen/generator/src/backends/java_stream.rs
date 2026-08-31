@@ -6,7 +6,7 @@
 //! fragment (which the shipped `Core.java` splice and the JSON-RPC server
 //! inline both pick up unchanged): a `public static final class <Base>Stream`
 //! nested in `Core` (per-handle state as package-private fields, `update`/
-//! `peek`/`value`/`copy` methods, a deep-copy constructor), a package-private
+//! `peek`/`value`/`clone` methods, a copy constructor), a package-private
 //! `<base>StepImpl(sp, bars...)` transition method on `Core` (so batch
 //! rendering conventions — `this.compatibility`, cross-calls, `Math.fma`
 //! sites — work verbatim), a `private RetCode <base>OpenImpl(sp, ...)`
@@ -38,11 +38,11 @@
 //! - There is no `close`: a handle is ordinary heap state — GC suffices (no
 //!   AutoCloseable, no finalizer). Handles are deliberately NOT serializable;
 //!   the sanctioned checkpoint story is re-opening from retained history.
-//! - `peek` = deep-copy constructor + step on the throwaway copy (the design
-//!   doc's stated cost model); `copy()` exposes the same constructor as an
-//!   independent stream. The copy is deep:
-//!   arrays clone, sub-handles copy recursively; only the `Core` reference is
-//!   shared (settings identity is the contract).
+//! - `peek` runs a non-committing frame against the live handle: its cost is
+//!   flat in the period, and what it allocates per call is bounded by the
+//!   indicator, never by the period. `clone()` exposes the copy constructor as
+//!   an independent stream — arrays clone, sub-streams clone recursively, and
+//!   only the `Core` reference is shared (settings identity is the contract).
 //! - Multi-output functions return a per-function immutable `Value` class
 //!   (public final fields, batch output order, generated toString/equals/
 //!   hashCode); `update` caches the instance so `value()` is a pure field
@@ -673,11 +673,11 @@ fn emit_handle_class_with_members(
          \x20   * Open with {{@link Core#{jbase}Open}}; there is no close — the handle is\n\
          \x20   * ordinary heap state, unreferenced handles are simply garbage-collected.\n\
          \x20   * <p>Concurrency: a handle is single-writer — {{@code update}}, {{@code peek}},\n\
-         \x20   * {{@code value}} and {{@code copy}} must not race with an {{@code update}} on\n\
+         \x20   * {{@code value}} and {{@code clone}} must not race with an {{@code update}} on\n\
          \x20   * the same handle. With no concurrent {{@code update}}, {{@code peek}}/\n\
-         \x20   * {{@code value}}/{{@code copy}} never write the handle and may be called\n\
-         \x20   * concurrently after safe publication. Independent handles (including\n\
-         \x20   * {{@code copy()}} results) are fully independent.\n\
+         \x20   * {{@code value}}/{{@code clone}} never write the stream and may be called\n\
+         \x20   * concurrently after safe publication. Independent streams (a\n\
+         \x20   * {{@code clone()}} result included) are fully independent.\n\
          \x20   * <p>Not serializable by design: to checkpoint, retain the history and\n\
          \x20   * re-open — the result is bit-identical by contract.\n\
          \x20   */"
@@ -688,7 +688,7 @@ fn emit_handle_class_with_members(
         let _ = writeln!(o, "      {jty} {name};");
     }
     o.push_str(extra_members);
-    // The bars this handle has produced a value for (issue #241). Two ints
+    // The bars this handle has an output for (issue #241). Two ints
     // rather than an `OutRange`: `update` runs on every bar and the emitted
     // javadoc promises it never allocates handle state, so the record is built
     // in the accessor instead of replaced per bar.
@@ -698,12 +698,13 @@ fn emit_handle_class_with_members(
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * The bars this stream has produced a value for, in the input series'\n\
+         \x20      * The bars this stream has an output for, in the input series'\n\
          \x20      * coordinates: {{@code [begIdx, begIdx + count)}}.\n\
          \x20      * <p>It is what {{@link Core#{base}}} reports over the same bars: the\n\
          \x20      * opener sets it to {{@code (lookback, historyLen - lookback)}}, every\n\
-         \x20      * accepted {{@code update}} adds one to the count, {{@code peek}} leaves\n\
-         \x20      * it alone, and {{@code copy()}} carries it verbatim. A plain\n\
+         \x20      * {{@code update}} adds one to the count — a bar rejected for being\n\
+         \x20      * non-finite included, because it still happened — {{@code peek}} leaves\n\
+         \x20      * it alone, and {{@code clone()}} carries it verbatim. A plain\n\
          \x20      * {{@code open}} hands back only the last value, a subset of this range,\n\
          \x20      * because the caller chose not to take the fill.\n\
          \x20      */\n\
@@ -812,8 +813,16 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
     }
 }
 
+/// The one spelling of the `outRange` advance. Saturating: nothing bounds how
+/// many bars a live stream is fed, and past `MAX_INDEX` the count has left the
+/// batch index domain anyway. Every site that moves the count goes through here,
+/// or the saturation guard exists in two places and only one of them gets fixed.
+fn advance_out_range() -> &'static str {
+    "if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;"
+}
+
 /// The per-bar finite-input rejection for `update`/`peek`: one `Double.isFinite`
-/// per scalar bar input, before the handle is touched.
+/// per scalar bar input, before the handle's state is touched.
 ///
 /// The streaming tier's half of the boundary contract (see
 /// `docs/streaming-api-design.md`). Batch does not filter — it computes on
@@ -821,19 +830,32 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
 /// retained: one non-finite bar poisons every recursive accumulator in it for
 /// the rest of its life, long after the feed recovers.
 ///
+/// `advance` is rule U3's other half: a non-finite bar is still a bar, so the
+/// committing entry points count it before throwing — which is what keeps two
+/// handles driven off one feed positionally aligned when one rejects a bar the
+/// other accepts. `peek` passes `false`; a peek that moved the count would be a
+/// peek that wrote the handle.
+///
 /// `IllegalArgumentException` carrying the same `"<NAME> <what>: "` prefix the
 /// open rejections use, so one catch clause covers the whole tier.
-fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
+fn finite_bar_check(func: &FuncDef, indent: &str, what: &str, advance: bool) -> String {
     let bars = streaming::input_array_names(func);
     if bars.is_empty() {
         return String::new();
     }
     let n = base_name(func);
     let conds: Vec<String> = bars.iter().map(|b| format!("!Double.isFinite({b})")).collect();
-    format!(
-        "{indent}if( {} )\n{indent}   throw new TaLibArgumentException(\"{n} {what}: BadParam\", RetCode.BadParam);\n",
-        conds.join(" || ")
-    )
+    let cond = conds.join(" || ");
+    let throw =
+        format!("throw new TaLibArgumentException(\"{n} {what}: BadParam\", RetCode.BadParam);");
+    if advance {
+        format!(
+            "{indent}if( {cond} ) {{\n{indent}   {}\n{indent}   {throw}\n{indent}}}\n",
+            advance_out_range()
+        )
+    } else {
+        format!("{indent}if( {cond} )\n{indent}   {throw}\n")
+    }
 }
 
 
@@ -862,22 +884,25 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
          \x20      * Never allocates handle state.\n\
          \x20      * <p>Throws {{@link IllegalArgumentException}} if any bar value is not\n\
          \x20      * finite (NaN or an infinity). That check runs before anything is\n\
-         \x20      * written, so the handle is left exactly as it was —\n\
-         \x20      * the stream stays usable, so skip the bar or re-open on a clean\n\
-         \x20      * history. This is the one place the streaming tier is stricter than\n\
+         \x20      * written, so the state is left exactly as it was: the rejected bar's\n\
+         \x20      * output is the previous value, held, and {{@link #value()}} answers it.\n\
+         \x20      * The stream stays usable, so skip the bar or re-open on a clean\n\
+         \x20      * history. {{@link #outRange()}} does advance: the bar happened and\n\
+         \x20      * occupies a position in the series, so the handle counts it, which is\n\
+         \x20      * what keeps two handles on one feed aligned when only one rejects.\n\
+         \x20      * This is the one place the streaming tier is stricter than\n\
          \x20      * the batch API, which computes on whatever it is given: a handle\n\
          \x20      * retains its state, so a single non-finite bar would poison every\n\
          \x20      * later value it produces.\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} update( {sig_bars} ) {{");
-    o.push_str(&finite_bar_check(func, "         ", "update"));
+    o.push_str(&finite_bar_check(func, "         ", "update", true));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
-    // After the step and after the finite-bar reject, so a rejected bar leaves
-    // the range where it was. `peek` runs a frame that commits nothing and so
-    // never reaches this. Saturating: nothing bounds how many bars a live stream
-    // is fed, and past MAX_INDEX it has left the batch index domain anyway.
-    let _ = writeln!(o, "         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;");
+    // After the step, so a bar the step throws out of is not counted. The
+    // finite-bar reject above counts its own bar and is the only rejection that
+    // does; `peek` runs a frame that commits nothing and reaches neither.
+    let _ = writeln!(o, "         {}", advance_out_range());
     if has_value_class(func) {
         let _ = writeln!(o, "         this.cachedValue = {};", fresh_value_expr(func, "this"));
         let _ = writeln!(o, "         return this.cachedValue;");
@@ -921,11 +946,12 @@ fn update_and_fill_doc(func: &FuncDef, count_src: &str) -> String {
          \x20      * {{@code {count_src}}}; the outputs must hold at least that many, and must\n\
          \x20      * not be the same array as an input or as each other.\n\
          {declinable}\
-         \x20      * <p>{{@link #outRange()}} counts what was committed, which is what makes a\n\
+         \x20      * <p>{{@link #outRange()}} counts what this call took in, which is what makes a\n\
          \x20      * rejection readable: a non-finite bar {{@code k}} throws\n\
          \x20      * {{@link IllegalArgumentException}} exactly as {{@code update}} would, with\n\
-         \x20      * bars {{@code 0..k}} committed and written, bar {{@code k}} and everything\n\
-         \x20      * after it not, and the count advanced by {{@code k}}.\n\
+         \x20      * the bars before {{@code k}} committed and written, bar {{@code k}} and\n\
+         \x20      * everything after it not, and the count advanced by {{@code k + 1}} —\n\
+         \x20      * the committed bars plus the rejected one.\n\
          \x20      */"
     );
     o
@@ -1021,8 +1047,14 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
             .iter()
             .map(|b| format!("!Double.isFinite({b}[i])"))
             .collect();
-        let _ = writeln!(o, "{pad}   if( {} )", conds.join(" || "));
+        // Rule U3 per bar: the rejected bar is counted, so `outRange()` ends on
+        // the offending bar. Output slot `i` is deliberately left unwritten, and
+        // `done` is not moved — the `finally` below must publish bar `i-1`, the
+        // last one the step actually committed.
+        let _ = writeln!(o, "{pad}   if( {} ) {{", conds.join(" || "));
+        let _ = writeln!(o, "{pad}      {}", advance_out_range());
         let _ = writeln!(o, "{pad}      {reject}");
+        let _ = writeln!(o, "{pad}   }}");
     }
     let _ = writeln!(o, "{pad}   core.{jbase}StepImpl(this, {});", idx_bars.join(", "));
     for out in &func.outputs {
@@ -1030,7 +1062,7 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
         let guard = if nullable.contains(name) { format!("if( {name} != null ) ") } else { String::new() };
         let _ = writeln!(o, "{pad}   {guard}{name}[i] = this.cur_{name};");
     }
-    let _ = writeln!(o, "{pad}   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;");
+    let _ = writeln!(o, "{pad}   {}", advance_out_range());
     if cached {
         let _ = writeln!(o, "{pad}   done = i + 1;");
     }
@@ -1057,19 +1089,16 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     };
     let (sig_bars, _) = bar_params(func);
 
-    // The allocation sentence is CONDITIONAL, because for 21 handles the
-    // unconditional one was false: a Java array field is a reference, so a
-    // frame that writes a fixed-size accumulator has to clone it, and that
-    // clone is a real per-call allocation. Both sentences say the thing that is
-    // actually true of THIS frame — the flat-in-period cost, which is the claim
-    // the frame exists to keep, holds either way.
-    let cost = if frame.is_some_and(|f| f.contains(".clone()")) {
+    // Two things allocate here and both are per call: an accumulator the frame
+    // had to clone, and the `Value` a multi-output peek returns. Neither grows
+    // with the period, which is the claim the frame exists to keep.
+    let allocates =
+        frame.is_some_and(|f| f.contains(".clone()")) || func.outputs.len() > 1;
+    let cost = if allocates {
         "It copies no buffer: the frame runs against this handle, reading its\n\
          \x20      * buffers and storing what the step would commit into locals, so the cost\n\
-         \x20      * does not grow with the period. It does clone this indicator's fixed-size\n\
-         \x20      * per-bar accumulators — a few elements, a count fixed by the indicator and\n\
-         \x20      * not by the period — so {@code peek} allocates a small bounded amount per\n\
-         \x20      * call."
+         \x20      * does not grow with the period. It does allocate a small bounded amount\n\
+         \x20      * per call — a size fixed by the indicator, never by the period."
     } else {
         "It copies nothing: the frame runs against this handle, reading its\n\
          \x20      * buffers and storing what the step would commit into locals, so the cost\n\
@@ -1088,7 +1117,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     let _ = writeln!(o, "      public {vt} peek( {sig_bars} ) {{");
     // Ahead of the frame, not left to the transition: a rejected bar must not
     // run any of it.
-    o.push_str(&finite_bar_check(func, "         ", "peek"));
+    o.push_str(&finite_bar_check(func, "         ", "peek", false));
     let body = frame.expect("every tier emits a peek frame");
     let _ = writeln!(o, "         {class} sp = this;");
     o.push_str(body);
@@ -1107,8 +1136,9 @@ fn emit_value_method(o: &mut String, func: &FuncDef) {
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * The value at the most recently committed bar — the last history bar\n\
-         \x20      * right after open, then whatever the latest {{@code update}} returned.\n\
+         \x20      * The value at the last bar this stream counted — the bar\n\
+         \x20      * {{@link #outRange()}} ends on. The last history bar right after open,\n\
+         \x20      * then whatever the latest accepted {{@code update}} returned.\n\
          \x20      * A pure field read; {{@code peek}} does not change it.\n\
          \x20      */"
     );
@@ -1128,11 +1158,19 @@ fn emit_copy_method(o: &mut String, func: &FuncDef) {
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * An independent deep copy of this stream: both evolve separately from\n\
-         \x20      * here on (the Java rendering of the Rust handle's {{@code Clone}}).\n\
+         \x20      * An independent fork of this stream: both evolve separately from here\n\
+         \x20      * on. Buffers are copied and sub-streams cloned recursively; the\n\
+         \x20      * {{@link Core}} reference is shared, since a {{@code Core}} is immutable\n\
+         \x20      * for a stream's lifetime.\n\
+         \x20      *\n\
+         \x20      * <p>Not the {{@code Cloneable}} protocol: this calls a copy constructor,\n\
+         \x20      * never {{@code super.clone()}}, so it throws nothing.\n\
+         \x20      *\n\
+         \x20      * @return an independent stream at the same bar\n\
          \x20      */"
     );
-    let _ = writeln!(o, "      public {class} copy() {{");
+    let _ = writeln!(o, "      @Override");
+    let _ = writeln!(o, "      public {class} clone() {{");
     let _ = writeln!(o, "         return new {class}(this);");
     let _ = writeln!(o, "      }}");
 }
@@ -1266,7 +1304,7 @@ fn localize_state_writes(
 /// value. It sits above the mode predicate, so the outputs it names are
 /// declared by the frame rather than by either arm.
 fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<Statement>> {
-    let st = streaming::identity_step_branch(model, &JavaStreamNames)?;
+    let st = streaming::identity_peek_branch(model, &JavaStreamNames)?;
     let answer = fresh_value_expr_local(func);
     let bare: HashMap<String, String> = func
         .outputs
@@ -1385,8 +1423,8 @@ fn peek_frame_arm(
 }
 
 /// One model's peek frame: the transition rewritten to commit nothing, run
-/// against the live handle at `indent`. `None` where it cannot be built and the
-/// caller falls back to peeking a copy.
+/// against the live handle at `indent`. `None` where it cannot be built, which
+/// the caller turns into a panic — every tier emits a frame.
 #[allow(clippy::too_many_arguments)]
 fn peek_frame_arm_named(
     func: &FuncDef,
@@ -1404,8 +1442,7 @@ fn peek_frame_arm_named(
 ) -> Option<String> {
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, names).ok()?;
-    let bufs = streaming::transition_buffers(model, names);
-    let pt = streaming::peek_transition(&transition, &bufs, None).ok()?;
+    let pt = streaming::peek_transition_widest(model, names, &transition, None).ok()?;
     // The extrema rebase moves the cursor before the first store, so its
     // targets localize with the transition's own.
     let mut rebased: Vec<String> = Vec::new();
@@ -1414,6 +1451,7 @@ fn peek_frame_arm_named(
         rebased.push(ex.trailing.clone());
         rebased.extend(ex.index_vars.iter().cloned());
     }
+    let bufs = streaming::transition_buffers(model, names);
     let (locals, body_ir) = localize_state_writes(func, &pt.body, &rebased, &bufs)?;
     // The transition's own early exit — the param-degenerate identity
     // short-circuit — is valueless, because a step returns `void`. Inline in
@@ -1439,9 +1477,9 @@ fn peek_frame_arm_named(
         }
         let jty = types.get(name.as_str()).copied()?;
         // A Java array field is a reference: taking it plain would write the
-        // handle through it. These are the fixed-size per-bar accumulators —
-        // two to five elements — never a period-sized buffer, which the frame
-        // only ever reads.
+        // handle through it. Only the accumulators `peek_transition_widest`
+        // refused reach here — two to five elements, never a period-sized
+        // buffer, which the frame only ever reads.
         let init = if jty.ends_with("[]") {
             format!("sp.{name}.clone()")
         } else {
@@ -3463,8 +3501,8 @@ fn emit_period_bank(
 // sub-handles, mirroring rust_stream's emit_composed with the managed-language
 // simplifications: GC replaces every cleanup ladder and series-free replay,
 // `free()` renders as a no-op so lag-ring seeding reads the still-live
-// intermediate array, and copy-peek needs no sub-call routing at all (sub handles
-// deep-copy through their copy constructors).
+// intermediate array, and the peek frame drives each sub-stream's own public
+// peek rather than committing anything.
 // ---------------------------------------------------------------------------
 
 /// Composed producer name map: identical to [`JavaStreamNames`] except the

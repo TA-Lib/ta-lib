@@ -131,10 +131,12 @@ TA_RetCode TA_S_ADD( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ADD_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_ADD_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -142,6 +144,7 @@ static void TA_ADD_StepImpl( struct TA_ADD_Stream *sp, double inReal0, double in
 {
    (void)sp;
    *outReal= inReal0 + inReal1;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_ADD_OpenImpl( struct TA_ADD_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -184,6 +187,7 @@ static TA_RetCode TA_ADD_OpenImpl( struct TA_ADD_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -234,7 +238,11 @@ TA_RetCode TA_ADD_OpenAndFillInternal( struct TA_ADD_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_ADD_Update( TA_ADD_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_ADD_StepImpl( stream, inReal0, inReal1, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -250,6 +258,7 @@ TA_LIB_API TA_RetCode TA_ADD_Peek( const TA_ADD_Stream *stream, double inReal0, 
    scratch = *stream;
    (void)sp;
    *outReal= inReal0 + inReal1;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -262,7 +271,11 @@ TA_LIB_API TA_RetCode TA_ADD_UpdateAndFill( TA_ADD_Stream *stream, const double 
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal0[i] ) || !TA_IS_FINITE( inReal1[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal0[i] ) || !TA_IS_FINITE( inReal1[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_ADD_StepImpl( stream, inReal0[i], inReal1[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -272,6 +285,27 @@ TA_LIB_API TA_RetCode TA_ADD_UpdateAndFill( TA_ADD_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_ADD_Close( TA_ADD_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADD_Value( const TA_ADD_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ADD_Clone( const TA_ADD_Stream *stream, TA_ADD_Stream **clone )
+{
+   struct TA_ADD_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_ADD_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

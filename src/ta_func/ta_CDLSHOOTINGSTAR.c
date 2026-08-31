@@ -310,10 +310,12 @@ TA_RetCode TA_S_CDLSHOOTINGSTAR( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLSHOOTINGSTAR_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_CDLSHOOTINGSTAR_Value). */
+   int cur_outInteger;
    double BodyPeriodTotal;
    double ShadowLongPeriodTotal;
    double ShadowVeryShortPeriodTotal;
@@ -372,6 +374,7 @@ static void TA_CDLSHOOTINGSTAR_StepImpl( struct TA_CDLSHOOTINGSTAR_Stream *sp, d
    sp->BodyPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose) - sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx];
    sp->ShadowLongPeriodTotal += TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose) - sp->ring_ShadowLongTrailingIdx_derived[sp->ringPos_ShadowLongTrailingIdx];
    sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose) - sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inClose = inClose;
    sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
@@ -558,6 +561,7 @@ static TA_RetCode TA_CDLSHOOTINGSTAR_OpenImpl( struct TA_CDLSHOOTINGSTAR_Stream 
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -608,7 +612,11 @@ TA_RetCode TA_CDLSHOOTINGSTAR_OpenAndFillInternal( struct TA_CDLSHOOTINGSTAR_Str
 TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Update( TA_CDLSHOOTINGSTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CDLSHOOTINGSTAR_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -660,6 +668,7 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Peek( const TA_CDLSHOOTINGSTAR_Stream *
    sp->BodyPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyTrailingIdx != pkSlot0) ? sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx] : pkVal0);
    sp->ShadowLongPeriodTotal += TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_ShadowLongTrailingIdx != pkSlot1) ? sp->ring_ShadowLongTrailingIdx_derived[sp->ringPos_ShadowLongTrailingIdx] : pkVal1);
    sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_ShadowVeryShortTrailingIdx != pkSlot2) ? sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] : pkVal2);
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inClose = inClose;
    sp->ringPos_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx + 1;
@@ -689,7 +698,11 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_UpdateAndFill( TA_CDLSHOOTINGSTAR_Strea
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CDLSHOOTINGSTAR_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -699,6 +712,45 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_UpdateAndFill( TA_CDLSHOOTINGSTAR_Strea
 TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Close( TA_CDLSHOOTINGSTAR_Stream *stream )
 {
    TA_CDLSHOOTINGSTAR_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Value( const TA_CDLSHOOTINGSTAR_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Clone( const TA_CDLSHOOTINGSTAR_Stream *stream, TA_CDLSHOOTINGSTAR_Stream **clone )
+{
+   struct TA_CDLSHOOTINGSTAR_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLSHOOTINGSTAR_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyTrailingIdx_derived = NULL;
+   sp->ring_ShadowLongTrailingIdx_derived = NULL;
+   sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyTrailingIdx > 0 ? sp->ringCap_BodyTrailingIdx : 1);
+     sp->ring_BodyTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyTrailingIdx_derived ) { TA_CDLSHOOTINGSTAR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyTrailingIdx_derived, stream->ring_BodyTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowLongTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_ShadowLongTrailingIdx > 0 ? sp->ringCap_ShadowLongTrailingIdx : 1);
+     sp->ring_ShadowLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_ShadowLongTrailingIdx_derived ) { TA_CDLSHOOTINGSTAR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_ShadowLongTrailingIdx_derived, stream->ring_ShadowLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowVeryShortTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
+     sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLSHOOTINGSTAR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

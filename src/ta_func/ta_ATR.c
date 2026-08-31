@@ -397,10 +397,12 @@ TA_RetCode TA_S_ATR( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ATR_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_ATR_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double prevATR;
    double lag1_inClose;
@@ -436,6 +438,7 @@ static void TA_ATR_StepImpl( struct TA_ATR_Stream *sp, double inHigh, double inL
    sp->prevATR += greatest;
    sp->prevATR /= sp->optInTimePeriod;
    *outReal= sp->prevATR;
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
 }
 
@@ -632,6 +635,7 @@ static TA_RetCode TA_ATR_OpenImpl( struct TA_ATR_Stream **stream, const double i
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -682,7 +686,11 @@ TA_RetCode TA_ATR_OpenAndFillInternal( struct TA_ATR_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_ATR_Update( TA_ATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_ATR_StepImpl( stream, inHigh, inLow, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -722,6 +730,7 @@ TA_LIB_API TA_RetCode TA_ATR_Peek( const TA_ATR_Stream *stream, double inHigh, d
    sp->prevATR += greatest;
    sp->prevATR /= sp->optInTimePeriod;
    *outReal= sp->prevATR;
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
@@ -735,7 +744,11 @@ TA_LIB_API TA_RetCode TA_ATR_UpdateAndFill( TA_ATR_Stream *stream, const double 
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_ATR_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -745,6 +758,27 @@ TA_LIB_API TA_RetCode TA_ATR_UpdateAndFill( TA_ATR_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_ATR_Close( TA_ATR_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ATR_Value( const TA_ATR_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ATR_Clone( const TA_ATR_Stream *stream, TA_ATR_Stream **clone )
+{
+   struct TA_ATR_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_ATR_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

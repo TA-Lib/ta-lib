@@ -234,15 +234,22 @@ const UF_BAD: usize = 3;
 const UF_CANARY: f64 = -1.234_567_890_123_4e300;
 const UF_CANARY_I: i32 = -987_654_321;
 
-/// `update_and_fill` is n back-to-back `update`s and nothing else, so a
-/// non-finite bar `k` is rejected exactly as `update` rejects it — and the bars
-/// before it stay committed with their values written.
+/// `update_and_fill` is a loop of `update`s that stops at the first error, so a
+/// non-finite bar `k` is rejected exactly as `update` rejects it — the bars
+/// before it stay committed with their values written, and bar `k` itself is
+/// counted without being written (rule U3).
 ///
 /// That is the one place in the API where a call returns an error AND leaves
 /// output behind, so what it leaves is pinned against a CONTROL handle driven
-/// over the same first `k` bars one at a time: same range, same values, same
-/// answer on the next good bar. A whole-array pre-scan would satisfy "it
-/// rejects" and fail every one of those.
+/// the same way — the same bars one at a time, *including* the rejected one,
+/// which is what makes this an equivalence rather than a comparison against a
+/// constant. Same range, same values, same answer on the next good bar. A
+/// whole-array pre-scan would satisfy "it rejects" and fail every one of those.
+///
+/// The control moves with the rule, so that equivalence is blind to the net
+/// advance itself — drop the advance from both arms and it still holds. The
+/// SMA arm therefore also asserts the count absolutely: the committed bars plus
+/// the rejected one.
 #[test]
 fn update_and_fill_commits_the_bars_before_a_rejected_one() {
     let core = Core::new();
@@ -256,6 +263,7 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
     );
     let next = WARM + UF_N;
     let mut commits = 0usize;
+    let mut absolute = 0usize;
     let mut values = 0usize;
     let mut untouched = 0usize;
 
@@ -266,11 +274,18 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         // --- the shared step loop (loop / dual-mode / composed all reach it) --
         let (mut sa, _) = core.sma_open(c, 14).unwrap();
         let (mut sb, _) = core.sma_open(c, 14).unwrap();
+        let base = sa.out_range().count;
         let want: Vec<f64> = (0..UF_BAD).map(|i| sb.update(bars[i]).unwrap()).collect();
+        assert!(is_bad_param(&sb.update(bars[UF_BAD])), "SMA: the control accepted the bad bar");
         let mut out = vec![UF_CANARY; UF_N];
         assert!(
             is_bad_param(&sa.update_and_fill(&bars, &mut out)),
             "SMA.update_and_fill accepted {bad}"
+        );
+        assert!(
+            probed(&mut absolute, sa.out_range().count == base + UF_BAD + 1),
+            "SMA: counted {} for {UF_BAD} committed bars plus the rejected one",
+            sa.out_range().count - base
         );
         assert!(
             probed(&mut commits, sa.out_range() == sb.out_range()),
@@ -298,6 +313,7 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         let (mut bb, _) = core.bbands_open(c, 20, 2.0, 2.0, MAType::SMA).unwrap();
         let wantb: Vec<(f64, f64, f64)> =
             (0..UF_BAD).map(|i| bb.update(bars[i]).unwrap()).collect();
+        assert!(is_bad_param(&bb.update(bars[UF_BAD])), "BBANDS: the control accepted the bad bar");
         let (mut bu, mut bm, mut bl) =
             (vec![UF_CANARY; UF_N], vec![UF_CANARY; UF_N], vec![UF_CANARY; UF_N]);
         assert!(
@@ -323,6 +339,10 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
             let (mut ma, _) = core.ma_open(c, period, MAType::SMA).unwrap();
             let (mut mb, _) = core.ma_open(c, period, MAType::SMA).unwrap();
             let wantm: Vec<f64> = (0..UF_BAD).map(|i| mb.update(bars[i]).unwrap()).collect();
+            assert!(
+                is_bad_param(&mb.update(bars[UF_BAD])),
+                "MA({period}): the control accepted the bad bar"
+            );
             let mut mo = vec![UF_CANARY; UF_N];
             assert!(
                 is_bad_param(&ma.update_and_fill(&bars, &mut mo)),
@@ -347,6 +367,10 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         let wantv: Vec<f64> = (0..UF_BAD)
             .map(|i| vb.update(good_bars[i], pers[i]).unwrap())
             .collect();
+        assert!(
+            is_bad_param(&vb.update(good_bars[UF_BAD], pers[UF_BAD])),
+            "MAVP: the control accepted the bad period"
+        );
         let mut vo = vec![UF_CANARY; UF_N];
         assert!(
             is_bad_param(&va.update_and_fill(&good_bars, &pers, &mut vo)),
@@ -371,6 +395,10 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
         let wantj: Vec<i32> = (0..UF_BAD)
             .map(|i| jb.update(opens[i], highs[i], lows[i], good_bars[i]).unwrap())
             .collect();
+        assert!(
+            is_bad_param(&jb.update(opens[UF_BAD], highs[UF_BAD], lows[UF_BAD], good_bars[UF_BAD])),
+            "CDLDOJI: the control accepted the bad low"
+        );
         let mut jo = vec![UF_CANARY_I; UF_N];
         assert!(
             is_bad_param(&ja.update_and_fill(&opens, &highs, &lows, &good_bars, &mut jo)),
@@ -386,6 +414,7 @@ fn update_and_fill_commits_the_bars_before_a_rejected_one() {
     }
     // Literal floors, every counter incremented inside the assertion it counts.
     assert!(commits >= 18, "the commit sweep ran {commits} compares");
+    assert!(absolute >= 3, "the absolute-count sweep ran {absolute} compares");
     assert!(values >= 54, "the value sweep ran {values} compares");
     assert!(untouched >= 54, "the untouched sweep ran {untouched} compares");
 }

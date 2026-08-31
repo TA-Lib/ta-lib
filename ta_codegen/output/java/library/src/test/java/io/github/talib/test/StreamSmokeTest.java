@@ -369,11 +369,14 @@ public class StreamSmokeTest {
      * the bars before it stay committed with their values written.
      *
      * <p>That is the one place in the API where a call fails AND leaves output
-     * behind, so what it leaves is pinned against a CONTROL handle driven over
-     * the same first {@code k} bars one at a time: same {@code outRange()}, same
-     * values, same answer on the next good bar, and nothing written at or above
-     * {@code k}. A whole-array pre-scan would satisfy "it throws" and fail every
-     * one of those.
+     * behind, so what it leaves is pinned against a CONTROL handle driven the way
+     * the loop itself runs: the first {@code k} bars one at a time, then bar
+     * {@code k}, which the control must reject too. Offer the control only the
+     * good bars and the range assertion stops being an equivalence — a rejected
+     * bar is still counted, so the filler advances by {@code k + 1}. What the two
+     * must then agree on: {@code outRange()}, the values written below {@code k},
+     * the next good bar's answer, and nothing written at or above {@code k}. A
+     * whole-array pre-scan would satisfy "it throws" and fail every one of those.
      *
      * <p>Coverage is by the emitters {@code updateAndFill} is generated from,
      * which is one for every tier — so SMA stands for the whole step-loop family,
@@ -409,6 +412,7 @@ public class StreamSmokeTest {
             for (int i = 0; i < UF_BAD; i++) {
                 want[i] = sb.update(bars[i]);
             }
+            barMustReject("SMA.update(control)", () -> sb.update(bars[UF_BAD]));
             final double[] out = new double[UF_N];
             java.util.Arrays.fill(out, UF_CANARY);
             barMustReject("SMA.updateAndFill", () -> sa.updateAndFill(bars, out));
@@ -429,6 +433,7 @@ public class StreamSmokeTest {
             for (int i = 0; i < UF_BAD; i++) {
                 wantB[i] = bb.update(bars[i]);
             }
+            barMustReject("BBANDS.update(control)", () -> bb.update(bars[UF_BAD]));
             final double[] bu = new double[UF_N];
             final double[] bm = new double[UF_N];
             final double[] bl = new double[UF_N];
@@ -462,6 +467,8 @@ public class StreamSmokeTest {
                 for (int i = 0; i < UF_BAD; i++) {
                     wantM[i] = mb.update(bars[i]);
                 }
+                barMustReject("MA(" + period + ").update(control)",
+                    () -> mb.update(bars[UF_BAD]));
                 final double[] mo = new double[UF_N];
                 java.util.Arrays.fill(mo, UF_CANARY);
                 barMustReject("MA(" + period + ").updateAndFill", () -> ma.updateAndFill(bars, mo));
@@ -487,6 +494,8 @@ public class StreamSmokeTest {
             for (int i = 0; i < UF_BAD; i++) {
                 wantV[i] = vb.update(goodBars[i], pers[i]);
             }
+            barMustReject("MAVP.update(control)",
+                () -> vb.update(goodBars[UF_BAD], pers[UF_BAD]));
             final double[] vo = new double[UF_N];
             java.util.Arrays.fill(vo, UF_CANARY);
             barMustReject("MAVP.updateAndFill", () -> va.updateAndFill(goodBars, pers, vo));
@@ -514,6 +523,8 @@ public class StreamSmokeTest {
             for (int i = 0; i < UF_BAD; i++) {
                 wantJ[i] = jb.update(opens[i], highs[i], lows[i], goodBars[i]);
             }
+            barMustReject("CDLDOJI.update(control)",
+                () -> jb.update(opens[UF_BAD], highs[UF_BAD], lows[UF_BAD], goodBars[UF_BAD]));
             final int[] jo = new int[UF_N];
             java.util.Arrays.fill(jo, UF_CANARY_I);
             barMustReject("CDLDOJI.updateAndFill",
@@ -573,8 +584,9 @@ public class StreamSmokeTest {
      *  generated class — so the caller passes the two ranges, not the handles. */
     private static void ufRangeEq(String what, OutRange ra, OutRange rb) {
         check(ra.begIdx() == rb.begIdx() && ra.count() == rb.count(),
-              what + ": updateAndFill committed (" + ra.begIdx() + "," + ra.count()
-              + "), " + UF_BAD + " updates committed (" + rb.begIdx() + "," + rb.count() + ")");
+              what + ": updateAndFill reports (" + ra.begIdx() + "," + ra.count()
+              + "), the control (" + UF_BAD + " updates then the rejected bar) reports ("
+              + rb.begIdx() + "," + rb.count() + ")");
         ufCommits++;
     }
 
@@ -586,6 +598,263 @@ public class StreamSmokeTest {
     private static void ufUntouched(String what, double x, double canary) {
         check(bitEq(x, canary), what + ": updateAndFill wrote past the bar it rejected");
         ufSlots++;
+    }
+
+    /* ---- rule U3, stated absolutely (docs/error-handling-spec.md 2.4) ---- */
+
+    /** Advance counters, one per property, each incremented AT its assertion. */
+    private static int advRejects = 0;
+    private static int advHolds = 0;
+    private static int advResumes = 0;
+    private static int advValues = 0;
+    private static int advPeekStills = 0;
+
+    /** Reads one handle's range. Handles share no supertype, so the caller hands
+     *  over the accessor rather than the handle. */
+    private interface Range { OutRange get(); }
+
+    private static void advReject(String what, Range range, Call bad) {
+        final OutRange before = range.get();
+        check(rejects(bad), what + ": update must reject a non-finite bar");
+        final OutRange after = range.get();
+        check(after.begIdx() == before.begIdx() && after.count() == before.count() + 1,
+              what + ": a rejected update left (" + after.begIdx() + "," + after.count()
+              + "), expected (" + before.begIdx() + "," + (before.count() + 1) + ")");
+        advRejects++;
+    }
+
+    private static void advHeld(String what, double before, double after) {
+        check(bitEq(before, after),
+              what + ": a rejected call moved value() (" + before + " -> " + after + ")");
+        advHolds++;
+    }
+
+    private static void advResume(String what, Range range, Call good) {
+        final OutRange before = range.get();
+        try {
+            good.run();
+        } catch (RuntimeException e) {
+            check(false, what + ": the good bar after a rejection threw " + e);
+        }
+        final OutRange after = range.get();
+        check(after.begIdx() == before.begIdx() && after.count() == before.count() + 1,
+              what + ": a committed update left (" + after.begIdx() + "," + after.count()
+              + "), expected (" + before.begIdx() + "," + (before.count() + 1) + ")");
+        advResumes++;
+    }
+
+    /** The resumed bar produced a value AND the handle kept it — so the
+     *  "value() did not move" assertions above cannot be passing because the
+     *  handle stopped producing anything at all. */
+    private static void advProduced(String what, double returned, double held) {
+        check(Double.isFinite(returned) && bitEq(returned, held),
+              what + ": after the rejected bar, update returned " + returned
+              + " and value() reports " + held);
+        advValues++;
+    }
+
+    private static void advPeekStill(String what, Range range, Call c, boolean mustReject) {
+        final OutRange before = range.get();
+        if (mustReject) {
+            check(rejects(c), what + ": peek must reject a non-finite bar");
+        } else {
+            try {
+                c.run();
+            } catch (RuntimeException e) {
+                check(false, what + ": a peek of a good bar must not throw " + e);
+            }
+        }
+        final OutRange after = range.get();
+        check(after.begIdx() == before.begIdx() && after.count() == before.count(),
+              what + ": peek moved the range (" + before.begIdx() + "," + before.count()
+              + ") -> (" + after.begIdx() + "," + after.count() + ")");
+        advPeekStills++;
+    }
+
+    /**
+     * What ONE rejected {@code update} costs, in absolute numbers.
+     *
+     * <p>{@link #updateAndFillCommitsThePrefix} pins {@code updateAndFill}
+     * against a loop of {@code update}s. That is an EQUIVALENCE, and therefore
+     * symmetric: it cannot see a change that moves both sides equally. Delete the
+     * advance from BOTH of a function's reject arms and the whole suite — here,
+     * in C and in C# — stays green, leaving the rule pinned only by the
+     * generator's source-text gate. This method compares against no control at
+     * all: it reads {@code outRange()}, offers one bad bar, and demands the exact
+     * numbers.
+     *
+     * <p>Both halves of U3 are asserted on the SAME call — the count moved by
+     * exactly one AND {@code value()} did not move. A change that stepped the
+     * state without counting, or counted while stepping, satisfies either half
+     * alone; only the pair pins "counted, not committed".
+     *
+     * <p>Then a good bar, which must still produce a value and advance by one:
+     * refusing a bar beats computing on it only if the handle survives the
+     * refusal. And the mirror — {@code peek} advances NOTHING, rejected or not.
+     * That half regresses silently, because a counting peek breaks no value
+     * anywhere.
+     *
+     * <p>Coverage is by stream TIER, as everywhere else in this file: the loop
+     * tier, dual-mode, both dispatch arms, the period bank, two composed
+     * multi-output functions, and an integer output over four price inputs.
+     */
+    private static void aRejectedUpdateCostsExactlyOneBar(
+            Core core, double[] open, double[] high, double[] low, double[] close) {
+        final double[] bad = { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
+        final int warm = 60;
+        final double[] cw = java.util.Arrays.copyOf(close, warm);
+        final double[] hw = java.util.Arrays.copyOf(high, warm);
+        final double[] lw = java.util.Arrays.copyOf(low, warm);
+        final double[] ow = java.util.Arrays.copyOf(open, warm);
+        final double[] pw = new double[warm];
+        for (int i = 0; i < warm; i++) {
+            pw[i] = 5.0 + (i % 11);
+        }
+        final double[] got = new double[1];
+
+        for (final double v : bad) {
+            /* --- loop tier ------------------------------------------------- */
+            final Core.SmaStream s = core.smaOpen(cw, 14);
+            final double sPeekHeld = s.value();
+            advPeekStill("SMA(bad)", s::outRange, () -> s.peek(v), true);
+            advHeld("SMA(peek)", sPeekHeld, s.value());
+            advPeekStill("SMA(good)", s::outRange, () -> s.peek(close[warm]), false);
+            final double sHeld = s.value();
+            advReject("SMA", s::outRange, () -> s.update(v));
+            advHeld("SMA", sHeld, s.value());
+            advResume("SMA", s::outRange, () -> {
+                got[0] = s.update(close[warm]);
+            });
+            advProduced("SMA", got[0], s.value());
+
+            /* --- dual-mode tier, three price inputs ------------------------ */
+            final Core.MinusDiStream d = core.minusDiOpen(hw, lw, cw, 14);
+            final double dPeekHeld = d.value();
+            advPeekStill("MINUS_DI(bad)", d::outRange,
+                () -> d.peek(high[warm], v, close[warm]), true);
+            advHeld("MINUS_DI(peek)", dPeekHeld, d.value());
+            advPeekStill("MINUS_DI(good)", d::outRange,
+                () -> d.peek(high[warm], low[warm], close[warm]), false);
+            final double dHeld = d.value();
+            advReject("MINUS_DI", d::outRange, () -> d.update(high[warm], low[warm], v));
+            advHeld("MINUS_DI", dHeld, d.value());
+            advResume("MINUS_DI", d::outRange, () -> {
+                got[0] = d.update(high[warm], low[warm], close[warm]);
+            });
+            advProduced("MINUS_DI", got[0], d.value());
+
+            /* --- dispatch, both arms; period 1 is the identity loop, which
+             * never reaches a sub-stream and carries its own advance --------- */
+            for (final int period : new int[] { 1, 14 }) {
+                final Core.MaStream m = core.maOpen(cw, period, MAType.SMA);
+                final double mPeekHeld = m.value();
+                advPeekStill("MA(" + period + ",bad)", m::outRange, () -> m.peek(v), true);
+                advHeld("MA(" + period + ",peek)", mPeekHeld, m.value());
+                advPeekStill("MA(" + period + ",good)", m::outRange,
+                    () -> m.peek(close[warm]), false);
+                final double mHeld = m.value();
+                advReject("MA(" + period + ")", m::outRange, () -> m.update(v));
+                advHeld("MA(" + period + ")", mHeld, m.value());
+                advResume("MA(" + period + ")", m::outRange, () -> {
+                    got[0] = m.update(close[warm]);
+                });
+                advProduced("MA(" + period + ")", got[0], m.value());
+            }
+
+            /* --- period bank; the poisoned slot is the PERIOD, the input that
+             * reaches an (int) cast ------------------------------------------ */
+            final Core.MavpStream p = core.mavpOpen(cw, pw, 2, 30, MAType.SMA);
+            final double pPeekHeld = p.value();
+            advPeekStill("MAVP(bad)", p::outRange, () -> p.peek(close[warm], v), true);
+            advHeld("MAVP(peek)", pPeekHeld, p.value());
+            advPeekStill("MAVP(good)", p::outRange, () -> p.peek(close[warm], pw[0]), false);
+            final double pHeld = p.value();
+            advReject("MAVP", p::outRange, () -> p.update(close[warm], v));
+            advHeld("MAVP", pHeld, p.value());
+            advResume("MAVP", p::outRange, () -> {
+                got[0] = p.update(close[warm], pw[0]);
+            });
+            advProduced("MAVP", got[0], p.value());
+
+            /* --- composed, three outputs: all three must be left alone ----- */
+            final Core.BbandsStream b = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
+            final Core.BbandsStream.Value bPeekHeld = b.value();
+            advPeekStill("BBANDS(bad)", b::outRange, () -> b.peek(v), true);
+            advHeld("BBANDS.upper(peek)", bPeekHeld.realUpperBand(), b.value().realUpperBand());
+            advHeld("BBANDS.middle(peek)", bPeekHeld.realMiddleBand(), b.value().realMiddleBand());
+            advHeld("BBANDS.lower(peek)", bPeekHeld.realLowerBand(), b.value().realLowerBand());
+            advPeekStill("BBANDS(good)", b::outRange, () -> b.peek(close[warm]), false);
+            final Core.BbandsStream.Value bHeld = b.value();
+            advReject("BBANDS", b::outRange, () -> b.update(v));
+            advHeld("BBANDS.upper", bHeld.realUpperBand(), b.value().realUpperBand());
+            advHeld("BBANDS.middle", bHeld.realMiddleBand(), b.value().realMiddleBand());
+            advHeld("BBANDS.lower", bHeld.realLowerBand(), b.value().realLowerBand());
+            final Core.BbandsStream.Value[] gotB = new Core.BbandsStream.Value[1];
+            advResume("BBANDS", b::outRange, () -> {
+                gotB[0] = b.update(close[warm]);
+            });
+            advProduced("BBANDS.upper", gotB[0].realUpperBand(), b.value().realUpperBand());
+            advProduced("BBANDS.middle", gotB[0].realMiddleBand(), b.value().realMiddleBand());
+            advProduced("BBANDS.lower", gotB[0].realLowerBand(), b.value().realLowerBand());
+
+            /* --- composed, one sub feeding the next ------------------------ */
+            final Core.StochStream k = core.stochOpen(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
+            final Core.StochStream.Value kPeekHeld = k.value();
+            advPeekStill("STOCH(bad)", k::outRange,
+                () -> k.peek(high[warm], v, close[warm]), true);
+            advHeld("STOCH.slowK(peek)", kPeekHeld.slowK(), k.value().slowK());
+            advHeld("STOCH.slowD(peek)", kPeekHeld.slowD(), k.value().slowD());
+            advPeekStill("STOCH(good)", k::outRange,
+                () -> k.peek(high[warm], low[warm], close[warm]), false);
+            final Core.StochStream.Value kHeld = k.value();
+            advReject("STOCH", k::outRange, () -> k.update(v, low[warm], close[warm]));
+            advHeld("STOCH.slowK", kHeld.slowK(), k.value().slowK());
+            advHeld("STOCH.slowD", kHeld.slowD(), k.value().slowD());
+            final Core.StochStream.Value[] gotK = new Core.StochStream.Value[1];
+            advResume("STOCH", k::outRange, () -> {
+                gotK[0] = k.update(high[warm], low[warm], close[warm]);
+            });
+            advProduced("STOCH.slowK", gotK[0].slowK(), k.value().slowK());
+            advProduced("STOCH.slowD", gotK[0].slowD(), k.value().slowD());
+
+            /* --- integer output over four price inputs --------------------- */
+            final Core.CdldojiStream j = core.cdldojiOpen(ow, hw, lw, cw);
+            final int jPeekHeld = j.value();
+            advPeekStill("CDLDOJI(bad)", j::outRange,
+                () -> j.peek(open[warm], high[warm], low[warm], v), true);
+            check(j.value() == jPeekHeld, "CDLDOJI: a rejected peek moved value()");
+            advHolds++;
+            advPeekStill("CDLDOJI(good)", j::outRange,
+                () -> j.peek(open[warm], high[warm], low[warm], close[warm]), false);
+            final int jHeld = j.value();
+            advReject("CDLDOJI", j::outRange,
+                () -> j.update(open[warm], high[warm], v, close[warm]));
+            check(j.value() == jHeld, "CDLDOJI: a rejected update moved value()");
+            advHolds++;
+            /* A zero-bodied bar, so the resumed value is 100 — distinguishable
+             * from the 0 an unwritten slot would also read. */
+            final int[] gotJ = new int[1];
+            advResume("CDLDOJI", j::outRange, () -> {
+                gotJ[0] = j.update(close[warm], high[warm], low[warm], close[warm]);
+            });
+            check(gotJ[0] == 100 && j.value() == gotJ[0],
+                  "CDLDOJI: the bar after the rejection produced " + gotJ[0]);
+            advValues++;
+        }
+
+        System.out.println("  Rejected-update advance gate (U3, absolute): "
+            + advRejects + " rejection(s) counted once, " + advHolds
+            + " untouched value(s), " + advResumes + " resumed bar(s), "
+            + advValues + " value(s) produced, " + advPeekStills
+            + " peek(s) that moved nothing");
+
+        /* Non-vacuity. Literal floors, every counter incremented at its own
+         * assertion. */
+        check(advRejects >= 24 && advHolds >= 66 && advResumes >= 24
+              && advValues >= 33 && advPeekStills >= 48,
+              "the rejected-update advance gate ran fewer checks than it was written with ("
+              + advRejects + "/" + advHolds + "/" + advResumes + "/" + advValues
+              + "/" + advPeekStills + ")");
     }
 
     /* ---- the registry-wide peek/copy sweep (#172 C4) --------------------- */
@@ -797,7 +1066,7 @@ public class StreamSmokeTest {
      *
      * <p><b>The gap this closes is the RANGE, not the fork.</b> The server's
      * {@code stream_verify} does fork a handle, and drives the fork and the
-     * original to the end against batch, so a {@code copy()} that returned
+     * original to the end against batch, so a {@code clone()} that returned
      * {@code this} goes red there too. What that leg compares is values; its
      * range checks sit on the fill, the prefix, the update-fill and the
      * anchored open — none on a copy, none after a peek. So a copy constructor
@@ -811,12 +1080,12 @@ public class StreamSmokeTest {
      *   <li>{@code peek} leaves {@code value()} and {@code outRange()} where
      *       they were, and returns what the {@code update} that follows returns;
      *   <li>{@code update} advances {@code outRange().count()} by exactly one;
-     *   <li>a fresh {@code copy()} carries the range and the value; and
+     *   <li>a fresh {@code clone()} carries the range and the value; and
      *   <li>updating the copy moves NOTHING on the original, and feeding the
      *       original that same bar afterwards reproduces the copy bit for bit.
      * </ol>
      *
-     * <p>Property 4 is what a shared-state {@code copy()} fails: the original's
+     * <p>Property 4 is what a shared-state {@code clone()} fails: the original's
      * count moves with the copy's update. It is checked on the count as well as
      * on the value because a count always moves, where a value need not — a CDL
      * pattern returning 0 on both bars would hide a shared handle behind a
@@ -826,7 +1095,7 @@ public class StreamSmokeTest {
      * paired with the same sabotage driven through {@code stream_verify}, and
      * the miss recorded rather than rounded off:</b>
      * <ul>
-     *   <li>{@code copy()} → {@code return this}: 176 of 176 named here, and
+     *   <li>{@code clone()} → {@code return this}: 176 of 176 named here, and
      *       the range assertions are what do it — the value assertions alone
      *       name 108, so 68 handles would have shared state silently.
      *       {@code stream_verify} also goes red.
@@ -868,12 +1137,12 @@ public class StreamSmokeTest {
             java.lang.reflect.Method open = methodNamed(Core.class, camelCase(name) + "Open");
             java.lang.reflect.Method update = methodNamed(handle, "update");
             java.lang.reflect.Method peek = methodNamed(handle, "peek");
-            java.lang.reflect.Method copy = methodNamed(handle, "copy");
+            java.lang.reflect.Method copy = methodNamed(handle, "clone");
             java.lang.reflect.Method value = methodNamed(handle, "value");
             java.lang.reflect.Method range = methodNamed(handle, "outRange");
             if (open == null || update == null || peek == null
                     || copy == null || value == null || range == null) {
-                unhandled.add(name + ": handle is missing one of open/update/peek/copy/value/outRange");
+                unhandled.add(name + ": handle is missing one of open/update/peek/clone/value/outRange");
                 continue;
             }
 
@@ -1060,12 +1329,12 @@ public class StreamSmokeTest {
                   "update adds one to outRange.count @" + t);
         }
 
-        /* peek does not commit; copy() forks independently. */
+        /* peek does not commit; clone() forks independently. */
         Core.SmaStream a = core.smaOpen(java.util.Arrays.copyOf(close, 40), 14);
         double before = a.value();
         a.peek(12345.0);
         check(bitEq(a.value(), before), "peek must not commit");
-        Core.SmaStream b = a.copy();
+        Core.SmaStream b = a.clone();
         a.update(111.0);
         check(!bitEq(a.value(), b.value()), "copy is independent (diverges)");
         b.update(111.0);
@@ -1084,9 +1353,9 @@ public class StreamSmokeTest {
         check(f.outRange().equals(batchRange), "openAndFill outRange == the batch range");
         check(bitEq(warm[batchRange.count() - 1], f.value()),
               "last filled value == the handle's value");
-        check(f.copy().outRange().equals(batchRange), "copy carries the range");
+        check(f.clone().outRange().equals(batchRange), "clone carries the range");
         /* A fork diverges: the copy's count only grows with ITS updates. */
-        Core.SmaStream g = f.copy();
+        Core.SmaStream g = f.clone();
         g.update(close[n - 1]);
         check(g.outRange().equals(new OutRange(batchRange.begIdx(), batchRange.count() + 1)),
               "a copy's own update extends only the copy");
@@ -1286,6 +1555,7 @@ public class StreamSmokeTest {
 
         nonFiniteInputsAreRejected(core, open, high, low, close);
         updateAndFillCommitsThePrefix(core, open, high, low, close);
+        aRejectedUpdateCostsExactlyOneBar(core, open, high, low, close);
         peekAndCopyHoldOnEveryHandle(core);
 
 

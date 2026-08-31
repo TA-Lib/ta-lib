@@ -276,10 +276,12 @@ TA_RetCode TA_S_CDLDOJISTAR( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLDOJISTAR_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_CDLDOJISTAR_Value). */
+   int cur_outInteger;
    double BodyDojiPeriodTotal;
    double BodyLongPeriodTotal;
    double lag1_inOpen;
@@ -328,6 +330,7 @@ static void TA_CDLDOJISTAR_StepImpl( struct TA_CDLDOJISTAR_Stream *sp, double in
     */
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx];
    sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
@@ -486,6 +489,7 @@ static TA_RetCode TA_CDLDOJISTAR_OpenImpl( struct TA_CDLDOJISTAR_Stream **stream
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -536,7 +540,11 @@ TA_RetCode TA_CDLDOJISTAR_OpenAndFillInternal( struct TA_CDLDOJISTAR_Stream **st
 TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Update( TA_CDLDOJISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CDLDOJISTAR_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -578,6 +586,7 @@ TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Peek( const TA_CDLDOJISTAR_Stream *stream, 
     */
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - ((sp->ringPos_BodyLongTrailingIdx != pkSlot1) ? sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] : pkVal1);
    sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] : pkVal0);
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
@@ -604,7 +613,11 @@ TA_LIB_API TA_RetCode TA_CDLDOJISTAR_UpdateAndFill( TA_CDLDOJISTAR_Stream *strea
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CDLDOJISTAR_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -614,6 +627,39 @@ TA_LIB_API TA_RetCode TA_CDLDOJISTAR_UpdateAndFill( TA_CDLDOJISTAR_Stream *strea
 TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Close( TA_CDLDOJISTAR_Stream *stream )
 {
    TA_CDLDOJISTAR_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Value( const TA_CDLDOJISTAR_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Clone( const TA_CDLDOJISTAR_Stream *stream, TA_CDLDOJISTAR_Stream **clone )
+{
+   struct TA_CDLDOJISTAR_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLDOJISTAR_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyDojiTrailingIdx_derived = NULL;
+   sp->ring_BodyLongTrailingIdx_derived = NULL;
+   if( stream->ring_BodyDojiTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
+     sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLDOJISTAR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyDojiTrailingIdx_derived, stream->ring_BodyDojiTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_BodyLongTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+     sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLDOJISTAR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

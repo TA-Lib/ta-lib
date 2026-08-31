@@ -716,10 +716,12 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ULTOSC_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_ULTOSC_Value). */
+   double cur_outReal;
    int optInTimePeriod1;
    int optInTimePeriod2;
    int optInTimePeriod3;
@@ -864,6 +866,7 @@ static void TA_ULTOSC_StepImpl( struct TA_ULTOSC_Stream *sp, double inHigh, doub
     */
    *outReal= 100.0 * (output / 7.0);
    /* Increment indexes */
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
 }
 
@@ -1233,6 +1236,7 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
       if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1283,7 +1287,11 @@ TA_RetCode TA_ULTOSC_OpenAndFillInternal( struct TA_ULTOSC_Stream **stream, cons
 TA_LIB_API TA_RetCode TA_ULTOSC_Update( TA_ULTOSC_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_ULTOSC_StepImpl( stream, inHigh, inLow, inClose, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -1414,6 +1422,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
     */
    *outReal= 100.0 * (output / 7.0);
    /* Increment indexes */
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
@@ -1427,7 +1436,11 @@ TA_LIB_API TA_RetCode TA_ULTOSC_UpdateAndFill( TA_ULTOSC_Stream *stream, const d
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_ULTOSC_StepImpl( stream, inHigh[i], inLow[i], inClose[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -1437,6 +1450,39 @@ TA_LIB_API TA_RetCode TA_ULTOSC_UpdateAndFill( TA_ULTOSC_Stream *stream, const d
 TA_LIB_API TA_RetCode TA_ULTOSC_Close( TA_ULTOSC_Stream *stream )
 {
    TA_ULTOSC_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ULTOSC_Value( const TA_ULTOSC_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ULTOSC_Clone( const TA_ULTOSC_Stream *stream, TA_ULTOSC_Stream **clone )
+{
+   struct TA_ULTOSC_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_ULTOSC_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->cb_term_closeMinusTrueLow = NULL;
+   sp->cb_term_trueRange = NULL;
+   if( stream->cb_term_closeMinusTrueLow )
+   { size_t copyN = (size_t)(sp->cbSize_term);
+     sp->cb_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_term_closeMinusTrueLow ) { TA_ULTOSC_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_term_closeMinusTrueLow, stream->cb_term_closeMinusTrueLow, sizeof(double) * copyN ); }
+   if( stream->cb_term_trueRange )
+   { size_t copyN = (size_t)(sp->cbSize_term);
+     sp->cb_term_trueRange = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_term_trueRange ) { TA_ULTOSC_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_term_trueRange, stream->cb_term_trueRange, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

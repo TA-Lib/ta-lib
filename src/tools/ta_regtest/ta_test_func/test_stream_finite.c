@@ -43,6 +43,7 @@
  *  081626 MF,CC  First version. The streaming tier's non-finite input
  *                rejection.
  *  082326 MF,CC  UpdateAndFill's partial commit (issue #246).
+ *  083026 MF,CC  Rule U3 asserted absolutely, not as a tier equivalence.
  */
 
 /* Description:
@@ -77,14 +78,23 @@
  *       bar. A rejection that half-advanced the state would pass (a) and fail
  *       here.
  *   (d) UpdateAndFill applies (a) and (b) PER BAR. It is n back-to-back
- *       Updates, so a non-finite bar k is rejected exactly as Update rejects
- *       it -- which means the bars before it stay committed and their values
- *       stay written. That is the one place in the API where a call returns a
- *       failure code AND leaves output behind, so what it left has to be
- *       pinned: k values written, nothing above k touched, the handle's
- *       OutRange advanced by exactly k, and the handle still in step with a
- *       control that took the same k bars one at a time. A whole-array
- *       pre-scan would pass "it rejects" and fail every one of those.
+ *       Updates STOPPING AT THE FIRST ERROR, so a non-finite bar k is
+ *       rejected exactly as Update rejects it -- the bars before it stay
+ *       committed and their values stay written. That is the one place in the
+ *       API where a call returns a failure code AND leaves output behind, so
+ *       what it left has to be pinned: k values written, nothing from k up
+ *       touched, and the handle indistinguishable from a control driven over
+ *       the same bars one at a time -- the poisoned bar included, which the
+ *       control must reject and which advances the range without committing
+ *       (docs/error-handling-spec.md, U3). A whole-array pre-scan would pass
+ *       "it rejects" and fail every one of those.
+ *
+ *   (e) The numbers themselves. (b) and (d) are EQUIVALENCES -- one handle
+ *       against another, one tier against another -- so neither can see a
+ *       change that moves both sides. (e) offers one bad bar to one handle and
+ *       demands the exact range: BadParam, begIdx put, count exactly one
+ *       higher, output untouched. Then a good bar, which must still produce a
+ *       value. And the mirror, Peek, which advances nothing either way.
  *
  *   (c) A real optional parameter that is NaN is rejected too. This one is not
  *       redundant with the batch range check: `NaN < min` and `NaN > max` are
@@ -131,7 +141,8 @@ static int sfBarRejects;    /* (a) */
 static int sfStateHolds;    /* (b) */
 static int sfParamRejects;  /* (c) */
 static int sfUfRejects;     /* (d) the rejected n-bar call */
-static int sfUfCommits;     /* (d) OutRange advanced by exactly k */
+static int sfUfCommits;     /* (d) the range matched the control's */
+static int sfUfCtrlRejects; /* (d) the control rejected bar k as well */
 static int sfUfValues;      /* (d) a value the rejected call still wrote */
 static int sfUfCanaries;    /* (d) a slot at or above k it left alone */
 static int sfUfGuards;      /* (d) an argument the call refuses outright */
@@ -194,10 +205,12 @@ static void sf_build_series( void )
 /* ---- (d) UpdateAndFill: the partial commit ------------------------------ */
 /*
  * SF_UF_N bars are offered in ONE call with bar SF_UF_BAD poisoned. What the
- * call must leave behind is checked against a CONTROL handle driven over the
- * same first SF_UF_BAD bars with plain Update: same range, same values, and
- * still in step on the next good bar. The control is what makes this a
- * statement about equivalence rather than about a number this test made up.
+ * call must leave behind is checked against a CONTROL handle driven with plain
+ * Update over the same bars, stopping where UpdateAndFill stops -- so the
+ * control is offered the poisoned bar too, and must reject it. Same range,
+ * same values, still in step on the next good bar. Stop the control one bar
+ * short instead and the range compare stops testing that equivalence and
+ * starts testing a number this test made up.
  */
 #define SF_UF_N     6
 #define SF_UF_BAD   3
@@ -215,8 +228,21 @@ static void sf_build_series( void )
       sfUfRejects++;                                                          \
    } while( 0 )
 
-/* The rejected call must have advanced the handle by exactly the bars it
- * committed -- which is what the control handle advanced by. */
+#define SF_UF_CTRL_REJECT( fname, rc )                                        \
+   do {                                                                       \
+      if( (rc) != TA_BAD_PARAM )                                              \
+      {                                                                       \
+         printf( "  %s: the one-at-a-time control accepted the bar "          \
+                 "UpdateAndFill rejected (retCode %d)\n", fname,              \
+                 (int)(rc) );                                                 \
+         return TA_STREAM_UFILL_ACCEPTED_BAD_BAR;                             \
+      }                                                                       \
+      sfUfCtrlRejects++;                                                      \
+   } while( 0 )
+
+/* Both handles were driven over the same bars, so they must report the same
+ * range. Never compare either against a literal: what a rejected bar
+ * contributes to the count is the rule under test. */
 #define SF_UF_RANGE_EQ( fname, ha, hb )                                       \
    do {                                                                       \
       int aB = -1, aN = -1, bB = -2, bN = -2;                                 \
@@ -224,8 +250,8 @@ static void sf_build_series( void )
           TA_StreamOutRange( (hb), &bB, &bN ) != TA_SUCCESS ||                \
           aB != bB || aN != bN )                                              \
       {                                                                       \
-         printf( "  %s: UpdateAndFill committed (%d,%d), %d Updates "         \
-                 "committed (%d,%d)\n", fname, aB, aN, SF_UF_BAD, bB, bN );   \
+         printf( "  %s: UpdateAndFill left (%d,%d), the same bars one at "    \
+                 "a time left (%d,%d)\n", fname, aB, aN, bB, bN );            \
          return TA_STREAM_UFILL_WRONG_COMMIT;                                 \
       }                                                                       \
       sfUfCommits++;                                                          \
@@ -532,6 +558,7 @@ static ErrorNumber sf_uf_sma( void )
       for( i = 0; i < SF_UF_N; i++ ) { bars[i] = sfClose[warm + i]; out[i] = SF_UF_CANARY; ref[i] = 0.0; }
       bars[SF_UF_BAD] = sfBad[b];
       for( i = 0; i < SF_UF_BAD; i++ ) TA_SMA_Update( sb, bars[i], &ref[i] );
+      SF_UF_CTRL_REJECT( "SMA", TA_SMA_Update( sb, bars[SF_UF_BAD], &ref[SF_UF_BAD] ) );
 
       SF_UF_MUST_REJECT( "SMA", TA_SMA_UpdateAndFill( sa, bars, SF_UF_N, out ) );
       SF_UF_RANGE_EQ( "SMA", sa, sb );
@@ -571,6 +598,8 @@ static ErrorNumber sf_uf_bbands( void )
       }
       bars[SF_UF_BAD] = sfBad[b];
       for( i = 0; i < SF_UF_BAD; i++ ) TA_BBANDS_Update( sb, bars[i], &rU[i], &rM[i], &rL[i] );
+      SF_UF_CTRL_REJECT( "BBANDS", TA_BBANDS_Update( sb, bars[SF_UF_BAD],
+                            &rU[SF_UF_BAD], &rM[SF_UF_BAD], &rL[SF_UF_BAD] ) );
 
       SF_UF_MUST_REJECT( "BBANDS", TA_BBANDS_UpdateAndFill( sa, bars, SF_UF_N, oU, oM, oL ) );
       SF_UF_RANGE_EQ( "BBANDS", sa, sb );
@@ -623,6 +652,8 @@ static ErrorNumber sf_uf_cdldoji( void )
        * at the first input array would still reject on every other case. */
       l[SF_UF_BAD] = sfBad[b];
       for( i = 0; i < SF_UF_BAD; i++ ) TA_CDLDOJI_Update( sb, o[i], h[i], l[i], c[i], &ref[i] );
+      SF_UF_CTRL_REJECT( "CDLDOJI", TA_CDLDOJI_Update( sb, o[SF_UF_BAD], h[SF_UF_BAD],
+                            l[SF_UF_BAD], c[SF_UF_BAD], &ref[SF_UF_BAD] ) );
 
       SF_UF_MUST_REJECT( "CDLDOJI", TA_CDLDOJI_UpdateAndFill( sa, o, h, l, c, SF_UF_N, out ) );
       SF_UF_RANGE_EQ( "CDLDOJI", sa, sb );
@@ -663,6 +694,7 @@ static ErrorNumber sf_uf_ma( void )
       for( i = 0; i < SF_UF_N; i++ ) { bars[i] = sfClose[warm + i]; out[i] = SF_UF_CANARY; ref[i] = 0.0; }
       bars[SF_UF_BAD] = sfBad[b];
       for( i = 0; i < SF_UF_BAD; i++ ) TA_MA_Update( sb, bars[i], &ref[i] );
+      SF_UF_CTRL_REJECT( "MA", TA_MA_Update( sb, bars[SF_UF_BAD], &ref[SF_UF_BAD] ) );
 
       SF_UF_MUST_REJECT( "MA", TA_MA_UpdateAndFill( sa, bars, SF_UF_N, out ) );
       SF_UF_RANGE_EQ( "MA", sa, sb );
@@ -703,6 +735,8 @@ static ErrorNumber sf_uf_mavp( void )
        * rather than merely a wrong number. */
       pers[SF_UF_BAD] = sfBad[b];
       for( i = 0; i < SF_UF_BAD; i++ ) TA_MAVP_Update( sb, bars[i], pers[i], &ref[i] );
+      SF_UF_CTRL_REJECT( "MAVP", TA_MAVP_Update( sb, bars[SF_UF_BAD],
+                            pers[SF_UF_BAD], &ref[SF_UF_BAD] ) );
 
       SF_UF_MUST_REJECT( "MAVP", TA_MAVP_UpdateAndFill( sa, bars, pers, SF_UF_N, out ) );
       SF_UF_RANGE_EQ( "MAVP", sa, sb );
@@ -788,6 +822,426 @@ static ErrorNumber sf_uf_guards( void )
    return TA_TEST_PASS;
 }
 
+/* ---- (e) rule U3 stated ABSOLUTELY: what ONE rejected Update costs ------ */
+/*
+ * Everything above compares one tier against another: (b) and (d) hold two
+ * handles side by side, and (d)'s range check asserts UpdateAndFill == a loop
+ * of Updates. That equivalence is SYMMETRIC, so it cannot see a change that
+ * moves both sides equally -- deleting the advance from BOTH of a function's
+ * reject arms leaves the whole suite green in every language. The rule then
+ * rests on the generator's source-text gate alone, and nothing running proves
+ * it.
+ *
+ * So this leg compares against no control at all. It reads the range, offers
+ * exactly one bad bar, and demands the exact numbers: TA_BAD_PARAM, begIdx
+ * unmoved, count exactly one higher -- the bar happened, so it is counted --
+ * and the caller's output slot untouched.
+ *
+ * Both halves are asserted on the SAME call, deliberately. A change that
+ * stepped the state and skipped the count, or counted and stepped, satisfies
+ * either half alone; only the pair pins "counted but not committed".
+ *
+ * Then a good bar, which must still produce a value and advance by one:
+ * refusing a bar is better than computing on it only if the handle survives
+ * the refusal.
+ *
+ * The mirror is Peek, which advances NOTHING -- rejected or not. It is the
+ * half most likely to regress silently, because a Peek that started counting
+ * would break no value anywhere.
+ */
+
+/* Counters, one per property, each incremented AT its assertion. */
+static int sfAdvRejects;    /* a rejected Update: BadParam and exactly +1 */
+static int sfAdvHolds;      /* a slot the rejected call left alone */
+static int sfAdvResumes;    /* the next good bar: Success and exactly +1 */
+static int sfAdvValues;     /* a slot that good bar filled */
+static int sfAdvPeekStills; /* a Peek, good or rejected, moved nothing */
+static int sfAdvValueHolds; /* Value across the rejection: same bits */
+static int sfAdvValueTracks;/* Value after the next good bar: that bar's value */
+
+#define SF_ADV_READ( fname, h, bv, nv )                                       \
+   do {                                                                       \
+      if( TA_StreamOutRange( (h), &(bv), &(nv) ) != TA_SUCCESS )              \
+      {                                                                       \
+         printf( "  %s: TA_StreamOutRange failed\n", fname );                 \
+         return TA_STREAM_ADVANCE_SETUP_FAILED;                               \
+      }                                                                       \
+   } while( 0 )
+
+#define SF_ADV_REJECT( fname, h, call )                                       \
+   do {                                                                       \
+      int b0_, n0_, b1_, n1_;                                                 \
+      TA_RetCode rc_;                                                         \
+      SF_ADV_READ( fname, (h), b0_, n0_ );                                    \
+      rc_ = (call);                                                           \
+      if( rc_ != TA_BAD_PARAM )                                               \
+      {                                                                       \
+         printf( "  %s: Update accepted a non-finite bar (retCode %d)\n",     \
+                 fname, (int)rc_ );                                           \
+         return TA_STREAM_ADVANCE_NOT_REJECTED;                               \
+      }                                                                       \
+      SF_ADV_READ( fname, (h), b1_, n1_ );                                    \
+      if( b1_ != b0_ || n1_ != n0_ + 1 )                                      \
+      {                                                                       \
+         printf( "  %s: a rejected Update left (%d,%d), expected (%d,%d)\n",  \
+                 fname, b1_, n1_, b0_, n0_ + 1 );                             \
+         return TA_STREAM_ADVANCE_WRONG_COUNT;                                \
+      }                                                                       \
+      sfAdvRejects++;                                                         \
+   } while( 0 )
+
+#define SF_ADV_RESUME( fname, h, call )                                       \
+   do {                                                                       \
+      int b0_, n0_, b1_, n1_;                                                 \
+      TA_RetCode rc_;                                                         \
+      SF_ADV_READ( fname, (h), b0_, n0_ );                                    \
+      rc_ = (call);                                                           \
+      if( rc_ != TA_SUCCESS )                                                 \
+      {                                                                       \
+         printf( "  %s: the good bar after a rejection failed (retCode %d)\n",\
+                 fname, (int)rc_ );                                           \
+         return TA_STREAM_ADVANCE_NOT_RESUMED;                                \
+      }                                                                       \
+      SF_ADV_READ( fname, (h), b1_, n1_ );                                    \
+      if( b1_ != b0_ || n1_ != n0_ + 1 )                                      \
+      {                                                                       \
+         printf( "  %s: a committed Update left (%d,%d), expected (%d,%d)\n", \
+                 fname, b1_, n1_, b0_, n0_ + 1 );                             \
+         return TA_STREAM_ADVANCE_WRONG_COUNT;                                \
+      }                                                                       \
+      sfAdvResumes++;                                                         \
+   } while( 0 )
+
+/* Peek advances NOTHING -- rejected or not. The retCode is asserted in the
+ * same macro so a Peek that silently accepted the bad bar cannot pass on
+ * "it moved nothing". */
+#define SF_ADV_PEEK( fname, h, call, want )                                   \
+   do {                                                                       \
+      int b0_, n0_, b1_, n1_;                                                 \
+      TA_RetCode rc_;                                                         \
+      SF_ADV_READ( fname, (h), b0_, n0_ );                                    \
+      rc_ = (call);                                                           \
+      if( rc_ != (want) )                                                     \
+      {                                                                       \
+         printf( "  %s: Peek answered %d, expected %d\n",                     \
+                 fname, (int)rc_, (int)(want) );                              \
+         return TA_STREAM_ADVANCE_NOT_REJECTED;                               \
+      }                                                                       \
+      SF_ADV_READ( fname, (h), b1_, n1_ );                                    \
+      if( b1_ != b0_ || n1_ != n0_ )                                          \
+      {                                                                       \
+         printf( "  %s: Peek moved the range (%d,%d) -> (%d,%d)\n",           \
+                 fname, b0_, n0_, b1_, n1_ );                                 \
+         return TA_STREAM_ADVANCE_PEEK_MOVED;                                 \
+      }                                                                       \
+      sfAdvPeekStills++;                                                      \
+   } while( 0 )
+
+#define SF_ADV_HELD( fname, x )                                               \
+   do {                                                                       \
+      if( (x) != SF_UF_CANARY )                                               \
+      {                                                                       \
+         printf( "  %s: a rejected call wrote %.17g into the output\n",       \
+                 fname, (double)(x) );                                        \
+         return TA_STREAM_ADVANCE_VALUE_MOVED;                                \
+      }                                                                       \
+      sfAdvHolds++;                                                           \
+   } while( 0 )
+
+#define SF_ADV_HELD_I( fname, x )                                             \
+   do {                                                                       \
+      if( (x) != SF_UF_CANARY_I )                                             \
+      {                                                                       \
+         printf( "  %s: a rejected call wrote %d into the output\n",          \
+                 fname, (int)(x) );                                           \
+         return TA_STREAM_ADVANCE_VALUE_MOVED;                                \
+      }                                                                       \
+      sfAdvHolds++;                                                           \
+   } while( 0 )
+
+/* The handle is still usable: the good bar produced something, so the
+ * "untouched" assertions above are not passing because the function stopped
+ * writing at all. */
+#define SF_ADV_PRODUCED( fname, x )                                           \
+   do {                                                                       \
+      if( (x) == SF_UF_CANARY || !isfinite( (double)(x) ) )               \
+      {                                                                       \
+         printf( "  %s: no value after the rejected bar\n", fname );          \
+         return TA_STREAM_ADVANCE_NO_VALUE;                                   \
+      }                                                                       \
+      sfAdvValues++;                                                          \
+   } while( 0 )
+
+/* SF_ADV_HELD proves only that the rejected call left the CALLER's
+ * out-parameter alone -- the call convention. Value is the only path to the
+ * held output, so it is read across the rejection too. Held bits alone would
+ * pass for an accessor that answers a constant, hence the tracking half. */
+#define SF_ADV_VALUE( fname, call )                                           \
+   do {                                                                       \
+      if( (call) != TA_SUCCESS )                                              \
+      {                                                                       \
+         printf( "  %s: Value failed\n", fname );                             \
+         return TA_STREAM_ADVANCE_SETUP_FAILED;                               \
+      }                                                                       \
+   } while( 0 )
+
+#define SF_ADV_VALUE_HELD( fname, pre, post )                                 \
+   do {                                                                       \
+      if( memcmp( &(pre), &(post), sizeof(pre) ) != 0 )                       \
+      {                                                                       \
+         printf( "  %s: Value answered %.17g after a rejected Update, "       \
+                 "held %.17g\n", fname, (double)(post), (double)(pre) );      \
+         return TA_STREAM_ADVANCE_VALUE_NOT_HELD;                             \
+      }                                                                       \
+      sfAdvValueHolds++;                                                      \
+   } while( 0 )
+
+#define SF_ADV_VALUE_TRACKS( fname, produced, post )                          \
+   do {                                                                       \
+      if( memcmp( &(produced), &(post), sizeof(produced) ) != 0 )             \
+      {                                                                       \
+         printf( "  %s: Value answered %.17g, the bar produced %.17g\n",      \
+                 fname, (double)(post), (double)(produced) );                 \
+         return TA_STREAM_ADVANCE_VALUE_NOT_HELD;                             \
+      }                                                                       \
+      sfAdvValueTracks++;                                                     \
+   } while( 0 )
+
+#define SF_ADV_VALUE_HELD_I( fname, pre, post )                               \
+   do {                                                                       \
+      if( (pre) != (post) )                                                   \
+      {                                                                       \
+         printf( "  %s: Value answered %d after a rejected Update, held %d\n",\
+                 fname, (int)(post), (int)(pre) );                            \
+         return TA_STREAM_ADVANCE_VALUE_NOT_HELD;                             \
+      }                                                                       \
+      sfAdvValueHolds++;                                                      \
+   } while( 0 )
+
+#define SF_ADV_VALUE_TRACKS_I( fname, produced, post )                        \
+   do {                                                                       \
+      if( (produced) != (post) )                                              \
+      {                                                                       \
+         printf( "  %s: Value answered %d, the bar produced %d\n",            \
+                 fname, (int)(post), (int)(produced) );                       \
+         return TA_STREAM_ADVANCE_VALUE_NOT_HELD;                             \
+      }                                                                       \
+      sfAdvValueTracks++;                                                     \
+   } while( 0 )
+
+#define SF_ADV_PRODUCED_I( fname, x )                                         \
+   do {                                                                       \
+      if( (x) == SF_UF_CANARY_I )                                             \
+      {                                                                       \
+         printf( "  %s: no value after the rejected bar\n", fname );          \
+         return TA_STREAM_ADVANCE_NO_VALUE;                                   \
+      }                                                                       \
+      sfAdvValues++;                                                          \
+   } while( 0 )
+
+static ErrorNumber sf_advance( void )
+{
+   int b, k, warm = 60;
+   static double periods[SF_BARS];
+
+   for( k = 0; k < SF_BARS; k++ )
+      periods[k] = 5.0 + (double)( k % 11 );
+
+   for( b = 0; b < SF_NBAD; b++ )
+   {
+      /* Loop tier. */
+      {
+         TA_SMA_Stream *s = NULL;
+         double seed = 0.0, v = SF_UF_CANARY;
+         double vp = 0.0, vq = 0.0;
+         if( TA_SMA_Open( &s, sfClose, warm, 10, &seed ) != TA_SUCCESS )
+            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         SF_ADV_PEEK( "SMA(bad)", s, TA_SMA_Peek( s, sfBad[b], &v ), TA_BAD_PARAM );
+         SF_ADV_HELD( "SMA(peek bad)", v );
+         SF_ADV_PEEK( "SMA(good)", s, TA_SMA_Peek( s, sfClose[warm], &seed ), TA_SUCCESS );
+         SF_ADV_VALUE( "SMA", TA_SMA_Value( s, &vp ) );
+         SF_ADV_REJECT( "SMA", s, TA_SMA_Update( s, sfBad[b], &v ) );
+         SF_ADV_HELD( "SMA", v );
+         SF_ADV_VALUE( "SMA", TA_SMA_Value( s, &vq ) );
+         SF_ADV_VALUE_HELD( "SMA", vp, vq );
+         SF_ADV_RESUME( "SMA", s, TA_SMA_Update( s, sfClose[warm], &v ) );
+         SF_ADV_PRODUCED( "SMA", v );
+         SF_ADV_VALUE( "SMA", TA_SMA_Value( s, &vq ) );
+         SF_ADV_VALUE_TRACKS( "SMA", v, vq );
+         TA_SMA_Close( s );
+      }
+      /* Dual-mode tier, three price inputs. */
+      {
+         TA_MINUS_DI_Stream *s = NULL;
+         double seed = 0.0, v = SF_UF_CANARY;
+         double vp = 0.0, vq = 0.0;
+         if( TA_MINUS_DI_Open( &s, sfHigh, sfLow, sfClose, warm, 14, &seed ) != TA_SUCCESS )
+            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         SF_ADV_PEEK( "MINUS_DI(bad)", s,
+            TA_MINUS_DI_Peek( s, sfHigh[warm], sfBad[b], sfClose[warm], &v ), TA_BAD_PARAM );
+         SF_ADV_HELD( "MINUS_DI(peek bad)", v );
+         SF_ADV_PEEK( "MINUS_DI(good)", s,
+            TA_MINUS_DI_Peek( s, sfHigh[warm], sfLow[warm], sfClose[warm], &seed ), TA_SUCCESS );
+         SF_ADV_VALUE( "MINUS_DI", TA_MINUS_DI_Value( s, &vp ) );
+         SF_ADV_REJECT( "MINUS_DI", s,
+            TA_MINUS_DI_Update( s, sfHigh[warm], sfLow[warm], sfBad[b], &v ) );
+         SF_ADV_HELD( "MINUS_DI", v );
+         SF_ADV_VALUE( "MINUS_DI", TA_MINUS_DI_Value( s, &vq ) );
+         SF_ADV_VALUE_HELD( "MINUS_DI", vp, vq );
+         SF_ADV_RESUME( "MINUS_DI", s,
+            TA_MINUS_DI_Update( s, sfHigh[warm], sfLow[warm], sfClose[warm], &v ) );
+         SF_ADV_PRODUCED( "MINUS_DI", v );
+         SF_ADV_VALUE( "MINUS_DI", TA_MINUS_DI_Value( s, &vq ) );
+         SF_ADV_VALUE_TRACKS( "MINUS_DI", v, vq );
+         TA_MINUS_DI_Close( s );
+      }
+      /* Dispatch tier, both arms: period 1 is the identity loop, which never
+       * reaches a sub-stream and carries its own copy of the advance. */
+      {
+         int p;
+         const int mp[2] = { 1, 10 };
+         for( p = 0; p < 2; p++ )
+         {
+            TA_MA_Stream *s = NULL;
+            double seed = 0.0, v = SF_UF_CANARY;
+            double vp = 0.0, vq = 0.0;
+            if( TA_MA_Open( &s, sfClose, warm, mp[p], TA_MAType_SMA, &seed ) != TA_SUCCESS )
+               return TA_STREAM_ADVANCE_SETUP_FAILED;
+            SF_ADV_PEEK( "MA(bad)", s, TA_MA_Peek( s, sfBad[b], &v ), TA_BAD_PARAM );
+            SF_ADV_HELD( "MA(peek bad)", v );
+            SF_ADV_PEEK( "MA(good)", s, TA_MA_Peek( s, sfClose[warm], &seed ), TA_SUCCESS );
+            SF_ADV_VALUE( "MA", TA_MA_Value( s, &vp ) );
+            SF_ADV_REJECT( "MA", s, TA_MA_Update( s, sfBad[b], &v ) );
+            SF_ADV_HELD( "MA", v );
+            SF_ADV_VALUE( "MA", TA_MA_Value( s, &vq ) );
+            SF_ADV_VALUE_HELD( "MA", vp, vq );
+            SF_ADV_RESUME( "MA", s, TA_MA_Update( s, sfClose[warm], &v ) );
+            SF_ADV_PRODUCED( "MA", v );
+            SF_ADV_VALUE( "MA", TA_MA_Value( s, &vq ) );
+            SF_ADV_VALUE_TRACKS( "MA", v, vq );
+            TA_MA_Close( s );
+         }
+      }
+      /* Period-bank tier. The poisoned slot is the PERIOD, the one that
+       * reaches an (int) cast. */
+      {
+         TA_MAVP_Stream *s = NULL;
+         double seed = 0.0, v = SF_UF_CANARY;
+         double vp = 0.0, vq = 0.0;
+         if( TA_MAVP_Open( &s, sfClose, periods, warm, 2, 30, TA_MAType_SMA, &seed ) != TA_SUCCESS )
+            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         SF_ADV_PEEK( "MAVP(bad)", s,
+            TA_MAVP_Peek( s, sfClose[warm], sfBad[b], &v ), TA_BAD_PARAM );
+         SF_ADV_HELD( "MAVP(peek bad)", v );
+         SF_ADV_PEEK( "MAVP(good)", s,
+            TA_MAVP_Peek( s, sfClose[warm], periods[warm], &seed ), TA_SUCCESS );
+         SF_ADV_VALUE( "MAVP", TA_MAVP_Value( s, &vp ) );
+         SF_ADV_REJECT( "MAVP", s, TA_MAVP_Update( s, sfClose[warm], sfBad[b], &v ) );
+         SF_ADV_HELD( "MAVP", v );
+         SF_ADV_VALUE( "MAVP", TA_MAVP_Value( s, &vq ) );
+         SF_ADV_VALUE_HELD( "MAVP", vp, vq );
+         SF_ADV_RESUME( "MAVP", s, TA_MAVP_Update( s, sfClose[warm], periods[warm], &v ) );
+         SF_ADV_PRODUCED( "MAVP", v );
+         SF_ADV_VALUE( "MAVP", TA_MAVP_Value( s, &vq ) );
+         SF_ADV_VALUE_TRACKS( "MAVP", v, vq );
+         TA_MAVP_Close( s );
+      }
+      /* Composed tier, three outputs: the rejection must leave all three. */
+      {
+         TA_BBANDS_Stream *s = NULL;
+         double s0 = 0.0, s1 = 0.0, s2 = 0.0;
+         double u = SF_UF_CANARY, m = SF_UF_CANARY, l = SF_UF_CANARY;
+         double up = 0.0, mp = 0.0, lp = 0.0, uq = 0.0, mq = 0.0, lq = 0.0;
+         if( TA_BBANDS_Open( &s, sfClose, warm, 20, 2.0, 2.0, TA_MAType_SMA, &s0, &s1, &s2 ) != TA_SUCCESS )
+            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         SF_ADV_PEEK( "BBANDS(bad)", s,
+            TA_BBANDS_Peek( s, sfBad[b], &u, &m, &l ), TA_BAD_PARAM );
+         SF_ADV_HELD( "BBANDS.upper(peek bad)",  u );
+         SF_ADV_HELD( "BBANDS.middle(peek bad)", m );
+         SF_ADV_HELD( "BBANDS.lower(peek bad)",  l );
+         SF_ADV_PEEK( "BBANDS(good)", s,
+            TA_BBANDS_Peek( s, sfClose[warm], &s0, &s1, &s2 ), TA_SUCCESS );
+         SF_ADV_VALUE( "BBANDS", TA_BBANDS_Value( s, &up, &mp, &lp ) );
+         SF_ADV_REJECT( "BBANDS", s, TA_BBANDS_Update( s, sfBad[b], &u, &m, &l ) );
+         SF_ADV_HELD( "BBANDS.upper",  u );
+         SF_ADV_HELD( "BBANDS.middle", m );
+         SF_ADV_HELD( "BBANDS.lower",  l );
+         SF_ADV_VALUE( "BBANDS", TA_BBANDS_Value( s, &uq, &mq, &lq ) );
+         SF_ADV_VALUE_HELD( "BBANDS.upper",  up, uq );
+         SF_ADV_VALUE_HELD( "BBANDS.middle", mp, mq );
+         SF_ADV_VALUE_HELD( "BBANDS.lower",  lp, lq );
+         SF_ADV_RESUME( "BBANDS", s, TA_BBANDS_Update( s, sfClose[warm], &u, &m, &l ) );
+         SF_ADV_PRODUCED( "BBANDS.upper",  u );
+         SF_ADV_PRODUCED( "BBANDS.middle", m );
+         SF_ADV_PRODUCED( "BBANDS.lower",  l );
+         SF_ADV_VALUE( "BBANDS", TA_BBANDS_Value( s, &uq, &mq, &lq ) );
+         SF_ADV_VALUE_TRACKS( "BBANDS.upper",  u, uq );
+         SF_ADV_VALUE_TRACKS( "BBANDS.middle", m, mq );
+         SF_ADV_VALUE_TRACKS( "BBANDS.lower",  l, lq );
+         TA_BBANDS_Close( s );
+      }
+      /* Composed, multi-output, one sub feeding the next. */
+      {
+         TA_STOCH_Stream *s = NULL;
+         double s0 = 0.0, s1 = 0.0;
+         double kv = SF_UF_CANARY, dv = SF_UF_CANARY;
+         double kp = 0.0, dp = 0.0, kq = 0.0, dq = 0.0;
+         if( TA_STOCH_Open( &s, sfHigh, sfLow, sfClose, warm, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, &s0, &s1 ) != TA_SUCCESS )
+            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         SF_ADV_PEEK( "STOCH(bad)", s,
+            TA_STOCH_Peek( s, sfHigh[warm], sfBad[b], sfClose[warm], &kv, &dv ), TA_BAD_PARAM );
+         SF_ADV_HELD( "STOCH.slowK(peek bad)", kv );
+         SF_ADV_HELD( "STOCH.slowD(peek bad)", dv );
+         SF_ADV_PEEK( "STOCH(good)", s,
+            TA_STOCH_Peek( s, sfHigh[warm], sfLow[warm], sfClose[warm], &s0, &s1 ), TA_SUCCESS );
+         SF_ADV_VALUE( "STOCH", TA_STOCH_Value( s, &kp, &dp ) );
+         SF_ADV_REJECT( "STOCH", s,
+            TA_STOCH_Update( s, sfBad[b], sfLow[warm], sfClose[warm], &kv, &dv ) );
+         SF_ADV_HELD( "STOCH.slowK", kv );
+         SF_ADV_HELD( "STOCH.slowD", dv );
+         SF_ADV_VALUE( "STOCH", TA_STOCH_Value( s, &kq, &dq ) );
+         SF_ADV_VALUE_HELD( "STOCH.slowK", kp, kq );
+         SF_ADV_VALUE_HELD( "STOCH.slowD", dp, dq );
+         SF_ADV_RESUME( "STOCH", s,
+            TA_STOCH_Update( s, sfHigh[warm], sfLow[warm], sfClose[warm], &kv, &dv ) );
+         SF_ADV_PRODUCED( "STOCH.slowK", kv );
+         SF_ADV_PRODUCED( "STOCH.slowD", dv );
+         SF_ADV_VALUE( "STOCH", TA_STOCH_Value( s, &kq, &dq ) );
+         SF_ADV_VALUE_TRACKS( "STOCH.slowK", kv, kq );
+         SF_ADV_VALUE_TRACKS( "STOCH.slowD", dv, dq );
+         TA_STOCH_Close( s );
+      }
+      /* Integer output over four price inputs. */
+      {
+         TA_CDLDOJI_Stream *s = NULL;
+         int seed = 0, v = SF_UF_CANARY_I;
+         int vp = 0, vq = 0;
+         if( TA_CDLDOJI_Open( &s, sfOpen, sfHigh, sfLow, sfClose, warm, &seed ) != TA_SUCCESS )
+            return TA_STREAM_ADVANCE_SETUP_FAILED;
+         SF_ADV_PEEK( "CDLDOJI(bad)", s,
+            TA_CDLDOJI_Peek( s, sfOpen[warm], sfHigh[warm], sfLow[warm], sfBad[b], &v ), TA_BAD_PARAM );
+         SF_ADV_HELD_I( "CDLDOJI(peek bad)", v );
+         SF_ADV_PEEK( "CDLDOJI(good)", s,
+            TA_CDLDOJI_Peek( s, sfOpen[warm], sfHigh[warm], sfLow[warm], sfClose[warm], &seed ), TA_SUCCESS );
+         SF_ADV_VALUE( "CDLDOJI", TA_CDLDOJI_Value( s, &vp ) );
+         SF_ADV_REJECT( "CDLDOJI", s,
+            TA_CDLDOJI_Update( s, sfOpen[warm], sfHigh[warm], sfBad[b], sfClose[warm], &v ) );
+         SF_ADV_HELD_I( "CDLDOJI", v );
+         SF_ADV_VALUE( "CDLDOJI", TA_CDLDOJI_Value( s, &vq ) );
+         SF_ADV_VALUE_HELD_I( "CDLDOJI", vp, vq );
+         /* A doji, so the good bar's value is nonzero and distinguishable from
+          * "the slot was never written". */
+         SF_ADV_RESUME( "CDLDOJI", s,
+            TA_CDLDOJI_Update( s, sfClose[warm], sfHigh[warm], sfLow[warm], sfClose[warm], &v ) );
+         SF_ADV_PRODUCED_I( "CDLDOJI", v );
+         SF_ADV_VALUE( "CDLDOJI", TA_CDLDOJI_Value( s, &vq ) );
+         SF_ADV_VALUE_TRACKS_I( "CDLDOJI", v, vq );
+         TA_CDLDOJI_Close( s );
+      }
+   }
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_func_stream_finite( TA_History *history )
 {
    ErrorNumber errNb;
@@ -801,6 +1255,9 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    sf_build_series();
    sfBarRejects = sfStateHolds = sfParamRejects = 0;
    sfUfRejects = sfUfCommits = sfUfValues = sfUfCanaries = sfUfGuards = 0;
+   sfUfCtrlRejects = 0;
+   sfAdvRejects = sfAdvHolds = sfAdvResumes = sfAdvValues = sfAdvPeekStills = 0;
+   sfAdvValueHolds = sfAdvValueTracks = 0;
 
    if( ( errNb = sf_sma()       ) != TA_TEST_PASS ) return errNb;
    if( ( errNb = sf_minus_di()  ) != TA_TEST_PASS ) return errNb;
@@ -817,13 +1274,23 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    if( ( errNb = sf_uf_mavp()    ) != TA_TEST_PASS ) return errNb;
    if( ( errNb = sf_uf_guards()  ) != TA_TEST_PASS ) return errNb;
 
+   if( ( errNb = sf_advance()    ) != TA_TEST_PASS ) return errNb;
+
    printf( "  Streaming finite-input gate: %d bar rejection(s), "
            "%d state-unchanged compare(s), %d NaN-parameter rejection(s)\n",
            sfBarRejects, sfStateHolds, sfParamRejects );
-   printf( "  UpdateAndFill partial-commit gate: %d rejection(s), %d range "
-           "compare(s), %d value compare(s), %d untouched slot(s), "
-           "%d argument answer(s)\n",
-           sfUfRejects, sfUfCommits, sfUfValues, sfUfCanaries, sfUfGuards );
+   printf( "  UpdateAndFill partial-commit gate: %d rejection(s), %d control "
+           "rejection(s), %d range compare(s), %d value compare(s), "
+           "%d untouched slot(s), %d argument answer(s)\n",
+           sfUfRejects, sfUfCtrlRejects, sfUfCommits, sfUfValues,
+           sfUfCanaries, sfUfGuards );
+   printf( "  Rejected-Update advance gate (U3, absolute): %d rejection(s) "
+           "counted once, %d untouched output(s), %d resumed bar(s), "
+           "%d value(s) produced, %d Peek(s) that moved nothing, "
+           "%d Value read(s) held across the rejection, "
+           "%d Value read(s) tracking the next good bar\n",
+           sfAdvRejects, sfAdvHolds, sfAdvResumes, sfAdvValues,
+           sfAdvPeekStills, sfAdvValueHolds, sfAdvValueTracks );
 
    /* Non-vacuity. The floors are literal, not derived from the loops above: a
     * count computed from the trip count moves with it, and would let half the
@@ -833,12 +1300,20 @@ ErrorNumber test_func_stream_finite( TA_History *history )
       printf( "  Failed: the gate ran fewer checks than it was written with\n" );
       return TA_STREAM_FINITE_VACUOUS;
    }
-   if( sfUfRejects < 18 || sfUfCommits < 23 || sfUfValues < 72 ||
-       sfUfCanaries < 78 || sfUfGuards < 7 )
+   if( sfUfRejects < 18 || sfUfCtrlRejects < 18 || sfUfCommits < 23 ||
+       sfUfValues < 72 || sfUfCanaries < 78 || sfUfGuards < 7 )
    {
       printf( "  Failed: the UpdateAndFill gate ran fewer checks than it was "
               "written with\n" );
       return TA_STREAM_UFILL_VACUOUS;
+   }
+   if( sfAdvRejects < 24 || sfAdvHolds < 66 || sfAdvResumes < 24 ||
+       sfAdvValues < 33 || sfAdvPeekStills < 48 ||
+       sfAdvValueHolds < 33 || sfAdvValueTracks < 33 )
+   {
+      printf( "  Failed: the rejected-Update advance gate ran fewer checks "
+              "than it was written with\n" );
+      return TA_STREAM_ADVANCE_VACUOUS;
    }
 
    return TA_TEST_PASS;

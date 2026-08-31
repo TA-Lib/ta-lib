@@ -178,10 +178,12 @@ TA_RetCode TA_S_MARKETFI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MARKETFI_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_MARKETFI_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -205,6 +207,7 @@ static void TA_MARKETFI_StepImpl( struct TA_MARKETFI_Stream *sp, double inHigh, 
    {
       *outReal= 0.0;
    }
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_MARKETFI_OpenImpl( struct TA_MARKETFI_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -278,6 +281,7 @@ static TA_RetCode TA_MARKETFI_OpenImpl( struct TA_MARKETFI_Stream **stream, cons
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -328,7 +332,11 @@ TA_RetCode TA_MARKETFI_OpenAndFillInternal( struct TA_MARKETFI_Stream **stream, 
 TA_LIB_API TA_RetCode TA_MARKETFI_Update( TA_MARKETFI_Stream *stream, double inHigh, double inLow, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inVolume ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_MARKETFI_StepImpl( stream, inHigh, inLow, inVolume, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -360,6 +368,7 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Peek( const TA_MARKETFI_Stream *stream, double
    {
       *outReal= 0.0;
    }
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -372,7 +381,11 @@ TA_LIB_API TA_RetCode TA_MARKETFI_UpdateAndFill( TA_MARKETFI_Stream *stream, con
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inVolume[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inVolume[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_MARKETFI_StepImpl( stream, inHigh[i], inLow[i], inVolume[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -382,6 +395,27 @@ TA_LIB_API TA_RetCode TA_MARKETFI_UpdateAndFill( TA_MARKETFI_Stream *stream, con
 TA_LIB_API TA_RetCode TA_MARKETFI_Close( TA_MARKETFI_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MARKETFI_Value( const TA_MARKETFI_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MARKETFI_Clone( const TA_MARKETFI_Stream *stream, TA_MARKETFI_Stream **clone )
+{
+   struct TA_MARKETFI_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MARKETFI_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 
