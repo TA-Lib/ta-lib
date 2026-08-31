@@ -283,6 +283,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             enum_vars: super::rust_lang::enum_local_types(func),
             circbuf_hybrid_static: HashMap::new(),
             nullable_outputs: HashSet::new(),
+            nullable_shadow: false,
         },
         extrema_i32,
     }
@@ -909,26 +910,22 @@ fn cur_ctor_defaults(func: &FuncDef, sep: &str) -> String {
 }
 /// The `cur_<output>` initializer lines for a capture literal: the value(s) the
 /// opener just produced, so `value()` is right the instant the handle exists.
-fn cur_capture_fields(func: &FuncDef, model: &StreamModel, typing: &Typing) -> String {
+fn cur_capture_fields(func: &FuncDef, typing: &Typing) -> String {
     let nullable = super::common::nullable_output_names(func);
     let mut t = String::new();
     for out in &func.outputs {
         let name = &out.name;
-        if let Some(var) = streaming::declinable_retain_var(model, name) {
+        if nullable.contains(name) {
             // No slot to read: a declinable output's array may be absent.
-            let _ = writeln!(t, "            cur_{name}: {var},");
+            // `lastCur_<name>` is the transcribed open loop's own shadow of
+            // the guarded store (`nullable_shadow`), computed every
+            // iteration regardless of decline — matching what an Update
+            // recomputes, so `Open(P)+updates` and `Open(n)` agree.
+            let _ = writeln!(t, "            cur_{name}: lastCur_{name},");
         } else if typing.ctx.vec_vars.contains(&format!("sc_{name}")) {
             // A composed producer holds the caller's slice through the stride
             // alias, so the output name itself is mutably borrowed here.
             let _ = writeln!(t, "            cur_{name}: sc_{name}[*outNBElement - 1],");
-        } else if nullable.contains(name.as_str()) {
-            // Stored straight into the caller's array (not through a retained
-            // local), so it is still `Option<&mut [_]>` here. A declined output
-            // has no slot to read; 0.0 matches the field's own zero default.
-            let _ = writeln!(
-                t,
-                "            cur_{name}: {name}.as_deref().map_or(0.0, |s| s[(*outNBElement - 1) * outStride]),"
-            );
         } else {
             let _ = writeln!(
                 t,
@@ -2107,8 +2104,19 @@ fn emit_open_region(
     // body keeps the empty set — a `<n>_step_impl` writes `&mut f64` scalars, and
     // nothing there is declinable.
     let mut open_ctx = typing.ctx.clone();
-    open_ctx.nullable_outputs = super::common::nullable_output_names(func);
+    let nullable = super::common::nullable_output_names(func);
+    open_ctx.nullable_outputs = nullable.clone();
+    // The handle's `cur_<out>` has to hold what the store *would* have
+    // written even when the caller declined it — an Update always recomputes
+    // it (mama.c), so a capture that instead reads the array (absent) or
+    // defaults to zero diverges from `Open(P)+updates` the moment the store's
+    // RHS isn't already a bare local. Every guarded store also lands here,
+    // unconditionally (Java/C# `lastCur_*`); `cur_capture_fields` reads it.
+    open_ctx.nullable_shadow = true;
     let ctx = &open_ctx;
+    for name in &nullable {
+        let _ = writeln!(o, "        let mut lastCur_{name}: f64 = 0.0_f64;");
+    }
     let for_loop_vars = collect_for_loop_vars(body);
     let output_names: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
     let opt_real_params: Vec<String> = func
@@ -2517,7 +2525,7 @@ fn emit_capture(
     // produced at least one value, so `value()` is total on a live handle. A
     // DECLINABLE output has no slot to read, so it takes the body's own
     // variable — the same one the step retains from.
-    o.push_str(&cur_capture_fields(func, model, typing));
+    o.push_str(&cur_capture_fields(func, typing));
     for lag in &model.lags {
         for k in 1..=lag.depth {
             let _ = writeln!(
@@ -3479,6 +3487,7 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
         enum_vars: super::rust_lang::enum_local_types(func),
         circbuf_hybrid_static: HashMap::new(),
         nullable_outputs: HashSet::new(),
+        nullable_shadow: false,
     }
 }
 

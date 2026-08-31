@@ -963,6 +963,7 @@ impl Core {
         }
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
+        let mut lastCur_outFAMA: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
@@ -1287,6 +1288,7 @@ impl Core {
             if today >= startIdx {
                 // FAMA is nullable (issue #125): its write carries no outIdx advance so
                 // the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+                lastCur_outFAMA = fama;
                 if let Some(outFAMA) = outFAMA.as_deref_mut() {
                     outFAMA[(outIdx * outStride) as usize] = fama;
                 }
@@ -1378,7 +1380,7 @@ impl Core {
             prevPhase,
             streamParity: historyLen % 2,
             cur_outMAMA: outMAMA[(*outNBElement - 1) * outStride],
-            cur_outFAMA: fama,
+            cur_outFAMA: lastCur_outFAMA,
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,

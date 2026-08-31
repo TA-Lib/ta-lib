@@ -344,6 +344,16 @@ struct CRenderCtx<'a> {
     /// so callers may pass NULL to discard it. Empty for every non-body render
     /// pass (helpers, lookback) and every function without a nullable output.
     nullable_outputs: &'a [String],
+    /// When true, a guarded nullable store also assigns `lastCur_<out>`
+    /// unconditionally, beside the guard rather than inside it. Only the
+    /// stream Open region sets this: the handle's `cur_<out>` has to hold
+    /// what the store *would* have written even when the caller declined the
+    /// output, because `TA_<N>_StepImpl` always recomputes it (mama.c) — a
+    /// captured value that instead reads the (possibly absent) array
+    /// diverges from `Open(P)+updates` the moment the store's RHS is not
+    /// already a bare local. False everywhere else, including the plain
+    /// batch function, which has no `cur_*` state to feed.
+    nullable_shadow: bool,
 }
 
 #[allow(clippy::implicit_hasher)]
@@ -841,6 +851,7 @@ fn gen_func_inner(
         stream_scalar_candles: false,
         fma: Some(&fma_sets),
         nullable_outputs: &nullable_outputs,
+        nullable_shadow: false,
     };
 
     // For S_ variants with explicit _private: the extra params (e.g. EMA's k
@@ -1140,7 +1151,7 @@ fn render_hoisted_blocks(
     out
 }
 
-#[allow(clippy::implicit_hasher)]
+#[allow(clippy::implicit_hasher, clippy::too_many_arguments)]
 pub fn render_statement(
     stmt: &Statement,
     indent: usize,
@@ -1150,6 +1161,7 @@ pub fn render_statement(
     helpers: &HelperRegistry,
     inline_counter: &Cell<usize>,
     nullable: &[String],
+    nullable_shadow: bool,
 ) -> String {
     STREAM_FMA.with(|f| {
         let fma_sets = f.borrow();
@@ -1159,6 +1171,7 @@ pub fn render_statement(
             stream_scalar_candles: false,
             fma: fma_sets.as_ref(),
             nullable_outputs: nullable,
+            nullable_shadow,
         };
         render_stmt(stmt, indent, &ctx, enums, registry, helpers)
     })
@@ -1184,6 +1197,7 @@ pub fn render_statement_stream(
             stream_scalar_candles: true,
             fma: fma_sets.as_ref(),
             nullable_outputs: nullable,
+            nullable_shadow: false,
         };
         render_stmt(stmt, indent, &ctx, enums, registry, helpers)
     })
@@ -1438,6 +1452,9 @@ impl StatementEmitter for CStmt<'_> {
             // Writing into a nullable output — guard it so a NULL (discarded)
             // output is skipped. The `outIdx` advance rides the non-nullable
             // partner's write (see mama.c), so guarding this store is complete.
+            if self.ctx.nullable_shadow {
+                out.push_str(&format!("{pad}lastCur_{base} = {value_str};\n"));
+            }
             out.push_str(&format!(
                 "{pad}if( {base} != NULL )\n{pad}   {target_str}= {value_str};\n"
             ));
@@ -2127,6 +2144,7 @@ pub(crate) fn render_expression_stream_candles(
             stream_scalar_candles: true,
             fma: fma_sets.as_ref(),
             nullable_outputs: &[],
+            nullable_shadow: false,
         };
         render_expr(expr, &ctx, registry, helpers)
     })
@@ -2148,6 +2166,7 @@ pub(crate) fn render_expression(
             stream_scalar_candles: false,
             fma: fma_sets.as_ref(),
             nullable_outputs: &[],
+            nullable_shadow: false,
         };
         render_expr(expr, &ctx, registry, helpers)
     })
@@ -2469,7 +2488,7 @@ fn render_lookback_code(
     let inline_counter = Cell::new(0);
     // Lookback bodies are pure integer index arithmetic (the first-valid-output
     // count) — no float multiply-add, so fusion never applies here.
-    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false, fma: None, nullable_outputs: &[] };
+    let ctx = &CRenderCtx { single_precision: false, inline_counter: &inline_counter, stream_scalar_candles: false, fma: None, nullable_outputs: &[], nullable_shadow: false };
 
     // Declare local variables (deduplicated)
     let mut declared_vars: Vec<String> = Vec::new();

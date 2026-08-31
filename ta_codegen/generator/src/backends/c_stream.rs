@@ -1841,7 +1841,7 @@ fn emit_composed_sub_open(
     let _ = writeln!(o, "         {{");
     for sf in &cp.series_frees {
         if sf.tail_idx > sub.tail_idx {
-            o.push_str(&render_statement(&sf.stmt, 12, false, enums, registry, helpers, counter, &[]));
+            o.push_str(&render_statement(&sf.stmt, 12, false, enums, registry, helpers, counter, &[], false));
         }
     }
     let _ = writeln!(o, "            {cleanup};");
@@ -1955,7 +1955,7 @@ fn emit_composed_open(
     let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs, cleanup);
     let mut region_c = String::new();
     for s in &region_stmts {
-        region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter, &nullable_out_names(func)));
+        region_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter, &nullable_out_names(func), false));
     }
     let open_settings = crate::candle_settings::detect_candle_settings(&cp.region);
     if !open_settings.is_empty() {
@@ -1997,7 +1997,7 @@ fn emit_composed_open(
             }
             continue;
         }
-        o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter, &nullable_out_names(func)));
+        o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter, &nullable_out_names(func), false));
     }
 
     // --- capture ----------------------------------------------------------------
@@ -4486,10 +4486,19 @@ fn emit_open_arm(
     let n = uname(func);
     // --- transcribed batch body ----------------------------------------------
     let _ = writeln!(o, "\n   {{");
+    let nullable = nullable_out_names(func);
+    // The handle's `cur_<out>` has to hold what the guarded store *would* have
+    // written even when the caller declined it — `TA_<N>_StepImpl` always
+    // recomputes it (mama.c), so a capture that instead reads the (possibly
+    // absent) array diverges from `Open(P)+updates`. Every guarded store below
+    // also lands here, unconditionally; `alloc_and_capture` reads it.
+    for name in &nullable {
+        let _ = writeln!(o, "      double lastCur_{name} = 0.0;");
+    }
     let open_body = build_open_body_from(model, body);
     let mut open_body_c = String::new();
     for s in &open_body {
-        open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter, &nullable_out_names(func)));
+        open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter, &nullable, true));
     }
     let open_settings = crate::candle_settings::detect_candle_settings(body);
     if !open_settings.is_empty() {
@@ -4709,14 +4718,13 @@ fn alloc_and_capture(
             let _ = writeln!(s, "{pad}sp->lastOut_{name} = {name}[{idx}];");
         }
         // A DECLINABLE output has no output slot to read at the publish point
-        // (its array may be NULL), so it is seeded here, from the body's own
-        // variable — the same one the step retains from. Every other output is
-        // seeded at the publish point, where all five tiers meet.
-        for out in &func.outputs {
-            let name = &out.name;
-            if let Some(var) = streaming::declinable_retain_var(model, name) {
-                let _ = writeln!(s, "{pad}sp->cur_{name} = {var};");
-            }
+        // (its array may be NULL), so it is seeded here, from `lastCur_<out>`
+        // — the transcribed open loop's own shadow of the guarded store
+        // (`nullable_shadow`), computed every iteration regardless of decline
+        // so it matches what `TA_<N>_StepImpl` always recomputes. Every other
+        // output is seeded at the publish point, where all five tiers meet.
+        for name in nullable_out_names(func) {
+            let _ = writeln!(s, "{pad}sp->cur_{name} = lastCur_{name};");
         }
         for (name, ty) in &model.state {
             if model.parity.as_ref().is_some_and(|p| &p.field == name) {

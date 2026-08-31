@@ -1200,6 +1200,7 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
    {
+      double lastCur_outFAMA = 0.0;
       int outIdx;
       int i;
       int lookbackTotal;
@@ -1547,6 +1548,7 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
             /* FAMA is nullable (issue #125): its write carries no outIdx advance so
              * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
              */
+            lastCur_outFAMA = fama;
             if( outFAMA != NULL )
                outFAMA[outIdx * outStride] = fama;
             outMAMA[outIdx++ * outStride] = mama;
@@ -1591,7 +1593,7 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
       memset( sp, 0, sizeof(*sp) );
       sp->optInFastLimit = optInFastLimit;
       sp->optInSlowLimit = optInSlowLimit;
-      sp->cur_outFAMA = fama;
+      sp->cur_outFAMA = lastCur_outFAMA;
       sp->period = period;
       sp->periodWMASum = periodWMASum;
       sp->periodWMASub = periodWMASub;

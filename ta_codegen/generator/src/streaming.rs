@@ -5478,41 +5478,6 @@ fn collect_out_feedback(steady_stmts: &[Statement], outputs: &[String]) -> Vec<S
     out_feedback
 }
 
-/// The state field a DECLINABLE output's retained value is taken from, if any.
-///
-/// A declinable output's sink may be NULL, so neither the transition nor the
-/// opener can read it back to fill `cur_<name>`. Both take the body's own
-/// variable instead — the single un-cursored store that
-/// `assert_nullable_stores_are_guardable` guarantees — and because that
-/// variable is also carried state, the opener can spell it `sp-><var>` after
-/// the capture while the step spells it as the plain local. One rule, so the
-/// two cannot disagree about which bar the accessor reports.
-pub fn declinable_retain_var(model: &StreamModel, out_name: &str) -> Option<String> {
-    let declinable = model
-        .func
-        .outputs
-        .iter()
-        .any(|o| o.name == out_name && o.is_nullable());
-    if !declinable {
-        return None;
-    }
-    let mut found: Option<String> = None;
-    for st in &model.steady_stmts {
-        if let Statement::Assign { target, value, compound: false } = st {
-            let hits = match target {
-                Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) | Expr::Var(n) => n == out_name,
-                _ => false,
-            };
-            if hits {
-                if let Expr::Var(v) = value {
-                    found = Some(v.clone());
-                }
-            }
-        }
-    }
-    found
-}
-
 /// `out[idx - 1]`: the previous bar's output (DX repeats it on a zero
 /// denominator). Carried as `lastOut_*` state in the transition.
 pub fn is_prev_output_read(idx: &Expr) -> bool {
