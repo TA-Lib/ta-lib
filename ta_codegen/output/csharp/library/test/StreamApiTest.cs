@@ -887,6 +887,56 @@ public static class StreamApiTest
         Check(after == before, $"Update allocates nothing ({after - before} bytes over {closes.Length - 400} bars)");
     }
 
+    /// <summary>
+    /// Peek allocates nothing on a handle whose accumulator stores the frame
+    /// could delete.
+    /// </summary>
+    /// <remarks>
+    /// <para>This is the C# half of a property no value gate can see, and the
+    /// only backend where it is worth measuring at runtime: a C# array field is
+    /// a reference, so a frame that copied one would allocate — and RyuJIT does
+    /// not stack-allocate arrays, so the bytes are real. Java's escape analysis
+    /// can hide the same copy, and C and Rust never had it.</para>
+    /// <para>HT_DCPERIOD is the sharpest case in the corpus, with eight
+    /// <c>double[3]</c> accumulators — 384 B per call when they are copied. SMA
+    /// is the control: no accumulator, so it reads zero either way, and a run
+    /// that reported zero for both would still fail if the sweep stopped
+    /// running.</para>
+    /// </remarks>
+    private static void PeekDoesNotAllocate()
+    {
+        var core = new Core();
+        double[] closes = Closes(4000);
+
+        Core.HtDcperiodStream ht = core.HtDcperiodOpen(closes[..200]);
+        Core.SmaStream sma = core.SmaOpen(closes[..40], 30);
+
+        // Warm up: first-call JIT and any lazy init must not be attributed.
+        double sink = 0;
+        int calls = 0;
+        for (int t = 200; t < 600; t++)
+        {
+            sink += ht.Peek(closes[t]) + sma.Peek(closes[t]);
+        }
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int t = 600; t < closes.Length; t++)
+        {
+            sink += ht.Peek(closes[t]) + sma.Peek(closes[t]);
+            calls += 2;
+        }
+        long after = GC.GetAllocatedBytesForCurrentThread();
+
+        // A byte count of zero reads the same whether the sweep ran or not, so
+        // both are asserted: the call count, and a sink no run of these two
+        // functions can leave at its initial value.
+        Check(calls >= 6000, $"the Peek sweep ran ({calls} calls)");
+        Check(sink != 0 && !double.IsNaN(sink), "the Peek sweep produced values");
+        Check(after == before,
+              $"Peek allocates nothing ({after - before} bytes over {calls} calls, half "
+              + "of them HT_DCPERIOD's eight fixed-size accumulators)");
+    }
+
     /// <summary>Multi-output handles return a value type, not a fresh object.</summary>
     private static void MultiOutputValueIsAStruct()
     {
@@ -1479,6 +1529,7 @@ public static class StreamApiTest
         IntegerSentinelSelectsTheDocumentedDefault();
         SettingsAreCapturedFromTheOpeningCore();
         UpdateDoesNotAllocate();
+        PeekDoesNotAllocate();
         MultiOutputValueIsAStruct();
         CatalogueAgreesWithTheEmittedSurface();
         NonFiniteInputsAreRejected();

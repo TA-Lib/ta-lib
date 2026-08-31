@@ -1815,7 +1815,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       /* Do the Hilbert Transforms for even price bar */
       hilbertTempReal = sp->a * smoothedValue;
       detrender = 0 - sp->detrender_Even[sp->hilbertIdx];
-      sp->detrender_Even[sp->hilbertIdx] = hilbertTempReal;
       detrender += hilbertTempReal;
       detrender -= sp->prev_detrender_Even;
       sp->prev_detrender_Even = sp->b * sp->prev_detrender_input_Even;
@@ -1824,7 +1823,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       detrender *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * detrender;
       Q1 = 0 - sp->Q1_Even[sp->hilbertIdx];
-      sp->Q1_Even[sp->hilbertIdx] = hilbertTempReal;
       Q1 += hilbertTempReal;
       Q1 -= sp->prev_Q1_Even;
       sp->prev_Q1_Even = sp->b * sp->prev_Q1_input_Even;
@@ -1833,7 +1831,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       Q1 *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * sp->I1ForEvenPrev3;
       jI = 0 - sp->jI_Even[sp->hilbertIdx];
-      sp->jI_Even[sp->hilbertIdx] = hilbertTempReal;
       jI += hilbertTempReal;
       jI -= sp->prev_jI_Even;
       sp->prev_jI_Even = sp->b * sp->prev_jI_input_Even;
@@ -1842,7 +1839,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       jI *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * Q1;
       jQ = 0 - sp->jQ_Even[sp->hilbertIdx];
-      sp->jQ_Even[sp->hilbertIdx] = hilbertTempReal;
       jQ += hilbertTempReal;
       jQ -= sp->prev_jQ_Even;
       sp->prev_jQ_Even = sp->b * sp->prev_jQ_input_Even;
@@ -1868,7 +1864,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       /* Do the Hilbert Transforms for odd price bar */
       hilbertTempReal = sp->a * smoothedValue;
       detrender = 0 - sp->detrender_Odd[sp->hilbertIdx];
-      sp->detrender_Odd[sp->hilbertIdx] = hilbertTempReal;
       detrender += hilbertTempReal;
       detrender -= sp->prev_detrender_Odd;
       sp->prev_detrender_Odd = sp->b * sp->prev_detrender_input_Odd;
@@ -1877,7 +1872,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       detrender *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * detrender;
       Q1 = 0 - sp->Q1_Odd[sp->hilbertIdx];
-      sp->Q1_Odd[sp->hilbertIdx] = hilbertTempReal;
       Q1 += hilbertTempReal;
       Q1 -= sp->prev_Q1_Odd;
       sp->prev_Q1_Odd = sp->b * sp->prev_Q1_input_Odd;
@@ -1886,7 +1880,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       Q1 *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * sp->I1ForOddPrev3;
       jI = 0 - sp->jI_Odd[sp->hilbertIdx];
-      sp->jI_Odd[sp->hilbertIdx] = hilbertTempReal;
       jI += hilbertTempReal;
       jI -= sp->prev_jI_Odd;
       sp->prev_jI_Odd = sp->b * sp->prev_jI_input_Odd;
@@ -1895,7 +1888,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       jI *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * Q1;
       jQ = 0 - sp->jQ_Odd[sp->hilbertIdx];
-      sp->jQ_Odd[sp->hilbertIdx] = hilbertTempReal;
       jQ += hilbertTempReal;
       jQ -= sp->prev_jQ_Odd;
       sp->prev_jQ_Odd = sp->b * sp->prev_jQ_input_Odd;

@@ -4,10 +4,11 @@
 //! `src/ta_func/ta_<NAME>.c` gains a stream section after the batch variants:
 //!
 //! - `struct TA_<NAME>_Stream` — params, carried scalars, lag slots;
-//! - `static void TA_<NAME>_StepImpl(...)` — the ONE transition function
-//!   (the batch steady-loop body on rewritten IR); `Update` runs it on the
-//!   live state and `Peek` on a stack copy, so peek == update bit-for-bit by
-//!   construction;
+//! - `static void TA_<NAME>_StepImpl(...)` — the transition function (the batch
+//!   steady-loop body on rewritten IR) that `Update` runs on the live state;
+//!   `Peek` inlines the same transition rewritten to commit nothing into the
+//!   handle's BUFFERS, over a stack copy of the struct that carries the scalars
+//!   and the in-struct arrays;
 //! - `TA_LIB_API TA_RetCode TA_<NAME>_Open/Update/Peek/Close` — the public
 //!   lifecycle (proposal §"API shape per backend").
 //!
@@ -1483,12 +1484,8 @@ fn emit_composed_frame_body(
         let transition = match frame {
             StepFrame::Commit => transition,
             StepFrame::Peek => {
-                let pt = streaming::peek_transition(
-                    &transition,
-                    &streaming::transition_buffers(model, &names),
-                    None,
-                )
-                .unwrap_or_else(|e| panic!("{}: {e}", func.name));
+                let pt = streaming::peek_transition_widest(model, &names, &transition, None)
+                    .unwrap_or_else(|e| panic!("{}: {e}", func.name));
                 decls.push_str(&peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3));
                 answer_bare_returns(&pt.body)
             }
@@ -3892,12 +3889,8 @@ fn emit_step_inner(
     let (transition, shadows, slot_temps) = match frame {
         StepFrame::Commit => (transition, Vec::new(), Vec::new()),
         StepFrame::Peek => {
-            let pt = streaming::peek_transition(
-                &transition,
-                &streaming::transition_buffers(model, &CNames),
-                None,
-            )
-            .unwrap_or_else(|e| panic!("{}: {e}", model.func.name));
+            let pt = streaming::peek_transition_widest(model, &CNames, &transition, None)
+                .unwrap_or_else(|e| panic!("{}: {e}", model.func.name));
             (answer_bare_returns(&pt.body), pt.shadows, pt.slot_temps)
         }
     };

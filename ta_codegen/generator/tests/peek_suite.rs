@@ -550,3 +550,129 @@ fn sma_shadows_the_store_its_own_bar_reads_and_deletes_the_one_it_does_not() {
         "exactly one load survives, and it is a load: {peek}"
     );
 }
+
+/// The handle's fixed-size REAL accumulator fields — the set
+/// `transition_buffers_with_state_arrays` offers. `handle_buffers` above cannot
+/// see them: it keys on `*`, and these are in the struct.
+fn handle_accumulators(src: &str, upper: &str) -> BTreeSet<String> {
+    let Some(body) = body_of(src, &format!("struct TA_{upper}_Stream {{")) else {
+        return BTreeSet::new();
+    };
+    let mut out = BTreeSet::new();
+    for line in body.lines() {
+        let l = line.trim().trim_end_matches(';');
+        if l.contains('*') || !l.ends_with(']') || !l.starts_with("double ") {
+            continue;
+        }
+        let Some((decl, size)) = l.rsplit_once('[') else { continue };
+        if !size.trim_end_matches(']').chars().all(|c| c.is_ascii_digit()) {
+            continue;
+        }
+        let Some((_, name)) = decl.rsplit_once(' ') else { continue };
+        if !name.is_empty() && name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+            out.insert(name.to_string());
+        }
+    }
+    out
+}
+
+/// A store `validate_peekable` refuses: a compound one, which renders as a
+/// store reading its own target. A refusal drops the whole function back to the
+/// narrow set, so one such store justifies every copy in it. The other two
+/// refusals (a store in a loop, a counter-moving index) have no instance here;
+/// one would surface as an offender below rather than be waved through.
+fn refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool {
+    body.lines().any(|l| {
+        l.split_once('=').is_some_and(|(lhs, rhs)| {
+            // `!rhs.starts_with('=')`: `X[i] == X[j]` splits the same way a store
+            // does, and comparing two slots is not a store into either.
+            lhs.trim_end().ends_with(']')
+                && !rhs.starts_with('=')
+                && fields.iter().any(|f| {
+                    let sub = format!("{f}[");
+                    lhs.contains(&sub) && rhs.contains(&sub)
+                })
+        })
+    })
+}
+
+/// A peek frame deletes every accumulator store it can, and one that keeps a
+/// store shows why.
+///
+/// The refusal is per function, so ONE surviving store must be a refused shape,
+/// not each. Both floors guard a real split; `kept_by_refusal` shrinking is an
+/// improvement, so lower it rather than working around it.
+#[test]
+fn a_peek_frame_deletes_every_accumulator_store_it_can() {
+    let mut with_accumulators = 0usize;
+    let mut fully_deleted = 0usize;
+    let mut kept_by_refusal = 0usize;
+    let mut step_stores = 0usize;
+    let mut unhandled: Vec<String> = Vec::new();
+    let mut offenders: Vec<String> = Vec::new();
+
+    for name in indicators() {
+        let Some((func, enums)) = load(&name) else { continue };
+        let src = stream_c(&func, &enums);
+        let upper = func.name.to_uppercase();
+        let accs = handle_accumulators(&src, &upper);
+        if accs.is_empty() {
+            continue;
+        }
+        let Some(peek) = body_of(&src, &format!("TA_RetCode TA_{upper}_Peek(")) else {
+            unhandled.push(format!("{upper}: holds an accumulator but emits no Peek"));
+            continue;
+        };
+        // Reported, not skipped: no such handle exists today.
+        let Some(step) = body_of(&src, &format!("TA_{upper}_StepImpl(")) else {
+            unhandled.push(format!("{upper}: holds an accumulator but emits no StepImpl"));
+            continue;
+        };
+        let stored = buffer_stores(&step, &accs).len();
+        if stored == 0 {
+            continue; // nothing for the frame to delete: neither side of the split
+        }
+        with_accumulators += 1;
+        step_stores += stored;
+        if buffer_stores(&peek, &accs).is_empty() {
+            fully_deleted += 1;
+            continue;
+        }
+        kept_by_refusal += 1;
+        if !refused_accumulator_store(&peek, &accs) {
+            offenders.push(format!(
+                "{upper}: keeps {} accumulator store(s), none of them a shape \
+                 `validate_peekable` refuses",
+                buffer_stores(&peek, &accs).len()
+            ));
+        }
+    }
+
+    assert!(unhandled.is_empty(), "unswept handle(s):\n{}", unhandled.join("\n"));
+    assert!(
+        with_accumulators >= 21,
+        "only {with_accumulators} function(s) store into a fixed-size accumulator, so this \
+         sweep is looking for something that is not there"
+    );
+    assert!(
+        step_stores >= 60,
+        "the update frames carry only {step_stores} accumulator store(s), so the peek \
+         sweep proves nothing"
+    );
+    assert!(
+        fully_deleted >= 7,
+        "only {fully_deleted} function(s) had every accumulator store deleted — the \
+         widened buffer set is no longer reaching them, and Java/C# are cloning again"
+    );
+    assert!(
+        kept_by_refusal >= 1,
+        "no function keeps an accumulator store, so the refusal arm below is untested"
+    );
+    assert!(
+        offenders.is_empty(),
+        "a peek frame keeps an accumulator store with no refusal to justify it, so the \
+         widened buffer set was not offered for it ({} site(s)):\n{}",
+        offenders.len(),
+        offenders.join("\n")
+    );
+}

@@ -1306,11 +1306,9 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies no buffer: the frame runs against this handle, reading its
-      /// buffers and holding what the step would commit in locals, so the cost does
-      /// not grow with the period. It does copy this indicator's fixed-size per-bar
-      /// accumulators — a few elements, a count fixed by the indicator and not by
-      /// the period — so <c>Peek</c> allocates a small bounded amount per call.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
@@ -1348,29 +1346,13 @@ public partial class Core
          double I1ForOddPrev2 = sp.I1ForOddPrev2;
          double I1ForOddPrev3 = sp.I1ForOddPrev3;
          double Im = sp.Im;
-         double[] Q1_Even = new double[sp.Q1_Even.Length];
-         Array.Copy( sp.Q1_Even, Q1_Even, sp.Q1_Even.Length );
-         double[] Q1_Odd = new double[sp.Q1_Odd.Length];
-         Array.Copy( sp.Q1_Odd, Q1_Odd, sp.Q1_Odd.Length );
          double Re = sp.Re;
          int cur_outInteger = sp.cur_outInteger;
          int daysInTrend = sp.daysInTrend;
-         double[] detrender_Even = new double[sp.detrender_Even.Length];
-         Array.Copy( sp.detrender_Even, detrender_Even, sp.detrender_Even.Length );
-         double[] detrender_Odd = new double[sp.detrender_Odd.Length];
-         Array.Copy( sp.detrender_Odd, detrender_Odd, sp.detrender_Odd.Length );
          int hilbertIdx = sp.hilbertIdx;
          double iTrend1 = sp.iTrend1;
          double iTrend2 = sp.iTrend2;
          double iTrend3 = sp.iTrend3;
-         double[] jI_Even = new double[sp.jI_Even.Length];
-         Array.Copy( sp.jI_Even, jI_Even, sp.jI_Even.Length );
-         double[] jI_Odd = new double[sp.jI_Odd.Length];
-         Array.Copy( sp.jI_Odd, jI_Odd, sp.jI_Odd.Length );
-         double[] jQ_Even = new double[sp.jQ_Even.Length];
-         Array.Copy( sp.jQ_Even, jQ_Even, sp.jQ_Even.Length );
-         double[] jQ_Odd = new double[sp.jQ_Odd.Length];
-         Array.Copy( sp.jQ_Odd, jQ_Odd, sp.jQ_Odd.Length );
          double leadSine = sp.leadSine;
          double period = sp.period;
          double periodWMASub = sp.periodWMASub;
@@ -1428,8 +1410,7 @@ public partial class Core
          if( streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
-            detrender = 0 - detrender_Even[hilbertIdx];
-            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender = 0 - sp.detrender_Even[hilbertIdx];
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Even;
             prev_detrender_Even = sp.b * prev_detrender_input_Even;
@@ -1437,8 +1418,7 @@ public partial class Core
             prev_detrender_input_Even = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * detrender;
-            Q1 = 0 - Q1_Even[hilbertIdx];
-            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 = 0 - sp.Q1_Even[hilbertIdx];
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Even;
             prev_Q1_Even = sp.b * prev_Q1_input_Even;
@@ -1446,8 +1426,7 @@ public partial class Core
             prev_Q1_input_Even = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * I1ForEvenPrev3;
-            jI = 0 - jI_Even[hilbertIdx];
-            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI = 0 - sp.jI_Even[hilbertIdx];
             jI += hilbertTempReal;
             jI -= prev_jI_Even;
             prev_jI_Even = sp.b * prev_jI_input_Even;
@@ -1455,8 +1434,7 @@ public partial class Core
             prev_jI_input_Even = I1ForEvenPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * Q1;
-            jQ = 0 - jQ_Even[hilbertIdx];
-            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ = 0 - sp.jQ_Even[hilbertIdx];
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Even;
             prev_jQ_Even = sp.b * prev_jQ_input_Even;
@@ -1479,8 +1457,7 @@ public partial class Core
          } else {
             /* Do the Hilbert Transforms for odd price bar */
             hilbertTempReal = sp.a * smoothedValue;
-            detrender = 0 - detrender_Odd[hilbertIdx];
-            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender = 0 - sp.detrender_Odd[hilbertIdx];
             detrender += hilbertTempReal;
             detrender -= prev_detrender_Odd;
             prev_detrender_Odd = sp.b * prev_detrender_input_Odd;
@@ -1488,8 +1465,7 @@ public partial class Core
             prev_detrender_input_Odd = smoothedValue;
             detrender *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * detrender;
-            Q1 = 0 - Q1_Odd[hilbertIdx];
-            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 = 0 - sp.Q1_Odd[hilbertIdx];
             Q1 += hilbertTempReal;
             Q1 -= prev_Q1_Odd;
             prev_Q1_Odd = sp.b * prev_Q1_input_Odd;
@@ -1497,8 +1473,7 @@ public partial class Core
             prev_Q1_input_Odd = detrender;
             Q1 *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * I1ForOddPrev3;
-            jI = 0 - jI_Odd[hilbertIdx];
-            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI = 0 - sp.jI_Odd[hilbertIdx];
             jI += hilbertTempReal;
             jI -= prev_jI_Odd;
             prev_jI_Odd = sp.b * prev_jI_input_Odd;
@@ -1506,8 +1481,7 @@ public partial class Core
             prev_jI_input_Odd = I1ForOddPrev3;
             jI *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * Q1;
-            jQ = 0 - jQ_Odd[hilbertIdx];
-            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ = 0 - sp.jQ_Odd[hilbertIdx];
             jQ += hilbertTempReal;
             jQ -= prev_jQ_Odd;
             prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
