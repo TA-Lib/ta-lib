@@ -41,7 +41,7 @@ import subprocess
 import sys
 
 from utilities.common import verify_git_repo, run_command
-from utilities.versions import sync_sources_digest, sync_versions
+from utilities.versions import sync_sources_digest, sync_versions, sync_pom_indicator_count
 
 def generate_short_unique_id(length=20) -> str:
     # Generate a "unique enough" short identifier.
@@ -200,6 +200,12 @@ def main():
         is_updated, version = sync_versions(root_dir)
         if not is_updated:
             print(f"No changes to version [{version}]")
+
+        # Keep the Java pom.xml <description>'s indicator count in step with
+        # ta_codegen/input/ (as needed)
+        is_updated, func_count = sync_pom_indicator_count(root_dir)
+        if not is_updated:
+            print(f"No changes to pom.xml indicator count [{func_count}]")
 
         # Update TA_LIB_SOURCES_DIGEST in ta_common.h (as needed)
         is_updated, digest = sync_sources_digest(root_dir)
