@@ -22,7 +22,7 @@ import re
 
 from utilities.files import path_join
 from utilities.common import get_release_assets, verify_git_repo
-from utilities.versions import check_sources_digest, check_versions, count_indicators
+from utilities.versions import check_sources_digest, check_versions
 from utilities.package_digest import PackageDigest
 from datetime import datetime
 
@@ -42,21 +42,24 @@ if __name__ == "__main__":
     # The Java pom's <description> names an indicator count. It is published to
     # Central and immutable per version, so a stale number cannot be corrected after
     # release -- it had already drifted from 168 to 174 before anything checked it.
-    # scripts/sync.py keeps it in step on every commit; this is the release-time
-    # backstop in case sync.py was skipped.
     #
     # Checked HERE and not in `ta_codegen build`: the synth gate deliberately adds
     # synthetic indicators to ta_codegen/input/, so a per-build assertion is wrong by
     # construction there (it demanded "183 indicators"). A release is the only moment
     # the count is both meaningful and permanent.
     pom_path = path_join(root_dir, 'ta_codegen', 'output', 'java', 'library', 'pom.xml')
-    func_count = count_indicators(root_dir)
+    input_dir = path_join(root_dir, 'ta_codegen', 'input')
+    func_count = sum(
+        1 for d in os.listdir(input_dir)
+        if os.path.isdir(path_join(input_dir, d))
+        and d not in ('helpers', 'lib')
+        and os.path.exists(path_join(input_dir, d, f'{d}.yaml'))
+    )
     with open(pom_path, 'r') as f:
         pom_text = f.read()
     if f'{func_count} indicators' not in pom_text:
         print(f"Error: {pom_path} <description> does not say '{func_count} indicators'.")
         print("       It is published to Maven Central and is immutable per version.")
-        print("       Did you forget to run scripts/sync.py?")
         exit(1)
 
     sources_digest = check_sources_digest(root_dir)

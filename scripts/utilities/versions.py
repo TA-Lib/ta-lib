@@ -603,49 +603,6 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
 
     return is_updated, version_c
 
-def count_indicators(root_dir: str) -> int:
-    """
-    Count indicators the same way ta_codegen does: one directory per indicator
-    under ta_codegen/input/, each carrying a <name>.yaml. Excludes the
-    non-indicator 'helpers' and 'lib' directories.
-    """
-    input_dir = path_join(root_dir, 'ta_codegen', 'input')
-    return sum(
-        1 for d in os.listdir(input_dir)
-        if os.path.isdir(path_join(input_dir, d))
-        and d not in ('helpers', 'lib')
-        and os.path.exists(path_join(input_dir, d, f'{d}.yaml'))
-    )
-
-def sync_pom_indicator_count(root_dir: str) -> Tuple[bool, int]:
-    """
-    Keep the Java pom.xml <description>'s "<N> indicators" in step with the
-    ta_codegen/input/ corpus, the same way sync_versions() keeps the version
-    fields in step -- except one-directional: the corpus count is always
-    authoritative, so this only ever writes it into the pom, never reads a
-    count back out.
-
-    Return true if the pom was updated.
-    """
-    pom_path = path_join(root_dir, 'ta_codegen', 'output', 'java', 'library', 'pom.xml')
-    func_count = count_indicators(root_dir)
-
-    with open(pom_path, 'r') as f:
-        pom_text = f.read()
-
-    new_text, n = re.subn(r'\d+ indicators', f'{func_count} indicators', pom_text, count=1)
-    if n != 1:
-        print(f"Error: expected one '<N> indicators' phrase in {pom_path}, found {n}")
-        sys.exit(1)
-
-    if new_text == pom_text:
-        return False, func_count
-
-    print(f"Updating pom.xml indicator count to [{func_count}]")
-    with open(pom_path, 'w') as f:
-        f.write(new_text)
-    return True, func_count
-
 def check_versions(root_dir: str) -> str:
     # Similar to sync_versions() but only checks if the versions are in sync, do not modify anything.
     version_file = get_version_string(root_dir)
