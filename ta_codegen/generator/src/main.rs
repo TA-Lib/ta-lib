@@ -722,6 +722,9 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // to regenerate.
         backends::java_enums::generate(&enums, &java_pkg.join("FuncUnstId.java"));
         backends::java_enums::generate_matype(&enums, &java_pkg.join("MAType.java"));
+        // Whole-corpus count regardless of --func: `all_funcs` is every
+        // definition even under a filtered run (see its own comment above).
+        sync_pom_indicator_count(&root, all_funcs.len());
         // Core.java's GENCODE section splices ALL indicators into a single file,
         // so only regenerate on a full (unfiltered) run — a --func subset would
         // drop every other indicator's methods.
@@ -2290,6 +2293,27 @@ const RUST_GENERATED_TEST_MODULES: &[&str] = &["no_phantom_io"];
 /// `=DISPATCH_VERSION`, so `cargo publish` of dispatch has to land first or
 /// ta-lib's dependency does not resolve.
 const DISPATCH_VERSION: &str = "0.1.2";
+
+/// Rewrite the Java pom's `<description>` "<N> indicators" from the corpus
+/// count -- the one field `generate` overwrites in an otherwise hand-written,
+/// preserved file (see CLAUDE.md). It is published to Maven Central and
+/// immutable per version, so a stale count cannot be fixed after release
+/// (issue tracked in #317); tying it to `generate` means it can no longer go
+/// stale between the indicator that added it and the release that ships it.
+fn sync_pom_indicator_count(root: &Path, n_funcs: usize) {
+    let pom_path = root.join("ta_codegen/output/java/library/pom.xml");
+    let text = std::fs::read_to_string(&pom_path)
+        .unwrap_or_else(|e| panic!("cannot read {}: {e}", pom_path.display()));
+    let marker = " indicators";
+    let marker_pos = text
+        .find(marker)
+        .unwrap_or_else(|| panic!("{}: no \"{marker}\" found in <description>", pom_path.display()));
+    let digits_start = text[..marker_pos]
+        .rfind(|c: char| !c.is_ascii_digit())
+        .map_or(0, |i| i + 1);
+    let new_text = format!("{}{n_funcs}{}", &text[..digits_start], &text[marker_pos..]);
+    backends::write_if_changed(&pom_path, &new_text, "pom.xml", n_funcs);
+}
 
 fn generate_rust_crate_scaffolding(
     out_base: &Path,

@@ -135,9 +135,10 @@ because the four runtime probes are nightly-only.
 
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source
-lives under `output/` too (the Java shared types, `pom.xml`, `Core.java` outside
-the GENCODE markers, the test suites, the C# `TALib.csproj`); the generator
-preserves those and never overwrites them.
+lives under `output/` too (the Java shared types, `Core.java` outside the
+GENCODE markers, the test suites, the C# `TALib.csproj`); the generator
+preserves those and never overwrites them. `pom.xml` is maintained by
+`ta_codegen`.
 
 ## Comments and docs: guidance, not narration
 
