@@ -42,11 +42,9 @@ if __name__ == "__main__":
     # The Java pom's <description> names an indicator count. It is published to
     # Central and immutable per version, so a stale number cannot be corrected after
     # release -- it had already drifted from 168 to 174 before anything checked it.
-    #
-    # Checked HERE and not in `ta_codegen build`: the synth gate deliberately adds
-    # synthetic indicators to ta_codegen/input/, so a per-build assertion is wrong by
-    # construction there (it demanded "183 indicators"). A release is the only moment
-    # the count is both meaningful and permanent.
+    # `ta_codegen generate` now rewrites it from ta_codegen/input/ on every run
+    # (sync_pom_indicator_count in main.rs); this check is the release-time
+    # backstop in case generate wasn't run since the last indicator was added.
     pom_path = path_join(root_dir, 'ta_codegen', 'output', 'java', 'library', 'pom.xml')
     input_dir = path_join(root_dir, 'ta_codegen', 'input')
     func_count = sum(
@@ -60,6 +58,7 @@ if __name__ == "__main__":
     if f'{func_count} indicators' not in pom_text:
         print(f"Error: {pom_path} <description> does not say '{func_count} indicators'.")
         print("       It is published to Maven Central and is immutable per version.")
+        print("       Did you forget to run `ta_codegen generate`?")
         exit(1)
 
     sources_digest = check_sources_digest(root_dir)
