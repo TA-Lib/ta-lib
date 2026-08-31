@@ -75,6 +75,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_EFI_Lookback")]
     #[inline]
     pub fn EFI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -339,6 +340,7 @@ impl Core {
     ///   `Force Index(13) = 13-period EMA of Force Index(1)`.
     /// * MotiveWave, *Elder's Force Index*: `rawForce = vol * (price - prevP)`, smoothed by a
     ///   moving average whose default method is EMA, at 2 and 13. No competing formula was found.
+    #[doc(alias = "TA_EFI")]
     pub fn EFI(
         &self,
         startIdx: usize,

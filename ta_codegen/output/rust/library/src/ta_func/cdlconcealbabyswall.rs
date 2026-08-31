@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLCONCEALBABYSWALL`]: the number of leading input values
     /// consumed before the first output value can be produced.
+    #[doc(alias = "TA_CDLCONCEALBABYSWALL_Lookback")]
     pub fn CDLCONCEALBABYSWALL_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
@@ -336,6 +337,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLMARUBOZU`] · [`Core::CDLENGULFING`]
+    #[doc(alias = "TA_CDLCONCEALBABYSWALL")]
     #[doc(alias = "ConcealingBabySwallow")]
     pub fn CDLCONCEALBABYSWALL(
         &self,

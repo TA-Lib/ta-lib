@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLBREAKAWAY`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLBREAKAWAY_Lookback")]
     pub fn CDLBREAKAWAY_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -286,6 +287,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLRISEFALL3METHODS`] · [`Core::CDL3LINESTRIKE`]
+    #[doc(alias = "TA_CDLBREAKAWAY")]
     #[doc(alias = "Breakaway")]
     pub fn CDLBREAKAWAY(
         &self,

@@ -79,6 +79,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MACDFIX_Lookback")]
     #[inline]
     pub fn MACDFIX_Lookback(&self, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
@@ -388,6 +389,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MACD`] · [`Core::MACDEXT`] · [`Core::EMA`] · [`Core::APO`]
+    #[doc(alias = "TA_MACDFIX")]
     #[doc(alias = "MovingAverageConvergenceDivergenceFix")]
     pub fn MACDFIX(
         &self,

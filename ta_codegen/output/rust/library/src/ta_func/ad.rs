@@ -68,6 +68,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::AD`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_AD_Lookback")]
     pub fn AD_Lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
         return Ok((0) as usize);
@@ -203,6 +204,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ADOSC`] · [`Core::OBV`]
+    #[doc(alias = "TA_AD")]
     #[doc(alias = "ChaikinADLine")]
     #[doc(alias = "AccumulationDistributionLine")]
     #[doc(alias = "AccumulationDistribution")]

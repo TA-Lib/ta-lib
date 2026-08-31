@@ -79,6 +79,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MIDPOINT_Lookback")]
     #[inline]
     pub fn MIDPOINT_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -362,6 +363,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MIDPRICE`] · [`Core::MAX`] · [`Core::MIN`]
+    #[doc(alias = "TA_MIDPOINT")]
     pub fn MIDPOINT(
         &self,
         startIdx: usize,

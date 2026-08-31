@@ -82,6 +82,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_LINEARREG_SLOPE_Lookback")]
     #[inline]
     pub fn LINEARREG_SLOPE_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -346,6 +347,7 @@ impl Core {
     ///
     /// [`Core::LINEARREG`] · [`Core::LINEARREG_INTERCEPT`] · [`Core::LINEARREG_ANGLE`] ·
     /// [`Core::TSF`]
+    #[doc(alias = "TA_LINEARREG_SLOPE")]
     #[doc(alias = "LinearRegressionSlope")]
     #[doc(alias = "LSMAslope")]
     #[doc(alias = "leastsquaresslope")]

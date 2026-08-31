@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::MULT`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_MULT_Lookback")]
     pub fn MULT_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -157,6 +158,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ADD`] · [`Core::SUB`] · [`Core::DIV`]
+    #[doc(alias = "TA_MULT")]
     #[doc(alias = "VectorMultiply")]
     #[doc(alias = "VectorArithmeticMult")]
     #[doc(alias = "Element-wiseProduct")]

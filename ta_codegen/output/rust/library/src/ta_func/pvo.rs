@@ -79,6 +79,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_PVO_Lookback")]
     #[inline]
     pub fn PVO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -269,6 +270,7 @@ impl Core {
     ///   (PVO)](https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/percentage-volume-oscillator-pvo),
     ///   StockCharts ChartSchool; also documented by
     ///   [TradingView](https://www.tradingview.com/support/solutions/43000591350-percentage-volume-oscillator-pvo/).
+    #[doc(alias = "TA_PVO")]
     #[doc(alias = "PercentageVolumeOscillator")]
     pub fn PVO(
         &self,

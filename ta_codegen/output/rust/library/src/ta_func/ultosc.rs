@@ -85,6 +85,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_ULTOSC_Lookback")]
     #[inline]
     pub fn ULTOSC_Lookback(&self, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod1) as i32) == (i32::MIN) {
@@ -484,6 +485,7 @@ impl Core {
     ///
     /// * Larry Williams, *The Ultimate Oscillator*, Technical Analysis of Stocks & Commodities,
     ///   V.3:4 (1985)
+    #[doc(alias = "TA_ULTOSC")]
     #[doc(alias = "UltimateOscillator")]
     #[doc(alias = "UO")]
     pub fn ULTOSC(

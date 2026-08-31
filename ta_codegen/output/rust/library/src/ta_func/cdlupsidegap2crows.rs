@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLUPSIDEGAP2CROWS`]: the number of leading input values
     /// consumed before the first output value can be produced.
+    #[doc(alias = "TA_CDLUPSIDEGAP2CROWS_Lookback")]
     pub fn CDLUPSIDEGAP2CROWS_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -361,6 +362,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL2CROWS`] · [`Core::CDLGAPSIDESIDEWHITE`]
+    #[doc(alias = "TA_CDLUPSIDEGAP2CROWS")]
     #[doc(alias = "UpsideGapTwoCrows")]
     pub fn CDLUPSIDEGAP2CROWS(
         &self,

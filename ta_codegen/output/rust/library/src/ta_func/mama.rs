@@ -80,6 +80,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MAMA_Lookback")]
     #[inline]
     pub fn MAMA_Lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> Result<usize, RetCode> {
         if optInFastLimit == Self::REAL_DEFAULT {
@@ -611,6 +612,7 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
+    #[doc(alias = "TA_MAMA")]
     #[doc(alias = "MESAAdaptiveMovingAverage")]
     #[doc(alias = "EhlersMAMA")]
     pub fn MAMA(

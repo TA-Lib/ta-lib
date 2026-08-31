@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLADVANCEBLOCK`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLADVANCEBLOCK_Lookback")]
     pub fn CDLADVANCEBLOCK_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -674,6 +675,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3WHITESOLDIERS`] · CDLDELIBERATION · [`Core::CDLSTALLEDPATTERN`]
+    #[doc(alias = "TA_CDLADVANCEBLOCK")]
     #[doc(alias = "AdvanceBlock")]
     pub fn CDLADVANCEBLOCK(
         &self,

@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::COSH`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_COSH_Lookback")]
     pub fn COSH_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -157,6 +158,7 @@ impl Core {
     ///
     /// * Wikipedia, *Hyperbolic functions*:
     ///   [en.wikipedia.org/wiki/Hyperbolic_functions](https://en.wikipedia.org/wiki/Hyperbolic_functions)
+    #[doc(alias = "TA_COSH")]
     #[doc(alias = "HyperbolicCosine")]
     pub fn COSH(
         &self,

@@ -89,6 +89,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MACDEXT_Lookback")]
     #[inline]
     pub fn MACDEXT_Lookback(&self, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -380,6 +381,7 @@ impl Core {
     ///
     /// [`Core::MACD`] · [`Core::MACDFIX`] · [`Core::MA`] · [`Core::EMA`] · [`Core::APO`] ·
     /// [`Core::PPO`]
+    #[doc(alias = "TA_MACDEXT")]
     #[doc(alias = "MACDExtended")]
     #[doc(alias = "MACDwithcontrollableMAtype")]
     pub fn MACDEXT(

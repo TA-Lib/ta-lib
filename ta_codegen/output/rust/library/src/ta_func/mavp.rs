@@ -85,6 +85,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MAVP_Lookback")]
     #[inline]
     pub fn MAVP_Lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInMinPeriod) as i32) == (i32::MIN) {
@@ -463,6 +464,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MA`] · [`Core::SMA`] · [`Core::MAMA`] · [`Core::T3`]
+    #[doc(alias = "TA_MAVP")]
     #[doc(alias = "MovingAverageVariablePeriod")]
     #[doc(alias = "VariablePeriodMovingAverage")]
     pub fn MAVP(

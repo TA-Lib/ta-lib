@@ -68,6 +68,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::WCLPRICE`]: the number of leading input values consumed before
     /// the first output value can be produced.
+    #[doc(alias = "TA_WCLPRICE_Lookback")]
     pub fn WCLPRICE_Lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
         return Ok((0) as usize);
@@ -199,6 +200,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::TYPPRICE`] · [`Core::MEDPRICE`] · [`Core::AVGPRICE`]
+    #[doc(alias = "TA_WCLPRICE")]
     #[doc(alias = "WeightedClosePrice")]
     #[doc(alias = "WeightedClose")]
     pub fn WCLPRICE(

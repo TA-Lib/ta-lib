@@ -85,6 +85,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_PPO_Lookback")]
     #[inline]
     pub fn PPO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -269,6 +270,7 @@ impl Core {
     ///   Forecasts* newsletter). The PPO is the MACD expressed as a percentage of the slow moving
     ///   average. Appel's original definition uses **exponential** moving averages (periods 12,
     ///   26).
+    #[doc(alias = "TA_PPO")]
     #[doc(alias = "PercentagePriceOscillator")]
     pub fn PPO(
         &self,

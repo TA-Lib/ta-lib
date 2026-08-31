@@ -89,6 +89,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CCI_Lookback")]
     #[inline]
     pub fn CCI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -304,6 +305,7 @@ impl Core {
     /// # References
     ///
     /// * Donald Lambert
+    #[doc(alias = "TA_CCI")]
     #[doc(alias = "CommodityChannelIndex")]
     pub fn CCI(
         &self,

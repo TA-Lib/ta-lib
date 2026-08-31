@@ -76,6 +76,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MOM_Lookback")]
     #[inline]
     pub fn MOM_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -226,6 +227,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ROC`] · [`Core::ROCP`] · [`Core::ROCR`] · [`Core::ROCR100`]
+    #[doc(alias = "TA_MOM")]
     #[doc(alias = "Momentum")]
     pub fn MOM(
         &self,

@@ -80,6 +80,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_HMA_Lookback")]
     #[inline]
     pub fn HMA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -529,6 +530,7 @@ impl Core {
     /// * Alan Hull, *How to reduce lag in a moving average* — the original definition, including
     ///   the `Integer()` truncation of both derived periods:
     ///   [alanhull.com/hull-moving-average](https://alanhull.com/hull-moving-average)
+    #[doc(alias = "TA_HMA")]
     #[doc(alias = "HullMovingAverage")]
     pub fn HMA(
         &self,

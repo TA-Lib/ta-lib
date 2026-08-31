@@ -76,6 +76,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CDLMATHOLD_Lookback")]
     #[inline]
     pub fn CDLMATHOLD_Lookback(&self, mut optInPenetration: f64) -> Result<usize, RetCode> {
         if optInPenetration == Self::REAL_DEFAULT {
@@ -439,6 +440,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLRISEFALL3METHODS`] · [`Core::CDLXSIDEGAP3METHODS`]
+    #[doc(alias = "TA_CDLMATHOLD")]
     #[doc(alias = "MatHold")]
     pub fn CDLMATHOLD(
         &self,

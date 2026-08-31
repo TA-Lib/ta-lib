@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::MARKETFI`]: the number of leading input values consumed before
     /// the first output value can be produced.
+    #[doc(alias = "TA_MARKETFI_Lookback")]
     pub fn MARKETFI_Lookback(&self) -> Result<usize, RetCode> {
         // Each output depends only on its own bar, so nothing is consumed
         // before the first one can be produced.
@@ -208,6 +209,7 @@ impl Core {
     /// * The four-state green/fade/fake/squat colour code charting packages overlay is derived from
     ///   the signs of the bar-to-bar change in this index and in volume. It is an interpretive
     ///   layer, not part of the series; `outReal` is the scalar only.
+    #[doc(alias = "TA_MARKETFI")]
     pub fn MARKETFI(
         &self,
         startIdx: usize,

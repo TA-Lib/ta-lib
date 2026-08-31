@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::VWAP`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_VWAP_Lookback")]
     pub fn VWAP_Lookback(&self) -> Result<usize, RetCode> {
         // Cumulative from the first bar of the requested range, so the very
         // first bar already has a complete answer and nothing is consumed
@@ -296,6 +297,7 @@ impl Core {
     ///   `VWAP = tpv.cumsum() / volume.cumsum()`, and reaches the session reset only by grouping on
     ///   a `DatetimeIndex`. trading-signals `trend/VWAP` implements the cumulative form with no
     ///   anchor at all.
+    #[doc(alias = "TA_VWAP")]
     #[doc(alias = "VolumeWeightedAveragePrice")]
     pub fn VWAP(
         &self,

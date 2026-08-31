@@ -78,6 +78,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::HT_TRENDLINE`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_HT_TRENDLINE_Lookback")]
     pub fn HT_TRENDLINE_Lookback(&self) -> Result<usize, RetCode> {
         // 31 input are skip
         // +32 output are skip to account for misc lookback
@@ -555,6 +556,7 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
+    #[doc(alias = "TA_HT_TRENDLINE")]
     #[doc(alias = "HilbertTransformInstantaneousTrendline")]
     #[doc(alias = "InstantaneousTrendline")]
     pub fn HT_TRENDLINE(

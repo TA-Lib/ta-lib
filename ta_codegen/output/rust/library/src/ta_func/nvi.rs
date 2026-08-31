@@ -67,6 +67,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::NVI`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_NVI_Lookback")]
     pub fn NVI_Lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
         return Ok((0) as usize);
@@ -200,6 +201,7 @@ impl Core {
     ///
     /// * Norman G. Fosback, *Stock Market Logic*, The Institute for Econometric Research (ISBN
     ///   0917604482)
+    #[doc(alias = "TA_NVI")]
     #[doc(alias = "NegativeVolumeIndex")]
     pub fn NVI(
         &self,

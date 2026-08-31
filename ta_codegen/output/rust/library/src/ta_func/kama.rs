@@ -89,6 +89,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_KAMA_Lookback")]
     #[inline]
     pub fn KAMA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -420,6 +421,7 @@ impl Core {
     ///
     /// * Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*,
     ///   McGraw-Hill (1995)
+    #[doc(alias = "TA_KAMA")]
     #[doc(alias = "KaufmanAdaptiveMovingAverage")]
     #[doc(alias = "KaufmansAdaptiveMovingAverage")]
     pub fn KAMA(

@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDL3BLACKCROWS`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDL3BLACKCROWS_Lookback")]
     pub fn CDL3BLACKCROWS_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
@@ -336,6 +337,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3WHITESOLDIERS`] · [`Core::CDLIDENTICAL3CROWS`] · [`Core::CDLADVANCEBLOCK`]
+    #[doc(alias = "TA_CDL3BLACKCROWS")]
     #[doc(alias = "ThreeBlackCrows")]
     #[doc(alias = "3BlackCrows")]
     pub fn CDL3BLACKCROWS(

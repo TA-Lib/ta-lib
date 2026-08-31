@@ -76,6 +76,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CDLEVENINGDOJISTAR_Lookback")]
     #[inline]
     pub fn CDLEVENINGDOJISTAR_Lookback(&self, mut optInPenetration: f64) -> Result<usize, RetCode> {
         if optInPenetration == Self::REAL_DEFAULT {
@@ -455,6 +456,7 @@ impl Core {
     ///
     /// [`Core::CDLEVENINGSTAR`] · [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLDOJISTAR`] ·
     /// [`Core::CDLABANDONEDBABY`]
+    #[doc(alias = "TA_CDLEVENINGDOJISTAR")]
     #[doc(alias = "EveningDojiStar")]
     pub fn CDLEVENINGDOJISTAR(
         &self,

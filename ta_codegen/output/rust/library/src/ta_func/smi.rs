@@ -83,6 +83,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_SMI_Lookback")]
     #[inline]
     pub fn SMI_Lookback(&self, mut optInTimePeriod: i32, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -544,6 +545,7 @@ impl Core {
     /// * William Blau, "Stochastic Momentum", *Technical Analysis of Stocks & Commodities*, v11:1
     ///   (January 1993), pp. 11-18
     /// * William Blau, *Momentum, Direction and Divergence*, Wiley 1995 (ISBN 0471027294)
+    #[doc(alias = "TA_SMI")]
     #[doc(alias = "stochasticmomentumindex")]
     #[doc(alias = "Blaustochasticmomentum")]
     pub fn SMI(

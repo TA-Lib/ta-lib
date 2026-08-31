@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::SQRT`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_SQRT_Lookback")]
     pub fn SQRT_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -153,6 +154,7 @@ impl Core {
     ///
     /// * Wikipedia, *Square root*:
     ///   [en.wikipedia.org/wiki/Square_root](https://en.wikipedia.org/wiki/Square_root)
+    #[doc(alias = "TA_SQRT")]
     #[doc(alias = "SquareRoot")]
     pub fn SQRT(
         &self,

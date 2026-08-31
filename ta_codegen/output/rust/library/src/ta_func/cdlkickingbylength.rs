@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLKICKINGBYLENGTH`]: the number of leading input values
     /// consumed before the first output value can be produced.
+    #[doc(alias = "TA_CDLKICKINGBYLENGTH_Lookback")]
     pub fn CDLKICKINGBYLENGTH_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -398,6 +399,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLKICKING`] · [`Core::CDLMARUBOZU`] · [`Core::CDLGAPSIDESIDEWHITE`]
+    #[doc(alias = "TA_CDLKICKINGBYLENGTH")]
     #[doc(alias = "KickingbyLength")]
     #[doc(alias = "Kicking-bullbeardecidedbythelongermarubozu")]
     pub fn CDLKICKINGBYLENGTH(

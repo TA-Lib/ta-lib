@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLHAMMER`]: the number of leading input values consumed before
     /// the first output value can be produced.
+    #[doc(alias = "TA_CDLHAMMER_Lookback")]
     pub fn CDLHAMMER_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
@@ -486,6 +487,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLINVERTEDHAMMER`] · [`Core::CDLHANGINGMAN`] · [`Core::CDLTAKURI`]
+    #[doc(alias = "TA_CDLHAMMER")]
     #[doc(alias = "Hammer")]
     pub fn CDLHAMMER(
         &self,

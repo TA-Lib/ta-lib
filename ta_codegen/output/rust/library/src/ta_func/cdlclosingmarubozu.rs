@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLCLOSINGMARUBOZU`]: the number of leading input values
     /// consumed before the first output value can be produced.
+    #[doc(alias = "TA_CDLCLOSINGMARUBOZU_Lookback")]
     pub fn CDLCLOSINGMARUBOZU_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -347,6 +348,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLMARUBOZU`] · [`Core::CDLLONGLINE`] · [`Core::CDLBELTHOLD`]
+    #[doc(alias = "TA_CDLCLOSINGMARUBOZU")]
     #[doc(alias = "ClosingMarubozu")]
     pub fn CDLCLOSINGMARUBOZU(
         &self,

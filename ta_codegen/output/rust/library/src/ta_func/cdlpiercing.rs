@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLPIERCING`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLPIERCING_Lookback")]
     pub fn CDLPIERCING_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -343,6 +344,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLDARKCLOUDCOVER`] · [`Core::CDLENGULFING`] · [`Core::CDLMORNINGSTAR`]
+    #[doc(alias = "TA_CDLPIERCING")]
     #[doc(alias = "PiercingPattern")]
     #[doc(alias = "PiercingLine")]
     pub fn CDLPIERCING(

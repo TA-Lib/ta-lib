@@ -84,6 +84,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MACD_Lookback")]
     #[inline]
     pub fn MACD_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -445,6 +446,7 @@ impl Core {
     /// # References
     ///
     /// * Gerald Appel, *Stock Market Trading Systems*, Traders Pr (ISBN 0934380163)
+    #[doc(alias = "TA_MACD")]
     #[doc(alias = "movingaverageconvergencedivergence")]
     pub fn MACD(
         &self,

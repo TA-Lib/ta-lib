@@ -77,6 +77,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CDLDARKCLOUDCOVER_Lookback")]
     #[inline]
     pub fn CDLDARKCLOUDCOVER_Lookback(&self, mut optInPenetration: f64) -> Result<usize, RetCode> {
         if optInPenetration == Self::REAL_DEFAULT {
@@ -318,6 +319,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLPIERCING`] · [`Core::CDLENGULFING`] · [`Core::CDLONNECK`]
+    #[doc(alias = "TA_CDLDARKCLOUDCOVER")]
     #[doc(alias = "DarkCloudCover")]
     pub fn CDLDARKCLOUDCOVER(
         &self,

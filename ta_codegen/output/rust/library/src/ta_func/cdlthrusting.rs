@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLTHRUSTING`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLTHRUSTING_Lookback")]
     pub fn CDLTHRUSTING_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -388,6 +389,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLINNECK`] · [`Core::CDLONNECK`] · [`Core::CDLPIERCING`] · CDLMEETINGLINES
+    #[doc(alias = "TA_CDLTHRUSTING")]
     #[doc(alias = "ThrustingPattern")]
     #[doc(alias = "ThrustingLine")]
     pub fn CDLTHRUSTING(

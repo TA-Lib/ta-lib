@@ -77,6 +77,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_ADOSC_Lookback")]
     #[inline]
     pub fn ADOSC_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -362,6 +363,7 @@ impl Core {
     /// # References
     ///
     /// * Marc Chaikin
+    #[doc(alias = "TA_ADOSC")]
     #[doc(alias = "ChaikinADOscillator")]
     #[doc(alias = "ChaikinOscillator")]
     pub fn ADOSC(

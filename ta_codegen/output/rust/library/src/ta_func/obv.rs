@@ -69,6 +69,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::OBV`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_OBV_Lookback")]
     pub fn OBV_Lookback(&self) -> Result<usize, RetCode> {
         // This function have no lookback needed.
         return Ok((0) as usize);
@@ -175,6 +176,7 @@ impl Core {
     ///
     /// * Joseph Ensign Granville, B. Granville, *Granville's New Strategy of Daily Stock Market
     ///   Timing for Maximum Profit*, Simon & Schuster (ISBN 0133634329)
+    #[doc(alias = "TA_OBV")]
     #[doc(alias = "OnBalanceVolume")]
     pub fn OBV(
         &self,

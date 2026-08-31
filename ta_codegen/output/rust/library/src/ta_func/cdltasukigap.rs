@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLTASUKIGAP`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLTASUKIGAP_Lookback")]
     pub fn CDLTASUKIGAP_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
@@ -295,6 +296,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLXSIDEGAP3METHODS`]
+    #[doc(alias = "TA_CDLTASUKIGAP")]
     #[doc(alias = "TasukiGap")]
     #[doc(alias = "UpsideDownsideTasukiGap")]
     pub fn CDLTASUKIGAP(

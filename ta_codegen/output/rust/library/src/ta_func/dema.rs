@@ -79,6 +79,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_DEMA_Lookback")]
     #[inline]
     pub fn DEMA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -347,6 +348,7 @@ impl Core {
     ///
     /// * Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of
     ///   Stocks & Commodities, V.12:1 (January 1994)
+    #[doc(alias = "TA_DEMA")]
     #[doc(alias = "DoubleExponentialMovingAverage")]
     pub fn DEMA(
         &self,

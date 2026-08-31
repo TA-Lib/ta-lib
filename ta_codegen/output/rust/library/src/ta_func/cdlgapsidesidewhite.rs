@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLGAPSIDESIDEWHITE`]: the number of leading input values
     /// consumed before the first output value can be produced.
+    #[doc(alias = "TA_CDLGAPSIDESIDEWHITE_Lookback")]
     pub fn CDLGAPSIDESIDEWHITE_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
@@ -360,6 +361,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLTASUKIGAP`] · [`Core::CDLXSIDEGAP3METHODS`]
+    #[doc(alias = "TA_CDLGAPSIDESIDEWHITE")]
     #[doc(alias = "UpDown-gapside-by-sidewhitelines")]
     #[doc(alias = "Gappingside-by-sidewhitelines")]
     pub fn CDLGAPSIDESIDEWHITE(

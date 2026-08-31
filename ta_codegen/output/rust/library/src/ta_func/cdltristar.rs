@@ -67,6 +67,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLTRISTAR`]: the number of leading input values consumed before
     /// the first output value can be produced.
+    #[doc(alias = "TA_CDLTRISTAR_Lookback")]
     pub fn CDLTRISTAR_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
@@ -290,6 +291,7 @@ impl Core {
     ///
     /// [`Core::CDLDOJI`] · [`Core::CDLDOJISTAR`] · [`Core::CDLMORNINGDOJISTAR`] ·
     /// [`Core::CDLEVENINGDOJISTAR`]
+    #[doc(alias = "TA_CDLTRISTAR")]
     #[doc(alias = "TristarPattern")]
     #[doc(alias = "Tri-Star")]
     pub fn CDLTRISTAR(

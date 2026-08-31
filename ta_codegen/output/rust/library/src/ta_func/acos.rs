@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::ACOS`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_ACOS_Lookback")]
     pub fn ACOS_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -157,6 +158,7 @@ impl Core {
     ///
     /// * Wikipedia, *Inverse trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Inverse_trigonometric_functions](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
+    #[doc(alias = "TA_ACOS")]
     #[doc(alias = "ArcCosine")]
     #[doc(alias = "InverseCosine")]
     #[doc(alias = "arccos")]

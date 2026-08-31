@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::SIN`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_SIN_Lookback")]
     pub fn SIN_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -157,6 +158,7 @@ impl Core {
     ///
     /// * Wikipedia, *Trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)
+    #[doc(alias = "TA_SIN")]
     #[doc(alias = "sine")]
     pub fn SIN(
         &self,

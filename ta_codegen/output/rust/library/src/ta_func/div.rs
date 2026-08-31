@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::DIV`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_DIV_Lookback")]
     pub fn DIV_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -158,6 +159,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MULT`] · [`Core::ADD`] · [`Core::SUB`]
+    #[doc(alias = "TA_DIV")]
     #[doc(alias = "VectorArithmeticDivide")]
     #[doc(alias = "Divide")]
     pub fn DIV(

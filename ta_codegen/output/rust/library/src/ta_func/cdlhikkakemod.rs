@@ -72,6 +72,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLHIKKAKEMOD`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLHIKKAKEMOD_Lookback")]
     pub fn CDLHIKKAKEMOD_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
@@ -376,6 +377,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHIKKAKE`]
+    #[doc(alias = "TA_CDLHIKKAKEMOD")]
     #[doc(alias = "ModifiedHikkake")]
     #[doc(alias = "ModifiedHikkakePattern")]
     pub fn CDLHIKKAKEMOD(

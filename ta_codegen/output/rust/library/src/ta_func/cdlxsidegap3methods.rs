@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLXSIDEGAP3METHODS`]: the number of leading input values
     /// consumed before the first output value can be produced.
+    #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Lookback")]
     pub fn CDLXSIDEGAP3METHODS_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((2) as usize);
     }
@@ -221,6 +222,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLTASUKIGAP`] · [`Core::CDLRISEFALL3METHODS`]
+    #[doc(alias = "TA_CDLXSIDEGAP3METHODS")]
     #[doc(alias = "UpsideDownsideGapThreeMethods")]
     #[doc(alias = "UpsideGapThreeMethods")]
     #[doc(alias = "DownsideGapThreeMethods")]

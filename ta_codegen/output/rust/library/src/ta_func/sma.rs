@@ -77,6 +77,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_SMA_Lookback")]
     #[inline]
     pub fn SMA_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -217,6 +218,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::EMA`] · [`Core::WMA`] · [`Core::MA`] · [`Core::DEMA`] · [`Core::TEMA`]
+    #[doc(alias = "TA_SMA")]
     #[doc(alias = "simplemovingaverage")]
     pub fn SMA(
         &self,

@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLONNECK`]: the number of leading input values consumed before
     /// the first output value can be produced.
+    #[doc(alias = "TA_CDLONNECK_Lookback")]
     pub fn CDLONNECK_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -351,6 +352,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLINNECK`] · [`Core::CDLTHRUSTING`] · CDLMEETINGLINES
+    #[doc(alias = "TA_CDLONNECK")]
     #[doc(alias = "On-NeckPattern")]
     #[doc(alias = "On-NeckLine")]
     pub fn CDLONNECK(
