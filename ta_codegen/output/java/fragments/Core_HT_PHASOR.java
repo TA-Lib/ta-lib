@@ -869,7 +869,6 @@
       double[] ring_trailingWMAIdx_inReal;
       double cur_outInPhase;
       double cur_outQuadrature;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -936,7 +935,6 @@
          this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
          this.cur_outInPhase = other.cur_outInPhase;
          this.cur_outQuadrature = other.cur_outQuadrature;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -977,8 +975,7 @@
          }
          core.htPhasorStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
-         return this.cachedValue;
+         return new Value(this.cur_outInPhase, this.cur_outQuadrature);
       }
 
       /**
@@ -1001,21 +998,15 @@
          final int barCount = inReal.length;
          if( outInPhase.length < barCount || outQuadrature.length < barCount || (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature )
             throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.htPhasorStepImpl(this, inReal[i]);
-               outInPhase[i] = this.cur_outInPhase;
-               outQuadrature[i] = this.cur_outQuadrature;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
+            core.htPhasorStepImpl(this, inReal[i]);
+            outInPhase[i] = this.cur_outInPhase;
+            outQuadrature[i] = this.cur_outQuadrature;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -1225,9 +1216,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outInPhase, this.cur_outQuadrature);
       }
 
       /**
@@ -1803,7 +1796,6 @@
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outInPhase = outInPhase[(outNBElement.value - 1) * outStride];
       sp.cur_outQuadrature = outQuadrature[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new HtPhasorStream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
    /* htPhasorOpenAndFill anchored at startIdx — the composed-open fusion seam. */

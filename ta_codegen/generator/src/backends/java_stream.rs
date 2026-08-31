@@ -43,10 +43,11 @@
 //!   indicator, never by the period. `clone()` exposes the copy constructor as
 //!   an independent stream — arrays clone, sub-streams clone recursively, and
 //!   only the `Core` reference is shared (settings identity is the contract).
-//! - Multi-output functions return a per-function immutable `Value` class
-//!   (public final fields, batch output order, generated toString/equals/
-//!   hashCode); `update` caches the instance so `value()` is a pure field
-//!   read. Single-output functions return the primitive directly.
+//! - Multi-output functions return a per-function immutable `Value` record
+//!   (batch output order); `update` returns it WITHOUT storing it, and
+//!   `value()` builds an equal one from the same committed fields — a store
+//!   made it escape, which cost a heap allocation on every bar (#310).
+//!   Single-output functions return the primitive directly.
 //! - Candle settings are SNAPSHOTTED into the handle at open (primitive
 //!   fields), matching Rust's frozen-by-copy observable semantics — the step
 //!   never reads the live (mutable, torn-read-prone) `CandleSetting` objects.
@@ -247,7 +248,7 @@ fn field_type_and_default(ty: &VarType) -> (String, String) {
     }
 }
 
-/// The params + `cur_<out>` (+ cachedValue) fields every tier's handle carries
+/// The params + `cur_<out>` fields every tier's handle carries
 /// (dispatch/period-bank/loopless-composed build on exactly this base).
 fn base_fields(func: &FuncDef) -> Vec<Field> {
     let mut fields: Vec<Field> = Vec::new();
@@ -259,9 +260,6 @@ fn base_fields(func: &FuncDef) -> Vec<Field> {
     }
     for out in &func.outputs {
         fields.push((format!("cur_{}", out.name), out_java_type(func, &out.name).to_string(), "0".into()));
-    }
-    if has_value_class(func) {
-        fields.push(("cachedValue".into(), "Value".into(), "null".into()));
     }
     fields
 }
@@ -385,9 +383,6 @@ fn state_fields_from(
     for out in &func.outputs {
         let t = out_java_type(func, &out.name);
         fields.push((format!("cur_{}", out.name), t.to_string(), "0".to_string()));
-    }
-    if has_value_class(func) {
-        fields.push(("cachedValue".into(), "Value".into(), "null".into()));
     }
     fields
 }
@@ -903,12 +898,11 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     // finite-bar reject above counts its own bar and is the only rejection that
     // does; `peek` runs a frame that commits nothing and reaches neither.
     let _ = writeln!(o, "         {}", advance_out_range());
-    if has_value_class(func) {
-        let _ = writeln!(o, "         this.cachedValue = {};", fresh_value_expr(func, "this"));
-        let _ = writeln!(o, "         return this.cachedValue;");
-    } else {
-        let _ = writeln!(o, "         return {};", fresh_value_expr(func, "this"));
-    }
+    // Multi-output: the `Value` is returned WITHOUT being stored on the handle.
+    // Storing it made it escape, which is a guaranteed heap allocation on every
+    // bar (issue #310); unstored it is a candidate for scalar replacement, the
+    // same shape `peek` already had.
+    let _ = writeln!(o, "         return {};", fresh_value_expr(func, "this"));
     let _ = writeln!(o, "      }}");
 }
 
@@ -1018,28 +1012,16 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
         let _ = writeln!(o, "            {reject}");
     }
     // `value()` must name the last COMMITTED bar on EVERY exit, the throwing
-    // ones included, so the multi-output cache is refreshed in a `finally`.
-    //
-    // That is sound because of an invariant of the step, not by luck: a
-    // composed `<base>StepImpl` writes its `sp.cur_<out>` fields as its LAST
-    // statements, after every sub-stream call — so the one thing that can throw
-    // out of the middle of a bar (a sub rejecting a non-finite intermediate,
-    // the documented composed hole) leaves `cur_*` still holding bar `i-1`,
-    // which is exactly the bar `done` counts. `no_throwing_call_follows_the_cur_capture`
-    // pins it, because without that ordering the `finally` would publish a
-    // half-written bar.
-    //
-    // C# needs none of this: its `Value` is a record struct built fresh from
-    // the same fields, so it is correct at every exit by construction. Leaving
-    // Java's cache stale would make the two backends disagree on an observable
-    // the streaming design says they agree on. Single-output handles read
-    // `cur_<out>` directly and have no cache at all.
-    let cached = has_value_class(func);
-    if cached {
-        let _ = writeln!(o, "         int done = 0;");
-        let _ = writeln!(o, "         try {{");
-    }
-    let pad = if cached { "            " } else { "         " };
+    // ones included. Since #310 that holds by construction in both managed
+    // backends alike: `value()` builds its `Value` from the `cur_<out>` fields
+    // when it is called, so there is no cache to leave stale here and no
+    // `try`/`finally` to keep one fresh. What makes those fields name the last
+    // COMMITTED bar rather than a half-written one is an invariant of the step —
+    // a composed `<base>StepImpl` writes `sp.cur_<out>` as its LAST statements,
+    // after every sub-stream call, so a sub rejecting a non-finite intermediate
+    // mid-bar (the documented composed hole) leaves them holding bar `i-1`.
+    // `no_throwing_call_follows_the_cur_capture` pins that ordering.
+    let pad = "         ";
     let _ = writeln!(o, "{pad}for( int i = 0; i < barCount; i++ ) {{");
     let idx_bars: Vec<String> = inputs.iter().map(|a| format!("{a}[i]")).collect();
     if !inputs.is_empty() {
@@ -1063,19 +1045,7 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
         let _ = writeln!(o, "{pad}   {guard}{name}[i] = this.cur_{name};");
     }
     let _ = writeln!(o, "{pad}   {}", advance_out_range());
-    if cached {
-        let _ = writeln!(o, "{pad}   done = i + 1;");
-    }
     let _ = writeln!(o, "{pad}}}");
-    if cached {
-        let _ = writeln!(o, "         }} finally {{");
-        let _ = writeln!(
-            o,
-            "            if( done > 0 ) this.cachedValue = {};",
-            fresh_value_expr(func, "this")
-        );
-        let _ = writeln!(o, "         }}");
-    }
     let _ = writeln!(o, "      }}");
 }
 
@@ -1140,14 +1110,17 @@ fn emit_value_method(o: &mut String, func: &FuncDef) {
          \x20      * {{@link #outRange()}} ends on. The last history bar right after open,\n\
          \x20      * then whatever the latest accepted {{@code update}} returned.\n\
          \x20      * A pure field read; {{@code peek}} does not change it.\n\
-         \x20      */"
+         \x20      * {tail}\n\
+         \x20      */",
+        tail = if has_value_class(func) {
+            "Built from the committed fields on each call, as the C# tier does —\n\
+             \x20      * nothing is cached between calls, and {@code peek} does not change them."
+        } else {
+            "A pure field read; {@code peek} does not change it."
+        }
     );
     let _ = writeln!(o, "      public {vt} value() {{");
-    if has_value_class(func) {
-        let _ = writeln!(o, "         return this.cachedValue;");
-    } else {
-        let _ = writeln!(o, "         return {};", fresh_value_expr(func, "this"));
-    }
+    let _ = writeln!(o, "         return {};", fresh_value_expr(func, "this"));
     let _ = writeln!(o, "      }}");
 }
 
@@ -2079,7 +2052,7 @@ fn emit_identity_fast_path(
     // Identity state: params captured, everything else deterministic defaults
     // (1-slot buffers keep the transition's cap-0 guard well-defined).
     for (name, _, default) in fields {
-        if name == "cachedValue" || name.starts_with("cur_") {
+        if name.starts_with("cur_") {
             continue;
         }
         if model.parity.as_ref().is_some_and(|p| &p.field == name) {
@@ -2108,23 +2081,8 @@ fn emit_identity_fast_path(
     for (out, _inp) in &idp.pairs {
         let _ = writeln!(o, "         sp.cur_{out} = {out}[(outNBElement.value - 1) * outStride];");
     }
-    if has_value_class(func) {
-        let _ = writeln!(o, "         sp.cachedValue = {};", capture_value_expr(func));
-    }
     let _ = writeln!(o, "         return RetCode.Success;");
     let _ = writeln!(o, "      }}");
-}
-
-/// `new Value(sp.cur_a, ...)` for the capture sites (Value resolves inside the
-/// nested handle class; from Core scope it needs the class qualifier).
-fn capture_value_expr(func: &FuncDef) -> String {
-    let class = stream_class_name(func);
-    let args: Vec<String> = func
-        .outputs
-        .iter()
-        .map(|out| format!("sp.cur_{}", out.name))
-        .collect();
-    format!("new {class}.Value({})", args.join(", "))
 }
 
 // ---------------------------------------------------------------------------
@@ -2366,7 +2324,7 @@ enum CurSource {
     Scratch,
 }
 
-/// Seed `sp.cur_*` (+ the cached Value) at the end of an open body.
+/// Seed `sp.cur_*` at the end of an open body.
 fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: CurSource) {
     let nullable = super::common::nullable_output_names(func);
     assert!(
@@ -2385,9 +2343,6 @@ fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: 
             }
         };
         let _ = writeln!(o, "      sp.cur_{out} = {expr};");
-    }
-    if has_value_class(func) {
-        let _ = writeln!(o, "      sp.cachedValue = {};", capture_value_expr(func));
     }
 }
 
@@ -3183,9 +3138,6 @@ fn emit_dispatch(
                     }
                 }
             }
-            if has_value_class(func) {
-                let _ = writeln!(o, "         sp.cachedValue = {};", capture_value_expr(func));
-            }
             let _ = writeln!(o, "         return RetCode.Success;");
             let _ = writeln!(o, "      }}");
         }
@@ -3280,9 +3232,6 @@ fn emit_dispatch(
         let _ = writeln!(o, "      }}");
         for p in &func.optional_inputs {
             let _ = writeln!(o, "      sp.{0} = {0};", p.name);
-        }
-        if has_value_class(func) {
-            let _ = writeln!(o, "      sp.cachedValue = {};", capture_value_expr(func));
         }
         let _ = writeln!(o, "      return RetCode.Success;");
         let _ = writeln!(o, "   }}");

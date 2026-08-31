@@ -453,8 +453,11 @@ public class StreamSmokeTest {
                 ufUntouched("BBANDS.lower", bl[i], UF_CANARY);
             }
             /* value() must name the last COMMITTED bar, not the one before the
-             * call: the multi-output cache is refreshed on the throwing path
-             * too. */
+             * call, on the throwing path too. Before #310 that took a `finally`
+             * refreshing a cached Value; now it holds because `value()` reads
+             * the `cur_*` fields the loop already advanced, and nothing else
+             * stands between them and the caller. This check is what says the
+             * `finally` was removable rather than load-bearing. */
             check(bitEq(ba.value().realUpperBand(), wantB[UF_BAD - 1].realUpperBand()),
                   "BBANDS: value() must name the last committed bar after a partial fill");
             ufValues++;
@@ -1427,12 +1430,21 @@ public class StreamSmokeTest {
         /* Multi-output Value: named components, equals/hashCode/toString. */
         Core.MacdStream m = core.macdOpen(close, 12, 26, 9);
         Core.MacdStream.Value v1 = m.update(close[n - 1]);
-        check(m.value() == v1, "multi-output value() returns the cached instance");
+        /* #310: the handle caches no Value. `value()` builds one from the same
+         * committed fields, so it is EQUAL to what `update` returned and is a
+         * DISTINCT instance. Both halves are asserted: equality alone would
+         * still pass against a cache, and distinctness alone would pass against
+         * a stale one. Java therefore reads here exactly as C# does, where a
+         * record struct makes both true by construction. */
+        check(v1.equals(m.value()), "multi-output value() equals what update returned");
+        check(m.value() != v1, "multi-output value() is not a cached instance");
         Core.MacdStream.Value v2 = m.peek(close[n - 1] + 1.0);
         check(!v1.equals(v2), "distinct bars produce non-equal Values");
         check(v1.toString().contains("macdSignal="), "Value toString names fields");
         java.util.HashSet<Core.MacdStream.Value> set = new java.util.HashSet<Core.MacdStream.Value>();
         set.add(v1);
+        /* Now a real test of the record's equals/hashCode: the instance looked
+         * up is not the instance inserted, where before #310 it was. */
         check(set.contains(m.value()), "Value hashCode/equals contract");
 
         /* Components are readable by name, in batch output order, and carry the

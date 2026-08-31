@@ -711,7 +711,6 @@
       double[] x_inClose;
       double cur_outSlowK;
       double cur_outSlowD;
-      Value cachedValue;
       MaStream sub0;
       MaStream sub1;
       int outRangeBegIdx;
@@ -753,7 +752,6 @@
          this.x_inClose = other.x_inClose.clone();
          this.cur_outSlowK = other.cur_outSlowK;
          this.cur_outSlowD = other.cur_outSlowD;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new MaStream(other.sub0);
          this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -796,8 +794,7 @@
          }
          core.stochStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
-         return this.cachedValue;
+         return new Value(this.cur_outSlowK, this.cur_outSlowD);
       }
 
       /**
@@ -822,21 +819,15 @@
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outSlowK.length < barCount || outSlowD.length < barCount || (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD )
             throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.stochStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outSlowK[i] = this.cur_outSlowK;
-               outSlowD[i] = this.cur_outSlowD;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
+            core.stochStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outSlowK[i] = this.cur_outSlowK;
+            outSlowD[i] = this.cur_outSlowD;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -951,9 +942,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outSlowK, this.cur_outSlowD);
       }
 
       /**
@@ -1333,7 +1326,6 @@
       sp.sub1 = sub1;
       sp.cur_outSlowK = sc_outSlowK[outNBElement.value - 1];
       sp.cur_outSlowD = sc_outSlowD[outNBElement.value - 1];
-      sp.cachedValue = new StochStream.Value(sp.cur_outSlowK, sp.cur_outSlowD);
       return RetCode.Success;
    }
    /* stochOpenAndFill anchored at startIdx — the composed-open fusion seam. */

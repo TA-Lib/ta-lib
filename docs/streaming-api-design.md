@@ -50,8 +50,11 @@ Every stream, in every language, is the same lifecycle:
    true.
 2. **`update(handle, bar) → value` — once per closed bar.** Takes the handle
    and the new input(s) (OHLCV for multi-input functions) and always produces
-   the new current value. `update` performs **no allocation** — the handle is
-   sized at open.
+   the new current value. `update` allocates **no handle state** — the handle is
+   sized at open. On the managed backends a multi-output `update` also returns a
+   `Value`; C#'s is a record struct and costs nothing, and Java's is a record
+   *returned unstored*, which is what leaves it eligible for scalar replacement
+   rather than a guaranteed per-bar heap allocation (#310).
 3. **`close(handle)`.** Releases the stream — explicit in C, implicit
    in managed languages (Rust/Java).
 
@@ -492,8 +495,11 @@ OutRange r = s2.outRange();                      // the bars this handle has an
   `"<NAME> peek:"`), leaving the handle's *state* untouched
   (`docs/error-handling-spec.md` §2.4).
 - `value()` re-reads the value(s) at the last bar the stream counted — the bar
-  `outRange()` ends on — without recomputing; multi-output `update`
-  caches the immutable `Value` it returns, so `value()` is allocation-free.
+  `outRange()` ends on — without recomputing. Multi-output `value()` builds its
+  `Value` from those committed fields on each call rather than returning a
+  cached instance: the cache cost a guaranteed heap allocation on every
+  `update`, to make an accessor free that a caller invokes at most once a bar
+  and usually not at all (#310).
 - `clone()` is the universal deep copy (arrays cloned, sub-handles copied
   recursively, the `Core` reference shared), and it is spelled the same in all
   four backends: `TA_<N>_Clone`, `.clone()`, `clone()`, `Clone()`. It is the
@@ -536,9 +542,10 @@ emitter and accepted the later delivery date.
 One place the C# tier deliberately departs from the Java one, because the
 language offers something Java does not:
 
-- **Multi-output values are a `readonly record struct`, not a class.** Java
-  caches the boxed `Value` so that `value()` allocates nothing; a struct is
-  allocation-free by construction, so C# has no `cachedValue` field at all.
+- **Multi-output values are a `readonly record struct`, not a class.** A struct
+  is allocation-free by construction; Java's `Value` is a real object, so the
+  best Java can do is never store it (#310) and leave the JIT free to
+  scalar-replace it — a JIT decision, where C#'s is a language guarantee.
   The consequence for callers is that C# equality is .NET's `double` equality
   — `NaN` equals `NaN` **and** `+0.0` equals `-0.0` — where Java's record
   compares bitwise and disagrees on the second. Compare

@@ -995,7 +995,6 @@
       double[] cb_smoothPrice;
       double cur_outSine;
       double cur_outLeadSine;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -1070,7 +1069,6 @@
          this.cb_smoothPrice = other.cb_smoothPrice.clone();
          this.cur_outSine = other.cur_outSine;
          this.cur_outLeadSine = other.cur_outLeadSine;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -1111,8 +1109,7 @@
          }
          core.htSineStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
-         return this.cachedValue;
+         return new Value(this.cur_outSine, this.cur_outLeadSine);
       }
 
       /**
@@ -1135,21 +1132,15 @@
          final int barCount = inReal.length;
          if( outSine.length < barCount || outLeadSine.length < barCount || (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine )
             throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.htSineStepImpl(this, inReal[i]);
-               outSine[i] = this.cur_outSine;
-               outLeadSine[i] = this.cur_outLeadSine;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
+            core.htSineStepImpl(this, inReal[i]);
+            outSine[i] = this.cur_outSine;
+            outLeadSine[i] = this.cur_outLeadSine;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -1417,9 +1408,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outSine, this.cur_outLeadSine);
       }
 
       /**
@@ -2127,7 +2120,6 @@
       sp.cb_smoothPrice = smoothPrice;
       sp.cur_outSine = outSine[(outNBElement.value - 1) * outStride];
       sp.cur_outLeadSine = outLeadSine[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new HtSineStream.Value(sp.cur_outSine, sp.cur_outLeadSine);
       return RetCode.Success;
    }
    /* htSineOpenAndFill anchored at startIdx — the composed-open fusion seam. */

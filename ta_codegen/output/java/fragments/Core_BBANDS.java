@@ -811,7 +811,6 @@
       double cur_outRealUpperBand;
       double cur_outRealMiddleBand;
       double cur_outRealLowerBand;
-      Value cachedValue;
       MaStream sub0;
       StddevStream sub1;
       int outRangeBegIdx;
@@ -841,7 +840,6 @@
          this.cur_outRealUpperBand = other.cur_outRealUpperBand;
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new MaStream(other.sub0);
          this.sub1 = new StddevStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -885,8 +883,7 @@
          }
          core.bbandsStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
-         return this.cachedValue;
+         return new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
       }
 
       /**
@@ -910,22 +907,16 @@
          final int barCount = inReal.length;
          if( outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
             throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.bbandsStepImpl(this, inReal[i]);
-               outRealUpperBand[i] = this.cur_outRealUpperBand;
-               outRealMiddleBand[i] = this.cur_outRealMiddleBand;
-               outRealLowerBand[i] = this.cur_outRealLowerBand;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+            core.bbandsStepImpl(this, inReal[i]);
+            outRealUpperBand[i] = this.cur_outRealUpperBand;
+            outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+            outRealLowerBand[i] = this.cur_outRealLowerBand;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -973,9 +964,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
       }
 
       /**
@@ -1153,7 +1146,6 @@
       sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
       sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
-      sp.cachedValue = new BbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
    /* bbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */

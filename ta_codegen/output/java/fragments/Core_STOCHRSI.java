@@ -448,7 +448,6 @@
       MAType optInFastD_MAType;
       double cur_outFastK;
       double cur_outFastD;
-      Value cachedValue;
       RsiStream sub0;
       StochfStream sub1;
       int outRangeBegIdx;
@@ -477,7 +476,6 @@
          this.optInFastD_MAType = other.optInFastD_MAType;
          this.cur_outFastK = other.cur_outFastK;
          this.cur_outFastD = other.cur_outFastD;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new RsiStream(other.sub0);
          this.sub1 = new StochfStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -520,8 +518,7 @@
          }
          core.stochrsiStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
-         return this.cachedValue;
+         return new Value(this.cur_outFastK, this.cur_outFastD);
       }
 
       /**
@@ -544,21 +541,15 @@
          final int barCount = inReal.length;
          if( outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD )
             throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.stochrsiStepImpl(this, inReal[i]);
-               outFastK[i] = this.cur_outFastK;
-               outFastD[i] = this.cur_outFastD;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+            core.stochrsiStepImpl(this, inReal[i]);
+            outFastK[i] = this.cur_outFastK;
+            outFastD[i] = this.cur_outFastD;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -594,9 +585,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outFastK, this.cur_outFastD);
       }
 
       /**
@@ -747,7 +740,6 @@
       sp.sub1 = sub1;
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-      sp.cachedValue = new StochrsiStream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
    /* stochrsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */

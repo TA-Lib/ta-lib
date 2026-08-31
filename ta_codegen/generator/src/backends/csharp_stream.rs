@@ -33,11 +33,12 @@
 //!   `Core` instance method. Measured, `core.Step(sp, x)` versus
 //!   `this.Step(x)` is 3.44–3.54 against 3.39–3.47 ns/bar — indistinguishable.
 //!
-//! - **No `cachedValue` field.** Java caches the boxed multi-output `Value` so
-//!   that `value()` allocates nothing; a `readonly record struct` return is
-//!   0 B/update by construction (measured against 40 B/update for the
-//!   Java-shaped class). One fewer field, one fewer store per bar, and one
-//!   fewer thing the copy path can get wrong.
+//! - **No `cachedValue` field.** A `readonly record struct` return is
+//!   0 B/update by construction, where a class return is 0 B only if the JIT
+//!   proves it does not escape. Java once cached the boxed multi-output
+//!   `Value` in a field so that `value()` was a field read, and paid 40 B per
+//!   `update` for it; #310 dropped that field and brought Java to this shape,
+//!   so the two managed backends now agree here rather than differing.
 //!
 //! - **The `NameMap` prefixes are Java's, verbatim** (`sp.x`, `sp.cur_y`,
 //!   `sp.ring_v_a`, ...). This is load-bearing, not cosmetic:
@@ -286,7 +287,8 @@ fn field_type_and_default(ty: &VarType) -> (String, String) {
 ///
 /// There is no `cachedValue`: the C# `Value` is a `readonly record struct`
 /// returned by value, so caching it would cost a field and a store per bar and
-/// buy nothing.
+/// buy nothing. Java reached the same conclusion the other way round, by
+/// measuring what the store cost it (#310).
 fn base_fields(func: &FuncDef) -> Vec<Field> {
     let mut fields: Vec<Field> = Vec::new();
     for p in &func.optional_inputs {
@@ -975,10 +977,10 @@ fn emit_handle_class_with_members(
 /// after the outputs (`outSlowK` → `SlowK`).
 ///
 /// A record struct, not Java's record class: the return is copied to the
-/// caller's frame, so `Update` allocates nothing at all (measured 0 B/update
-/// against 40 B/update for the Java-shaped cached class), which is also why
-/// there is no `cachedValue` field to keep it free. `Deconstruct` comes free —
-/// `var (up, mid, low) = s.Update(bar);`.
+/// caller's frame, so `Update` allocates nothing at all — unconditionally,
+/// where Java's unstored record class relies on the JIT to scalar-replace it
+/// (#310). That is why there is no `cachedValue` field here to keep it free.
+/// `Deconstruct` comes free — `var (up, mid, low) = s.Update(bar);`.
 fn emit_value_type(o: &mut String, func: &FuncDef) {
     if !has_value_type(func) {
         return;

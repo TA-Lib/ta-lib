@@ -420,7 +420,6 @@
       double[] x_inLow;
       double cur_outAroonDown;
       double cur_outAroonUp;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -455,7 +454,6 @@
          this.x_inLow = other.x_inLow.clone();
          this.cur_outAroonDown = other.cur_outAroonDown;
          this.cur_outAroonUp = other.cur_outAroonUp;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -496,8 +494,7 @@
          }
          core.aroonStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
-         return this.cachedValue;
+         return new Value(this.cur_outAroonDown, this.cur_outAroonUp);
       }
 
       /**
@@ -521,21 +518,15 @@
          final int barCount = inHigh.length;
          if( inLow.length != barCount || outAroonDown.length < barCount || outAroonUp.length < barCount || (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp )
             throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.aroonStepImpl(this, inHigh[i], inLow[i]);
-               outAroonDown[i] = this.cur_outAroonDown;
-               outAroonUp[i] = this.cur_outAroonUp;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
+            core.aroonStepImpl(this, inHigh[i], inLow[i]);
+            outAroonDown[i] = this.cur_outAroonDown;
+            outAroonUp[i] = this.cur_outAroonUp;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -628,9 +619,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outAroonDown, this.cur_outAroonUp);
       }
 
       /**
@@ -845,7 +838,6 @@
       sp.x_inLow = capX_inLow;
       sp.cur_outAroonDown = outAroonDown[(outNBElement.value - 1) * outStride];
       sp.cur_outAroonUp = outAroonUp[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new AroonStream.Value(sp.cur_outAroonDown, sp.cur_outAroonUp);
       return RetCode.Success;
    }
    /* aroonOpenAndFill anchored at startIdx — the composed-open fusion seam. */

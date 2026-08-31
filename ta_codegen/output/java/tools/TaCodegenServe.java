@@ -914,6 +914,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -1770,7 +1771,6 @@ class Core {
           double cur_outRealUpperBand;
           double cur_outRealMiddleBand;
           double cur_outRealLowerBand;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -1803,7 +1803,6 @@ class Core {
              this.cur_outRealUpperBand = other.cur_outRealUpperBand;
              this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
              this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -1845,8 +1844,7 @@ class Core {
              }
              core.accbandsStepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
-             return this.cachedValue;
+             return new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
           }
 
           /**
@@ -1872,22 +1870,16 @@ class Core {
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
                 throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.accbandsStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-                   outRealUpperBand[i] = this.cur_outRealUpperBand;
-                   outRealMiddleBand[i] = this.cur_outRealMiddleBand;
-                   outRealLowerBand[i] = this.cur_outRealLowerBand;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+                core.accbandsStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+                outRealUpperBand[i] = this.cur_outRealUpperBand;
+                outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+                outRealLowerBand[i] = this.cur_outRealLowerBand;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -1972,9 +1964,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
           }
 
           /**
@@ -2200,7 +2194,6 @@ class Core {
           sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement.value - 1) * outStride];
           sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement.value - 1) * outStride];
           sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new AccbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
           return RetCode.Success;
        }
        /* accbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -2609,6 +2602,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -3150,6 +3144,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -3657,6 +3652,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -4406,6 +4402,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -5686,6 +5683,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -6693,6 +6691,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -7511,6 +7510,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -8316,6 +8316,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -8952,7 +8953,6 @@ class Core {
           double[] x_inLow;
           double cur_outAroonDown;
           double cur_outAroonUp;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -8987,7 +8987,6 @@ class Core {
              this.x_inLow = other.x_inLow.clone();
              this.cur_outAroonDown = other.cur_outAroonDown;
              this.cur_outAroonUp = other.cur_outAroonUp;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -9028,8 +9027,7 @@ class Core {
              }
              core.aroonStepImpl(this, inHigh, inLow);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
-             return this.cachedValue;
+             return new Value(this.cur_outAroonDown, this.cur_outAroonUp);
           }
 
           /**
@@ -9053,21 +9051,15 @@ class Core {
              final int barCount = inHigh.length;
              if( inLow.length != barCount || outAroonDown.length < barCount || outAroonUp.length < barCount || (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp )
                 throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.aroonStepImpl(this, inHigh[i], inLow[i]);
-                   outAroonDown[i] = this.cur_outAroonDown;
-                   outAroonUp[i] = this.cur_outAroonUp;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
+                core.aroonStepImpl(this, inHigh[i], inLow[i]);
+                outAroonDown[i] = this.cur_outAroonDown;
+                outAroonUp[i] = this.cur_outAroonUp;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -9160,9 +9152,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outAroonDown, this.cur_outAroonUp);
           }
 
           /**
@@ -9377,7 +9371,6 @@ class Core {
           sp.x_inLow = capX_inLow;
           sp.cur_outAroonDown = outAroonDown[(outNBElement.value - 1) * outStride];
           sp.cur_outAroonUp = outAroonUp[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new AroonStream.Value(sp.cur_outAroonDown, sp.cur_outAroonUp);
           return RetCode.Success;
        }
        /* aroonOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -10081,6 +10074,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -10724,6 +10718,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -11162,6 +11157,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -11916,6 +11912,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -12644,6 +12641,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -13177,6 +13175,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -14141,7 +14140,6 @@ class Core {
           double cur_outRealUpperBand;
           double cur_outRealMiddleBand;
           double cur_outRealLowerBand;
-          Value cachedValue;
           MaStream sub0;
           StddevStream sub1;
           int outRangeBegIdx;
@@ -14171,7 +14169,6 @@ class Core {
              this.cur_outRealUpperBand = other.cur_outRealUpperBand;
              this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
              this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-             this.cachedValue = other.cachedValue;
              this.sub0 = new MaStream(other.sub0);
              this.sub1 = new StddevStream(other.sub1);
              this.outRangeBegIdx = other.outRangeBegIdx;
@@ -14215,8 +14212,7 @@ class Core {
              }
              core.bbandsStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
-             return this.cachedValue;
+             return new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
           }
 
           /**
@@ -14240,22 +14236,16 @@ class Core {
              final int barCount = inReal.length;
              if( outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
                 throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.bbandsStepImpl(this, inReal[i]);
-                   outRealUpperBand[i] = this.cur_outRealUpperBand;
-                   outRealMiddleBand[i] = this.cur_outRealMiddleBand;
-                   outRealLowerBand[i] = this.cur_outRealLowerBand;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+                core.bbandsStepImpl(this, inReal[i]);
+                outRealUpperBand[i] = this.cur_outRealUpperBand;
+                outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+                outRealLowerBand[i] = this.cur_outRealLowerBand;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -14303,9 +14293,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
           }
 
           /**
@@ -14483,7 +14475,6 @@ class Core {
           sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
           sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
           sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
-          sp.cachedValue = new BbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
           return RetCode.Success;
        }
        /* bbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -15706,6 +15697,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -16764,6 +16756,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -17515,6 +17508,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -18327,6 +18321,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -19154,6 +19149,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -20027,6 +20023,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -20883,6 +20880,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -21593,6 +21591,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -22531,6 +22530,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -23701,6 +23701,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -24796,6 +24797,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -25969,6 +25971,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -26975,6 +26978,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -27800,6 +27804,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -28613,6 +28618,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -29449,6 +29455,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -30314,6 +30321,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -31140,6 +31148,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -31862,6 +31871,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -32664,6 +32674,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -33499,6 +33510,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -34208,6 +34220,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -35083,6 +35096,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -36062,6 +36076,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -36956,6 +36971,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -37801,6 +37817,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -38752,6 +38769,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -39807,6 +39825,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -40777,6 +40796,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -41690,6 +41710,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -42547,6 +42568,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -43347,6 +43369,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -44238,6 +44261,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -45128,6 +45152,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -46040,6 +46065,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -46938,6 +46964,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -47838,6 +47865,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -48746,6 +48774,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -49623,6 +49652,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -50468,6 +50498,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -51281,6 +51312,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -52072,6 +52104,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -52876,6 +52909,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -53643,6 +53677,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -54567,6 +54602,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -55605,6 +55641,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -56591,6 +56628,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -57476,6 +57514,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -58281,6 +58320,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -59140,6 +59180,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -60126,6 +60167,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -61103,6 +61145,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -62048,6 +62091,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -62913,6 +62957,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -63648,6 +63693,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -64615,6 +64661,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -65540,6 +65587,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -66394,6 +66442,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -67236,6 +67285,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -68076,6 +68126,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -68907,6 +68958,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -69765,6 +69817,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -70660,6 +70713,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -71414,6 +71468,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -71933,6 +71988,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -72703,6 +72759,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -73618,6 +73675,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -74578,6 +74636,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -75838,6 +75897,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -76708,6 +76768,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -77145,6 +77206,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -77824,6 +77886,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -78422,6 +78485,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -79460,6 +79524,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -80516,6 +80581,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -81329,6 +81395,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -81855,6 +81922,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -82290,6 +82358,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -83646,6 +83715,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -85689,6 +85759,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -87716,6 +87787,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -89375,7 +89447,6 @@ class Core {
           double[] ring_trailingWMAIdx_inReal;
           double cur_outInPhase;
           double cur_outQuadrature;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -89442,7 +89513,6 @@ class Core {
              this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
              this.cur_outInPhase = other.cur_outInPhase;
              this.cur_outQuadrature = other.cur_outQuadrature;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -89483,8 +89553,7 @@ class Core {
              }
              core.htPhasorStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
-             return this.cachedValue;
+             return new Value(this.cur_outInPhase, this.cur_outQuadrature);
           }
 
           /**
@@ -89507,21 +89576,15 @@ class Core {
              final int barCount = inReal.length;
              if( outInPhase.length < barCount || outQuadrature.length < barCount || (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature )
                 throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.htPhasorStepImpl(this, inReal[i]);
-                   outInPhase[i] = this.cur_outInPhase;
-                   outQuadrature[i] = this.cur_outQuadrature;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
+                core.htPhasorStepImpl(this, inReal[i]);
+                outInPhase[i] = this.cur_outInPhase;
+                outQuadrature[i] = this.cur_outQuadrature;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -89731,9 +89794,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outInPhase, this.cur_outQuadrature);
           }
 
           /**
@@ -90309,7 +90374,6 @@ class Core {
           sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
           sp.cur_outInPhase = outInPhase[(outNBElement.value - 1) * outStride];
           sp.cur_outQuadrature = outQuadrature[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new HtPhasorStream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
           return RetCode.Success;
        }
        /* htPhasorOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -91393,7 +91457,6 @@ class Core {
           double[] cb_smoothPrice;
           double cur_outSine;
           double cur_outLeadSine;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -91468,7 +91531,6 @@ class Core {
              this.cb_smoothPrice = other.cb_smoothPrice.clone();
              this.cur_outSine = other.cur_outSine;
              this.cur_outLeadSine = other.cur_outLeadSine;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -91509,8 +91571,7 @@ class Core {
              }
              core.htSineStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
-             return this.cachedValue;
+             return new Value(this.cur_outSine, this.cur_outLeadSine);
           }
 
           /**
@@ -91533,21 +91594,15 @@ class Core {
              final int barCount = inReal.length;
              if( outSine.length < barCount || outLeadSine.length < barCount || (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine )
                 throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.htSineStepImpl(this, inReal[i]);
-                   outSine[i] = this.cur_outSine;
-                   outLeadSine[i] = this.cur_outLeadSine;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
+                core.htSineStepImpl(this, inReal[i]);
+                outSine[i] = this.cur_outSine;
+                outLeadSine[i] = this.cur_outLeadSine;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -91815,9 +91870,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outSine, this.cur_outLeadSine);
           }
 
           /**
@@ -92525,7 +92582,6 @@ class Core {
           sp.cb_smoothPrice = smoothPrice;
           sp.cur_outSine = outSine[(outNBElement.value - 1) * outStride];
           sp.cur_outLeadSine = outLeadSine[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new HtSineStream.Value(sp.cur_outSine, sp.cur_outLeadSine);
           return RetCode.Success;
        }
        /* htSineOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -93911,6 +93967,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -96265,6 +96322,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -97660,6 +97718,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -98657,6 +98716,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -99797,6 +99857,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -100941,6 +101002,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -102078,6 +102140,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -103209,6 +103272,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -103939,6 +104003,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -104382,6 +104447,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -105230,6 +105296,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -106371,7 +106438,6 @@ class Core {
           double cur_outMACD;
           double cur_outMACDSignal;
           double cur_outMACDHist;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -106404,7 +106470,6 @@ class Core {
              this.cur_outMACD = other.cur_outMACD;
              this.cur_outMACDSignal = other.cur_outMACDSignal;
              this.cur_outMACDHist = other.cur_outMACDHist;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -106446,8 +106511,7 @@ class Core {
              }
              core.macdStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
-             return this.cachedValue;
+             return new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
           }
 
           /**
@@ -106471,22 +106535,16 @@ class Core {
              final int barCount = inReal.length;
              if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
                 throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.macdStepImpl(this, inReal[i]);
-                   outMACD[i] = this.cur_outMACD;
-                   outMACDSignal[i] = this.cur_outMACDSignal;
-                   outMACDHist[i] = this.cur_outMACDHist;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+                core.macdStepImpl(this, inReal[i]);
+                outMACD[i] = this.cur_outMACD;
+                outMACDSignal[i] = this.cur_outMACDSignal;
+                outMACDHist[i] = this.cur_outMACDHist;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -106532,9 +106590,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
           }
 
           /**
@@ -106781,7 +106841,6 @@ class Core {
           sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
           sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
           sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new MacdStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
           return RetCode.Success;
        }
        /* macdOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -107469,7 +107528,6 @@ class Core {
           double cur_outMACD;
           double cur_outMACDSignal;
           double cur_outMACDHist;
-          Value cachedValue;
           MaStream sub0;
           MaStream sub1;
           MaStream sub2;
@@ -107502,7 +107560,6 @@ class Core {
              this.cur_outMACD = other.cur_outMACD;
              this.cur_outMACDSignal = other.cur_outMACDSignal;
              this.cur_outMACDHist = other.cur_outMACDHist;
-             this.cachedValue = other.cachedValue;
              this.sub0 = new MaStream(other.sub0);
              this.sub1 = new MaStream(other.sub1);
              this.sub2 = new MaStream(other.sub2);
@@ -107547,8 +107604,7 @@ class Core {
              }
              core.macdextStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
-             return this.cachedValue;
+             return new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
           }
 
           /**
@@ -107572,22 +107628,16 @@ class Core {
              final int barCount = inReal.length;
              if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
                 throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.macdextStepImpl(this, inReal[i]);
-                   outMACD[i] = this.cur_outMACD;
-                   outMACDSignal[i] = this.cur_outMACDSignal;
-                   outMACDHist[i] = this.cur_outMACDHist;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+                core.macdextStepImpl(this, inReal[i]);
+                outMACD[i] = this.cur_outMACD;
+                outMACDSignal[i] = this.cur_outMACDSignal;
+                outMACDHist[i] = this.cur_outMACDHist;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -107627,9 +107677,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
           }
 
           /**
@@ -107822,7 +107874,6 @@ class Core {
           sp.cur_outMACD = sc_outMACD[outNBElement.value - 1];
           sp.cur_outMACDSignal = sc_outMACDSignal[outNBElement.value - 1];
           sp.cur_outMACDHist = sc_outMACDHist[outNBElement.value - 1];
-          sp.cachedValue = new MacdextStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
           return RetCode.Success;
        }
        /* macdextOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -108441,7 +108492,6 @@ class Core {
           double cur_outMACD;
           double cur_outMACDSignal;
           double cur_outMACDHist;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -108472,7 +108522,6 @@ class Core {
              this.cur_outMACD = other.cur_outMACD;
              this.cur_outMACDSignal = other.cur_outMACDSignal;
              this.cur_outMACDHist = other.cur_outMACDHist;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -108514,8 +108563,7 @@ class Core {
              }
              core.macdfixStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
-             return this.cachedValue;
+             return new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
           }
 
           /**
@@ -108539,22 +108587,16 @@ class Core {
              final int barCount = inReal.length;
              if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
                 throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.macdfixStepImpl(this, inReal[i]);
-                   outMACD[i] = this.cur_outMACD;
-                   outMACDSignal[i] = this.cur_outMACDSignal;
-                   outMACDHist[i] = this.cur_outMACDHist;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+                core.macdfixStepImpl(this, inReal[i]);
+                outMACD[i] = this.cur_outMACD;
+                outMACDSignal[i] = this.cur_outMACDSignal;
+                outMACDHist[i] = this.cur_outMACDHist;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -108600,9 +108642,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
           }
 
           /**
@@ -108824,7 +108868,6 @@ class Core {
           sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
           sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
           sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new MacdfixStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
           return RetCode.Success;
        }
        /* macdfixOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -109927,7 +109970,6 @@ class Core {
           double[] ring_trailingWMAIdx_inReal;
           double cur_outMAMA;
           double cur_outFAMA;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -109999,7 +110041,6 @@ class Core {
              this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
              this.cur_outMAMA = other.cur_outMAMA;
              this.cur_outFAMA = other.cur_outFAMA;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -110040,8 +110081,7 @@ class Core {
              }
              core.mamaStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
-             return this.cachedValue;
+             return new Value(this.cur_outMAMA, this.cur_outFAMA);
           }
 
           /**
@@ -110066,21 +110106,15 @@ class Core {
              final int barCount = inReal.length;
              if( outMAMA.length < barCount || (outFAMA != null && outFAMA.length < barCount) || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
                 throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.mamaStepImpl(this, inReal[i]);
-                   outMAMA[i] = this.cur_outMAMA;
-                   if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
+                core.mamaStepImpl(this, inReal[i]);
+                outMAMA[i] = this.cur_outMAMA;
+                if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -110325,9 +110359,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outMAMA, this.cur_outFAMA);
           }
 
           /**
@@ -110989,7 +111025,6 @@ class Core {
           sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
           sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
           sp.cur_outFAMA = lastCur_outFAMA;
-          sp.cachedValue = new MamaStream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
           return RetCode.Success;
        }
        /* mamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -111477,6 +111512,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -112468,6 +112504,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -113306,6 +113343,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -114043,6 +114081,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public int value() {
              return this.cur_outInteger;
@@ -114610,6 +114649,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -115456,6 +115496,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -116506,6 +116547,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -117520,6 +117562,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -118418,6 +118461,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -119152,6 +119196,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public int value() {
@@ -119929,7 +119974,6 @@ class Core {
           double[] x_inReal;
           double cur_outMin;
           double cur_outMax;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -119962,7 +120006,6 @@ class Core {
              this.x_inReal = other.x_inReal.clone();
              this.cur_outMin = other.cur_outMin;
              this.cur_outMax = other.cur_outMax;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -120003,8 +120046,7 @@ class Core {
              }
              core.minmaxStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
-             return this.cachedValue;
+             return new Value(this.cur_outMin, this.cur_outMax);
           }
 
           /**
@@ -120027,21 +120069,15 @@ class Core {
              final int barCount = inReal.length;
              if( outMin.length < barCount || outMax.length < barCount || (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax )
                 throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.minmaxStepImpl(this, inReal[i]);
-                   outMin[i] = this.cur_outMin;
-                   outMax[i] = this.cur_outMax;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
+                core.minmaxStepImpl(this, inReal[i]);
+                outMin[i] = this.cur_outMin;
+                outMax[i] = this.cur_outMax;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -120126,9 +120162,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outMin, this.cur_outMax);
           }
 
           /**
@@ -120342,7 +120380,6 @@ class Core {
           sp.x_inReal = capX_inReal;
           sp.cur_outMin = outMin[(outNBElement.value - 1) * outStride];
           sp.cur_outMax = outMax[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new MinmaxStream.Value(sp.cur_outMin, sp.cur_outMax);
           return RetCode.Success;
        }
        /* minmaxOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -120835,7 +120872,6 @@ class Core {
           double[] x_inReal;
           int cur_outMinIdx;
           int cur_outMaxIdx;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -120868,7 +120904,6 @@ class Core {
              this.x_inReal = other.x_inReal.clone();
              this.cur_outMinIdx = other.cur_outMinIdx;
              this.cur_outMaxIdx = other.cur_outMaxIdx;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -120909,8 +120944,7 @@ class Core {
              }
              core.minmaxindexStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
-             return this.cachedValue;
+             return new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
           }
 
           /**
@@ -120933,21 +120967,15 @@ class Core {
              final int barCount = inReal.length;
              if( outMinIdx.length < barCount || outMaxIdx.length < barCount || (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx )
                 throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.minmaxindexStepImpl(this, inReal[i]);
-                   outMinIdx[i] = this.cur_outMinIdx;
-                   outMaxIdx[i] = this.cur_outMaxIdx;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
+                core.minmaxindexStepImpl(this, inReal[i]);
+                outMinIdx[i] = this.cur_outMinIdx;
+                outMaxIdx[i] = this.cur_outMaxIdx;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -121032,9 +121060,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
           }
 
           /**
@@ -121231,7 +121261,6 @@ class Core {
           sp.x_inReal = capX_inReal;
           sp.cur_outMinIdx = outMinIdx[(outNBElement.value - 1) * outStride];
           sp.cur_outMaxIdx = outMaxIdx[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new MinmaxindexStream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
           return RetCode.Success;
        }
        /* minmaxindexOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -122265,6 +122294,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -123619,6 +123649,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -124508,6 +124539,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -125038,6 +125070,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -125885,6 +125918,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -126690,6 +126724,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -127255,6 +127290,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -128374,6 +128410,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -129727,6 +129764,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -130706,6 +130744,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -131366,6 +131405,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -132087,6 +132127,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -132786,6 +132827,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -133458,6 +133500,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -134114,6 +134157,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -134774,6 +134818,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -135436,6 +135481,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -136310,6 +136356,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -137493,6 +137540,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -139106,6 +139154,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -140002,6 +140051,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -140437,6 +140487,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -141014,6 +141065,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -142075,7 +142127,6 @@ class Core {
           double[] x_inClose;
           double cur_outSMI;
           double cur_outSMISignal;
-          Value cachedValue;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -142121,7 +142172,6 @@ class Core {
              this.x_inClose = other.x_inClose.clone();
              this.cur_outSMI = other.cur_outSMI;
              this.cur_outSMISignal = other.cur_outSMISignal;
-             this.cachedValue = other.cachedValue;
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -142162,8 +142212,7 @@ class Core {
              }
              core.smiStepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
-             return this.cachedValue;
+             return new Value(this.cur_outSMI, this.cur_outSMISignal);
           }
 
           /**
@@ -142188,21 +142237,15 @@ class Core {
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outSMI.length < barCount || outSMISignal.length < barCount || (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal )
                 throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-                   outSMI[i] = this.cur_outSMI;
-                   outSMISignal[i] = this.cur_outSMISignal;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
+                core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+                outSMI[i] = this.cur_outSMI;
+                outSMISignal[i] = this.cur_outSMISignal;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -142329,9 +142372,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outSMI, this.cur_outSMISignal);
           }
 
           /**
@@ -142767,7 +142812,6 @@ class Core {
           sp.x_inClose = capX_inClose;
           sp.cur_outSMI = outSMI[(outNBElement.value - 1) * outStride];
           sp.cur_outSMISignal = outSMISignal[(outNBElement.value - 1) * outStride];
-          sp.cachedValue = new SmiStream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
           return RetCode.Success;
        }
        /* smiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -143166,6 +143210,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -143734,6 +143779,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -144648,7 +144694,6 @@ class Core {
           double[] x_inClose;
           double cur_outSlowK;
           double cur_outSlowD;
-          Value cachedValue;
           MaStream sub0;
           MaStream sub1;
           int outRangeBegIdx;
@@ -144690,7 +144735,6 @@ class Core {
              this.x_inClose = other.x_inClose.clone();
              this.cur_outSlowK = other.cur_outSlowK;
              this.cur_outSlowD = other.cur_outSlowD;
-             this.cachedValue = other.cachedValue;
              this.sub0 = new MaStream(other.sub0);
              this.sub1 = new MaStream(other.sub1);
              this.outRangeBegIdx = other.outRangeBegIdx;
@@ -144733,8 +144777,7 @@ class Core {
              }
              core.stochStepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
-             return this.cachedValue;
+             return new Value(this.cur_outSlowK, this.cur_outSlowD);
           }
 
           /**
@@ -144759,21 +144802,15 @@ class Core {
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outSlowK.length < barCount || outSlowD.length < barCount || (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD )
                 throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.stochStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-                   outSlowK[i] = this.cur_outSlowK;
-                   outSlowD[i] = this.cur_outSlowD;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
+                core.stochStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+                outSlowK[i] = this.cur_outSlowK;
+                outSlowD[i] = this.cur_outSlowD;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -144888,9 +144925,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outSlowK, this.cur_outSlowD);
           }
 
           /**
@@ -145270,7 +145309,6 @@ class Core {
           sp.sub1 = sub1;
           sp.cur_outSlowK = sc_outSlowK[outNBElement.value - 1];
           sp.cur_outSlowD = sc_outSlowD[outNBElement.value - 1];
-          sp.cachedValue = new StochStream.Value(sp.cur_outSlowK, sp.cur_outSlowD);
           return RetCode.Success;
        }
        /* stochOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -146003,7 +146041,6 @@ class Core {
           double[] x_inClose;
           double cur_outFastK;
           double cur_outFastD;
-          Value cachedValue;
           MaStream sub0;
           int outRangeBegIdx;
           int outRangeCount;
@@ -146042,7 +146079,6 @@ class Core {
              this.x_inClose = other.x_inClose.clone();
              this.cur_outFastK = other.cur_outFastK;
              this.cur_outFastD = other.cur_outFastD;
-             this.cachedValue = other.cachedValue;
              this.sub0 = new MaStream(other.sub0);
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
@@ -146084,8 +146120,7 @@ class Core {
              }
              core.stochfStepImpl(this, inHigh, inLow, inClose);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
-             return this.cachedValue;
+             return new Value(this.cur_outFastK, this.cur_outFastD);
           }
 
           /**
@@ -146110,21 +146145,15 @@ class Core {
              final int barCount = inHigh.length;
              if( inLow.length != barCount || inClose.length != barCount || outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD )
                 throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.stochfStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-                   outFastK[i] = this.cur_outFastK;
-                   outFastD[i] = this.cur_outFastD;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+                core.stochfStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+                outFastK[i] = this.cur_outFastK;
+                outFastD[i] = this.cur_outFastD;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -146238,9 +146267,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outFastK, this.cur_outFastD);
           }
 
           /**
@@ -146594,7 +146625,6 @@ class Core {
           sp.sub0 = sub0;
           sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
           sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-          sp.cachedValue = new StochfStream.Value(sp.cur_outFastK, sp.cur_outFastD);
           return RetCode.Success;
        }
        /* stochfOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -147141,7 +147171,6 @@ class Core {
           MAType optInFastD_MAType;
           double cur_outFastK;
           double cur_outFastD;
-          Value cachedValue;
           RsiStream sub0;
           StochfStream sub1;
           int outRangeBegIdx;
@@ -147170,7 +147199,6 @@ class Core {
              this.optInFastD_MAType = other.optInFastD_MAType;
              this.cur_outFastK = other.cur_outFastK;
              this.cur_outFastD = other.cur_outFastD;
-             this.cachedValue = other.cachedValue;
              this.sub0 = new RsiStream(other.sub0);
              this.sub1 = new StochfStream(other.sub1);
              this.outRangeBegIdx = other.outRangeBegIdx;
@@ -147213,8 +147241,7 @@ class Core {
              }
              core.stochrsiStepImpl(this, inReal);
              if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-             this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
-             return this.cachedValue;
+             return new Value(this.cur_outFastK, this.cur_outFastD);
           }
 
           /**
@@ -147237,21 +147264,15 @@ class Core {
              final int barCount = inReal.length;
              if( outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD )
                 throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
-             int done = 0;
-             try {
-                for( int i = 0; i < barCount; i++ ) {
-                   if( !Double.isFinite(inReal[i]) ) {
-                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                      throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
-                   }
-                   core.stochrsiStepImpl(this, inReal[i]);
-                   outFastK[i] = this.cur_outFastK;
-                   outFastD[i] = this.cur_outFastD;
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
                    if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                   done = i + 1;
+                   throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
                 }
-             } finally {
-                if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+                core.stochrsiStepImpl(this, inReal[i]);
+                outFastK[i] = this.cur_outFastK;
+                outFastD[i] = this.cur_outFastD;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
              }
           }
 
@@ -147287,9 +147308,11 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * Built from the committed fields on each call, as the C# tier does —
+           * nothing is cached between calls, and {@code peek} does not change them.
            */
           public Value value() {
-             return this.cachedValue;
+             return new Value(this.cur_outFastK, this.cur_outFastD);
           }
 
           /**
@@ -147440,7 +147463,6 @@ class Core {
           sp.sub1 = sub1;
           sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
           sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-          sp.cachedValue = new StochrsiStream.Value(sp.cur_outFastK, sp.cur_outFastD);
           return RetCode.Success;
        }
        /* stochrsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -147843,6 +147865,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -148403,6 +148426,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -149282,6 +149306,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -149912,6 +149937,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -150349,6 +150375,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -151071,6 +151098,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -151814,6 +151842,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -152837,6 +152866,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -154002,6 +154032,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -154973,6 +155004,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -155731,6 +155763,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -156891,6 +156924,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -158173,6 +158207,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -159210,6 +159245,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -160110,6 +160146,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -160876,6 +160913,7 @@ class Core {
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
            * A pure field read; {@code peek} does not change it.
+           * A pure field read; {@code peek} does not change it.
            */
           public double value() {
              return this.cur_outReal;
@@ -161431,6 +161469,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -162334,6 +162373,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {
@@ -163386,6 +163426,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
            * A pure field read; {@code peek} does not change it.
            */
           public double value() {

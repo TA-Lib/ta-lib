@@ -853,7 +853,6 @@
       double[] x_inClose;
       double cur_outSMI;
       double cur_outSMISignal;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -899,7 +898,6 @@
          this.x_inClose = other.x_inClose.clone();
          this.cur_outSMI = other.cur_outSMI;
          this.cur_outSMISignal = other.cur_outSMISignal;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -940,8 +938,7 @@
          }
          core.smiStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
-         return this.cachedValue;
+         return new Value(this.cur_outSMI, this.cur_outSMISignal);
       }
 
       /**
@@ -966,21 +963,15 @@
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outSMI.length < barCount || outSMISignal.length < barCount || (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal )
             throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outSMI[i] = this.cur_outSMI;
-               outSMISignal[i] = this.cur_outSMISignal;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
+            core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outSMI[i] = this.cur_outSMI;
+            outSMISignal[i] = this.cur_outSMISignal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -1107,9 +1098,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outSMI, this.cur_outSMISignal);
       }
 
       /**
@@ -1545,7 +1538,6 @@
       sp.x_inClose = capX_inClose;
       sp.cur_outSMI = outSMI[(outNBElement.value - 1) * outStride];
       sp.cur_outSMISignal = outSMISignal[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new SmiStream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
       return RetCode.Success;
    }
    /* smiOpenAndFill anchored at startIdx — the composed-open fusion seam. */

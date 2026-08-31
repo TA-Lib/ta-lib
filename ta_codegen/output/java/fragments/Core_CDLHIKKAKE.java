@@ -523,6 +523,7 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * A pure field read; {@code peek} does not change it.
        */
       public int value() {
          return this.cur_outInteger;

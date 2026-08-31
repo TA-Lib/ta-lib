@@ -465,7 +465,6 @@
       double cur_outRealUpperBand;
       double cur_outRealMiddleBand;
       double cur_outRealLowerBand;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -498,7 +497,6 @@
          this.cur_outRealUpperBand = other.cur_outRealUpperBand;
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -540,8 +538,7 @@
          }
          core.accbandsStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
-         return this.cachedValue;
+         return new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
       }
 
       /**
@@ -567,22 +564,16 @@
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
             throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.accbandsStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outRealUpperBand[i] = this.cur_outRealUpperBand;
-               outRealMiddleBand[i] = this.cur_outRealMiddleBand;
-               outRealLowerBand[i] = this.cur_outRealLowerBand;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+            core.accbandsStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outRealUpperBand[i] = this.cur_outRealUpperBand;
+            outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+            outRealLowerBand[i] = this.cur_outRealLowerBand;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -667,9 +658,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
       }
 
       /**
@@ -895,7 +888,6 @@
       sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new AccbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
    /* accbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */

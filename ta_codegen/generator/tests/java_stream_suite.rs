@@ -184,9 +184,11 @@ fn test_java_mama_value_class_protocol() {
     // one output reads the same in both tiers.
     assert!(s.contains("@param mama "));
     assert!(s.contains("@param fama "));
-    // update caches the instance so value() is a pure field read.
-    assert!(s.contains("this.cachedValue ="));
-    assert!(s.contains("return this.cachedValue;"));
+    // #310: the record `update` returns is never STORED — a store makes it
+    // escape, which is a guaranteed heap allocation on every bar. `value()`
+    // builds its own from the same committed fields, as C# does.
+    assert!(!s.contains("cachedValue"));
+    assert!(s.contains("         return new Value(this.cur_outMAMA, this.cur_outFAMA);\n"));
 }
 
 #[test]

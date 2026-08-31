@@ -632,7 +632,6 @@
       double[] x_inClose;
       double cur_outFastK;
       double cur_outFastD;
-      Value cachedValue;
       MaStream sub0;
       int outRangeBegIdx;
       int outRangeCount;
@@ -671,7 +670,6 @@
          this.x_inClose = other.x_inClose.clone();
          this.cur_outFastK = other.cur_outFastK;
          this.cur_outFastD = other.cur_outFastD;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new MaStream(other.sub0);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
@@ -713,8 +711,7 @@
          }
          core.stochfStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
-         return this.cachedValue;
+         return new Value(this.cur_outFastK, this.cur_outFastD);
       }
 
       /**
@@ -739,21 +736,15 @@
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD )
             throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.stochfStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outFastK[i] = this.cur_outFastK;
-               outFastD[i] = this.cur_outFastD;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+            core.stochfStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outFastK[i] = this.cur_outFastK;
+            outFastD[i] = this.cur_outFastD;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -867,9 +858,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outFastK, this.cur_outFastD);
       }
 
       /**
@@ -1223,7 +1216,6 @@
       sp.sub0 = sub0;
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-      sp.cachedValue = new StochfStream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
    /* stochfOpenAndFill anchored at startIdx — the composed-open fusion seam. */

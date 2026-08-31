@@ -1012,7 +1012,6 @@
       double[] ring_trailingWMAIdx_inReal;
       double cur_outMAMA;
       double cur_outFAMA;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -1084,7 +1083,6 @@
          this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
          this.cur_outMAMA = other.cur_outMAMA;
          this.cur_outFAMA = other.cur_outFAMA;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -1125,8 +1123,7 @@
          }
          core.mamaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
-         return this.cachedValue;
+         return new Value(this.cur_outMAMA, this.cur_outFAMA);
       }
 
       /**
@@ -1151,21 +1148,15 @@
          final int barCount = inReal.length;
          if( outMAMA.length < barCount || (outFAMA != null && outFAMA.length < barCount) || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
             throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.mamaStepImpl(this, inReal[i]);
-               outMAMA[i] = this.cur_outMAMA;
-               if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
+            core.mamaStepImpl(this, inReal[i]);
+            outMAMA[i] = this.cur_outMAMA;
+            if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -1410,9 +1401,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outMAMA, this.cur_outFAMA);
       }
 
       /**
@@ -2074,7 +2067,6 @@
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
       sp.cur_outFAMA = lastCur_outFAMA;
-      sp.cachedValue = new MamaStream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
       return RetCode.Success;
    }
    /* mamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */

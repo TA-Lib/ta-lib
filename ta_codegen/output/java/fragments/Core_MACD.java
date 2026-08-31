@@ -612,7 +612,6 @@
       double cur_outMACD;
       double cur_outMACDSignal;
       double cur_outMACDHist;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -645,7 +644,6 @@
          this.cur_outMACD = other.cur_outMACD;
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -687,8 +685,7 @@
          }
          core.macdStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
-         return this.cachedValue;
+         return new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
       }
 
       /**
@@ -712,22 +709,16 @@
          final int barCount = inReal.length;
          if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
             throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.macdStepImpl(this, inReal[i]);
-               outMACD[i] = this.cur_outMACD;
-               outMACDSignal[i] = this.cur_outMACDSignal;
-               outMACDHist[i] = this.cur_outMACDHist;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+            core.macdStepImpl(this, inReal[i]);
+            outMACD[i] = this.cur_outMACD;
+            outMACDSignal[i] = this.cur_outMACDSignal;
+            outMACDHist[i] = this.cur_outMACDHist;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -773,9 +764,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
       }
 
       /**
@@ -1022,7 +1015,6 @@
       sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MacdStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
    /* macdOpenAndFill anchored at startIdx — the composed-open fusion seam. */

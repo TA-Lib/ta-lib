@@ -536,7 +536,6 @@
       double[] x_inReal;
       double cur_outMin;
       double cur_outMax;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -569,7 +568,6 @@
          this.x_inReal = other.x_inReal.clone();
          this.cur_outMin = other.cur_outMin;
          this.cur_outMax = other.cur_outMax;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -610,8 +608,7 @@
          }
          core.minmaxStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
-         return this.cachedValue;
+         return new Value(this.cur_outMin, this.cur_outMax);
       }
 
       /**
@@ -634,21 +631,15 @@
          final int barCount = inReal.length;
          if( outMin.length < barCount || outMax.length < barCount || (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax )
             throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.minmaxStepImpl(this, inReal[i]);
-               outMin[i] = this.cur_outMin;
-               outMax[i] = this.cur_outMax;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
+            core.minmaxStepImpl(this, inReal[i]);
+            outMin[i] = this.cur_outMin;
+            outMax[i] = this.cur_outMax;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -733,9 +724,11 @@
        * {@link #outRange()} ends on. The last history bar right after open,
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
+       * Built from the committed fields on each call, as the C# tier does —
+       * nothing is cached between calls, and {@code peek} does not change them.
        */
       public Value value() {
-         return this.cachedValue;
+         return new Value(this.cur_outMin, this.cur_outMax);
       }
 
       /**
@@ -949,7 +942,6 @@
       sp.x_inReal = capX_inReal;
       sp.cur_outMin = outMin[(outNBElement.value - 1) * outStride];
       sp.cur_outMax = outMax[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MinmaxStream.Value(sp.cur_outMin, sp.cur_outMax);
       return RetCode.Success;
    }
    /* minmaxOpenAndFill anchored at startIdx — the composed-open fusion seam. */
