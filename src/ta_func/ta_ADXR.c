@@ -548,10 +548,12 @@ TA_LIB_API TA_RetCode TA_ADXR_Clone( const TA_ADXR_Stream *stream, TA_ADXR_Strea
    *sp = *stream;
    sp->lagRing_adx = NULL;
    sp->sub0 = NULL;
+   if( stream->lagRing_adx )
    { size_t copyN = (size_t)sp->lagRingCap_adx;
      sp->lagRing_adx = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->lagRing_adx ) { TA_ADXR_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->lagRing_adx, stream->lagRing_adx, sizeof(double) * copyN ); }
+   if( stream->sub0 )
    { TA_RetCode subRc = TA_ADX_Clone( stream->sub0, &sp->sub0 );
      if( subRc != TA_SUCCESS ) { TA_ADXR_Close( sp ); return subRc; } }
    *clone = sp;

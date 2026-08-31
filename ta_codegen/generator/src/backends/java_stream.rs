@@ -6,7 +6,7 @@
 //! fragment (which the shipped `Core.java` splice and the JSON-RPC server
 //! inline both pick up unchanged): a `public static final class <Base>Stream`
 //! nested in `Core` (per-handle state as package-private fields, `update`/
-//! `peek`/`value`/`copy` methods, a deep-copy constructor), a package-private
+//! `peek`/`value`/`clone` methods, a copy constructor), a package-private
 //! `<base>StepImpl(sp, bars...)` transition method on `Core` (so batch
 //! rendering conventions — `this.compatibility`, cross-calls, `Math.fma`
 //! sites — work verbatim), a `private RetCode <base>OpenImpl(sp, ...)`
@@ -38,11 +38,11 @@
 //! - There is no `close`: a handle is ordinary heap state — GC suffices (no
 //!   AutoCloseable, no finalizer). Handles are deliberately NOT serializable;
 //!   the sanctioned checkpoint story is re-opening from retained history.
-//! - `peek` = deep-copy constructor + step on the throwaway copy (the design
-//!   doc's stated cost model); `clone()` exposes the same constructor as an
-//!   independent stream. The copy is deep:
-//!   arrays clone, sub-handles copy recursively; only the `Core` reference is
-//!   shared (settings identity is the contract).
+//! - `peek` runs the step against locals and copies no buffer, so its cost does
+//!   not grow with the period; a multi-output `peek` still allocates the one
+//!   `Value` it returns. `clone()` is the call that duplicates: arrays clone and
+//!   sub-streams clone recursively, and only the `Core` reference is shared
+//!   (settings identity is the contract).
 //! - Multi-output functions return a per-function immutable `Value` class
 //!   (public final fields, batch output order, generated toString/equals/
 //!   hashCode); `update` caches the instance so `value()` is a pure field
@@ -673,11 +673,11 @@ fn emit_handle_class_with_members(
          \x20   * Open with {{@link Core#{jbase}Open}}; there is no close — the handle is\n\
          \x20   * ordinary heap state, unreferenced handles are simply garbage-collected.\n\
          \x20   * <p>Concurrency: a handle is single-writer — {{@code update}}, {{@code peek}},\n\
-         \x20   * {{@code value}} and {{@code copy}} must not race with an {{@code update}} on\n\
+         \x20   * {{@code value}} and {{@code clone}} must not race with an {{@code update}} on\n\
          \x20   * the same handle. With no concurrent {{@code update}}, {{@code peek}}/\n\
-         \x20   * {{@code value}}/{{@code copy}} never write the handle and may be called\n\
-         \x20   * concurrently after safe publication. Independent handles (including\n\
-         \x20   * {{@code clone()}} results) are fully independent.\n\
+         \x20   * {{@code value}}/{{@code clone}} never write the stream and may be called\n\
+         \x20   * concurrently after safe publication. Independent streams (a\n\
+         \x20   * {{@code clone()}} result included) are fully independent.\n\
          \x20   * <p>Not serializable by design: to checkpoint, retain the history and\n\
          \x20   * re-open — the result is bit-identical by contract.\n\
          \x20   */"

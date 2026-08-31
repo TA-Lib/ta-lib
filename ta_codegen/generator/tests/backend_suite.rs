@@ -9719,9 +9719,9 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
 ///
 /// The sets differ, which is why the declaration is a mask and not a count (see
 /// `SvRangeSite`): C, Java and C# reach the anchored `_OpenInternal` seam and
-/// Rust's server, a separate crate, cannot; Java, C# and Rust can fork a live
-/// handle and C cannot. C and Rust therefore have four sites each and neither
-/// set is a prefix of the other.
+/// Rust's server, a separate crate, cannot. All four can fork a live stream
+/// since C gained `TA_<N>_Clone` (#287), so Rust is the one server whose set is
+/// a strict subset — and a count still could not say WHICH four it has.
 #[test]
 fn sv_range_sites_mask_matches_the_declared_set() {
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
@@ -9730,7 +9730,7 @@ fn sv_range_sites_mask_matches_the_declared_set() {
 
     // Fill = 1, Prefix = 2, UpdateFill = 4, Anchored = 8, Copy = 16.
     let servers = [
-        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 1 | 2 | 4 | 8u32),
+        ("c", ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16u32),
         ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
         ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
         ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 1 | 2 | 4 | 16),

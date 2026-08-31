@@ -1211,18 +1211,22 @@ TA_LIB_API TA_RetCode TA_STOCHF_Clone( const TA_STOCHF_Stream *stream, TA_STOCHF
    sp->x_inLow = NULL;
    sp->x_inClose = NULL;
    sp->sub0 = NULL;
+   if( stream->x_inHigh )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inHigh ) { TA_STOCHF_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inLow ) { TA_STOCHF_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->x_inLow, stream->x_inLow, sizeof(double) * copyN ); }
+   if( stream->x_inClose )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inClose ) { TA_STOCHF_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->x_inClose, stream->x_inClose, sizeof(double) * copyN ); }
+   if( stream->sub0 )
    { TA_RetCode subRc = TA_MA_Clone( stream->sub0, &sp->sub0 );
      if( subRc != TA_SUCCESS ) { TA_STOCHF_Close( sp ); return subRc; } }
    *clone = sp;

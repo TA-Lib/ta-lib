@@ -647,10 +647,12 @@ TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_Clone( const TA_CDLHOMINGPIGEON_Stream 
    *sp = *stream;
    sp->ring_BodyLongTrailingIdx_derived = NULL;
    sp->ring_BodyShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
      sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLHOMINGPIGEON_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_BodyShortTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
      sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDLHOMINGPIGEON_Close( sp ); return TA_ALLOC_ERR; }

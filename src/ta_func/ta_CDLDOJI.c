@@ -523,6 +523,7 @@ TA_LIB_API TA_RetCode TA_CDLDOJI_Clone( const TA_CDLDOJI_Stream *stream, TA_CDLD
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_BodyDojiTrailingIdx_derived = NULL;
+   if( stream->ring_BodyDojiTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
      sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLDOJI_Close( sp ); return TA_ALLOC_ERR; }

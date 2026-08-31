@@ -1368,10 +1368,12 @@ TA_LIB_API TA_RetCode TA_CORREL_Clone( const TA_CORREL_Stream *stream, TA_CORREL
    *sp = *stream;
    sp->x_inReal0 = NULL;
    sp->x_inReal1 = NULL;
+   if( stream->x_inReal0 )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inReal0 = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inReal0 ) { TA_CORREL_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->x_inReal0, stream->x_inReal0, sizeof(double) * copyN ); }
+   if( stream->x_inReal1 )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inReal1 = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inReal1 ) { TA_CORREL_Close( sp ); return TA_ALLOC_ERR; }

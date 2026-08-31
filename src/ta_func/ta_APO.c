@@ -602,8 +602,10 @@ TA_LIB_API TA_RetCode TA_APO_Clone( const TA_APO_Stream *stream, TA_APO_Stream *
    *sp = *stream;
    sp->sub0 = NULL;
    sp->sub1 = NULL;
+   if( stream->sub0 )
    { TA_RetCode subRc = TA_MA_Clone( stream->sub0, &sp->sub0 );
      if( subRc != TA_SUCCESS ) { TA_APO_Close( sp ); return subRc; } }
+   if( stream->sub1 )
    { TA_RetCode subRc = TA_MA_Clone( stream->sub1, &sp->sub1 );
      if( subRc != TA_SUCCESS ) { TA_APO_Close( sp ); return subRc; } }
    *clone = sp;

@@ -459,7 +459,7 @@ Core.SmaStream s = core.smaOpen(history, 14);  // throws on reject; value() = la
 double v = s.update(bar);                        // one value per closed bar
 double p = s.peek(formingBarClose);              // forming bar, non-committing
 s.updateAndFill(gapBars, out);                   // n bars, n values, one call
-Core.SmaStream t = s.copy();                    // independent stream fork
+Core.SmaStream t = s.clone();                   // independent stream fork
 Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
 Core.MacdStream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
 Core.SmaStream s2 = core.smaOpenAndFill(history, 14, warmup);
@@ -609,9 +609,9 @@ enforcing it its own way:
   process-global hazard; the same documented rule applies per instance: don't
   mutate a `Core`'s settings while streams opened from it are live (candle
   settings are additionally snapshotted into CDL handles at open — see above).
-  Single-writer per handle — `update`, and `peek`/`value()`/`copy()` count as
+  Single-writer per handle — `update`, and `peek`/`value()`/`clone()` count as
   accesses under that rule; with no concurrent `update`, `peek`/`value()`/
-  `copy()` never write the handle and are safe to call concurrently after safe
+  `clone()` never write the handle and are safe to call concurrently after safe
   publication (a stronger guarantee than C documents for `const` peek). No
   synchronization in the generated code; safe publication when handing a
   handle between threads is the caller's usual memory-model responsibility.

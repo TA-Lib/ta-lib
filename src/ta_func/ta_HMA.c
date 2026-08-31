@@ -1978,22 +1978,27 @@ TA_LIB_API TA_RetCode TA_HMA_Clone( const TA_HMA_Stream *stream, TA_HMA_Stream *
    sp->ring_trailingIdxHalf_inReal = NULL;
    sp->win_jHalf_inReal = NULL;
    sp->cb_dRing = NULL;
+   if( stream->ring_trailingIdxFull_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdxFull > 0 ? sp->ringCap_trailingIdxFull : 1);
      sp->ring_trailingIdxFull_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdxFull_inReal ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingIdxFull_inReal, stream->ring_trailingIdxFull_inReal, sizeof(double) * copyN ); }
+   if( stream->win_jFull_inReal )
    { size_t copyN = (size_t)(sp->winCap_jFull);
      sp->win_jFull_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->win_jFull_inReal ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->win_jFull_inReal, stream->win_jFull_inReal, sizeof(double) * copyN ); }
+   if( stream->ring_trailingIdxHalf_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdxHalf > 0 ? sp->ringCap_trailingIdxHalf : 1);
      sp->ring_trailingIdxHalf_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdxHalf_inReal ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingIdxHalf_inReal, stream->ring_trailingIdxHalf_inReal, sizeof(double) * copyN ); }
+   if( stream->win_jHalf_inReal )
    { size_t copyN = (size_t)(sp->winCap_jHalf);
      sp->win_jHalf_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->win_jHalf_inReal ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->win_jHalf_inReal, stream->win_jHalf_inReal, sizeof(double) * copyN ); }
+   if( stream->cb_dRing )
    { size_t copyN = (size_t)(sp->cbSize_dRing);
      sp->cb_dRing = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_dRing ) { TA_HMA_Close( sp ); return TA_ALLOC_ERR; }

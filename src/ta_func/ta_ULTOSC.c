@@ -1464,10 +1464,12 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Clone( const TA_ULTOSC_Stream *stream, TA_ULTOSC
    *sp = *stream;
    sp->cb_term_closeMinusTrueLow = NULL;
    sp->cb_term_trueRange = NULL;
+   if( stream->cb_term_closeMinusTrueLow )
    { size_t copyN = (size_t)(sp->cbSize_term);
      sp->cb_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_term_closeMinusTrueLow ) { TA_ULTOSC_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->cb_term_closeMinusTrueLow, stream->cb_term_closeMinusTrueLow, sizeof(double) * copyN ); }
+   if( stream->cb_term_trueRange )
    { size_t copyN = (size_t)(sp->cbSize_term);
      sp->cb_term_trueRange = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_term_trueRange ) { TA_ULTOSC_Close( sp ); return TA_ALLOC_ERR; }

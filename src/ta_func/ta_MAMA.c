@@ -1976,6 +1976,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Clone( const TA_MAMA_Stream *stream, TA_MAMA_Strea
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_trailingWMAIdx_inReal = NULL;
+   if( stream->ring_trailingWMAIdx_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
      sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingWMAIdx_inReal ) { TA_MAMA_Close( sp ); return TA_ALLOC_ERR; }

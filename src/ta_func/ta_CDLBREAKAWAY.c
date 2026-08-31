@@ -609,6 +609,7 @@ TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Clone( const TA_CDLBREAKAWAY_Stream *strea
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_BodyLongTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
      sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLBREAKAWAY_Close( sp ); return TA_ALLOC_ERR; }

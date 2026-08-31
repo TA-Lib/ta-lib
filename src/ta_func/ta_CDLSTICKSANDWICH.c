@@ -577,6 +577,7 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Clone( const TA_CDLSTICKSANDWICH_Strea
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_EqualTrailingIdx_derived = NULL;
+   if( stream->ring_EqualTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
      sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLSTICKSANDWICH_Close( sp ); return TA_ALLOC_ERR; }

@@ -680,10 +680,12 @@ TA_LIB_API TA_RetCode TA_VWMA_Clone( const TA_VWMA_Stream *stream, TA_VWMA_Strea
    *sp = *stream;
    sp->ring_trailingIdx_inReal = NULL;
    sp->ring_trailingIdx_inVolume = NULL;
+   if( stream->ring_trailingIdx_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
      sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdx_inReal ) { TA_VWMA_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * copyN ); }
+   if( stream->ring_trailingIdx_inVolume )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
      sp->ring_trailingIdx_inVolume = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdx_inVolume ) { TA_VWMA_Close( sp ); return TA_ALLOC_ERR; }

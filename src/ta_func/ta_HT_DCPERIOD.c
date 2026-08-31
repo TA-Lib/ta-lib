@@ -1665,6 +1665,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Clone( const TA_HT_DCPERIOD_Stream *stream,
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_trailingWMAIdx_inReal = NULL;
+   if( stream->ring_trailingWMAIdx_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
      sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_Close( sp ); return TA_ALLOC_ERR; }

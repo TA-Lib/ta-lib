@@ -715,10 +715,12 @@ TA_LIB_API TA_RetCode TA_AO_Clone( const TA_AO_Stream *stream, TA_AO_Stream **cl
    *sp = *stream;
    sp->ring_trailingFastIdx_derived = NULL;
    sp->ring_trailingSlowIdx_derived = NULL;
+   if( stream->ring_trailingFastIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_trailingFastIdx > 0 ? sp->ringCap_trailingFastIdx : 1);
      sp->ring_trailingFastIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingFastIdx_derived ) { TA_AO_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingFastIdx_derived, stream->ring_trailingFastIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_trailingSlowIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_trailingSlowIdx > 0 ? sp->ringCap_trailingSlowIdx : 1);
      sp->ring_trailingSlowIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingSlowIdx_derived ) { TA_AO_Close( sp ); return TA_ALLOC_ERR; }

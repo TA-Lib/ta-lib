@@ -660,10 +660,12 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Clone( const TA_CDLGAPSIDESIDEWHITE
    *sp = *stream;
    sp->ring_EqualTrailingIdx_derived = NULL;
    sp->ring_NearTrailingIdx_derived = NULL;
+   if( stream->ring_EqualTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
      sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_NearTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
      sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_Close( sp ); return TA_ALLOC_ERR; }

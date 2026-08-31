@@ -974,10 +974,12 @@ TA_LIB_API TA_RetCode TA_MFI_Clone( const TA_MFI_Stream *stream, TA_MFI_Stream *
    *sp = *stream;
    sp->cb_mflow_positive = NULL;
    sp->cb_mflow_negative = NULL;
+   if( stream->cb_mflow_positive )
    { size_t copyN = (size_t)(sp->cbSize_mflow);
      sp->cb_mflow_positive = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_mflow_positive ) { TA_MFI_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->cb_mflow_positive, stream->cb_mflow_positive, sizeof(double) * copyN ); }
+   if( stream->cb_mflow_negative )
    { size_t copyN = (size_t)(sp->cbSize_mflow);
      sp->cb_mflow_negative = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_mflow_negative ) { TA_MFI_Close( sp ); return TA_ALLOC_ERR; }

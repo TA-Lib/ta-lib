@@ -756,6 +756,7 @@ TA_LIB_API TA_RetCode TA_CCI_Clone( const TA_CCI_Stream *stream, TA_CCI_Stream *
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->cb_circBuffer = NULL;
+   if( stream->cb_circBuffer )
    { size_t copyN = (size_t)(sp->cbSize_circBuffer);
      sp->cb_circBuffer = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_circBuffer ) { TA_CCI_Close( sp ); return TA_ALLOC_ERR; }

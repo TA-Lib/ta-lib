@@ -807,10 +807,12 @@ TA_LIB_API TA_RetCode TA_AROONOSC_Clone( const TA_AROONOSC_Stream *stream, TA_AR
    *sp = *stream;
    sp->x_inHigh = NULL;
    sp->x_inLow = NULL;
+   if( stream->x_inHigh )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inHigh ) { TA_AROONOSC_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inLow ) { TA_AROONOSC_Close( sp ); return TA_ALLOC_ERR; }

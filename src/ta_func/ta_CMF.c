@@ -810,10 +810,12 @@ TA_LIB_API TA_RetCode TA_CMF_Clone( const TA_CMF_Stream *stream, TA_CMF_Stream *
    *sp = *stream;
    sp->cb_mfv_flow = NULL;
    sp->cb_mfv_volume = NULL;
+   if( stream->cb_mfv_flow )
    { size_t copyN = (size_t)(sp->cbSize_mfv);
      sp->cb_mfv_flow = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_mfv_flow ) { TA_CMF_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->cb_mfv_flow, stream->cb_mfv_flow, sizeof(double) * copyN ); }
+   if( stream->cb_mfv_volume )
    { size_t copyN = (size_t)(sp->cbSize_mfv);
      sp->cb_mfv_volume = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_mfv_volume ) { TA_CMF_Close( sp ); return TA_ALLOC_ERR; }

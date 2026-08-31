@@ -1018,9 +1018,11 @@ TA_LIB_API TA_RetCode TA_MAVP_Clone( const TA_MAVP_Stream *stream, TA_MAVP_Strea
      for( k = 0; k < sp->nBank; k++ ) sp->bank[k] = NULL;
      for( k = 0; k < sp->nBank; k++ )
      {
+        if( !stream->bank[k] ) continue;
         TA_RetCode subRc = TA_MA_Clone( stream->bank[k], &sp->bank[k] );
         if( subRc != TA_SUCCESS ) { TA_MAVP_Close( sp ); return subRc; }
      } }
+   if( stream->scratch )
    { size_t copyN = (size_t)sp->nBank;
      sp->scratch = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->scratch ) { TA_MAVP_Close( sp ); return TA_ALLOC_ERR; }

@@ -766,6 +766,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Clone( const TA_CDLHIKKAKEMOD_Stream *str
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_NearTrailingIdx_derived = NULL;
+   if( stream->ring_NearTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
      sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLHIKKAKEMOD_Close( sp ); return TA_ALLOC_ERR; }

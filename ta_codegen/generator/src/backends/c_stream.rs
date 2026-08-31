@@ -752,8 +752,12 @@ fn clone_buffer_lines(model: &StreamModel, n: &str) -> (Vec<String>, Vec<String>
     let mut dup: Vec<String> = Vec::new();
     let one = |field: String, count: String, ty: &str, disown: &mut Vec<String>, dup: &mut Vec<String>| {
         disown.push(format!("   sp->{field} = NULL;"));
+        // NULL-guarded, exactly as `release_free_lines` guards every free and
+        // for the same reason: a buffer the active mode never allocated is NULL
+        // (the dual-mode union carries both arms' fields, and a cap can be 0),
+        // and a NULL source duplicates as NULL rather than as a read of nothing.
         dup.push(format!(
-            "   {{ size_t copyN = (size_t)({count});\n     \
+            "   if( stream->{field} )\n   {{ size_t copyN = (size_t)({count});\n     \
              sp->{field} = ({ty} *)TA_Malloc( sizeof({ty}) * copyN );\n     \
              if( !sp->{field} ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
              memcpy( sp->{field}, stream->{field}, sizeof({ty}) * copyN ); }}"
@@ -864,7 +868,7 @@ fn clone_owned_lines(
                 let sr = &ring.series;
                 disown.push(format!("   sp->lagRing_{sr} = NULL;"));
                 dup.push(format!(
-                    "   {{ size_t copyN = (size_t)sp->lagRingCap_{sr};\n     \
+                    "   if( stream->lagRing_{sr} )\n   {{ size_t copyN = (size_t)sp->lagRingCap_{sr};\n     \
                      sp->lagRing_{sr} = (double *)TA_Malloc( sizeof(double) * copyN );\n     \
                      if( !sp->lagRing_{sr} ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
                      memcpy( sp->lagRing_{sr}, stream->lagRing_{sr}, sizeof(double) * copyN ); }}"
@@ -874,7 +878,7 @@ fn clone_owned_lines(
                 let pre = callee_prefix(&sub.callee);
                 disown.push(format!("   sp->sub{i} = NULL;"));
                 dup.push(format!(
-                    "   {{ TA_RetCode subRc = {pre}_Clone( stream->sub{i}, &sp->sub{i} );\n     \
+                    "   if( stream->sub{i} )\n   {{ TA_RetCode subRc = {pre}_Clone( stream->sub{i}, &sp->sub{i} );\n     \
                      if( subRc != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return subRc; }} }}"
                 ));
             }
@@ -920,11 +924,11 @@ fn clone_owned_lines(
                  if( !sp->bank ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
                  for( k = 0; k < sp->nBank; k++ ) sp->bank[k] = NULL;\n     \
                  for( k = 0; k < sp->nBank; k++ )\n     \
-                 {{\n        TA_RetCode subRc = {pre}_Clone( stream->bank[k], &sp->bank[k] );\n        \
+                 {{\n        if( !stream->bank[k] ) continue;\n        TA_RetCode subRc = {pre}_Clone( stream->bank[k], &sp->bank[k] );\n        \
                  if( subRc != TA_SUCCESS ) {{ TA_{n}_Close( sp ); return subRc; }}\n     }} }}"
             ));
             dup.push(format!(
-                "   {{ size_t copyN = (size_t)sp->nBank;\n     \
+                "   if( stream->scratch )\n   {{ size_t copyN = (size_t)sp->nBank;\n     \
                  sp->scratch = (double *)TA_Malloc( sizeof(double) * copyN );\n     \
                  if( !sp->scratch ) {{ TA_{n}_Close( sp ); return TA_ALLOC_ERR; }}\n     \
                  memcpy( sp->scratch, stream->scratch, sizeof(double) * copyN ); }}"

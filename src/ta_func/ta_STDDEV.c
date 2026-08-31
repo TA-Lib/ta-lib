@@ -511,6 +511,7 @@ TA_LIB_API TA_RetCode TA_STDDEV_Clone( const TA_STDDEV_Stream *stream, TA_STDDEV
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->sub0 = NULL;
+   if( stream->sub0 )
    { TA_RetCode subRc = TA_VAR_Clone( stream->sub0, &sp->sub0 );
      if( subRc != TA_SUCCESS ) { TA_STDDEV_Close( sp ); return subRc; } }
    *clone = sp;

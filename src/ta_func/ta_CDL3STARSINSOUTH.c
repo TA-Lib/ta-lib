@@ -900,18 +900,22 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Clone( const TA_CDL3STARSINSOUTH_Strea
    sp->ring_BodyShortTrailingIdx_derived = NULL;
    sp->ring_ShadowLongTrailingIdx_derived = NULL;
    sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
      sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDL3STARSINSOUTH_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_BodyShortTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
      sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDL3STARSINSOUTH_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_BodyShortTrailingIdx_derived, stream->ring_BodyShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowLongTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_ShadowLongTrailingIdx > 0 ? sp->ringCap_ShadowLongTrailingIdx : 1);
      sp->ring_ShadowLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_ShadowLongTrailingIdx_derived ) { TA_CDL3STARSINSOUTH_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_ShadowLongTrailingIdx_derived, stream->ring_ShadowLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowVeryShortTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
      sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDL3STARSINSOUTH_Close( sp ); return TA_ALLOC_ERR; }

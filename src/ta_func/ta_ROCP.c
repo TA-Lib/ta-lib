@@ -513,6 +513,7 @@ TA_LIB_API TA_RetCode TA_ROCP_Clone( const TA_ROCP_Stream *stream, TA_ROCP_Strea
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_trailingIdx_inReal = NULL;
+   if( stream->ring_trailingIdx_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
      sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdx_inReal ) { TA_ROCP_Close( sp ); return TA_ALLOC_ERR; }

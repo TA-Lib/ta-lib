@@ -460,6 +460,7 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Clone( const TA_AVGDEV_Stream *stream, TA_AVGDEV
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->win_i_inReal = NULL;
+   if( stream->win_i_inReal )
    { size_t copyN = (size_t)(sp->winCap_i);
      sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->win_i_inReal ) { TA_AVGDEV_Close( sp ); return TA_ALLOC_ERR; }

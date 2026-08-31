@@ -656,6 +656,7 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Clone( const TA_CDLCONCEALBABYSWALL
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   if( stream->ring_ShadowVeryShortTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
      sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLCONCEALBABYSWALL_Close( sp ); return TA_ALLOC_ERR; }

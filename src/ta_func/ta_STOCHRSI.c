@@ -659,8 +659,10 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Clone( const TA_STOCHRSI_Stream *stream, TA_ST
    *sp = *stream;
    sp->sub0 = NULL;
    sp->sub1 = NULL;
+   if( stream->sub0 )
    { TA_RetCode subRc = TA_RSI_Clone( stream->sub0, &sp->sub0 );
      if( subRc != TA_SUCCESS ) { TA_STOCHRSI_Close( sp ); return subRc; } }
+   if( stream->sub1 )
    { TA_RetCode subRc = TA_STOCHF_Clone( stream->sub1, &sp->sub1 );
      if( subRc != TA_SUCCESS ) { TA_STOCHRSI_Close( sp ); return subRc; } }
    *clone = sp;

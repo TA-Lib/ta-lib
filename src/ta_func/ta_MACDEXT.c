@@ -962,10 +962,13 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Clone( const TA_MACDEXT_Stream *stream, TA_MACD
    sp->sub0 = NULL;
    sp->sub1 = NULL;
    sp->sub2 = NULL;
+   if( stream->sub0 )
    { TA_RetCode subRc = TA_MA_Clone( stream->sub0, &sp->sub0 );
      if( subRc != TA_SUCCESS ) { TA_MACDEXT_Close( sp ); return subRc; } }
+   if( stream->sub1 )
    { TA_RetCode subRc = TA_MA_Clone( stream->sub1, &sp->sub1 );
      if( subRc != TA_SUCCESS ) { TA_MACDEXT_Close( sp ); return subRc; } }
+   if( stream->sub2 )
    { TA_RetCode subRc = TA_MA_Clone( stream->sub2, &sp->sub2 );
      if( subRc != TA_SUCCESS ) { TA_MACDEXT_Close( sp ); return subRc; } }
    *clone = sp;

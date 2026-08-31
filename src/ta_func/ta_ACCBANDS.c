@@ -811,14 +811,17 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Clone( const TA_ACCBANDS_Stream *stream, TA_AC
    sp->ring_trailingIdx_inHigh = NULL;
    sp->ring_trailingIdx_inLow = NULL;
    sp->ring_trailingIdx_inClose = NULL;
+   if( stream->ring_trailingIdx_inHigh )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
      sp->ring_trailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdx_inHigh ) { TA_ACCBANDS_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingIdx_inHigh, stream->ring_trailingIdx_inHigh, sizeof(double) * copyN ); }
+   if( stream->ring_trailingIdx_inLow )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
      sp->ring_trailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdx_inLow ) { TA_ACCBANDS_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingIdx_inLow, stream->ring_trailingIdx_inLow, sizeof(double) * copyN ); }
+   if( stream->ring_trailingIdx_inClose )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
      sp->ring_trailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdx_inClose ) { TA_ACCBANDS_Close( sp ); return TA_ALLOC_ERR; }

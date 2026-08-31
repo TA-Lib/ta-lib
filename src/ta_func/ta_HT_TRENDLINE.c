@@ -1896,10 +1896,12 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Clone( const TA_HT_TRENDLINE_Stream *strea
    *sp = *stream;
    sp->ring_trailingWMAIdx_inReal = NULL;
    sp->win_i_inReal = NULL;
+   if( stream->ring_trailingWMAIdx_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
      sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDLINE_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * copyN ); }
+   if( stream->win_i_inReal )
    { size_t copyN = (size_t)(sp->winCap_i);
      sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->win_i_inReal ) { TA_HT_TRENDLINE_Close( sp ); return TA_ALLOC_ERR; }

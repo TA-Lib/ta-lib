@@ -991,6 +991,7 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Clone( const TA_LINEARREG_Stream *stream, TA_
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->x_inReal = NULL;
+   if( stream->x_inReal )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inReal ) { TA_LINEARREG_Close( sp ); return TA_ALLOC_ERR; }

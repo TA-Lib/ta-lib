@@ -611,10 +611,12 @@ TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_Clone( const TA_CDLHIGHWAVE_Stream *stream,
    *sp = *stream;
    sp->ring_BodyTrailingIdx_derived = NULL;
    sp->ring_ShadowTrailingIdx_derived = NULL;
+   if( stream->ring_BodyTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyTrailingIdx > 0 ? sp->ringCap_BodyTrailingIdx : 1);
      sp->ring_BodyTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyTrailingIdx_derived ) { TA_CDLHIGHWAVE_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_BodyTrailingIdx_derived, stream->ring_BodyTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_ShadowTrailingIdx > 0 ? sp->ringCap_ShadowTrailingIdx : 1);
      sp->ring_ShadowTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_ShadowTrailingIdx_derived ) { TA_CDLHIGHWAVE_Close( sp ); return TA_ALLOC_ERR; }

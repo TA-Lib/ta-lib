@@ -512,10 +512,12 @@ TA_LIB_API TA_RetCode TA_IMI_Clone( const TA_IMI_Stream *stream, TA_IMI_Stream *
    *sp = *stream;
    sp->win_i_inOpen = NULL;
    sp->win_i_inClose = NULL;
+   if( stream->win_i_inOpen )
    { size_t copyN = (size_t)(sp->winCap_i);
      sp->win_i_inOpen = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->win_i_inOpen ) { TA_IMI_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->win_i_inOpen, stream->win_i_inOpen, sizeof(double) * copyN ); }
+   if( stream->win_i_inClose )
    { size_t copyN = (size_t)(sp->winCap_i);
      sp->win_i_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->win_i_inClose ) { TA_IMI_Close( sp ); return TA_ALLOC_ERR; }

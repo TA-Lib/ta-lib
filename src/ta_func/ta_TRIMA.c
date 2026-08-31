@@ -1305,10 +1305,12 @@ TA_LIB_API TA_RetCode TA_TRIMA_Clone( const TA_TRIMA_Stream *stream, TA_TRIMA_St
    *sp = *stream;
    sp->ring_middleIdx_inReal = NULL;
    sp->ring_trailingIdx_inReal = NULL;
+   if( stream->ring_middleIdx_inReal )
    { size_t copyN = (size_t)(sp->ringCap_middleIdx > 0 ? sp->ringCap_middleIdx : 1);
      sp->ring_middleIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_middleIdx_inReal ) { TA_TRIMA_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_middleIdx_inReal, stream->ring_middleIdx_inReal, sizeof(double) * copyN ); }
+   if( stream->ring_trailingIdx_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
      sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingIdx_inReal ) { TA_TRIMA_Close( sp ); return TA_ALLOC_ERR; }

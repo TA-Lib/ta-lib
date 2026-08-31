@@ -523,6 +523,7 @@ TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Clone( const TA_CDLSPINNINGTOP_Stream *s
    if( !sp ) return TA_ALLOC_ERR;
    *sp = *stream;
    sp->ring_BodyTrailingIdx_derived = NULL;
+   if( stream->ring_BodyTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyTrailingIdx > 0 ? sp->ringCap_BodyTrailingIdx : 1);
      sp->ring_BodyTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyTrailingIdx_derived ) { TA_CDLSPINNINGTOP_Close( sp ); return TA_ALLOC_ERR; }

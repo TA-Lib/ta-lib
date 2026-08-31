@@ -642,10 +642,12 @@ TA_LIB_API TA_RetCode TA_CDLONNECK_Clone( const TA_CDLONNECK_Stream *stream, TA_
    *sp = *stream;
    sp->ring_BodyLongTrailingIdx_derived = NULL;
    sp->ring_EqualTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
      sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLONNECK_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_EqualTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
      sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLONNECK_Close( sp ); return TA_ALLOC_ERR; }

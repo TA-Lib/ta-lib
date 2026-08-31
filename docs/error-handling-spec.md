@@ -393,11 +393,21 @@ probe drives all four open/fill combinations and reads the declined value back
 through the handle, which is what a backend that "supported" declining by not
 computing would fail.
 
-**There is no value accessor in C or Rust**, so "read the current value" is a
-rule only two backends could carry, and it has no error surface in either: Java's
-`value()` and C#'s `Value` are plain field reads of the last committed bar. In C
-the value arrives through the out-parameter of `Open`/`Update`/`Peek`, and in
-Rust through their return values — a caller who wants it later keeps it.
+**All four backends have a value accessor** since #287: `TA_<N>_Value`,
+`value()`, `value()` and `Value`. Each reports the last committed bar without
+recomputing, and each is a plain read of state the stream already holds — so the
+only error surface is C's, which answers `TA_BAD_PARAM` for a NULL stream or a
+NULL out-pointer for a required output (a declinable output may be NULL and is
+then simply not written). Java, C# and Rust cannot fail: they take no argument
+to reject. The accessor exists because a FORKED stream is the one caller with no
+earlier call to have handed it a value — `clone()` gives a second stream at the
+same bar, and `peek` would answer for a bar that has not been committed.
+
+**The fork has an error surface in C alone.** `TA_<N>_Clone` answers
+`TA_BAD_PARAM` for a NULL stream or a NULL `clone`, and `TA_ALLOC_ERR` if any
+allocation fails; on either, `*clone` is NULL and the original is untouched.
+Java's and C#'s `clone()`/`Clone()` and Rust's derived `Clone` cannot fail
+short of the runtime's own allocation failure, which is not a `RetCode`.
 
 U3 is checked with an explicit finite test, so it rejects NaN and both
 infinities alike. Verified: 176 of 176 `Update` and `Peek` entry points check

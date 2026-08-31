@@ -1024,22 +1024,27 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Clone( const TA_CDLADVANCEBLOCK_Stream 
    sp->ring_NearTrailingIdx_derived = NULL;
    sp->ring_ShadowLongTrailingIdx_derived = NULL;
    sp->ring_ShadowShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyLongTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
      sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLADVANCEBLOCK_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_FarTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_FarTrailingIdx > 0 ? sp->ringCap_FarTrailingIdx : 1);
      sp->ring_FarTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_FarTrailingIdx_derived ) { TA_CDLADVANCEBLOCK_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_FarTrailingIdx_derived, stream->ring_FarTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_NearTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
      sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLADVANCEBLOCK_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_NearTrailingIdx_derived, stream->ring_NearTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowLongTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_ShadowLongTrailingIdx > 0 ? sp->ringCap_ShadowLongTrailingIdx : 1);
      sp->ring_ShadowLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_ShadowLongTrailingIdx_derived ) { TA_CDLADVANCEBLOCK_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_ShadowLongTrailingIdx_derived, stream->ring_ShadowLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowShortTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_ShadowShortTrailingIdx > 0 ? sp->ringCap_ShadowShortTrailingIdx : 1);
      sp->ring_ShadowShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_ShadowShortTrailingIdx_derived ) { TA_CDLADVANCEBLOCK_Close( sp ); return TA_ALLOC_ERR; }

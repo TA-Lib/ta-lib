@@ -939,18 +939,22 @@ TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Clone( const TA_CDL3WHITESOLDIERS_Str
    sp->ring_FarTrailingIdx_derived = NULL;
    sp->ring_NearTrailingIdx_derived = NULL;
    sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyShortTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
      sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_BodyShortTrailingIdx_derived, stream->ring_BodyShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_FarTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_FarTrailingIdx > 0 ? sp->ringCap_FarTrailingIdx : 1);
      sp->ring_FarTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_FarTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_FarTrailingIdx_derived, stream->ring_FarTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_NearTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
      sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_NearTrailingIdx_derived, stream->ring_NearTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowVeryShortTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
      sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDL3WHITESOLDIERS_Close( sp ); return TA_ALLOC_ERR; }

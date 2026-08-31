@@ -774,10 +774,12 @@ TA_LIB_API TA_RetCode TA_AROON_Clone( const TA_AROON_Stream *stream, TA_AROON_St
    *sp = *stream;
    sp->x_inHigh = NULL;
    sp->x_inLow = NULL;
+   if( stream->x_inHigh )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inHigh ) { TA_AROON_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
    { size_t copyN = (size_t)(sp->xPhys);
      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->x_inLow ) { TA_AROON_Close( sp ); return TA_ALLOC_ERR; }

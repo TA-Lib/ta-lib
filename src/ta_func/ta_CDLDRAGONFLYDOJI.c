@@ -615,10 +615,12 @@ TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_Clone( const TA_CDLDRAGONFLYDOJI_Strea
    *sp = *stream;
    sp->ring_BodyDojiTrailingIdx_derived = NULL;
    sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   if( stream->ring_BodyDojiTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
      sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLDRAGONFLYDOJI_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_BodyDojiTrailingIdx_derived, stream->ring_BodyDojiTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowVeryShortTrailingIdx_derived )
    { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
      sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLDRAGONFLYDOJI_Close( sp ); return TA_ALLOC_ERR; }

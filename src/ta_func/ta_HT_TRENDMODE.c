@@ -2468,14 +2468,17 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Clone( const TA_HT_TRENDMODE_Stream *strea
    sp->ring_trailingWMAIdx_inReal = NULL;
    sp->win_j_inReal = NULL;
    sp->cb_smoothPrice = NULL;
+   if( stream->ring_trailingWMAIdx_inReal )
    { size_t copyN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
      sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * copyN ); }
+   if( stream->win_j_inReal )
    { size_t copyN = (size_t)(sp->winCap_j);
      sp->win_j_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->win_j_inReal ) { TA_HT_TRENDMODE_Close( sp ); return TA_ALLOC_ERR; }
      memcpy( sp->win_j_inReal, stream->win_j_inReal, sizeof(double) * copyN ); }
+   if( stream->cb_smoothPrice )
    { size_t copyN = (size_t)(sp->cbSize_smoothPrice);
      sp->cb_smoothPrice = (double *)TA_Malloc( sizeof(double) * copyN );
      if( !sp->cb_smoothPrice ) { TA_HT_TRENDMODE_Close( sp ); return TA_ALLOC_ERR; }
