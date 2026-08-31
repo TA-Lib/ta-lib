@@ -2105,7 +2105,7 @@ fn emit_open_region(
     // nothing there is declinable.
     let mut open_ctx = typing.ctx.clone();
     let nullable = super::common::nullable_output_names(func);
-    open_ctx.nullable_outputs = nullable.clone();
+    open_ctx.nullable_outputs.clone_from(&nullable);
     // The handle's `cur_<out>` has to hold what the store *would* have
     // written even when the caller declined it — an Update always recomputes
     // it (mama.c), so a capture that instead reads the array (absent) or
