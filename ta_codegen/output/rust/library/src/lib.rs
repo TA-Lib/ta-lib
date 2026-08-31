@@ -68,8 +68,44 @@
 //! performs via `target_clones`); both paths are correctly rounded, so results
 //! are bit-identical either way. The streaming tier stays single-path.
 //!
+//! # Live data
+//!
+//! The calls above take a whole series at once. For a feed that arrives one bar
+//! at a time, each indicator also has a *streaming* form: an `*_open` method
+//! ([`Core::sma_open`], [`Core::rsi_open`], …) warms a handle up on the history
+//! you already have, and from then on one bar in gives that bar's value out,
+//! with no re-scan of the series and no allocation per bar.
+//!
+//! ```
+//! use ta_lib::Core;
+//!
+//! let history = [11.0, 12.0, 13.0, 14.0, 15.0];
+//! let core = Core::new();
+//! let (mut sma, last) = core.sma_open(&history, 3)?;
+//!
+//! assert_eq!(last, 14.0); // (13 + 14 + 15) / 3, the last history bar
+//! assert_eq!(sma.out_range().count, 3);
+//!
+//! // A bar that has not closed yet: ask without committing it.
+//! assert_eq!(sma.peek(16.0)?, 15.0);
+//! assert_eq!(sma.out_range().count, 3);
+//!
+//! // Once it closes, commit it — same value, and the range advances.
+//! assert_eq!(sma.update(16.0)?, 15.0);
+//! assert_eq!(sma.out_range().count, 4);
+//! # Ok::<(), ta_lib::RetCode>(())
+//! ```
+//!
+//! The handle's value at every bar is bit-identical to what the batch call
+//! reports for that bar. [`SmaStream::out_range`] carries the same
+//! [`OutRange`] the batch tier returns, advanced by one on each committed bar;
+//! [`SmaStream::peek`] leaves it alone; cloning a handle forks an independent
+//! stream, and dropping it closes the stream.
+//!
 //! The full function reference, grouped by category, is at
-//! [ta-lib.org/functions](https://ta-lib.org/functions/).
+//! [ta-lib.org/functions](https://ta-lib.org/functions/); the guides are at
+//! [ta-lib.org/api/rust](https://ta-lib.org/api/rust/) and, for the streaming
+//! tier, [ta-lib.org/api/rust/stream](https://ta-lib.org/api/rust/stream/).
 //!
 //! # Indicators by category
 //!
