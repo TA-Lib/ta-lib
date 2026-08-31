@@ -518,6 +518,53 @@ jobs:
         shell: bash
         run: python3 scripts/rust_package_check.py
 
+  # Every Rust step elsewhere in this workflow runs on ubuntu, so the crate
+  # has never compiled on Windows or macOS (#179 E6). `--lib --doc` together
+  # is rejected by cargo, hence two `cargo test` invocations.
+  rust-other-os:
+    name: Rust on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-latest]
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Refuse a matrix that adds no operating system
+        shell: bash
+        run: |
+          os='${{ matrix.os }}'
+          if [ -z "$os" ]; then
+            echo "::error::This job ran with an empty 'os', so it compiled nothing. The point of the job is to compile the crate somewhere the other Rust jobs do not — restore the matrix in .github/workflows/dev-nightly-tests.yml."
+            exit 1
+          fi
+          case "$os" in
+            ubuntu*)
+              echo "::error::'$os' is the operating system every other Rust job in this workflow already uses, so this leg would duplicate them instead of covering anything (#179 E6). Name a non-Linux runner, or delete the job rather than leaving it green and vacuous."
+              exit 1
+              ;;
+          esac
+          echo "Covering $os"
+
+      - name: Compile the publishable crates
+        shell: bash
+        run: cargo check -p ta-lib -p ta-lib-dispatch --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      - name: Run the crate's unit tests
+        shell: bash
+        run: cargo test --lib -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      - name: Run the crate's doctests
+        shell: bash
+        run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
   # The two publishable crates declare `rust-version = "1.86"`, and nothing
   # else here compiles them at it -- every other Rust step runs on the pinned
   # toolchain from rust-toolchain.toml (1.97.0), so a post-1.86 API reaching
