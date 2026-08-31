@@ -193,13 +193,18 @@ public partial class Core
      * any range; C answers it with TA_SUCCESS only because it has no size to
      * check against.
      *
-     * Same shape and same bound as Java's Core.clampedStart. NOT the same as Rust:
-     * rust_lang.rs prefixes BOTH of its generated asserts with
-     * `_assertStart > endIdx ||`, so on a sub-lookback range Rust asserts nothing
-     * about the input length and SMA(0, 5, &[], 30, &mut []) is Ok(count 0) there
-     * while it throws here. This input bound is the one place C# and Java check
-     * more than C and Rust do; it is a diagnostic, not a safety net, since
-     * NoPhantomIoTest pins that no core reads on such a range. */
+     * Same shape and same bound as Java's Core.clampedStart, and as Rust's public
+     * wrapper: rust_lang.rs's gen_argument_checks takes the
+     * `_assertStart > endIdx ||` escape on the output bound and not on the input
+     * one, exactly as here, so SMA(0, 5, &[], 30, &mut []) is Err(BadParam) there
+     * and a throw here -- one verdict, spelled two ways. What does take the escape
+     * on BOTH bounds is Rust's <N>_Impl assertion preamble, which is pub(crate)
+     * and off the public path since #267; that tier is what the JSON-RPC servers
+     * exercise, and it is the reason this paragraph used to read "NOT the same as
+     * Rust". So C is the one backend that checks less, having no size to check
+     * against. It is a diagnostic, not a safety net, since NoPhantomIoTest pins
+     * that no core reads on such a range. The Rust crate's tests/empty_range.rs
+     * pins the rows named here. */
     internal static int ClampedStart(int startIdx, int endIdx, int lookback)
     {
         if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MAX_INDEX)
