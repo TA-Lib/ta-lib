@@ -517,28 +517,10 @@ jobs:
       - name: Package the publishable crates and check what ships
         shell: bash
         run: python3 scripts/rust_package_check.py
-  # Every Rust step in this workflow runs on ubuntu. The crate has therefore
-  # only ever been compiled on one operating system, and the audit's own
-  # justification for that -- "no build.rs, and `cfg(windows)|cfg(unix)|
-  # cfg(target_os` over library/src dispatch/src is zero hits" -- is a
-  # statement about today's emitted code, not a property the generator is
-  # obliged to preserve. The first `cfg` the emitter grows, or the first
-  # path/line-ending assumption that reaches a doctest, is invisible here and
-  # visible to a consumer on Windows or a Mac, after publish (#179 E6).
-  #
-  # `cargo check` plus the lib and doc tests only: no C build, no server
-  # harness, no dist asset, so the POSIX-only argument that keeps the other
-  # jobs on ubuntu does not reach this one. Split into two `cargo test`
-  # invocations on purpose -- `--lib --doc` together is rejected by cargo
-  # ("can't mix --doc with other target selecting options").
-  #
-  # The OS list is the job's non-vacuity guard: an empty matrix, or one that
-  # names only ubuntu, would leave this green while compiling nothing the
-  # jobs above do not already compile, so both are a hard failure before any
-  # toolchain work.
-  #
-  # Rust-only and self-contained, so like clippy and msrv it is deliberately
-  # NOT gated on the C hero 'test' job.
+
+  # Every Rust step elsewhere in this workflow runs on ubuntu, so the crate
+  # has never compiled on Windows or macOS (#179 E6). `--lib --doc` together
+  # is rejected by cargo, hence two `cargo test` invocations.
   rust-other-os:
     name: Rust on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -571,9 +553,6 @@ jobs:
           esac
           echo "Covering $os"
 
-      # rustup is preinstalled on both runner images and honours
-      # rust-toolchain.toml, so the pinned 1.97.0 is what compiles here too —
-      # the variable under test is the operating system, not the toolchain.
       - name: Compile the publishable crates
         shell: bash
         run: cargo check -p ta-lib -p ta-lib-dispatch --manifest-path ta_codegen/output/rust/Cargo.toml
@@ -585,7 +564,6 @@ jobs:
       - name: Run the crate's doctests
         shell: bash
         run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
-
 
   # The two publishable crates declare `rust-version = "1.86"`, and nothing
   # else here compiles them at it -- every other Rust step runs on the pinned
