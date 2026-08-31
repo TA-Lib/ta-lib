@@ -9,6 +9,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ## [0.8.1] Not Released Yet
 ### Added
 - New Streaming API. See https://ta-lib.org/api/stream/
+- The Rust library is published on crates.io for the first time: `cargo add ta-lib`. See https://ta-lib.org/api/rust/
+  - It carries the C library's version, so the first release from this project is 0.8.1, not 0.1.0. Versions 0.1.0 to 0.1.2 of the `ta-lib` crate name (2021-2023) are an unrelated third-party binding from https://github.com/virtualritz/ta-lib-rs and are not part of this project.
+  - `ta-lib` depends on `ta-lib-dispatch`, which is versioned separately.
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
