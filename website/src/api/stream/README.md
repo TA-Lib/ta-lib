@@ -52,7 +52,7 @@ TA_SMA_Close( s );
 - **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed — the stream keeps everything it needs.
 - **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are first read at `Open` and must not change during the stream's life.
-- **Threads.** A stream is single-writer: never drive one stream from two threads at once (even `Peek`, `Value` and `Clone`, despite their `const` source). Distinct streams — a `Clone` result included — are fully independent.
+- **Threads.** A stream is single-writer: an `Update` must not race with any other call on the same stream. With no concurrent `Update`, `Peek`, `Value` and `Clone` write nothing behind the handle — their `const` is load-bearing — and may run concurrently. Distinct streams — a `Clone` result included — are fully independent.
 
 ## Multi-input / multi-output
 
@@ -100,18 +100,18 @@ TA_SMA_UpdateAndFill( s, gap, 64, out );   /* out[i] is the SMA at gap[i] */
 
 | Call | When | Does |
 |------|------|------|
-| `TA_<NAME>_Value` | any time | the value(s) at the last bar consumed, without recomputing |
+| `TA_<NAME>_Value` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `TA_<NAME>_Clone` | any time | an independent fork of the stream, at the same bar |
-| `TA_StreamOutRange` | any time | the bars the stream has consumed — the batch range over the same bars |
+| `TA_StreamOutRange` | any time | the bars the stream has an output for — the batch range over the same bars |
 
 ```c
 double v;
 int begIdx, nbElement;
 TA_SMA_Stream *fork = NULL;
 
-TA_SMA_Value( s, &v );                        /* the value at the last bar consumed */
+TA_SMA_Value( s, &v );                        /* the value at the last bar s counted */
 TA_SMA_Clone( s, &fork );                     /* independent from here on */
-TA_StreamOutRange( s, &begIdx, &nbElement );  /* the bars s has consumed */
+TA_StreamOutRange( s, &begIdx, &nbElement );  /* the bars s has an output for */
 ```
 
 `Value` hands back what `Open` or the last `Update` already gave you: it recomputes
@@ -134,11 +134,11 @@ since a fork has no call that handed you its value.
 `TA_<NAME>_Stream *`, because the range lives in a header every stream struct
 shares. A value has a per-function shape and a fork has a per-function heap graph,
 so those two are declared per function. A stream opened over `historyLen` bars
-starts at `(lookback, historyLen - lookback)`; every bar handed to `Update` adds
-one — a bar rejected as non-finite included, since it happened and holds a
-position in the series, and its output is the previous one, held. That is what
-keeps two streams on the same feed positionally aligned when one rejects a bar the
-other accepts. `Peek` counts nothing, and neither does a malformed call — a fault
+starts at `(lookback, historyLen - lookback)`; a bar the call accepts as data
+adds one, whether the step computes on it or it is turned down as non-finite —
+it happened and holds a position in the series, and its output is the previous
+one, held. That is what keeps two streams on the same feed positionally aligned
+when one rejects a bar the other accepts. `Peek` counts nothing, and neither does a malformed call — a fault
 in the call is not a bar. So after a stream has been fed `nbBar` bars, by any mix
 of `Open` and `Update`, this reports what the batch call over `(0, nbBar-1)` would.
 The count saturates at `TA_MAX_INDEX`.

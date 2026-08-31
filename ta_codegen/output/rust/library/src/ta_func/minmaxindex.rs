@@ -319,13 +319,13 @@ impl Core {
 /// over the same series. Open with [`Core::minmaxindex_open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 ///
-/// [`Self::out_range`] reports the bars it has consumed.
+/// [`Self::out_range`] reports the bars this handle has an output for.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MINMAXINDEX_Stream")]
 pub struct MinmaxindexStream {
     state: MinmaxindexStreamState,
-    /// The bars this handle has consumed — see [`Self::out_range`].
+    /// The bars this handle has an output for — see [`Self::out_range`].
     out: OutRange,
 }
 
@@ -820,20 +820,20 @@ impl MinmaxindexStream {
         Ok((outMinIdx, outMaxIdx))
     }
 
-    /// The value(s) at the last committed bar, without recomputing —
-    /// seeded by the opener, refreshed by every accepted `update` and
-    /// `update_and_fill`, and left alone by `peek`.
+    /// The value(s) at the last bar the stream counted — the bar
+    /// [`Self::out_range`] ends on — without recomputing. Seeded by the opener,
+    /// refreshed by every accepted `update` and `update_and_fill`, and left
+    /// alone by `peek`.
     ///
-    /// The bars they belong to are what [`Self::out_range`] reports. A clone
-    /// carries them verbatim, so a forked handle can be asked its current
-    /// value without committing a bar to find out.
+    /// A clone carries them verbatim, so a forked handle can be asked its
+    /// current value without committing a bar to find out.
     #[must_use]
     #[doc(alias = "TA_MINMAXINDEX_Value")]
     pub fn value(&self) -> (i32, i32) {
         (self.state.cur_outMinIdx, self.state.cur_outMaxIdx)
     }
 
-    /// The bars this stream has consumed, in the input series'
+    /// The bars this stream has an output for, in the input series'
     /// coordinates: `[beg_idx, beg_idx + count)`.
     ///
     /// It is what [`Core::MINMAXINDEX`] reports over the same bars: the opener sets it

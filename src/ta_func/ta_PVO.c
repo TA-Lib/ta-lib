@@ -281,11 +281,11 @@ TA_RetCode TA_S_PVO( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_PVO_Stream {
-   /* The bars this handle has consumed (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_PVO_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_PVO_Value). */
    double cur_outReal;
    int optInFastPeriod;
    int optInSlowPeriod;

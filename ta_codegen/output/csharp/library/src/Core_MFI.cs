@@ -597,7 +597,7 @@ public partial class Core
 
       internal MfiStream( Core core ) { this.core = core; }
 
-      /// <summary>The bars this stream has consumed, in the input series' coordinates:
+      /// <summary>The bars this stream has an output for, in the input series' coordinates:
       /// <c>[BegIdx, BegIdx + Count)</c>.</summary>
       /// <remarks>
       /// <para>It is what <c>Core.Mfi</c> reports over the same bars: the opener sets it
@@ -762,8 +762,9 @@ public partial class Core
          }
       }
 
-      /// <summary>The value at the most recently committed bar — the last history bar right
-      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <summary>The value at the last bar this stream counted — the bar
+      /// <see cref="OutRange"/> ends on. The last history bar right after open,
+      /// then whatever the latest accepted <see cref="Update"/> returned.</summary>
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>

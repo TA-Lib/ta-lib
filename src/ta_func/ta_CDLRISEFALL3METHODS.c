@@ -314,11 +314,11 @@ TA_RetCode TA_S_CDLRISEFALL3METHODS( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLRISEFALL3METHODS_Stream {
-   /* The bars this handle has consumed (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_CDLRISEFALL3METHODS_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_CDLRISEFALL3METHODS_Value). */
    int cur_outInteger;
    double BodyPeriodTotal[5];
    double lag1_inOpen;

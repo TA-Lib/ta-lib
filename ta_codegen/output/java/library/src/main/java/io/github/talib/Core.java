@@ -1063,7 +1063,7 @@ public final class Core {
       AcStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#AC} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -1103,9 +1103,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -1133,9 +1133,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("AC updateAndFill", "inHigh", inHigh);
@@ -1236,8 +1236,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -2102,7 +2103,7 @@ public final class Core {
       AccbandsStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ACCBANDS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -2152,9 +2153,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -2183,9 +2184,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
          requireArgument("ACCBANDS updateAndFill", "inHigh", inHigh);
@@ -2293,8 +2294,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -2836,7 +2838,7 @@ public final class Core {
       AcosStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ACOS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -2860,9 +2862,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -2890,9 +2892,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("ACOS updateAndFill", "inReal", inReal);
@@ -2930,8 +2932,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -3359,7 +3362,7 @@ public final class Core {
       AdStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#AD} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -3384,9 +3387,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -3414,9 +3417,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
          requireArgument("AD updateAndFill", "inHigh", inHigh);
@@ -3469,8 +3472,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -3881,7 +3885,7 @@ public final class Core {
       AddStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ADD} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -3905,9 +3909,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -3935,9 +3939,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
          requireArgument("ADD updateAndFill", "inReal0", inReal0);
@@ -3976,8 +3980,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -4602,7 +4607,7 @@ public final class Core {
       AdoscStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ADOSC} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -4635,9 +4640,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -4665,9 +4670,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
          requireArgument("ADOSC updateAndFill", "inHigh", inHigh);
@@ -4724,8 +4729,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -5841,7 +5847,7 @@ public final class Core {
       AdxStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ADX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -5873,9 +5879,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -5903,9 +5909,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("ADX updateAndFill", "inHigh", inHigh);
@@ -6002,8 +6008,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -6903,7 +6910,7 @@ public final class Core {
       AdxrStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ADXR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -6932,9 +6939,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -6962,9 +6969,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("ADXR updateAndFill", "inHigh", inHigh);
@@ -7008,8 +7015,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -7679,7 +7687,7 @@ public final class Core {
       AoStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#AO} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -7713,9 +7721,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -7743,9 +7751,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("AO updateAndFill", "inHigh", inHigh);
@@ -7825,8 +7833,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -8525,7 +8534,7 @@ public final class Core {
       ApoStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#APO} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -8554,9 +8563,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -8584,9 +8593,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("APO updateAndFill", "inReal", inReal);
@@ -8629,8 +8638,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -9275,7 +9285,7 @@ public final class Core {
       AroonStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#AROON} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -9326,9 +9336,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -9357,9 +9367,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outAroonDown[], double outAroonUp[] ) {
          requireArgument("AROON updateAndFill", "inHigh", inHigh);
@@ -9472,8 +9482,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -10212,7 +10223,7 @@ public final class Core {
       AroonoscStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#AROONOSC} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -10248,9 +10259,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -10278,9 +10289,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("AROONOSC updateAndFill", "inHigh", inHigh);
@@ -10392,8 +10403,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -10940,7 +10952,7 @@ public final class Core {
       AsinStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ASIN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -10964,9 +10976,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -10994,9 +11006,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("ASIN updateAndFill", "inReal", inReal);
@@ -11034,8 +11046,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -11378,7 +11391,7 @@ public final class Core {
       AtanStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ATAN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -11402,9 +11415,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -11432,9 +11445,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("ATAN updateAndFill", "inReal", inReal);
@@ -11472,8 +11485,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -12099,7 +12113,7 @@ public final class Core {
       AtrStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ATR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -12126,9 +12140,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -12156,9 +12170,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("ATR updateAndFill", "inHigh", inHigh);
@@ -12224,8 +12238,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -12833,7 +12848,7 @@ public final class Core {
       AvgdevStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#AVGDEV} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -12861,9 +12876,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -12891,9 +12906,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("AVGDEV updateAndFill", "inReal", inReal);
@@ -12951,8 +12966,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -13387,7 +13403,7 @@ public final class Core {
       AvgpriceStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#AVGPRICE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -13411,9 +13427,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -13441,9 +13457,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("AVGPRICE updateAndFill", "inOpen", inOpen);
@@ -13484,8 +13500,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -14459,7 +14476,7 @@ public final class Core {
       BbandsStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#BBANDS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -14506,9 +14523,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -14537,9 +14554,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
          requireArgument("BBANDS updateAndFill", "inReal", inReal);
@@ -14608,8 +14625,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -15681,7 +15699,7 @@ public final class Core {
       BetaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#BETA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -15727,9 +15745,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -15757,9 +15775,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
          requireArgument("BETA updateAndFill", "inReal0", inReal0);
@@ -16010,8 +16028,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -16958,7 +16977,7 @@ public final class Core {
       BopStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#BOP} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -16982,9 +17001,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -17012,9 +17031,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("BOP updateAndFill", "inOpen", inOpen);
@@ -17067,8 +17086,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -17670,7 +17690,7 @@ public final class Core {
       CciStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CCI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -17699,9 +17719,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -17729,9 +17749,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("CCI updateAndFill", "inHigh", inHigh);
@@ -17818,8 +17838,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -18469,7 +18490,7 @@ public final class Core {
       Cdl2crowsStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDL2CROWS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -18508,9 +18529,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -18538,9 +18559,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDL2CROWS updateAndFill", "inOpen", inOpen);
@@ -18629,8 +18650,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -19278,7 +19300,7 @@ public final class Core {
       Cdl3blackcrowsStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDL3BLACKCROWS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -19321,9 +19343,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -19351,9 +19373,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDL3BLACKCROWS updateAndFill", "inOpen", inOpen);
@@ -19455,8 +19477,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -20147,7 +20170,7 @@ public final class Core {
       Cdl3insideStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDL3INSIDE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -20193,9 +20216,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -20223,9 +20246,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDL3INSIDE updateAndFill", "inOpen", inOpen);
@@ -20326,8 +20349,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -21007,7 +21031,7 @@ public final class Core {
       Cdl3linestrikeStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDL3LINESTRIKE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -21051,9 +21075,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -21081,9 +21105,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDL3LINESTRIKE updateAndFill", "inOpen", inOpen);
@@ -21181,8 +21205,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -21774,7 +21799,7 @@ public final class Core {
       Cdl3outsideStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDL3OUTSIDE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -21802,9 +21827,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -21832,9 +21857,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDL3OUTSIDE updateAndFill", "inOpen", inOpen);
@@ -21891,8 +21916,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -22591,7 +22617,7 @@ public final class Core {
       Cdl3starsinsouthStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDL3STARSINSOUTH} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -22654,9 +22680,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -22684,9 +22710,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDL3STARSINSOUTH updateAndFill", "inOpen", inOpen);
@@ -22828,8 +22854,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -23758,7 +23785,7 @@ public final class Core {
       Cdl3whitesoldiersStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDL3WHITESOLDIERS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -23821,9 +23848,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -23851,9 +23878,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDL3WHITESOLDIERS updateAndFill", "inOpen", inOpen);
@@ -23996,8 +24023,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -24889,7 +24917,7 @@ public final class Core {
       CdlabandonedbabyStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLABANDONEDBABY} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -24943,9 +24971,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -24973,9 +25001,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLABANDONEDBABY updateAndFill", "inOpen", inOpen);
@@ -25091,8 +25119,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -26004,7 +26033,7 @@ public final class Core {
       CdladvanceblockStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLADVANCEBLOCK} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -26076,9 +26105,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -26106,9 +26135,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLADVANCEBLOCK updateAndFill", "inOpen", inOpen);
@@ -26262,8 +26291,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -27115,7 +27145,7 @@ public final class Core {
       CdlbeltholdStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLBELTHOLD} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -27153,9 +27183,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -27183,9 +27213,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLBELTHOLD updateAndFill", "inOpen", inOpen);
@@ -27267,8 +27297,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -27912,7 +27943,7 @@ public final class Core {
       CdlbreakawayStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLBREAKAWAY} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -27960,9 +27991,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -27990,9 +28021,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLBREAKAWAY updateAndFill", "inOpen", inOpen);
@@ -28091,8 +28122,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -28752,7 +28784,7 @@ public final class Core {
       CdlclosingmarubozuStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLCLOSINGMARUBOZU} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -28790,9 +28822,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -28820,9 +28852,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLCLOSINGMARUBOZU updateAndFill", "inOpen", inOpen);
@@ -28904,8 +28936,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -29560,7 +29593,7 @@ public final class Core {
       CdlconcealbabyswallStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLCONCEALBABYSWALL} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -29604,9 +29637,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -29634,9 +29667,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLCONCEALBABYSWALL updateAndFill", "inOpen", inOpen);
@@ -29739,8 +29772,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -30433,7 +30467,7 @@ public final class Core {
       CdlcounterattackStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLCOUNTERATTACK} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -30477,9 +30511,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -30507,9 +30541,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLCOUNTERATTACK updateAndFill", "inOpen", inOpen);
@@ -30602,8 +30636,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -31282,7 +31317,7 @@ public final class Core {
       CdldarkcloudcoverStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLDARKCLOUDCOVER} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -31319,9 +31354,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -31349,9 +31384,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLDARKCLOUDCOVER updateAndFill", "inOpen", inOpen);
@@ -31427,8 +31462,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -32022,7 +32058,7 @@ public final class Core {
       CdldojiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLDOJI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -32053,9 +32089,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -32083,9 +32119,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLDOJI updateAndFill", "inOpen", inOpen);
@@ -32149,8 +32185,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -32785,7 +32822,7 @@ public final class Core {
       CdldojistarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLDOJISTAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -32827,9 +32864,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -32857,9 +32894,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLDOJISTAR updateAndFill", "inOpen", inOpen);
@@ -32950,8 +32987,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -33633,7 +33671,7 @@ public final class Core {
       CdldragonflydojiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLDRAGONFLYDOJI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -33671,9 +33709,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -33701,9 +33739,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLDRAGONFLYDOJI updateAndFill", "inOpen", inOpen);
@@ -33783,8 +33821,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -34379,7 +34418,7 @@ public final class Core {
       CdlengulfingStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLENGULFING} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -34405,9 +34444,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -34435,9 +34474,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLENGULFING updateAndFill", "inOpen", inOpen);
@@ -34492,8 +34531,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -35161,7 +35201,7 @@ public final class Core {
       CdleveningdojistarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLEVENINGDOJISTAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -35215,9 +35255,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -35245,9 +35285,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLEVENINGDOJISTAR updateAndFill", "inOpen", inOpen);
@@ -35366,8 +35406,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -36159,7 +36200,7 @@ public final class Core {
       CdleveningstarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLEVENINGSTAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -36208,9 +36249,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -36238,9 +36279,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLEVENINGSTAR updateAndFill", "inOpen", inOpen);
@@ -36343,8 +36384,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -37063,7 +37105,7 @@ public final class Core {
       CdlgapsidesidewhiteStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLGAPSIDESIDEWHITE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -37109,9 +37151,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -37139,9 +37181,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLGAPSIDESIDEWHITE updateAndFill", "inOpen", inOpen);
@@ -37236,8 +37278,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -37931,7 +37974,7 @@ public final class Core {
       CdlgravestonedojiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLGRAVESTONEDOJI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -37969,9 +38012,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -37999,9 +38042,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLGRAVESTONEDOJI updateAndFill", "inOpen", inOpen);
@@ -38081,8 +38124,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -38819,7 +38863,7 @@ public final class Core {
       CdlhammerStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLHAMMER} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -38875,9 +38919,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -38905,9 +38949,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLHAMMER updateAndFill", "inOpen", inOpen);
@@ -39031,8 +39075,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -39872,7 +39917,7 @@ public final class Core {
       CdlhangingmanStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLHANGINGMAN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -39928,9 +39973,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -39958,9 +40003,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLHANGINGMAN updateAndFill", "inOpen", inOpen);
@@ -40084,8 +40129,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -40874,7 +40920,7 @@ public final class Core {
       CdlharamiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLHARAMI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -40916,9 +40962,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -40946,9 +40992,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLHARAMI updateAndFill", "inOpen", inOpen);
@@ -41053,8 +41099,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -41786,7 +41833,7 @@ public final class Core {
       CdlharamicrossStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLHARAMICROSS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -41828,9 +41875,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -41858,9 +41905,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLHARAMICROSS updateAndFill", "inOpen", inOpen);
@@ -41965,8 +42012,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -42671,7 +42719,7 @@ public final class Core {
       CdlhighwaveStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLHIGHWAVE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -42709,9 +42757,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -42739,9 +42787,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLHIGHWAVE updateAndFill", "inOpen", inOpen);
@@ -42821,8 +42869,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -43485,7 +43534,7 @@ public final class Core {
       CdlhikkakeStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLHIKKAKE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -43517,9 +43566,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -43547,9 +43596,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLHIKKAKE updateAndFill", "inOpen", inOpen);
@@ -43621,8 +43670,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -44332,7 +44382,7 @@ public final class Core {
       CdlhikkakemodStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLHIKKAKEMOD} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -44378,9 +44428,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -44408,9 +44458,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLHIKKAKEMOD updateAndFill", "inOpen", inOpen);
@@ -44510,8 +44560,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -45233,7 +45284,7 @@ public final class Core {
       CdlhomingpigeonStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLHOMINGPIGEON} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -45276,9 +45327,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -45306,9 +45357,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLHOMINGPIGEON updateAndFill", "inOpen", inOpen);
@@ -45400,8 +45451,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -46120,7 +46172,7 @@ public final class Core {
       Cdlidentical3crowsStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLIDENTICAL3CROWS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -46168,9 +46220,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -46198,9 +46250,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLIDENTICAL3CROWS updateAndFill", "inOpen", inOpen);
@@ -46310,8 +46362,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -47042,7 +47095,7 @@ public final class Core {
       CdlinneckStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLINNECK} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -47086,9 +47139,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -47116,9 +47169,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLINNECK updateAndFill", "inOpen", inOpen);
@@ -47208,8 +47261,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -47923,7 +47977,7 @@ public final class Core {
       CdlinvertedhammerStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLINVERTEDHAMMER} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -47970,9 +48024,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -48000,9 +48054,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLINVERTEDHAMMER updateAndFill", "inOpen", inOpen);
@@ -48107,8 +48161,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -48841,7 +48896,7 @@ public final class Core {
       CdlkickingStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLKICKING} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -48885,9 +48940,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -48915,9 +48970,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLKICKING updateAndFill", "inOpen", inOpen);
@@ -49013,8 +49068,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -49717,7 +49773,7 @@ public final class Core {
       CdlkickingbylengthStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLKICKINGBYLENGTH} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -49761,9 +49817,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -49791,9 +49847,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLKICKINGBYLENGTH updateAndFill", "inOpen", inOpen);
@@ -49889,8 +49945,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -50565,7 +50622,7 @@ public final class Core {
       CdlladderbottomStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLLADDERBOTTOM} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -50607,9 +50664,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -50637,9 +50694,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLLADDERBOTTOM updateAndFill", "inOpen", inOpen);
@@ -50733,8 +50790,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -51395,7 +51453,7 @@ public final class Core {
       CdllongleggeddojiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLLONGLEGGEDDOJI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -51433,9 +51491,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -51463,9 +51521,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLLONGLEGGEDDOJI updateAndFill", "inOpen", inOpen);
@@ -51545,8 +51603,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -52186,7 +52245,7 @@ public final class Core {
       CdllonglineStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLLONGLINE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -52224,9 +52283,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -52254,9 +52313,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLLONGLINE updateAndFill", "inOpen", inOpen);
@@ -52336,8 +52395,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -52988,7 +53048,7 @@ public final class Core {
       CdlmarubozuStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLMARUBOZU} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -53026,9 +53086,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -53056,9 +53116,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLMARUBOZU updateAndFill", "inOpen", inOpen);
@@ -53138,8 +53198,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -53763,7 +53824,7 @@ public final class Core {
       CdlmatchinglowStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLMATCHINGLOW} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -53799,9 +53860,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -53829,9 +53890,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLMATCHINGLOW updateAndFill", "inOpen", inOpen);
@@ -53905,8 +53966,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -54613,7 +54675,7 @@ public final class Core {
       CdlmatholdStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLMATHOLD} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -54669,9 +54731,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -54699,9 +54761,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLMATHOLD updateAndFill", "inOpen", inOpen);
@@ -54828,8 +54890,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -55659,7 +55722,7 @@ public final class Core {
       CdlmorningdojistarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLMORNINGDOJISTAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -55713,9 +55776,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -55743,9 +55806,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLMORNINGDOJISTAR updateAndFill", "inOpen", inOpen);
@@ -55864,8 +55927,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -56665,7 +56729,7 @@ public final class Core {
       CdlmorningstarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLMORNINGSTAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -56714,9 +56778,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -56744,9 +56808,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLMORNINGSTAR updateAndFill", "inOpen", inOpen);
@@ -56849,8 +56913,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -57567,7 +57632,7 @@ public final class Core {
       CdlonneckStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLONNECK} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -57611,9 +57676,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -57641,9 +57706,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLONNECK updateAndFill", "inOpen", inOpen);
@@ -57733,8 +57798,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -58389,7 +58455,7 @@ public final class Core {
       CdlpiercingStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLPIERCING} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -58425,9 +58491,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -58455,9 +58521,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLPIERCING updateAndFill", "inOpen", inOpen);
@@ -58538,8 +58604,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -59219,7 +59286,7 @@ public final class Core {
       CdlrickshawmanStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLRICKSHAWMAN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -59264,9 +59331,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -59294,9 +59361,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLRICKSHAWMAN updateAndFill", "inOpen", inOpen);
@@ -59396,8 +59463,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -60162,7 +60230,7 @@ public final class Core {
       Cdlrisefall3methodsStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLRISEFALL3METHODS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -60217,9 +60285,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -60247,9 +60315,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLRISEFALL3METHODS updateAndFill", "inOpen", inOpen);
@@ -60380,8 +60448,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -61167,7 +61236,7 @@ public final class Core {
       CdlseparatinglinesStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLSEPARATINGLINES} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -61217,9 +61286,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -61247,9 +61316,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLSEPARATINGLINES updateAndFill", "inOpen", inOpen);
@@ -61356,8 +61425,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -62116,7 +62186,7 @@ public final class Core {
       CdlshootingstarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLSHOOTINGSTAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -62163,9 +62233,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -62193,9 +62263,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLSHOOTINGSTAR updateAndFill", "inOpen", inOpen);
@@ -62300,8 +62370,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -63014,7 +63085,7 @@ public final class Core {
       CdlshortlineStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLSHORTLINE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -63052,9 +63123,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -63082,9 +63153,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLSHORTLINE updateAndFill", "inOpen", inOpen);
@@ -63164,8 +63235,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -63772,7 +63844,7 @@ public final class Core {
       CdlspinningtopStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLSPINNINGTOP} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -63803,9 +63875,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -63833,9 +63905,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLSPINNINGTOP updateAndFill", "inOpen", inOpen);
@@ -63899,8 +63971,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -64631,7 +64704,7 @@ public final class Core {
       CdlstalledpatternStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLSTALLEDPATTERN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -64694,9 +64767,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -64724,9 +64797,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLSTALLEDPATTERN updateAndFill", "inOpen", inOpen);
@@ -64864,8 +64937,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -65632,7 +65706,7 @@ public final class Core {
       CdlsticksandwichStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLSTICKSANDWICH} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -65672,9 +65746,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -65702,9 +65776,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLSTICKSANDWICH updateAndFill", "inOpen", inOpen);
@@ -65788,8 +65862,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -66468,7 +66543,7 @@ public final class Core {
       CdltakuriStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLTAKURI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -66513,9 +66588,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -66543,9 +66618,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLTAKURI updateAndFill", "inOpen", inOpen);
@@ -66641,8 +66716,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -67324,7 +67400,7 @@ public final class Core {
       CdltasukigapStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLTASUKIGAP} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -67362,9 +67438,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -67392,9 +67468,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLTASUKIGAP updateAndFill", "inOpen", inOpen);
@@ -67482,8 +67558,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -68155,7 +68232,7 @@ public final class Core {
       CdlthrustingStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLTHRUSTING} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -68199,9 +68276,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -68229,9 +68306,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLTHRUSTING updateAndFill", "inOpen", inOpen);
@@ -68321,8 +68398,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -68987,7 +69065,7 @@ public final class Core {
       CdltristarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLTRISTAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -69026,9 +69104,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -69056,9 +69134,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLTRISTAR updateAndFill", "inOpen", inOpen);
@@ -69152,8 +69230,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -69826,7 +69905,7 @@ public final class Core {
       Cdlunique3riverStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLUNIQUE3RIVER} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -69872,9 +69951,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -69902,9 +69981,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLUNIQUE3RIVER updateAndFill", "inOpen", inOpen);
@@ -70009,8 +70088,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -70719,7 +70799,7 @@ public final class Core {
       Cdlupsidegap2crowsStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLUPSIDEGAP2CROWS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -70765,9 +70845,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -70795,9 +70875,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLUPSIDEGAP2CROWS updateAndFill", "inOpen", inOpen);
@@ -70902,8 +70982,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -71532,7 +71613,7 @@ public final class Core {
       Cdlxsidegap3methodsStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CDLXSIDEGAP3METHODS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -71560,9 +71641,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -71590,9 +71671,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] ) {
          requireArgument("CDLXSIDEGAP3METHODS updateAndFill", "inOpen", inOpen);
@@ -71655,8 +71736,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -72080,7 +72162,7 @@ public final class Core {
       CeilStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CEIL} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -72104,9 +72186,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -72134,9 +72216,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("CEIL updateAndFill", "inReal", inReal);
@@ -72174,8 +72256,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -72809,7 +72892,7 @@ public final class Core {
       CmfStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CMF} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -72841,9 +72924,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -72871,9 +72954,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
          requireArgument("CMF updateAndFill", "inHigh", inHigh);
@@ -72943,8 +73026,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -73733,7 +73817,7 @@ public final class Core {
       CmoStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CMO} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -73761,9 +73845,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -73791,9 +73875,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("CMO updateAndFill", "inReal", inReal);
@@ -73857,8 +73941,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -74653,7 +74738,7 @@ public final class Core {
       CmouStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CMOU} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -74686,9 +74771,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -74716,9 +74801,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("CMOU updateAndFill", "inReal", inReal);
@@ -74816,8 +74901,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -75778,7 +75864,7 @@ public final class Core {
       CorrelStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CORREL} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -75821,9 +75907,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -75851,9 +75937,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
          requireArgument("CORREL updateAndFill", "inReal0", inReal0);
@@ -76074,8 +76160,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -76849,7 +76936,7 @@ public final class Core {
       CosStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#COS} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -76873,9 +76960,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -76903,9 +76990,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("COS updateAndFill", "inReal", inReal);
@@ -76943,8 +77030,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -77286,7 +77374,7 @@ public final class Core {
       CoshStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#COSH} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -77310,9 +77398,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -77340,9 +77428,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("COSH updateAndFill", "inReal", inReal);
@@ -77380,8 +77468,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -77951,7 +78040,7 @@ public final class Core {
       DemaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#DEMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -77979,9 +78068,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -78009,9 +78098,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("DEMA updateAndFill", "inReal", inReal);
@@ -78057,8 +78146,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -78560,7 +78650,7 @@ public final class Core {
       DivStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#DIV} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -78584,9 +78674,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -78614,9 +78704,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
          requireArgument("DIV updateAndFill", "inReal0", inReal0);
@@ -78655,8 +78745,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -79529,7 +79620,7 @@ public final class Core {
       DxStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#DX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -79561,9 +79652,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -79591,9 +79682,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("DX updateAndFill", "inHigh", inHigh);
@@ -79692,8 +79783,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -80633,7 +80725,7 @@ public final class Core {
       EfiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#EFI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -80661,9 +80753,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -80691,9 +80783,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
          requireArgument("EFI updateAndFill", "inClose", inClose);
@@ -80746,8 +80838,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -81455,7 +81548,7 @@ public final class Core {
       EmaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#EMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -81482,9 +81575,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -81512,9 +81605,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("EMA updateAndFill", "inReal", inReal);
@@ -81558,8 +81651,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -81989,7 +82083,7 @@ public final class Core {
       ExpStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#EXP} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -82013,9 +82107,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -82043,9 +82137,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("EXP updateAndFill", "inReal", inReal);
@@ -82083,8 +82177,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -82424,7 +82519,7 @@ public final class Core {
       FloorStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#FLOOR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -82448,9 +82543,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -82478,9 +82573,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("FLOOR updateAndFill", "inReal", inReal);
@@ -82518,8 +82613,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -83547,7 +83643,7 @@ public final class Core {
       HmaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#HMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -83608,9 +83704,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -83638,9 +83734,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("HMA updateAndFill", "inReal", inReal);
@@ -83873,8 +83969,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -85595,7 +85692,7 @@ public final class Core {
       HtDcperiodStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#HT_DCPERIOD} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -85664,9 +85761,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -85694,9 +85791,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("HT_DCPERIOD updateAndFill", "inReal", inReal);
@@ -85914,8 +86011,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -87557,7 +87655,7 @@ public final class Core {
       HtDcphaseStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#HT_DCPHASE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -87632,9 +87730,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -87662,9 +87760,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("HT_DCPHASE updateAndFill", "inReal", inReal);
@@ -87940,8 +88038,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -89609,7 +89708,7 @@ public final class Core {
       HtPhasorStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#HT_PHASOR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -89692,9 +89791,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -89723,9 +89822,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outInPhase[], double outQuadrature[] ) {
          requireArgument("HT_PHASOR updateAndFill", "inReal", inReal);
@@ -89954,8 +90053,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -91626,7 +91726,7 @@ public final class Core {
       HtSineStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#HT_SINE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -91717,9 +91817,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -91748,9 +91848,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outSine[], double outLeadSine[] ) {
          requireArgument("HT_SINE updateAndFill", "inReal", inReal);
@@ -92037,8 +92137,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -93765,7 +93866,7 @@ public final class Core {
       HtTrendlineStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#HT_TRENDLINE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -93840,9 +93941,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -93870,9 +93971,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("HT_TRENDLINE updateAndFill", "inReal", inReal);
@@ -94133,8 +94234,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -96018,7 +96120,7 @@ public final class Core {
       HtTrendmodeStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#HT_TRENDMODE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -96103,9 +96205,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -96133,9 +96235,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], int outInteger[] ) {
          requireArgument("HT_TRENDMODE updateAndFill", "inReal", inReal);
@@ -96485,8 +96587,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -97746,7 +97849,7 @@ public final class Core {
       ImiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#IMI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -97775,9 +97878,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -97805,9 +97908,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inClose[], double outReal[] ) {
          requireArgument("IMI updateAndFill", "inOpen", inOpen);
@@ -97879,8 +97982,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -98706,7 +98810,7 @@ public final class Core {
       KamaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#KAMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -98741,9 +98845,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -98771,9 +98875,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("KAMA updateAndFill", "inReal", inReal);
@@ -98876,8 +98980,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -99799,7 +99904,7 @@ public final class Core {
       LinearregStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#LINEARREG} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -99837,9 +99942,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -99867,9 +99972,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("LINEARREG updateAndFill", "inReal", inReal);
@@ -100015,8 +100120,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -100943,7 +101049,7 @@ public final class Core {
       LinearregAngleStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#LINEARREG_ANGLE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -100981,9 +101087,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -101011,9 +101117,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("LINEARREG_ANGLE updateAndFill", "inReal", inReal);
@@ -101157,8 +101263,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -102079,7 +102186,7 @@ public final class Core {
       LinearregInterceptStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#LINEARREG_INTERCEPT} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -102117,9 +102224,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -102147,9 +102254,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("LINEARREG_INTERCEPT updateAndFill", "inReal", inReal);
@@ -102293,8 +102400,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -103211,7 +103319,7 @@ public final class Core {
       LinearregSlopeStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#LINEARREG_SLOPE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -103249,9 +103357,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -103279,9 +103387,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("LINEARREG_SLOPE updateAndFill", "inReal", inReal);
@@ -103423,8 +103531,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -104058,7 +104167,7 @@ public final class Core {
       LnStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#LN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -104082,9 +104191,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -104112,9 +104221,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("LN updateAndFill", "inReal", inReal);
@@ -104152,8 +104261,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -104501,7 +104611,7 @@ public final class Core {
       Log10Stream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#LOG10} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -104525,9 +104635,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -104555,9 +104665,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("LOG10 updateAndFill", "inReal", inReal);
@@ -104595,8 +104705,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -105258,7 +105369,7 @@ public final class Core {
       MaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -105323,9 +105434,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -105353,9 +105464,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("MA updateAndFill", "inReal", inReal);
@@ -105442,8 +105553,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -106592,7 +106704,7 @@ public final class Core {
       MacdStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MACD} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -106642,9 +106754,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -106673,9 +106785,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
          requireArgument("MACD updateAndFill", "inReal", inReal);
@@ -106742,8 +106854,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -107692,7 +107805,7 @@ public final class Core {
       MacdextStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MACDEXT} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -107742,9 +107855,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -107773,9 +107886,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
          requireArgument("MACDEXT updateAndFill", "inReal", inReal);
@@ -107836,8 +107949,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -108660,7 +108774,7 @@ public final class Core {
       MacdfixStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MACDFIX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -108708,9 +108822,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -108739,9 +108853,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outMACD[], double outMACDSignal[], double outMACDHist[] ) {
          requireArgument("MACDFIX updateAndFill", "inReal", inReal);
@@ -108808,8 +108922,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -110145,7 +110260,7 @@ public final class Core {
       MamaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MAMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -110233,9 +110348,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -110267,9 +110382,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outMAMA[], double outFAMA[] ) {
          requireArgument("MAMA updateAndFill", "inReal", inReal);
@@ -110532,8 +110647,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -111574,7 +111690,7 @@ public final class Core {
       MarketfiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MARKETFI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -111598,9 +111714,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -111628,9 +111744,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] ) {
          requireArgument("MARKETFI updateAndFill", "inHigh", inHigh);
@@ -111684,8 +111800,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -112565,7 +112682,7 @@ public final class Core {
       MavpStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MAVP} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -112596,9 +112713,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -112626,9 +112743,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double inPeriods[], double outReal[] ) {
          requireArgument("MAVP updateAndFill", "inReal", inReal);
@@ -112673,8 +112790,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -113373,7 +113491,7 @@ public final class Core {
       MaxStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MAX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -113405,9 +113523,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -113435,9 +113553,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("MAX updateAndFill", "inReal", inReal);
@@ -113510,8 +113628,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -114109,7 +114228,7 @@ public final class Core {
       MaxindexStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MAXINDEX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -114141,9 +114260,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -114171,9 +114290,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], int outInteger[] ) {
          requireArgument("MAXINDEX updateAndFill", "inReal", inReal);
@@ -114246,8 +114365,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -114718,7 +114838,7 @@ public final class Core {
       MedpriceStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MEDPRICE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -114742,9 +114862,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -114772,9 +114892,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("MEDPRICE updateAndFill", "inHigh", inHigh);
@@ -114813,8 +114933,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -115508,7 +115629,7 @@ public final class Core {
       MfiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MFI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -115542,9 +115663,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -115572,9 +115693,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
          requireArgument("MFI updateAndFill", "inHigh", inHigh);
@@ -115658,8 +115779,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -116547,7 +116669,7 @@ public final class Core {
       MidpointStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MIDPOINT} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -116581,9 +116703,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -116611,9 +116733,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("MIDPOINT updateAndFill", "inReal", inReal);
@@ -116706,8 +116828,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -117554,7 +117677,7 @@ public final class Core {
       MidpriceStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MIDPRICE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -117589,9 +117712,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -117619,9 +117742,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("MIDPRICE updateAndFill", "inHigh", inHigh);
@@ -117719,8 +117842,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -118479,7 +118603,7 @@ public final class Core {
       MinStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MIN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -118511,9 +118635,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -118541,9 +118665,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("MIN updateAndFill", "inReal", inReal);
@@ -118616,8 +118740,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -119213,7 +119338,7 @@ public final class Core {
       MinindexStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MININDEX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -119245,9 +119370,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -119275,9 +119400,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], int outInteger[] ) {
          requireArgument("MININDEX updateAndFill", "inReal", inReal);
@@ -119350,8 +119475,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public int value() {
@@ -120136,7 +120262,7 @@ public final class Core {
       MinmaxStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MINMAX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -120185,9 +120311,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -120216,9 +120342,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outMin[], double outMax[] ) {
          requireArgument("MINMAX updateAndFill", "inReal", inReal);
@@ -120322,8 +120448,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -121041,7 +121168,7 @@ public final class Core {
       MinmaxindexStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MINMAXINDEX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -121090,9 +121217,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -121121,9 +121248,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], int outMinIdx[], int outMaxIdx[] ) {
          requireArgument("MINMAXINDEX updateAndFill", "inReal", inReal);
@@ -121227,8 +121354,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -122274,7 +122402,7 @@ public final class Core {
       MinusDiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MINUS_DI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -122304,9 +122432,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -122334,9 +122462,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("MINUS_DI updateAndFill", "inHigh", inHigh);
@@ -122460,8 +122588,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -123670,7 +123799,7 @@ public final class Core {
       MinusDmStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MINUS_DM} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -123698,9 +123827,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -123728,9 +123857,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("MINUS_DM updateAndFill", "inHigh", inHigh);
@@ -123812,8 +123941,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -124591,7 +124721,7 @@ public final class Core {
       MomStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MOM} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -124619,9 +124749,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -124649,9 +124779,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("MOM updateAndFill", "inReal", inReal);
@@ -124700,8 +124830,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -125135,7 +125266,7 @@ public final class Core {
       MultStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#MULT} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -125159,9 +125290,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -125189,9 +125320,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
          requireArgument("MULT updateAndFill", "inReal0", inReal0);
@@ -125230,8 +125361,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -125939,7 +126071,7 @@ public final class Core {
       NatrStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#NATR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -125966,9 +126098,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -125996,9 +126128,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("NATR updateAndFill", "inHigh", inHigh);
@@ -126075,8 +126207,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -126749,7 +126882,7 @@ public final class Core {
       NviStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#NVI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -126776,9 +126909,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -126806,9 +126939,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
          requireArgument("NVI updateAndFill", "inClose", inClose);
@@ -126879,8 +127012,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -127337,7 +127471,7 @@ public final class Core {
       ObvStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#OBV} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -127363,9 +127497,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -127393,9 +127527,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double inVolume[], double outReal[] ) {
          requireArgument("OBV updateAndFill", "inReal", inReal);
@@ -127444,8 +127578,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -128376,7 +128511,7 @@ public final class Core {
       PlusDiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#PLUS_DI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -128406,9 +128541,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -128436,9 +128571,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("PLUS_DI updateAndFill", "inHigh", inHigh);
@@ -128562,8 +128697,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -129771,7 +129907,7 @@ public final class Core {
       PlusDmStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#PLUS_DM} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -129799,9 +129935,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -129829,9 +129965,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("PLUS_DM updateAndFill", "inHigh", inHigh);
@@ -129913,8 +130049,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -130781,7 +130918,7 @@ public final class Core {
       PpoStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#PPO} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -130810,9 +130947,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -130840,9 +130977,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("PPO updateAndFill", "inReal", inReal);
@@ -130891,8 +131028,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -131421,7 +131559,7 @@ public final class Core {
       PviStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#PVI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -131448,9 +131586,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -131478,9 +131616,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inClose[], double inVolume[], double outReal[] ) {
          requireArgument("PVI updateAndFill", "inClose", inClose);
@@ -131551,8 +131689,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -132160,7 +132299,7 @@ public final class Core {
       PvoStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#PVO} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -132189,9 +132328,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -132219,9 +132358,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inVolume[], double outReal[] ) {
          requireArgument("PVO updateAndFill", "inVolume", inVolume);
@@ -132270,8 +132409,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -132852,7 +132992,7 @@ public final class Core {
       QstickStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#QSTICK} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -132881,9 +133021,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -132911,9 +133051,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inOpen[], double inClose[], double outReal[] ) {
          requireArgument("QSTICK updateAndFill", "inOpen", inOpen);
@@ -132968,8 +133108,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -133524,7 +133665,7 @@ public final class Core {
       RocStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ROC} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -133552,9 +133693,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -133582,9 +133723,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("ROC updateAndFill", "inReal", inReal);
@@ -133639,8 +133780,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -134180,7 +134322,7 @@ public final class Core {
       RocpStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ROCP} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -134208,9 +134350,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -134238,9 +134380,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("ROCP updateAndFill", "inReal", inReal);
@@ -134295,8 +134437,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -134839,7 +134982,7 @@ public final class Core {
       RocrStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ROCR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -134867,9 +135010,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -134897,9 +135040,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("ROCR updateAndFill", "inReal", inReal);
@@ -134954,8 +135097,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -135500,7 +135644,7 @@ public final class Core {
       Rocr100Stream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ROCR100} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -135528,9 +135672,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -135558,9 +135702,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("ROCR100 updateAndFill", "inReal", inReal);
@@ -135615,8 +135759,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -136364,7 +136509,7 @@ public final class Core {
       RsiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#RSI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -136392,9 +136537,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -136422,9 +136567,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("RSI updateAndFill", "inReal", inReal);
@@ -136488,8 +136633,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -137447,7 +137593,7 @@ public final class Core {
       SarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -137479,9 +137625,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -137509,9 +137655,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("SAR updateAndFill", "inHigh", inHigh);
@@ -137670,8 +137816,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -139044,7 +139191,7 @@ public final class Core {
       SarextStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SAREXT} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -139083,9 +139230,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -139113,9 +139260,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double outReal[] ) {
          requireArgument("SAREXT updateAndFill", "inHigh", inHigh);
@@ -139281,8 +139428,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -140082,7 +140230,7 @@ public final class Core {
       SinStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SIN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -140106,9 +140254,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -140136,9 +140284,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("SIN updateAndFill", "inReal", inReal);
@@ -140176,8 +140324,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -140517,7 +140666,7 @@ public final class Core {
       SinhStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SINH} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -140541,9 +140690,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -140571,9 +140720,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("SINH updateAndFill", "inReal", inReal);
@@ -140611,8 +140760,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -141072,7 +141222,7 @@ public final class Core {
       SmaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -141101,9 +141251,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -141131,9 +141281,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("SMA updateAndFill", "inReal", inReal);
@@ -141187,8 +141337,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -142257,7 +142408,7 @@ public final class Core {
       SmiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SMI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -142319,9 +142470,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -142350,9 +142501,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outSMI[], double outSMISignal[] ) {
          requireArgument("SMI updateAndFill", "inHigh", inHigh);
@@ -142500,8 +142651,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -143243,7 +143395,7 @@ public final class Core {
       SqrtStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SQRT} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -143267,9 +143419,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -143297,9 +143449,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("SQRT updateAndFill", "inReal", inReal);
@@ -143337,8 +143489,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -143800,7 +143953,7 @@ public final class Core {
       StddevStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#STDDEV} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -143827,9 +143980,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -143857,9 +144010,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("STDDEV updateAndFill", "inReal", inReal);
@@ -143904,8 +144057,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -144829,7 +144983,7 @@ public final class Core {
       StochStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#STOCH} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -144887,9 +145041,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -144918,9 +145072,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outSlowK[], double outSlowD[] ) {
          requireArgument("STOCH updateAndFill", "inHigh", inHigh);
@@ -145056,8 +145210,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -146182,7 +146337,7 @@ public final class Core {
       StochfStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#STOCHF} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -146237,9 +146392,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -146268,9 +146423,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outFastK[], double outFastD[] ) {
          requireArgument("STOCHF updateAndFill", "inHigh", inHigh);
@@ -146405,8 +146560,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -147320,7 +147476,7 @@ public final class Core {
       StochrsiStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#STOCHRSI} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -147365,9 +147521,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -147396,9 +147552,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outFastK[], double outFastD[] ) {
          requireArgument("STOCHRSI updateAndFill", "inReal", inReal);
@@ -147453,8 +147609,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public Value value() {
@@ -147914,7 +148071,7 @@ public final class Core {
       SubStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SUB} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -147938,9 +148095,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -147968,9 +148125,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
          requireArgument("SUB updateAndFill", "inReal0", inReal0);
@@ -148009,8 +148166,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -148453,7 +148611,7 @@ public final class Core {
       SumStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#SUM} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -148482,9 +148640,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -148512,9 +148670,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("SUM updateAndFill", "inReal", inReal);
@@ -148568,8 +148726,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -149321,7 +149480,7 @@ public final class Core {
       T3Stream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#T3} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -149359,9 +149518,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -149389,9 +149548,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("T3 updateAndFill", "inReal", inReal);
@@ -149445,8 +149604,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -149980,7 +150140,7 @@ public final class Core {
       TanStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#TAN} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -150004,9 +150164,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -150034,9 +150194,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("TAN updateAndFill", "inReal", inReal);
@@ -150074,8 +150234,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -150417,7 +150578,7 @@ public final class Core {
       TanhStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#TANH} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -150441,9 +150602,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -150471,9 +150632,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("TANH updateAndFill", "inReal", inReal);
@@ -150511,8 +150672,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -151123,7 +151285,7 @@ public final class Core {
       TemaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#TEMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -151152,9 +151314,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -151182,9 +151344,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("TEMA updateAndFill", "inReal", inReal);
@@ -151232,8 +151394,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -151855,7 +152018,7 @@ public final class Core {
       TrangeStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#TRANGE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -151880,9 +152043,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -151910,9 +152073,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("TRANGE updateAndFill", "inHigh", inHigh);
@@ -151974,8 +152137,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -152806,7 +152970,7 @@ public final class Core {
       TrimaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#TRIMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -152842,9 +153006,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -152872,9 +153036,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("TRIMA updateAndFill", "inReal", inReal);
@@ -152996,8 +153160,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -154048,7 +154213,7 @@ public final class Core {
       TrixStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#TRIX} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -154077,9 +154242,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -154107,9 +154272,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("TRIX updateAndFill", "inReal", inReal);
@@ -154159,8 +154324,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -154913,7 +155079,7 @@ public final class Core {
       TsfStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#TSF} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -154951,9 +155117,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -154981,9 +155147,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("TSF updateAndFill", "inReal", inReal);
@@ -155129,8 +155295,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -155791,7 +155958,7 @@ public final class Core {
       TyppriceStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#TYPPRICE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -155815,9 +155982,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -155845,9 +156012,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("TYPPRICE updateAndFill", "inHigh", inHigh);
@@ -155887,8 +156054,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -156817,7 +156985,7 @@ public final class Core {
       UltoscStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#ULTOSC} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -156859,9 +157027,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -156889,9 +157057,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("ULTOSC updateAndFill", "inHigh", inHigh);
@@ -157046,8 +157214,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -158090,7 +158259,7 @@ public final class Core {
       VarStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#VAR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -158128,9 +158297,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -158158,9 +158327,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("VAR updateAndFill", "inReal", inReal);
@@ -158326,8 +158495,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -159172,7 +159342,7 @@ public final class Core {
       VwapStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#VWAP} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -159199,9 +159369,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -159229,9 +159399,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] ) {
          requireArgument("VWAP updateAndFill", "inHigh", inHigh);
@@ -159362,8 +159532,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -160120,7 +160291,7 @@ public final class Core {
       VwmaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#VWMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -160151,9 +160322,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -160181,9 +160352,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double inVolume[], double outReal[] ) {
          requireArgument("VWMA updateAndFill", "inReal", inReal);
@@ -160261,8 +160432,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -160909,7 +161081,7 @@ public final class Core {
       WadStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#WAD} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -160935,9 +161107,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -160965,9 +161137,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("WAD updateAndFill", "inHigh", inHigh);
@@ -161026,8 +161198,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -161485,7 +161658,7 @@ public final class Core {
       WclpriceStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#WCLPRICE} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -161509,9 +161682,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -161539,9 +161712,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("WCLPRICE updateAndFill", "inHigh", inHigh);
@@ -161581,8 +161754,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -162301,7 +162475,7 @@ public final class Core {
       WillrStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#WILLR} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -162338,9 +162512,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -162368,9 +162542,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] ) {
          requireArgument("WILLR updateAndFill", "inHigh", inHigh);
@@ -162483,8 +162657,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {
@@ -163324,7 +163499,7 @@ public final class Core {
       WmaStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#WMA} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -163361,9 +163536,9 @@ public final class Core {
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -163391,9 +163566,9 @@ public final class Core {
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal[], double outReal[] ) {
          requireArgument("WMA updateAndFill", "inReal", inReal);
@@ -163534,8 +163709,9 @@ public final class Core {
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {

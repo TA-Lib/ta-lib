@@ -482,6 +482,7 @@ typedef enum
   TA_STREAM_ADVANCE_NOT_RESUMED      = 1645,
   TA_STREAM_ADVANCE_SETUP_FAILED     = 1646,
   TA_STREAM_ADVANCE_VACUOUS          = 1647,
+  TA_STREAM_ADVANCE_VALUE_NOT_HELD   = 1648,
 
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */

@@ -215,11 +215,11 @@ TA_RetCode TA_S_CDLXSIDEGAP3METHODS( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLXSIDEGAP3METHODS_Stream {
-   /* The bars this handle has consumed (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_CDLXSIDEGAP3METHODS_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_CDLXSIDEGAP3METHODS_Value). */
    int cur_outInteger;
    double lag1_inOpen;
    double lag2_inOpen;

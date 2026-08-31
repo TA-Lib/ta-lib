@@ -881,12 +881,12 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
          /// over the same series. Open with [`Core::{sn}_open`]; dropping the handle\n\
          /// closes the stream. Cloning it forks an independent stream.\n\
          ///\n\
-         /// [`Self::out_range`] reports the bars it has consumed.\n\
+         /// [`Self::out_range`] reports the bars this handle has an output for.\n\
          #[must_use = \"a stream does nothing unless updated; dropping it closes the stream\"]\n\
          #[derive(Debug, Clone)]\n\
          #[doc(alias = \"TA_{n}_Stream\")]\n\
          pub struct {handle} {{\n{cs_fields}    state: {state},\n\
-         \x20   /// The bars this handle has consumed — see [`Self::out_range`].\n\
+         \x20   /// The bars this handle has an output for — see [`Self::out_range`].\n\
          \x20   out: OutRange,\n}}\n"
     );
 }
@@ -935,9 +935,9 @@ fn emit_state_struct_from(o: &mut String, func: &FuncDef, fields: &[(String, Str
     emit_state_struct_decl(o, func, &state_type_name(func), fields, &[]);
 }
 
-/// The `cur_<output>` field list — the value(s) at the last committed bar,
-/// handed back by `value()`. Appended by every tier's state struct through the
-/// one declaration funnel, so a tier cannot be added without them.
+/// The `cur_<output>` field list — the value(s) at the last bar the stream
+/// counted, handed back by `value()`. Appended by every tier's state struct
+/// through the one declaration funnel, so a tier cannot be added without them.
 ///
 /// Distinct from `lastOut_` even where both exist (DX): that one is the
 /// PREVIOUS bar's output, read by the body while computing this one.
@@ -3126,13 +3126,13 @@ fn emit_update_and_peek(
     };
     let _ = writeln!(
         o,
-        "    /// The value(s) at the last committed bar, without recomputing —\n\
-         \x20   /// seeded by the opener, refreshed by every accepted `update` and\n\
-         \x20   /// `update_and_fill`, and left alone by `peek`.\n\
+        "    /// The value(s) at the last bar the stream counted — the bar\n\
+         \x20   /// [`Self::out_range`] ends on — without recomputing. Seeded by the opener,\n\
+         \x20   /// refreshed by every accepted `update` and `update_and_fill`, and left\n\
+         \x20   /// alone by `peek`.\n\
          \x20   ///\n\
-         \x20   /// The bars they belong to are what [`Self::out_range`] reports. A clone\n\
-         \x20   /// carries them verbatim, so a forked handle can be asked its current\n\
-         \x20   /// value without committing a bar to find out.\n\
+         \x20   /// A clone carries them verbatim, so a forked handle can be asked its\n\
+         \x20   /// current value without committing a bar to find out.\n\
          \x20   #[must_use]\n\
          \x20   #[doc(alias = \"TA_{n}_Value\")]\n\
          \x20   pub fn value(&self) -> {vt} {{\n\
@@ -3144,7 +3144,7 @@ fn emit_update_and_peek(
     // after an update or off a plain `Open`.
     let _ = writeln!(
         o,
-        "    /// The bars this stream has consumed, in the input series'\n\
+        "    /// The bars this stream has an output for, in the input series'\n\
          \x20   /// coordinates: `[beg_idx, beg_idx + count)`.\n\
          \x20   ///\n\
          \x20   /// It is what [`Core::{n}`] reports over the same bars: the opener sets it\n\

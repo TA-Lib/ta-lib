@@ -2958,7 +2958,7 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
     // TA_<N>_Stream, so 172 typed accessors would add 172 public entry points
     // for the same pair.
     o.push_str(
-        "/* The range of bars a live stream has consumed, in the\n\
+        "/* The range of bars a live stream has an output for, in the\n\
          \x20* input series' coordinates: [*outBegIdx, *outBegIdx + *outNBElement).\n\
          \x20*\n\
          \x20* It is what the batch call over the same bars reports. A handle opened\n\

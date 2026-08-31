@@ -688,7 +688,7 @@ fn emit_handle_class_with_members(
         let _ = writeln!(o, "      {jty} {name};");
     }
     o.push_str(extra_members);
-    // The bars this handle has consumed (issue #241). Two ints
+    // The bars this handle has an output for (issue #241). Two ints
     // rather than an `OutRange`: `update` runs on every bar and the emitted
     // javadoc promises it never allocates handle state, so the record is built
     // in the accessor instead of replaced per bar.
@@ -698,7 +698,7 @@ fn emit_handle_class_with_members(
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * The bars this stream has consumed, in the input series'\n\
+         \x20      * The bars this stream has an output for, in the input series'\n\
          \x20      * coordinates: {{@code [begIdx, begIdx + count)}}.\n\
          \x20      * <p>It is what {{@link Core#{base}}} reports over the same bars: the\n\
          \x20      * opener sets it to {{@code (lookback, historyLen - lookback)}}, every\n\
@@ -884,9 +884,9 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
          \x20      * Never allocates handle state.\n\
          \x20      * <p>Throws {{@link IllegalArgumentException}} if any bar value is not\n\
          \x20      * finite (NaN or an infinity). That check runs before anything is\n\
-         \x20      * written, so the state is left exactly as it was and\n\
-         \x20      * {{@link #value()}} still answers the previous bar —\n\
-         \x20      * the stream stays usable, so skip the bar or re-open on a clean\n\
+         \x20      * written, so the state is left exactly as it was: the rejected bar's\n\
+         \x20      * output is the previous value, held, and {{@link #value()}} answers it.\n\
+         \x20      * The stream stays usable, so skip the bar or re-open on a clean\n\
          \x20      * history. {{@link #outRange()}} does advance: the bar happened and\n\
          \x20      * occupies a position in the series, so the handle counts it, which is\n\
          \x20      * what keeps two handles on one feed aligned when only one rejects.\n\
@@ -949,9 +949,9 @@ fn update_and_fill_doc(func: &FuncDef, count_src: &str) -> String {
          \x20      * <p>{{@link #outRange()}} counts what this call took in, which is what makes a\n\
          \x20      * rejection readable: a non-finite bar {{@code k}} throws\n\
          \x20      * {{@link IllegalArgumentException}} exactly as {{@code update}} would, with\n\
-         \x20      * bars {{@code 0..k}} committed and written, bar {{@code k}} and everything\n\
-         \x20      * after it not, and the count advanced by {{@code k + 1}} — the committed\n\
-         \x20      * bars plus the rejected one.\n\
+         \x20      * the bars before {{@code k}} committed and written, bar {{@code k}} and\n\
+         \x20      * everything after it not, and the count advanced by {{@code k + 1}} —\n\
+         \x20      * the committed bars plus the rejected one.\n\
          \x20      */"
     );
     o
@@ -1136,8 +1136,9 @@ fn emit_value_method(o: &mut String, func: &FuncDef) {
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * The value at the most recently committed bar — the last history bar\n\
-         \x20      * right after open, then whatever the latest {{@code update}} returned.\n\
+         \x20      * The value at the last bar this stream counted — the bar\n\
+         \x20      * {{@link #outRange()}} ends on. The last history bar right after open,\n\
+         \x20      * then whatever the latest accepted {{@code update}} returned.\n\
          \x20      * A pure field read; {{@code peek}} does not change it.\n\
          \x20      */"
     );

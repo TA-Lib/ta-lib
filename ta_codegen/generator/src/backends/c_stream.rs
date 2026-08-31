@@ -977,9 +977,9 @@ pub fn value_signature(func: &FuncDef) -> String {
     )
 }
 
-/// `TA_<N>_Value`: the value(s) at the last committed bar, read back without
-/// recomputing. Tier-independent — every tier retains into the same `cur_`
-/// fields — so it is emitted once for all five rather than per arm.
+/// `TA_<N>_Value`: the value(s) at the last bar the stream counted, read back
+/// without recomputing. Tier-independent — every tier retains into the same
+/// `cur_` fields — so it is emitted once for all five rather than per arm.
 ///
 /// Total on a live handle: an Open that returned `TA_SUCCESS` produced at least
 /// one value and seeded these fields, so there is no "before the first update"
@@ -1071,11 +1071,10 @@ pub fn header_decls(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Str
         "\n/*\n * Clone: fork the stream — an independent stream at the same bar, owning its\n * own copy of everything the original owns. Both must be closed. The fork\n * carries the value and the range verbatim.\n */\n{};\n",
         clone_signature(func)
     );
-    // Value: the last committed bar's value(s), re-read without recomputing.
-    // Declared unconditionally beside the rest — every tier retains them, so
-    // there is no shape that could lack it.
+    // Value: declared unconditionally beside the rest — every tier retains the
+    // `cur_` fields, so there is no shape that could lack it.
     let value = format!(
-        "\n/*\n * Value: the value(s) at the last committed bar, without recomputing —\n * seeded by Open, refreshed by Update and UpdateAndFill, left alone by Peek.\n */\n{};\n",
+        "\n/*\n * Value: the value(s) at the last bar the stream counted — the bar\n * TA_StreamOutRange ends on — without recomputing. Seeded by Open, refreshed by\n * every accepted Update and UpdateAndFill, left alone by Peek.\n */\n{};\n",
         value_signature(func)
     );
     format!(
@@ -3271,7 +3270,7 @@ fn emit_dual_frame_body(
 }
 
 /// The two leading members every `struct TA_<N>_Stream` carries: the range of
-/// bars the handle has consumed (issue #241).
+/// bars the handle has an output for (issue #241).
 ///
 /// First, and in this order, in every tier — `TA_StreamOutRange` reads the pair
 /// through a `const void *`, which is what lets ONE public accessor serve all
@@ -3284,14 +3283,14 @@ fn emit_dual_frame_body(
 /// otherwise on the handle, so there is nothing to derive it from at accessor
 /// time.
 fn emit_range_head_fields(o: &mut String) {
-    let _ = writeln!(o, "   /* The bars this handle has consumed (see TA_StreamOutRange).");
+    let _ = writeln!(o, "   /* The bars this handle has an output for (see TA_StreamOutRange).");
     let _ = writeln!(o, "    * Kept first, and in this order, in every stream struct. */");
     for decl in RANGE_HEAD_FIELDS {
         let _ = writeln!(o, "   {decl}");
     }
 }
 
-/// The `cur_<output>` fields: the value(s) at the most recently committed bar,
+/// The `cur_<output>` fields: the value(s) at the last bar the stream counted,
 /// which `TA_<N>_Value` hands back without recomputing. One per output, on
 /// every tier, emitted beside the range head so the two accessors' storage
 /// cannot come apart tier by tier.
@@ -3300,7 +3299,7 @@ fn emit_range_head_fields(o: &mut String) {
 /// the PREVIOUS bar's output, read by the body while computing this one, and
 /// it is emitted only for the outputs a body actually reads back.
 fn emit_cur_fields(o: &mut String, func: &FuncDef) {
-    let _ = writeln!(o, "   /* The value(s) at the last committed bar (see TA_{}_Value). */", uname(func));
+    let _ = writeln!(o, "   /* The value(s) at the last bar the stream counted (see TA_{}_Value). */", uname(func));
     for out in &func.outputs {
         let _ = writeln!(o, "   {} cur_{};", out_c_type(func, &out.name), out.name);
     }
@@ -3312,7 +3311,8 @@ fn emit_cur_fields(o: &mut String, func: &FuncDef) {
 /// struct leads with cannot come apart.
 pub const RANGE_HEAD_FIELDS: [&str; 2] = ["int outRangeBegIdx;", "int outRangeCount;"];
 
-/// Advance the handle's produced-bar count by one committed bar (issue #241).
+/// Advance the handle's count by one bar it has an output for (issue #241);
+/// the U3 reject path calls this too, not only the committing steps.
 /// Saturates at `TA_MAX_INDEX`: past that the stream has left the index domain
 /// the batch tier addresses at all, and a signed overflow would be undefined.
 fn emit_range_head_advance(o: &mut String, indent: &str, handle: &str) {

@@ -87,7 +87,7 @@ let (mut s, filled) = core.sma_open_and_fill(&history, 30, &mut warmup)?;
 let v = s.update(new_close)?;
 ```
 
-`open_and_fill` takes the [batch method](/api/rust/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. The output slices must not alias the input or each other.
+`open_and_fill` takes the [batch method](/api/rust/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream.
 
 **`update_and_fill`**
 
@@ -113,14 +113,14 @@ counts one more than the values written.
 
 | Call | When | Does |
 |------|------|------|
-| `stream.value()` | any time | the value(s) at the last bar consumed, without recomputing |
+| `stream.value()` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.out_range()` | any time | the bars the stream has consumed — the batch range over the same bars |
+| `stream.out_range()` | any time | the bars the stream has an output for — the batch range over the same bars |
 
 ```rust
-let v = s.value();          // the value at the last bar consumed
+let v = s.value();          // the value at the last bar s counted
 let mut fork = s.clone();   // independent from here on
-let r = s.out_range();      // the bars s has consumed
+let r = s.out_range();      // the bars s has an output for
 ```
 
 `value()` hands back what the opener or the last `update` already gave you: it
@@ -137,13 +137,13 @@ way to fork a live stream — the warm-up history is gone once the opener return
 and it is what makes `value()` worth having, since a fork has no call that handed
 you its value and `peek` would answer for a bar you have not committed.
 
-`out_range()` reports the bars the stream has consumed. A stream opened over
-`history.len()` bars starts at `(lookback, history.len() - lookback)`; every bar
-handed to `update` adds one — a bar rejected as non-finite included, since it
-happened and holds a position in the series, and its output is the previous one,
-held. That is what keeps two streams on the same feed positionally aligned when one
-rejects a bar the other accepts. `peek` counts nothing, and neither does a
-malformed call — a fault in the call is not a bar.
+`out_range()` reports the bars the stream has an output for. A stream opened
+over `history.len()` bars starts at `(lookback, history.len() - lookback)`; a bar
+the call accepts as data adds one, whether the step computes on it or it is
+turned down as non-finite — it happened and holds a position in the series, and
+its output is the previous one, held. That is what keeps two streams on the same
+feed positionally aligned when one rejects a bar the other accepts. `peek` counts
+nothing, and neither does a malformed call — a fault in the call is not a bar.
 
 None of the three returns a `Result`: they read what the stream already holds, so
 there is nothing for them to reject.

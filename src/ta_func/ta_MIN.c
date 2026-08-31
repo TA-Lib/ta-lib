@@ -408,11 +408,11 @@ TA_RetCode TA_S_MIN( int    startIdx,
 /* Using min_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 struct TA_MIN_Stream {
-   /* The bars this handle has consumed (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_MIN_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_MIN_Value). */
    double cur_outReal;
    int optInTimePeriod;
    double lowest;

@@ -893,11 +893,11 @@ TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_HT_DCPHASE_Stream {
-   /* The bars this handle has consumed (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_HT_DCPHASE_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_HT_DCPHASE_Value). */
    double cur_outReal;
    double period;
    double periodWMASum;

@@ -590,11 +590,11 @@ TA_RetCode TA_S_STOCH( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_STOCH_Stream {
-   /* The bars this handle has consumed (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
-   /* The value(s) at the last committed bar (see TA_STOCH_Value). */
+   /* The value(s) at the last bar the stream counted (see TA_STOCH_Value). */
    double cur_outSlowK;
    double cur_outSlowD;
    int optInFastK_Period;

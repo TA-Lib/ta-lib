@@ -621,7 +621,7 @@
       CorrelStream( Core core ) { this.core = core; }
 
       /**
-       * The bars this stream has consumed, in the input series'
+       * The bars this stream has an output for, in the input series'
        * coordinates: {@code [begIdx, begIdx + count)}.
        * <p>It is what {@link Core#CORREL} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
@@ -664,9 +664,9 @@
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
-       * written, so the state is left exactly as it was and
-       * {@link #value()} still answers the previous bar —
-       * the stream stays usable, so skip the bar or re-open on a clean
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
        * what keeps two handles on one feed aligned when only one rejects.
@@ -694,9 +694,9 @@
        * <p>{@link #outRange()} counts what this call took in, which is what makes a
        * rejection readable: a non-finite bar {@code k} throws
        * {@link IllegalArgumentException} exactly as {@code update} would, with
-       * bars {@code 0..k} committed and written, bar {@code k} and everything
-       * after it not, and the count advanced by {@code k + 1} — the committed
-       * bars plus the rejected one.
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
        */
       public void updateAndFill( double inReal0[], double inReal1[], double outReal[] ) {
          requireArgument("CORREL updateAndFill", "inReal0", inReal0);
@@ -917,8 +917,9 @@
       }
 
       /**
-       * The value at the most recently committed bar — the last history bar
-       * right after open, then whatever the latest {@code update} returned.
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
       public double value() {

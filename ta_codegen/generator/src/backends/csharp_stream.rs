@@ -911,7 +911,7 @@ fn emit_handle_class_with_members(
         let _ = writeln!(o, "      internal {cty} {name}{init};");
     }
     o.push_str(extra_members);
-    // The bars this handle has consumed (issue #241). Two ints
+    // The bars this handle has an output for (issue #241). Two ints
     // rather than an `OutRange` field: `OutRange` is a readonly struct, so a
     // per-bar count bump would have to rebuild it, and `Update` is the hot path.
     let _ = writeln!(o, "      internal int outRangeBegIdx;");
@@ -921,7 +921,7 @@ fn emit_handle_class_with_members(
 
     let mut d = XmlDoc::new();
     d.summary(
-        "The bars this stream has consumed, in the input series' \
+        "The bars this stream has an output for, in the input series' \
          coordinates: <c>[BegIdx, BegIdx + Count)</c>.",
     );
     d.open("remarks");
@@ -1338,8 +1338,9 @@ fn emit_value_property(o: &mut String, func: &FuncDef) {
 
     let mut d = XmlDoc::new();
     d.summary(
-        "The value at the most recently committed bar — the last history bar right after \
-         open, then whatever the latest <see cref=\"Update\"/> returned.",
+        "The value at the last bar this stream counted — the bar <see cref=\"OutRange\"/> \
+         ends on. The last history bar right after open, then whatever the latest \
+         accepted <see cref=\"Update\"/> returned.",
     );
     d.open("remarks");
     d.para("<see cref=\"Peek\"/> does not change it.");
