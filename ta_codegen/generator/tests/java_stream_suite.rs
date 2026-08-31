@@ -622,6 +622,49 @@ fn java_composed_copy_out_is_stride_guarded() {
     );
 }
 
+/// A store `validate_peekable` refuses: a compound one, which renders as a
+/// store reading its own target. A refusal drops the whole function back to the
+/// narrow set, so one such store justifies every copy in it. The other two
+/// refusals (a store in a loop, a counter-moving index) have no instance here;
+/// one would surface as an offender below rather than be waved through.
+fn refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool {
+    body.lines().any(|l| {
+        l.split_once('=').is_some_and(|(lhs, rhs)| {
+            // `!rhs.starts_with('=')`: `X[i] == X[j]` splits the same way a store
+            // does, and comparing two slots is not a store into either.
+            lhs.trim_end().ends_with(']')
+                && !rhs.starts_with('=')
+                && fields.iter().any(|f| {
+                    let sub = format!("{f}[");
+                    lhs.contains(&sub) && rhs.contains(&sub)
+                })
+        })
+    })
+}
+
+/// The handle's fixed-size accumulator fields: an array the BATCH body declares
+/// with a literal size. Off the emitted code, never a name list.
+fn accumulator_fields(section: &str, batch: &str) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for line in section.lines() {
+        if !line.starts_with("      ") || line.starts_with("       ") {
+            continue;
+        }
+        let Some(d) = line.trim().strip_suffix(';') else { continue };
+        let Some((ty, name)) = d.split_once(' ') else { continue };
+        if !ty.ends_with("[]") || !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+            continue;
+        }
+        let decl = format!("{ty} {name} = new {}[", ty.trim_end_matches("[]"));
+        if batch.match_indices(&decl).any(|(i, _)| {
+            batch[i + decl.len()..].split_once(']').is_some_and(|(n, _)| n.parse::<u32>().is_ok())
+        }) {
+            out.insert(name.to_string());
+        }
+    }
+    out
+}
+
 /// No tier copies a handle to peek it — swept over the whole corpus.
 ///
 /// Structural, because no value gate can see it: a peek that copied and then
@@ -664,8 +707,10 @@ fn no_java_peek_copies_the_handle() {
     let mut frames = 0usize;
     let mut writes = 0usize;
     let mut clones = 0usize;
+    let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
+        let mut cloning: BTreeSet<String> = BTreeSet::new();
         let (func, enums) = load_indicator(&name);
         let registry = Registry::from_dir(&input_dir());
         let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
@@ -728,6 +773,7 @@ fn no_java_peek_copies_the_handle() {
                 });
                 if literal {
                     clones += 1;
+                    cloning.insert(f.to_string());
                 } else {
                     offenders.push(format!("{name}: clones a non-fixed-size array: {l}"));
                 }
@@ -735,13 +781,32 @@ fn no_java_peek_copies_the_handle() {
                 offenders.push(format!("{name}: {l}"));
             }
         }
+        // A frame that clones with nothing refused was never offered the wide
+        // set, and allocates per peek for nothing.
+        let accs = accumulator_fields(&s, &batch);
+        if !cloning.is_empty() && !refused_accumulator_store(peek, &accs) {
+            offenders.push(format!(
+                "{name}: clones {cloning:?} but no accumulator store is refusable"
+            ));
+        }
+        // The other half of the split. The frame must TOUCH an accumulator: a
+        // field it never names is evidence either way.
+        if cloning.is_empty() && accs.iter().any(|f| peek.contains(&format!("{f}["))) {
+            fully_shadowed.insert(name.clone());
+        }
     }
     assert!(swept > 170, "only {swept} peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} peek(s) run a frame");
     assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
-    // A floor on the exemption itself: if the clone shape stopped being emitted
-    // the branch above would be dead and would stop discriminating.
-    assert!(clones >= 20, "only {clones} accumulator clones seen — the exemption is untested");
+    // Both sides of the split are floored, because the corpus has both and a
+    // sweep that stopped finding either would read green while measuring one.
+    assert!(clones >= 1, "no accumulator clone seen — the exemption is untested");
+    assert!(
+        fully_shadowed.len() >= 7,
+        "only {} handle(s) hold an accumulator the frame clones nothing of — the widened \
+         buffer set is no longer reaching them and peek allocates again",
+        fully_shadowed.len()
+    );
     assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));
 }
 

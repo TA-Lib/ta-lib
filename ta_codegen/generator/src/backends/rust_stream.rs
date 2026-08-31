@@ -19,8 +19,8 @@
 //! Deliberate simplifications vs the C emitter (see design spec):
 //! - `peek(&self)` runs a second frame of the transition that commits nothing,
 //!   as C does. The handle is never written — which is what keeps the signature
-//!   `&self` and the handle `Sync` — and nothing is copied, so the cost is flat
-//!   in the period.
+//!   `&self` and the handle `Sync` — and no buffer is copied, so the cost is
+//!   flat in the period.
 //! - Drop replaces Close; RAII replaces every OOM-unwind ladder.
 //! - `historyLen` is the FIRST input slice's length: empty is
 //!   `Err(OutOfRangeStartIndex)` (rule S1), and a multi-input open additionally
@@ -1153,8 +1153,8 @@ fn answer_bare_returns_rust(func: &FuncDef, body: &[Statement]) -> Vec<Statement
 }
 
 /// One model's peek frame: the transition rewritten to commit nothing, against
-/// `&self.state`, at `indent`. `None` where the frame cannot be built, and the
-/// caller falls back to peeking a copy of the handle.
+/// `&self.state`, at `indent`. `None` where the frame cannot be built, which
+/// the caller turns into a panic — every tier emits a frame.
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn peek_frame_arm(
     func: &FuncDef,
@@ -1170,12 +1170,8 @@ fn peek_frame_arm(
 ) -> Option<String> {
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, names).ok()?;
-    let pt = streaming::peek_transition(
-        &transition,
-        &streaming::transition_buffers(model, names),
-        Some(VarType::Index),
-    )
-    .ok()?;
+    let pt =
+        streaming::peek_transition_widest(model, names, &transition, Some(VarType::Index)).ok()?;
     // The extrema rebase moves the cursor before the first store, so its
     // targets are localized with the transition's own.
     let mut rebased: Vec<String> = Vec::new();
@@ -2986,8 +2982,8 @@ fn emit_update_and_peek(
         "    /// Evaluate a forming bar without committing — bit-identical to what the\n\
          \x20   /// next `update` with the same bar would return: the same transition,\n\
          \x20   /// rewritten so every store it would make lives in a local instead. It\n\
-         \x20   /// copies nothing and never allocates, so its cost does not grow with the\n\
-         \x20   /// period, and it writes no part of the handle — peeks may run\n\
+         \x20   /// allocates nothing and copies no buffer, so its cost does not grow with\n\
+         \x20   /// the period, and it writes no part of the handle — peeks may run\n\
          \x20   /// concurrently with each other.\n\
          \x20   ///\n\
          \x20   /// # Errors\n\

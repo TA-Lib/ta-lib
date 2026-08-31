@@ -38,11 +38,12 @@
 //! - There is no `close`: a handle is ordinary heap state — GC suffices (no
 //!   AutoCloseable, no finalizer). Handles are deliberately NOT serializable;
 //!   the sanctioned checkpoint story is re-opening from retained history.
-//! - `peek` = deep-copy constructor + step on the throwaway copy (the design
-//!   doc's stated cost model); `copy()` exposes the same constructor as an
-//!   independent stream. The copy is deep:
-//!   arrays clone, sub-handles copy recursively; only the `Core` reference is
-//!   shared (settings identity is the contract).
+//! - `peek` runs its own non-committing frame against the live handle, so its
+//!   cost is flat in the period; what it still clones is a fixed-size
+//!   accumulator the shadow rewrite refused. `copy()` is the deep-copy
+//!   constructor exposed as an independent stream: arrays clone, sub-handles
+//!   copy recursively; only the `Core` reference is shared (settings identity
+//!   is the contract).
 //! - Multi-output functions return a per-function immutable `Value` class
 //!   (public final fields, batch output order, generated toString/equals/
 //!   hashCode); `update` caches the instance so `value()` is a pure field
@@ -1057,19 +1058,16 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     };
     let (sig_bars, _) = bar_params(func);
 
-    // The allocation sentence is CONDITIONAL, because for 21 handles the
-    // unconditional one was false: a Java array field is a reference, so a
-    // frame that writes a fixed-size accumulator has to clone it, and that
-    // clone is a real per-call allocation. Both sentences say the thing that is
-    // actually true of THIS frame — the flat-in-period cost, which is the claim
-    // the frame exists to keep, holds either way.
-    let cost = if frame.is_some_and(|f| f.contains(".clone()")) {
+    // Two things allocate here and both are per call: an accumulator the frame
+    // had to clone, and the `Value` a multi-output peek returns. Neither grows
+    // with the period, which is the claim the frame exists to keep.
+    let allocates =
+        frame.is_some_and(|f| f.contains(".clone()")) || func.outputs.len() > 1;
+    let cost = if allocates {
         "It copies no buffer: the frame runs against this handle, reading its\n\
          \x20      * buffers and storing what the step would commit into locals, so the cost\n\
-         \x20      * does not grow with the period. It does clone this indicator's fixed-size\n\
-         \x20      * per-bar accumulators — a few elements, a count fixed by the indicator and\n\
-         \x20      * not by the period — so {@code peek} allocates a small bounded amount per\n\
-         \x20      * call."
+         \x20      * does not grow with the period. It does allocate a small bounded amount\n\
+         \x20      * per call — a size fixed by the indicator, never by the period."
     } else {
         "It copies nothing: the frame runs against this handle, reading its\n\
          \x20      * buffers and storing what the step would commit into locals, so the cost\n\
@@ -1385,8 +1383,8 @@ fn peek_frame_arm(
 }
 
 /// One model's peek frame: the transition rewritten to commit nothing, run
-/// against the live handle at `indent`. `None` where it cannot be built and the
-/// caller falls back to peeking a copy.
+/// against the live handle at `indent`. `None` where it cannot be built, which
+/// the caller turns into a panic — every tier emits a frame.
 #[allow(clippy::too_many_arguments)]
 fn peek_frame_arm_named(
     func: &FuncDef,
@@ -1404,8 +1402,7 @@ fn peek_frame_arm_named(
 ) -> Option<String> {
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, names).ok()?;
-    let bufs = streaming::transition_buffers(model, names);
-    let pt = streaming::peek_transition(&transition, &bufs, None).ok()?;
+    let pt = streaming::peek_transition_widest(model, names, &transition, None).ok()?;
     // The extrema rebase moves the cursor before the first store, so its
     // targets localize with the transition's own.
     let mut rebased: Vec<String> = Vec::new();
@@ -1414,6 +1411,7 @@ fn peek_frame_arm_named(
         rebased.push(ex.trailing.clone());
         rebased.extend(ex.index_vars.iter().cloned());
     }
+    let bufs = streaming::transition_buffers(model, names);
     let (locals, body_ir) = localize_state_writes(func, &pt.body, &rebased, &bufs)?;
     // The transition's own early exit — the param-degenerate identity
     // short-circuit — is valueless, because a step returns `void`. Inline in
@@ -1439,9 +1437,9 @@ fn peek_frame_arm_named(
         }
         let jty = types.get(name.as_str()).copied()?;
         // A Java array field is a reference: taking it plain would write the
-        // handle through it. These are the fixed-size per-bar accumulators —
-        // two to five elements — never a period-sized buffer, which the frame
-        // only ever reads.
+        // handle through it. Only the accumulators `peek_transition_widest`
+        // refused reach here — two to five elements, never a period-sized
+        // buffer, which the frame only ever reads.
         let init = if jty.ends_with("[]") {
             format!("sp.{name}.clone()")
         } else {
@@ -3463,8 +3461,8 @@ fn emit_period_bank(
 // sub-handles, mirroring rust_stream's emit_composed with the managed-language
 // simplifications: GC replaces every cleanup ladder and series-free replay,
 // `free()` renders as a no-op so lag-ring seeding reads the still-live
-// intermediate array, and copy-peek needs no sub-call routing at all (sub handles
-// deep-copy through their copy constructors).
+// intermediate array, and the peek frame drives each sub-stream's own public
+// peek rather than committing anything.
 // ---------------------------------------------------------------------------
 
 /// Composed producer name map: identical to [`JavaStreamNames`] except the

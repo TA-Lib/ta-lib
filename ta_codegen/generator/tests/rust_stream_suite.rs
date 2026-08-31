@@ -6,7 +6,7 @@
 //! check: the transition build panics on a cursor/startIdx leak, so a clean
 //! render proves the analyzer normalizations fired.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::path::PathBuf;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::registry::Registry;
@@ -481,16 +481,55 @@ fn rust_composed_copy_out_is_stride_guarded() {
     );
 }
 
+/// The handle's fixed-size accumulator fields: a `[f64; N]` member.
+fn rust_accumulator_fields(section: &str) -> BTreeSet<String> {
+    section
+        .lines()
+        .filter_map(|l| l.trim_end().strip_suffix(','))
+        .filter_map(|d| d.trim().split_once(": "))
+        .filter(|(n, t)| {
+            t.starts_with("[f64;") && n.chars().all(|c| c.is_alphanumeric() || c == '_')
+        })
+        .map(|(n, _)| n.to_string())
+        .collect()
+}
+
+/// A store `validate_peekable` refuses: a compound one, which renders as a
+/// store reading its own target. A refusal drops the whole function back to the
+/// narrow set, so one such store justifies every copy in it. The other two
+/// refusals (a store in a loop, a counter-moving index) have no instance here;
+/// one would surface as an offender below rather than be waved through.
+fn rust_refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool {
+    body.lines().any(|l| {
+        l.split_once('=').is_some_and(|(lhs, rhs)| {
+            // `!rhs.starts_with('=')`: `X[i] == X[j]` splits the same way a store
+            // does, and comparing two slots is not a store into either.
+            lhs.trim_end().ends_with(']')
+                && !rhs.starts_with('=')
+                && fields.iter().any(|f| {
+                    let sub = format!("{f}[");
+                    lhs.contains(&sub) && rhs.contains(&sub)
+                })
+        })
+    })
+}
+
 /// No tier copies a handle to peek it — swept over the whole corpus.
 ///
 /// The property is structural, not a value one: a peek that copied and then
 /// wrote the copy would still answer correctly, so no value gate can see it.
 /// What it costs is the thing the frame exists to buy — a peek whose cost does
 /// not grow with the period — and the only place that is visible is here.
+///
+/// The accumulator half pins Rust's share of a decision that must be identical
+/// in all four backends; the other three sweeps cannot see a Rust-only
+/// regression, and no runtime gate can (the stores are dead).
 #[test]
 fn no_rust_peek_copies_the_handle() {
     let mut swept = 0usize;
     let mut frames = 0usize;
+    let mut localized = 0usize;
+    let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
         let s = rust_stream_section(&name);
@@ -506,12 +545,42 @@ fn no_rust_peek_copies_the_handle() {
                 offenders.push(format!("{name}: {needle}"));
             }
         }
+        let accs = rust_accumulator_fields(&s);
+        let held: BTreeSet<String> = accs
+            .iter()
+            .filter(|f| peek.contains(&format!("let mut {f} = sp.{f};")))
+            .cloned()
+            .collect();
+        localized += held.len();
+        if !held.is_empty() && !rust_refused_accumulator_store(peek, &accs) {
+            offenders.push(format!(
+                "{name}: localizes {held:?} but no accumulator store is refusable"
+            ));
+        }
+        // The frame must TOUCH an accumulator: a field it never names is
+        // evidence either way.
+        if held.is_empty() && accs.iter().any(|f| peek.contains(&format!("{f}["))) {
+            fully_shadowed.insert(name.clone());
+        }
     }
     assert!(swept > 170, "only {swept} peek(s) swept");
     assert!(
         frames == swept,
         "{} of {swept} peek(s) run a frame — the rest copy something",
         frames
+    );
+    // Both sides of the split are floored, because the corpus has both and a
+    // sweep that stopped finding either would read green while measuring one.
+    assert!(
+        localized >= 1,
+        "no accumulator is still localized, so the refusal arm above is untested"
+    );
+    assert!(
+        fully_shadowed.len() >= 7,
+        "only {} handle(s) hold an accumulator the frame localizes none of — Rust has \
+         fallen back to the narrow buffer set while the other three did not, which is \
+         exactly the per-backend divergence the widened set must never have",
+        fully_shadowed.len()
     );
     assert!(
         offenders.is_empty(),
