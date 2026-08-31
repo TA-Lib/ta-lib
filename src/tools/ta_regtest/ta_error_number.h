@@ -471,6 +471,19 @@ typedef enum
   /* Rule B6a: declining a nullable output changed what the call produced. */
   TA_BATCH_ARG_NULLABLE_DIVERGED     = 1633,
 
+  /* Rule U3, stated absolutely: what ONE rejected Update costs. The
+   * UpdateAndFill gate above compares the two tiers against each other, so it
+   * is blind to any change that moves both. */
+  TA_STREAM_ADVANCE_NOT_REJECTED     = 1640,
+  TA_STREAM_ADVANCE_WRONG_COUNT      = 1641,
+  TA_STREAM_ADVANCE_VALUE_MOVED      = 1642,
+  TA_STREAM_ADVANCE_NO_VALUE         = 1643,
+  TA_STREAM_ADVANCE_PEEK_MOVED       = 1644,
+  TA_STREAM_ADVANCE_NOT_RESUMED      = 1645,
+  TA_STREAM_ADVANCE_SETUP_FAILED     = 1646,
+  TA_STREAM_ADVANCE_VACUOUS          = 1647,
+  TA_STREAM_ADVANCE_VALUE_NOT_HELD   = 1648,
+
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,

@@ -438,10 +438,12 @@ TA_RetCode TA_S_AC( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_AC_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_AC_Value). */
+   double cur_outReal;
    int optInFastPeriod;
    int optInSlowPeriod;
    int optInSignalPeriod;
@@ -517,6 +519,7 @@ static void TA_AC_StepImpl( struct TA_AC_Stream *sp, double inHigh, double inLow
     * the collision ao.c has to guard against.
     */
    *outReal= tempReal;
+   sp->cur_outReal = *outReal;
    sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
    sp->ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx + 1;
    if( sp->ringPos_trailingFastIdx >= sp->ringCap_trailingFastIdx )
@@ -784,6 +787,7 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       if( oscBuffer != &local_oscBuffer[0] ) TA_Free( oscBuffer ); 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -834,7 +838,11 @@ TA_RetCode TA_AC_OpenAndFillInternal( struct TA_AC_Stream **stream, const double
 TA_LIB_API TA_RetCode TA_AC_Update( TA_AC_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_AC_StepImpl( stream, inHigh, inLow, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -900,6 +908,7 @@ TA_LIB_API TA_RetCode TA_AC_Peek( const TA_AC_Stream *stream, double inHigh, dou
     * the collision ao.c has to guard against.
     */
    *outReal= tempReal;
+   sp->cur_outReal = *outReal;
    sp->ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx + 1;
    if( sp->ringPos_trailingFastIdx >= sp->ringCap_trailingFastIdx )
    {
@@ -922,7 +931,11 @@ TA_LIB_API TA_RetCode TA_AC_UpdateAndFill( TA_AC_Stream *stream, const double in
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_AC_StepImpl( stream, inHigh[i], inLow[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -932,6 +945,45 @@ TA_LIB_API TA_RetCode TA_AC_UpdateAndFill( TA_AC_Stream *stream, const double in
 TA_LIB_API TA_RetCode TA_AC_Close( TA_AC_Stream *stream )
 {
    TA_AC_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AC_Value( const TA_AC_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_AC_Clone( const TA_AC_Stream *stream, TA_AC_Stream **clone )
+{
+   struct TA_AC_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_AC_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingFastIdx_derived = NULL;
+   sp->ring_trailingSlowIdx_derived = NULL;
+   sp->cb_oscBuffer = NULL;
+   if( stream->ring_trailingFastIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_trailingFastIdx > 0 ? sp->ringCap_trailingFastIdx : 1);
+     sp->ring_trailingFastIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingFastIdx_derived ) { TA_AC_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingFastIdx_derived, stream->ring_trailingFastIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_trailingSlowIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_trailingSlowIdx > 0 ? sp->ringCap_trailingSlowIdx : 1);
+     sp->ring_trailingSlowIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingSlowIdx_derived ) { TA_AC_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingSlowIdx_derived, stream->ring_trailingSlowIdx_derived, sizeof(double) * copyN ); }
+   if( stream->cb_oscBuffer )
+   { size_t copyN = (size_t)(sp->cbSize_oscBuffer);
+     sp->cb_oscBuffer = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_oscBuffer ) { TA_AC_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_oscBuffer, stream->cb_oscBuffer, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

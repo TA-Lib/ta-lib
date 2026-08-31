@@ -519,10 +519,12 @@ TA_RetCode TA_S_CORREL( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CORREL_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_CORREL_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double sumXY;
    double sumX;
@@ -743,6 +745,7 @@ static void TA_CORREL_StepImpl( struct TA_CORREL_Stream *sp, double inReal0, dou
    sumY -= trailingY;
    sumY2 -= sp->leavingY;
    sp->today += 1;
+   sp->cur_outReal = *outReal;
    sp->sumXY = sumXY;
    sp->sumX = sumX;
    sp->sumY = sumY;
@@ -1060,6 +1063,7 @@ static TA_RetCode TA_CORREL_OpenImpl( struct TA_CORREL_Stream **stream, const do
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1110,7 +1114,11 @@ TA_RetCode TA_CORREL_OpenAndFillInternal( struct TA_CORREL_Stream **stream, cons
 TA_LIB_API TA_RetCode TA_CORREL_Update( TA_CORREL_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CORREL_StepImpl( stream, inReal0, inReal1, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -1314,6 +1322,7 @@ TA_LIB_API TA_RetCode TA_CORREL_Peek( const TA_CORREL_Stream *stream, double inR
    sumY -= trailingY;
    sumY2 -= sp->leavingY;
    sp->today += 1;
+   sp->cur_outReal = *outReal;
    sp->sumXY = sumXY;
    sp->sumX = sumX;
    sp->sumY = sumY;
@@ -1331,7 +1340,11 @@ TA_LIB_API TA_RetCode TA_CORREL_UpdateAndFill( TA_CORREL_Stream *stream, const d
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal0[i] ) || !TA_IS_FINITE( inReal1[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal0[i] ) || !TA_IS_FINITE( inReal1[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CORREL_StepImpl( stream, inReal0[i], inReal1[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -1341,6 +1354,39 @@ TA_LIB_API TA_RetCode TA_CORREL_UpdateAndFill( TA_CORREL_Stream *stream, const d
 TA_LIB_API TA_RetCode TA_CORREL_Close( TA_CORREL_Stream *stream )
 {
    TA_CORREL_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CORREL_Value( const TA_CORREL_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CORREL_Clone( const TA_CORREL_Stream *stream, TA_CORREL_Stream **clone )
+{
+   struct TA_CORREL_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CORREL_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inReal0 = NULL;
+   sp->x_inReal1 = NULL;
+   if( stream->x_inReal0 )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inReal0 = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inReal0 ) { TA_CORREL_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inReal0, stream->x_inReal0, sizeof(double) * copyN ); }
+   if( stream->x_inReal1 )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inReal1 = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inReal1 ) { TA_CORREL_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inReal1, stream->x_inReal1, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

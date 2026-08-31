@@ -461,10 +461,14 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MACDFIX_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_MACDFIX_Value). */
+   double cur_outMACD;
+   double cur_outMACDSignal;
+   double cur_outMACDHist;
    int optInSignalPeriod;
    double prevFast;
    double prevSlow;
@@ -496,6 +500,9 @@ static void TA_MACDFIX_StepImpl( struct TA_MACDFIX_Stream *sp, double inReal, do
    *outMACD= macdValue;
    *outMACDSignal= prevSignal;
    *outMACDHist= macdValue - prevSignal;
+   sp->cur_outMACD = *outMACD;
+   sp->cur_outMACDSignal = *outMACDSignal;
+   sp->cur_outMACDHist = *outMACDHist;
    sp->prevSignal = prevSignal;
 }
 
@@ -728,6 +735,9 @@ static TA_RetCode TA_MACDFIX_OpenImpl( struct TA_MACDFIX_Stream **stream, const 
       sp->signalK = signalK;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outMACD = outMACD[(*outNBElement - 1) * outStride];
+      sp->cur_outMACDSignal = outMACDSignal[(*outNBElement - 1) * outStride];
+      sp->cur_outMACDHist = outMACDHist[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -782,7 +792,11 @@ TA_RetCode TA_MACDFIX_OpenAndFillInternal( struct TA_MACDFIX_Stream **stream, co
 TA_LIB_API TA_RetCode TA_MACDFIX_Update( TA_MACDFIX_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_MACDFIX_StepImpl( stream, inReal, outMACD, outMACDSignal, outMACDHist );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -814,6 +828,9 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Peek( const TA_MACDFIX_Stream *stream, double i
    *outMACD= macdValue;
    *outMACDSignal= prevSignal;
    *outMACDHist= macdValue - prevSignal;
+   sp->cur_outMACD = *outMACD;
+   sp->cur_outMACDSignal = *outMACDSignal;
+   sp->cur_outMACDHist = *outMACDHist;
    sp->prevSignal = prevSignal;
    return TA_SUCCESS;
 }
@@ -827,7 +844,11 @@ TA_LIB_API TA_RetCode TA_MACDFIX_UpdateAndFill( TA_MACDFIX_Stream *stream, const
    if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_MACDFIX_StepImpl( stream, inReal[i], &outMACD[i], &outMACDSignal[i], &outMACDHist[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -837,6 +858,29 @@ TA_LIB_API TA_RetCode TA_MACDFIX_UpdateAndFill( TA_MACDFIX_Stream *stream, const
 TA_LIB_API TA_RetCode TA_MACDFIX_Close( TA_MACDFIX_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MACDFIX_Value( const TA_MACDFIX_Stream *stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+{
+   if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   *outMACD = stream->cur_outMACD;
+   *outMACDSignal = stream->cur_outMACDSignal;
+   *outMACDHist = stream->cur_outMACDHist;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MACDFIX_Clone( const TA_MACDFIX_Stream *stream, TA_MACDFIX_Stream **clone )
+{
+   struct TA_MACDFIX_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MACDFIX_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -270,10 +270,12 @@ TA_RetCode TA_S_CDLLONGLINE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLLONGLINE_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_CDLLONGLINE_Value). */
+   int cur_outInteger;
    double BodyPeriodTotal;
    double ShadowPeriodTotal;
    int ringPos_BodyTrailingIdx;
@@ -316,6 +318,7 @@ static void TA_CDLLONGLINE_StepImpl( struct TA_CDLLONGLINE_Stream *sp, double in
     */
    sp->BodyPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose) - sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx];
    sp->ShadowPeriodTotal += TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose) - sp->ring_ShadowTrailingIdx_derived[sp->ringPos_ShadowTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ringPos_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx + 1;
    if( sp->ringPos_BodyTrailingIdx >= sp->ringCap_BodyTrailingIdx )
@@ -460,6 +463,7 @@ static TA_RetCode TA_CDLLONGLINE_OpenImpl( struct TA_CDLLONGLINE_Stream **stream
       sp->ringPos_ShadowTrailingIdx = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -510,7 +514,11 @@ TA_RetCode TA_CDLLONGLINE_OpenAndFillInternal( struct TA_CDLLONGLINE_Stream **st
 TA_LIB_API TA_RetCode TA_CDLLONGLINE_Update( TA_CDLLONGLINE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_CDLLONGLINE_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -550,6 +558,7 @@ TA_LIB_API TA_RetCode TA_CDLLONGLINE_Peek( const TA_CDLLONGLINE_Stream *stream, 
     */
    sp->BodyPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyTrailingIdx != pkSlot0) ? sp->ring_BodyTrailingIdx_derived[sp->ringPos_BodyTrailingIdx] : pkVal0);
    sp->ShadowPeriodTotal += TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_ShadowTrailingIdx != pkSlot1) ? sp->ring_ShadowTrailingIdx_derived[sp->ringPos_ShadowTrailingIdx] : pkVal1);
+   sp->cur_outInteger = *outInteger;
    sp->ringPos_BodyTrailingIdx = sp->ringPos_BodyTrailingIdx + 1;
    if( sp->ringPos_BodyTrailingIdx >= sp->ringCap_BodyTrailingIdx )
    {
@@ -572,7 +581,11 @@ TA_LIB_API TA_RetCode TA_CDLLONGLINE_UpdateAndFill( TA_CDLLONGLINE_Stream *strea
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inOpen[i] ) || !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) || !TA_IS_FINITE( inClose[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_CDLLONGLINE_StepImpl( stream, inOpen[i], inHigh[i], inLow[i], inClose[i], &outInteger[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -582,6 +595,39 @@ TA_LIB_API TA_RetCode TA_CDLLONGLINE_UpdateAndFill( TA_CDLLONGLINE_Stream *strea
 TA_LIB_API TA_RetCode TA_CDLLONGLINE_Close( TA_CDLLONGLINE_Stream *stream )
 {
    TA_CDLLONGLINE_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLLONGLINE_Value( const TA_CDLLONGLINE_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLLONGLINE_Clone( const TA_CDLLONGLINE_Stream *stream, TA_CDLLONGLINE_Stream **clone )
+{
+   struct TA_CDLLONGLINE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLLONGLINE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyTrailingIdx_derived = NULL;
+   sp->ring_ShadowTrailingIdx_derived = NULL;
+   if( stream->ring_BodyTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_BodyTrailingIdx > 0 ? sp->ringCap_BodyTrailingIdx : 1);
+     sp->ring_BodyTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyTrailingIdx_derived ) { TA_CDLLONGLINE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyTrailingIdx_derived, stream->ring_BodyTrailingIdx_derived, sizeof(double) * copyN ); }
+   if( stream->ring_ShadowTrailingIdx_derived )
+   { size_t copyN = (size_t)(sp->ringCap_ShadowTrailingIdx > 0 ? sp->ringCap_ShadowTrailingIdx : 1);
+     sp->ring_ShadowTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_ShadowTrailingIdx_derived ) { TA_CDLLONGLINE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_ShadowTrailingIdx_derived, stream->ring_ShadowTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -15,7 +15,7 @@
 #endif
 
 /* The leading members of every struct TA_<N>_Stream, in order: the range of
- * bars the handle has produced a value for. TA_StreamOutRange (ta_utility.c)
+ * bars the handle has an output for. TA_StreamOutRange (ta_utility.c)
  * copies a handle's head out through this type. */
 typedef struct
 {

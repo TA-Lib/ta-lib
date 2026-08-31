@@ -738,10 +738,12 @@ TA_RetCode TA_S_HT_DCPERIOD( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_HT_DCPERIOD_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_HT_DCPERIOD_Value). */
+   double cur_outReal;
    double period;
    double periodWMASum;
    double periodWMASub;
@@ -959,6 +961,7 @@ static void TA_HT_DCPERIOD_StepImpl( struct TA_HT_DCPERIOD_Stream *sp, double in
    sp->smoothPeriod = fma(0.67, sp->smoothPeriod, 0.33 * sp->period);
    *outReal= sp->smoothPeriod;
    /* Ooof... let's do the next price bar now! */
+   sp->cur_outReal = *outReal;
    sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
    if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
@@ -1386,6 +1389,7 @@ static TA_RetCode TA_HT_DCPERIOD_OpenImpl( struct TA_HT_DCPERIOD_Stream **stream
       sp->ringPos_trailingWMAIdx = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1436,7 +1440,11 @@ TA_RetCode TA_HT_DCPERIOD_OpenAndFillInternal( struct TA_HT_DCPERIOD_Stream **st
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Update( TA_HT_DCPERIOD_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_HT_DCPERIOD_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -1482,7 +1490,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
       /* Do the Hilbert Transforms for even price bar */
       hilbertTempReal = sp->a * smoothedValue;
       detrender = 0 - sp->detrender_Even[sp->hilbertIdx];
-      sp->detrender_Even[sp->hilbertIdx] = hilbertTempReal;
       detrender += hilbertTempReal;
       detrender -= sp->prev_detrender_Even;
       sp->prev_detrender_Even = sp->b * sp->prev_detrender_input_Even;
@@ -1491,7 +1498,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
       detrender *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * detrender;
       Q1 = 0 - sp->Q1_Even[sp->hilbertIdx];
-      sp->Q1_Even[sp->hilbertIdx] = hilbertTempReal;
       Q1 += hilbertTempReal;
       Q1 -= sp->prev_Q1_Even;
       sp->prev_Q1_Even = sp->b * sp->prev_Q1_input_Even;
@@ -1500,7 +1506,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
       Q1 *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * sp->I1ForEvenPrev3;
       jI = 0 - sp->jI_Even[sp->hilbertIdx];
-      sp->jI_Even[sp->hilbertIdx] = hilbertTempReal;
       jI += hilbertTempReal;
       jI -= sp->prev_jI_Even;
       sp->prev_jI_Even = sp->b * sp->prev_jI_input_Even;
@@ -1509,7 +1514,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
       jI *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * Q1;
       jQ = 0 - sp->jQ_Even[sp->hilbertIdx];
-      sp->jQ_Even[sp->hilbertIdx] = hilbertTempReal;
       jQ += hilbertTempReal;
       jQ -= sp->prev_jQ_Even;
       sp->prev_jQ_Even = sp->b * sp->prev_jQ_input_Even;
@@ -1535,7 +1539,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
       /* Do the Hilbert Transforms for odd price bar */
       hilbertTempReal = sp->a * smoothedValue;
       detrender = 0 - sp->detrender_Odd[sp->hilbertIdx];
-      sp->detrender_Odd[sp->hilbertIdx] = hilbertTempReal;
       detrender += hilbertTempReal;
       detrender -= sp->prev_detrender_Odd;
       sp->prev_detrender_Odd = sp->b * sp->prev_detrender_input_Odd;
@@ -1544,7 +1547,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
       detrender *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * detrender;
       Q1 = 0 - sp->Q1_Odd[sp->hilbertIdx];
-      sp->Q1_Odd[sp->hilbertIdx] = hilbertTempReal;
       Q1 += hilbertTempReal;
       Q1 -= sp->prev_Q1_Odd;
       sp->prev_Q1_Odd = sp->b * sp->prev_Q1_input_Odd;
@@ -1553,7 +1555,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
       Q1 *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * sp->I1ForOddPrev3;
       jI = 0 - sp->jI_Odd[sp->hilbertIdx];
-      sp->jI_Odd[sp->hilbertIdx] = hilbertTempReal;
       jI += hilbertTempReal;
       jI -= sp->prev_jI_Odd;
       sp->prev_jI_Odd = sp->b * sp->prev_jI_input_Odd;
@@ -1562,7 +1563,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
       jI *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * Q1;
       jQ = 0 - sp->jQ_Odd[sp->hilbertIdx];
-      sp->jQ_Odd[sp->hilbertIdx] = hilbertTempReal;
       jQ += hilbertTempReal;
       jQ -= sp->prev_jQ_Odd;
       sp->prev_jQ_Odd = sp->b * sp->prev_jQ_input_Odd;
@@ -1611,6 +1611,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
    sp->smoothPeriod = fma(0.67, sp->smoothPeriod, 0.33 * sp->period);
    *outReal= sp->smoothPeriod;
    /* Ooof... let's do the next price bar now! */
+   sp->cur_outReal = *outReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
    if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
    {
@@ -1629,7 +1630,11 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_UpdateAndFill( TA_HT_DCPERIOD_Stream *strea
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_HT_DCPERIOD_StepImpl( stream, inReal[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -1639,6 +1644,33 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_UpdateAndFill( TA_HT_DCPERIOD_Stream *strea
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Close( TA_HT_DCPERIOD_Stream *stream )
 {
    TA_HT_DCPERIOD_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Value( const TA_HT_DCPERIOD_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Clone( const TA_HT_DCPERIOD_Stream *stream, TA_HT_DCPERIOD_Stream **clone )
+{
+   struct TA_HT_DCPERIOD_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_HT_DCPERIOD_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingWMAIdx_inReal = NULL;
+   if( stream->ring_trailingWMAIdx_inReal )
+   { size_t copyN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
+     sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPERIOD_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

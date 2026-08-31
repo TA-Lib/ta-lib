@@ -125,10 +125,12 @@ TA_RetCode TA_S_LN( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_LN_Stream {
-   /* The bars this handle has a value for (see TA_StreamOutRange).
+   /* The bars this handle has an output for (see TA_StreamOutRange).
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_LN_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -136,6 +138,7 @@ static void TA_LN_StepImpl( struct TA_LN_Stream *sp, double inReal, double *outR
 {
    (void)sp;
    *outReal= log(inReal);
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_LN_OpenImpl( struct TA_LN_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -178,6 +181,7 @@ static TA_RetCode TA_LN_OpenImpl( struct TA_LN_Stream **stream, const double inR
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -228,7 +232,11 @@ TA_RetCode TA_LN_OpenAndFillInternal( struct TA_LN_Stream **stream, const double
 TA_LIB_API TA_RetCode TA_LN_Update( TA_LN_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
    TA_LN_StepImpl( stream, inReal, outReal );
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
@@ -244,6 +252,7 @@ TA_LIB_API TA_RetCode TA_LN_Peek( const TA_LN_Stream *stream, double inReal, dou
    scratch = *stream;
    (void)sp;
    *outReal= log(inReal);
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -256,7 +265,11 @@ TA_LIB_API TA_RetCode TA_LN_UpdateAndFill( TA_LN_Stream *stream, const double in
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    for( i = 0; i < barCount; i++ )
    {
-      if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
+      if( !TA_IS_FINITE( inReal[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
       TA_LN_StepImpl( stream, inReal[i], &outReal[i] );
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
@@ -266,6 +279,27 @@ TA_LIB_API TA_RetCode TA_LN_UpdateAndFill( TA_LN_Stream *stream, const double in
 TA_LIB_API TA_RetCode TA_LN_Close( TA_LN_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_LN_Value( const TA_LN_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_LN_Clone( const TA_LN_Stream *stream, TA_LN_Stream **clone )
+{
+   struct TA_LN_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_LN_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

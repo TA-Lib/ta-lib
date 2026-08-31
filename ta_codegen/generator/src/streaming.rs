@@ -5478,6 +5478,41 @@ fn collect_out_feedback(steady_stmts: &[Statement], outputs: &[String]) -> Vec<S
     out_feedback
 }
 
+/// The state field a DECLINABLE output's retained value is taken from, if any.
+///
+/// A declinable output's sink may be NULL, so neither the transition nor the
+/// opener can read it back to fill `cur_<name>`. Both take the body's own
+/// variable instead — the single un-cursored store that
+/// `assert_nullable_stores_are_guardable` guarantees — and because that
+/// variable is also carried state, the opener can spell it `sp-><var>` after
+/// the capture while the step spells it as the plain local. One rule, so the
+/// two cannot disagree about which bar the accessor reports.
+pub fn declinable_retain_var(model: &StreamModel, out_name: &str) -> Option<String> {
+    let declinable = model
+        .func
+        .outputs
+        .iter()
+        .any(|o| o.name == out_name && o.is_nullable());
+    if !declinable {
+        return None;
+    }
+    let mut found: Option<String> = None;
+    for st in &model.steady_stmts {
+        if let Statement::Assign { target, value, compound: false } = st {
+            let hits = match target {
+                Expr::ArrayAccess(n, _) | Expr::PointerDeref(n) | Expr::Var(n) => n == out_name,
+                _ => false,
+            };
+            if hits {
+                if let Expr::Var(v) = value {
+                    found = Some(v.clone());
+                }
+            }
+        }
+    }
+    found
+}
+
 /// `out[idx - 1]`: the previous bar's output (DX repeats it on a zero
 /// denominator). Carried as `lastOut_*` state in the transition.
 pub fn is_prev_output_read(idx: &Expr) -> bool {
@@ -5953,6 +5988,17 @@ fn transition_state_names(model: &StreamModel) -> BTreeSet<String> {
 /// the arm bodies.
 #[must_use]
 pub fn identity_step_branch(model: &StreamModel, names: &dyn NameMap) -> Option<Statement> {
+    identity_branch(model, names, true)
+}
+
+/// The identity short-circuit for a PEEK frame: the same arm without the value
+/// retain. Peek commits nothing, so it must not write `cur_` — C would write a
+/// discarded scratch and Rust would not compile, and both are the same rule.
+pub fn identity_peek_branch(model: &StreamModel, names: &dyn NameMap) -> Option<Statement> {
+    identity_branch(model, names, false)
+}
+
+fn identity_branch(model: &StreamModel, names: &dyn NameMap, retain: bool) -> Option<Statement> {
     let idp = model.identity.as_ref()?;
     let state_names = transition_state_names(model);
     let condition = rewrite_expr(&idp.condition, &|e| match e {
@@ -5968,6 +6014,20 @@ pub fn identity_step_branch(model: &StreamModel, names: &dyn NameMap) -> Option<
             compound: false,
         })
         .collect();
+    // Retain here too: this arm returns before the transition's own tail, and a
+    // handle that skipped the retain would disagree with one opened directly at
+    // the same bar — which is exactly what the state-equivalence gate compares.
+    for (out, _) in &idp.pairs {
+        let target = Expr::Var(names.state(&format!("cur_{out}")));
+        let value = names.output(out);
+        if retain && target != value {
+            then_body.push(Statement::Assign {
+                target,
+                value,
+                compound: false,
+            });
+        }
+    }
     then_body.push(Statement::Return { value: None });
     Some(Statement::If {
         condition,
@@ -6048,6 +6108,64 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
         out.push(Statement::Assign {
             target: Expr::Var(names.state(&format!("lastOut_{name}"))),
             value: names.output(name),
+            compound: false,
+        });
+    }
+    // Retain this bar's output(s) for the value accessor. Emitted only where
+    // the body did not already write the field: Java and C# map an output
+    // straight onto `cur_<name>`, so for them source and target are the same
+    // expression and the store would be `x = x`. C and Rust write through an
+    // out-pointer, so they pay one store per output per bar — which is what
+    // buys a handle that can be asked its current value after a fork.
+    for name in &model.outputs {
+        // `model.outputs` carries the producer's intermediates too (STOCH's
+        // `tempBuffer` feeds a sub-stream and is never handed to a caller).
+        // Only a real output of the function has a `cur_` field to retain into.
+        if !model.func.outputs.iter().any(|o| &o.name == name) {
+            continue;
+        }
+        let target = Expr::Var(names.state(&format!("cur_{name}")));
+        let sink = names.output(name);
+        if target == sink {
+            continue;
+        }
+        // Normally read the sink back — it is a local the body just wrote, so
+        // the copy is free. A DECLINABLE output (MAMA's FAMA, the corpus's
+        // only one) cannot be: its sink may be NULL, and the retained value has
+        // to be right whether or not the caller wanted it. Those take the value
+        // the body assigned instead, which `assert_nullable_stores_are_guardable`
+        // guarantees is a single un-cursored store, so there is exactly one
+        // expression to take.
+        let declinable = model
+            .func
+            .outputs
+            .iter()
+            .any(|o| &o.name == name && o.is_nullable());
+        let value = if declinable {
+            let mut assigned: Option<Expr> = None;
+            for st in &out {
+                if let Statement::Assign { target: t, value: v, compound: false } = st {
+                    if *t == sink {
+                        assigned = Some(v.clone());
+                    }
+                }
+            }
+            // Name a carried variable the way the rest of the transition names
+            // it. A bare `Var` here would be a fresh reference to a state field
+            // and the localizer would promote it, rewriting the body's own
+            // store for no reason.
+            let state_names = transition_state_names(model);
+            match assigned {
+                Some(Expr::Var(v)) if state_names.contains(&v) => Expr::Var(names.state(&v)),
+                Some(other) => other,
+                None => sink,
+            }
+        } else {
+            sink
+        };
+        out.push(Statement::Assign {
+            target,
+            value,
             compound: false,
         });
     }
@@ -7245,9 +7363,11 @@ pub struct PeekTransition {
     pub slot_temps: Vec<String>,
 }
 
-/// Every handle buffer a transition can index, with `true` for integer
-/// elements. Composed lag rings are absent by design: the composed tier emits
-/// its own push as text and drops it in peek mode.
+/// The handle's HEAP buffers a transition can index, with `true` for integer
+/// elements. Fixed-size array state fields are not here — see
+/// [`transition_buffers_with_state_arrays`]. Composed lag rings are absent by
+/// design: the composed tier emits its own push as text and drops it in peek
+/// mode.
 #[must_use]
 pub fn transition_buffers(model: &StreamModel, names: &dyn NameMap) -> Vec<(String, bool)> {
     let mut out: Vec<(String, bool)> = Vec::new();
@@ -7274,6 +7394,51 @@ pub fn transition_buffers(model: &StreamModel, names: &dyn NameMap) -> Vec<(Stri
     out.sort();
     out.dedup();
     out
+}
+
+/// [`transition_buffers`] plus the fixed-size REAL array state fields, so a
+/// peek frame can drop a dead store into one instead of cloning the field.
+///
+/// Offer it from every backend or from none: shadowing rewrites a store's
+/// target, which `canonicalize_accumulator_add` matches by string equality, so
+/// one backend shadowing where another does not can move an FMA site — a ~1 ULP
+/// cross-language divergence nothing points at.
+///
+/// Integer arrays are excluded deliberately: none exist in the corpus, so an
+/// integer shadow would be ungated.
+#[must_use]
+pub fn transition_buffers_with_state_arrays(
+    model: &StreamModel,
+    names: &dyn NameMap,
+) -> Vec<(String, bool)> {
+    let mut out = transition_buffers(model, names);
+    for (name, ty) in &model.state {
+        if matches!(ty, VarType::RealArray(_)) {
+            out.push((names.state(name), false));
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// [`peek_transition`] against the widest buffer set that accepts it. The retry
+/// is all-or-nothing: one refusing accumulator takes the whole function back to
+/// [`transition_buffers`].
+///
+/// # Errors
+/// Only when [`transition_buffers`] itself is refused; see [`peek_transition`].
+pub fn peek_transition_widest(
+    model: &StreamModel,
+    names: &dyn NameMap,
+    transition: &[Statement],
+    slot_cast: Option<VarType>,
+) -> Result<PeekTransition, String> {
+    let wide = transition_buffers_with_state_arrays(model, names);
+    if let Ok(pt) = peek_transition(transition, &wide, slot_cast.clone()) {
+        return Ok(pt);
+    }
+    peek_transition(transition, &transition_buffers(model, names), slot_cast)
 }
 
 /// The statement lists nested inside `s`, and whether entering them crosses a
@@ -8400,8 +8565,15 @@ mod tests {
         let f = func_with_body(t1_body());
         let m = analyze(&f).unwrap();
         let t = build_transition(&m, &TestNames).unwrap();
-        // Only the output write survives: *out_outReal = inReal * 2.0
-        assert_eq!(t.len(), 1);
+        // The output write, then the value retain that rides every transition.
+        assert_eq!(t.len(), 2);
+        match &t[1] {
+            Statement::Assign { target, value, .. } => {
+                assert!(matches!(target, Expr::Var(v) if v == "sp->cur_outReal"));
+                assert!(matches!(value, Expr::PointerDeref(p) if p == "out_outReal"));
+            }
+            other => panic!("unexpected retain stmt: {other:?}"),
+        }
         match &t[0] {
             Statement::Assign { target, value, .. } => {
                 assert!(matches!(target, Expr::PointerDeref(p) if p == "out_outReal"));
@@ -8436,16 +8608,16 @@ mod tests {
         ]);
         let m = analyze(&f).unwrap();
         let t = build_transition(&m, &TestNames).unwrap();
-        // output write + lag2=lag1 + lag1=bar
-        assert_eq!(t.len(), 3);
-        match &t[1] {
+        // output write + value retain + lag2=lag1 + lag1=bar
+        assert_eq!(t.len(), 4);
+        match &t[2] {
             Statement::Assign { target, value, .. } => {
                 assert!(matches!(target, Expr::Var(v) if v == "sp->lag2_inReal"));
                 assert!(matches!(value, Expr::Var(v) if v == "sp->lag1_inReal"));
             }
             other => panic!("unexpected stmt: {other:?}"),
         }
-        match &t[2] {
+        match &t[3] {
             Statement::Assign { target, value, .. } => {
                 assert!(matches!(target, Expr::Var(v) if v == "sp->lag1_inReal"));
                 assert!(matches!(value, Expr::Var(v) if v == "inReal"));
@@ -8485,7 +8657,7 @@ mod tests {
         assert_eq!(m.state, vec![("ad".into(), VarType::Real)]);
         // Transition must drop today/outIdx/nbBar bookkeeping.
         let t = build_transition(&m, &TestNames).unwrap();
-        assert_eq!(t.len(), 2); // ad update + output write
+        assert_eq!(t.len(), 3); // ad update + output write + value retain
     }
 
     // -- #229 rescan-window fold: the fail-closed conditions -----------------
