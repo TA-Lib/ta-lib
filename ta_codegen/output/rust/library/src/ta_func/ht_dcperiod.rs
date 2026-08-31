@@ -67,6 +67,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::HT_DCPERIOD`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_HT_DCPERIOD_Lookback")]
     pub fn HT_DCPERIOD_Lookback(&self) -> Result<usize, RetCode> {
         // See mama_lookback for an explanation of these
         return Ok((32 + self.unstable_period[FuncUnstId::HT_DCPERIOD as usize]) as usize);
@@ -498,6 +499,7 @@ impl Core {
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
+    #[doc(alias = "TA_HT_DCPERIOD")]
     #[doc(alias = "HilbertTransformDominantCyclePeriod")]
     #[doc(alias = "DominantCyclePeriod")]
     pub fn HT_DCPERIOD(

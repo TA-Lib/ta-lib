@@ -103,6 +103,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to select their
     /// default value.
+    #[doc(alias = "TA_BBANDS_Lookback")]
     #[inline]
     pub fn BBANDS_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -550,6 +551,7 @@ impl Core {
     /// # References
     ///
     /// * John A. Bollinger, *Bollinger on Bollinger Bands*, McGraw-Hill Trade (ISBN 0071373683)
+    #[doc(alias = "TA_BBANDS")]
     #[doc(alias = "BollingerBands")]
     pub fn BBANDS(
         &self,

@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDL3OUTSIDE`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDL3OUTSIDE_Lookback")]
     pub fn CDL3OUTSIDE_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((3) as usize);
     }
@@ -211,6 +212,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3INSIDE`] · [`Core::CDLENGULFING`] · [`Core::CDL3LINESTRIKE`]
+    #[doc(alias = "TA_CDL3OUTSIDE")]
     #[doc(alias = "ThreeOutsideUpDown")]
     #[doc(alias = "ThreeOutside")]
     pub fn CDL3OUTSIDE(

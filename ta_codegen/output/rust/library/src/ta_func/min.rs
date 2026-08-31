@@ -78,6 +78,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MIN_Lookback")]
     #[inline]
     pub fn MIN_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -304,6 +305,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::MAX`] · [`Core::MININDEX`] · [`Core::MINMAX`]
+    #[doc(alias = "TA_MIN")]
     #[doc(alias = "Lowest")]
     #[doc(alias = "RollingMin")]
     #[doc(alias = "MinValue")]

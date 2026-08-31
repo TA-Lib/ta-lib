@@ -76,6 +76,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_QSTICK_Lookback")]
     #[inline]
     pub fn QSTICK_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -257,6 +258,7 @@ impl Core {
     /// * TraderEvolution documents a default period of 1 and offers a choice of moving average;
     ///   AmiBroker community code commonly cites 8. Neither is verifiable against the book, and
     ///   this ships the SMA-only form the authors define.
+    #[doc(alias = "TA_QSTICK")]
     pub fn QSTICK(
         &self,
         startIdx: usize,

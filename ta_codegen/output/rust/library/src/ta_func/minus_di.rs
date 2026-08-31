@@ -86,6 +86,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MINUS_DI_Lookback")]
     #[inline]
     pub fn MINUS_DI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -509,6 +510,7 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
+    #[doc(alias = "TA_MINUS_DI")]
     #[doc(alias = "-DI")]
     #[doc(alias = "NegativeDirectionalIndicator")]
     pub fn MINUS_DI(

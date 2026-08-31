@@ -83,6 +83,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to select their
     /// default value.
+    #[doc(alias = "TA_VAR_Lookback")]
     #[inline]
     pub fn VAR_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -353,6 +354,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::STDDEV`]
+    #[doc(alias = "TA_VAR")]
     #[doc(alias = "Variance")]
     pub fn VAR(
         &self,

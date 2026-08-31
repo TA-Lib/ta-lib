@@ -81,6 +81,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_LINEARREG_INTERCEPT_Lookback")]
     #[inline]
     pub fn LINEARREG_INTERCEPT_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -346,6 +347,7 @@ impl Core {
     ///
     /// [`Core::LINEARREG`] · [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_ANGLE`] ·
     /// [`Core::TSF`]
+    #[doc(alias = "TA_LINEARREG_INTERCEPT")]
     #[doc(alias = "LinearRegressionIntercept")]
     pub fn LINEARREG_INTERCEPT(
         &self,

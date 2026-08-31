@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLHIGHWAVE`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLHIGHWAVE_Lookback")]
     pub fn CDLHIGHWAVE_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
@@ -345,6 +346,7 @@ impl Core {
     ///
     /// [`Core::CDLLONGLEGGEDDOJI`] · [`Core::CDLSPINNINGTOP`] · [`Core::CDLRICKSHAWMAN`] ·
     /// [`Core::CDLDOJI`]
+    #[doc(alias = "TA_CDLHIGHWAVE")]
     #[doc(alias = "High-WaveCandle")]
     #[doc(alias = "HighWave")]
     pub fn CDLHIGHWAVE(

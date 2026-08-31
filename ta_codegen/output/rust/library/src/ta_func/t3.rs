@@ -89,6 +89,7 @@ impl Core {
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to select their
     /// default value.
+    #[doc(alias = "TA_T3_Lookback")]
     #[inline]
     pub fn T3_Lookback(&self, mut optInTimePeriod: i32, mut optInVFactor: f64) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -397,6 +398,7 @@ impl Core {
     ///
     /// * Tim Tillson, *Smoothing Techniques for More Accurate Signals*, Technical Analysis of
     ///   Stocks & Commodities, V.16:1 (January 1998)
+    #[doc(alias = "TA_T3")]
     #[doc(alias = "TillsonT3")]
     #[doc(alias = "TripleExponentialMovingAverage")]
     pub fn T3(

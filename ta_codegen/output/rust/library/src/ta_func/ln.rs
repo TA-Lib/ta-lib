@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::LN`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_LN_Lookback")]
     pub fn LN_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -157,6 +158,7 @@ impl Core {
     ///
     /// * Wikipedia, *Natural logarithm*:
     ///   [en.wikipedia.org/wiki/Natural_logarithm](https://en.wikipedia.org/wiki/Natural_logarithm)
+    #[doc(alias = "TA_LN")]
     #[doc(alias = "NaturalLog")]
     #[doc(alias = "VectorLogNatural")]
     #[doc(alias = "Log")]

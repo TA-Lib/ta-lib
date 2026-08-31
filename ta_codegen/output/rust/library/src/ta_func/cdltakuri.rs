@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLTAKURI`]: the number of leading input values consumed before
     /// the first output value can be produced.
+    #[doc(alias = "TA_CDLTAKURI_Lookback")]
     pub fn CDLTAKURI_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
@@ -417,6 +418,7 @@ impl Core {
     ///
     /// [`Core::CDLDRAGONFLYDOJI`] · [`Core::CDLDOJI`] · [`Core::CDLHAMMER`] ·
     /// [`Core::CDLGRAVESTONEDOJI`]
+    #[doc(alias = "TA_CDLTAKURI")]
     #[doc(alias = "Takuri")]
     #[doc(alias = "Takuriline")]
     pub fn CDLTAKURI(

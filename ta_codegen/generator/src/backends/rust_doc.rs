@@ -246,7 +246,11 @@ pub fn lookback_docs(func: &FuncDef, snake: &str, enums: &HashMap<String, EnumDe
         d.paragraph(&sentence);
     }
 
-    d.finish()
+    let mut out = d.finish();
+    // `TA_SMA_Lookback` is a C symbol of its own, so it gets its own alias rather
+    // than riding the batch function's.
+    out.push_str(&format!("    #[doc(alias = \"TA_{}_Lookback\")]\n", func.name));
+    out
 }
 
 /// How a caller asks for a parameter's default value, phrased for whichever kinds
@@ -399,12 +403,21 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
     }
 }
 
-/// `#[doc(alias)]` values from the canonical `## Aliases`: whitespace/punctuation
-/// removed (rustdoc forbids whitespace in aliases), deduplicated, and dropped when
-/// the alias collapses to the function name itself.
+/// `#[doc(alias)]` values for the batch entry point: the C symbol first, then the
+/// canonical `## Aliases` with whitespace/punctuation removed (rustdoc forbids
+/// whitespace in aliases), deduplicated case-insensitively, and dropped when an
+/// alias collapses to the function name itself.
+///
+/// The C symbol leads because it is the name a migrating caller already has:
+/// without `TA_SMA` here, the C spelling reaches `SmaStream` (whose alias the
+/// stream emitter does write) and never the batch function it names. Seeding
+/// `out` rather than appending routes it through the existing dedup, so a
+/// canonical alias spelling the same symbol collapses into this one instead of
+/// being emitted twice — rustdoc accepts a repeated alias silently (checked on
+/// 1.97), which is exactly why nothing but this would catch it.
 fn doc_aliases(func: &FuncDef, doc: &DocDef) -> Vec<String> {
     let name_l = func.name.to_lowercase().replace('_', "");
-    let mut out: Vec<String> = Vec::new();
+    let mut out: Vec<String> = vec![format!("TA_{}", func.name)];
     for alias in &doc.aliases {
         let cleaned: String = alias
             .chars()

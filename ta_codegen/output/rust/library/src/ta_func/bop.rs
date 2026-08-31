@@ -69,6 +69,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::BOP`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_BOP_Lookback")]
     pub fn BOP_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -181,6 +182,7 @@ impl Core {
     /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
+    #[doc(alias = "TA_BOP")]
     #[doc(alias = "BalanceOfPower")]
     pub fn BOP(
         &self,

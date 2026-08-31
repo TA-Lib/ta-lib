@@ -68,6 +68,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLHARAMICROSS`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLHARAMICROSS_Lookback")]
     pub fn CDLHARAMICROSS_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
@@ -371,6 +372,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDLDOJI`]
+    #[doc(alias = "TA_CDLHARAMICROSS")]
     #[doc(alias = "HaramiCross")]
     pub fn CDLHARAMICROSS(
         &self,

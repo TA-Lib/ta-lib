@@ -78,6 +78,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_AO_Lookback")]
     #[inline]
     pub fn AO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -308,6 +309,7 @@ impl Core {
     ///   inputs, and both report the first value at the same bar.
     /// * pandas-ta-classic swaps an inverted pair before computing, so it answers AO(slow, fast)
     ///   where this answers its negation.
+    #[doc(alias = "TA_AO")]
     #[doc(alias = "AwesomeOscillator")]
     #[doc(alias = "BillWilliamsAwesomeOscillator")]
     #[doc(alias = "BWAO")]

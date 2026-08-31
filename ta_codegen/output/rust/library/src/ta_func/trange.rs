@@ -67,6 +67,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::TRANGE`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_TRANGE_Lookback")]
     pub fn TRANGE_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((1) as usize);
     }
@@ -213,6 +214,7 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
+    #[doc(alias = "TA_TRANGE")]
     #[doc(alias = "TrueRange")]
     #[doc(alias = "TR")]
     pub fn TRANGE(

@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLHOMINGPIGEON`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLHOMINGPIGEON_Lookback")]
     pub fn CDLHOMINGPIGEON_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -354,6 +355,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDLMATCHINGLOW`]
+    #[doc(alias = "TA_CDLHOMINGPIGEON")]
     #[doc(alias = "HomingPigeon")]
     pub fn CDLHOMINGPIGEON(
         &self,

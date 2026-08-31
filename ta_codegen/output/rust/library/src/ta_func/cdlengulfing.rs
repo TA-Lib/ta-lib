@@ -68,6 +68,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLENGULFING`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLENGULFING_Lookback")]
     pub fn CDLENGULFING_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((2) as usize);
     }
@@ -220,6 +221,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDLCOUNTERATTACK`] · [`Core::CDLHARAMICROSS`]
+    #[doc(alias = "TA_CDLENGULFING")]
     #[doc(alias = "EngulfingPattern")]
     #[doc(alias = "Engulfing")]
     #[doc(alias = "BullishBearishEngulfing")]

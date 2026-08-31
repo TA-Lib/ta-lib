@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::ADD`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_ADD_Lookback")]
     pub fn ADD_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -158,6 +159,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SUB`] · [`Core::MULT`] · [`Core::DIV`]
+    #[doc(alias = "TA_ADD")]
     #[doc(alias = "VectorAdd")]
     #[doc(alias = "VectorArithmeticAdd")]
     pub fn ADD(

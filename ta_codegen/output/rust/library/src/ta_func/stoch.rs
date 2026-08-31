@@ -97,6 +97,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_STOCH_Lookback")]
     #[inline]
     pub fn STOCH_Lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
@@ -456,6 +457,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::STOCHF`] · [`Core::STOCHRSI`] · [`Core::MA`]
+    #[doc(alias = "TA_STOCH")]
     #[doc(alias = "Stochastic")]
     #[doc(alias = "StochasticOscillator")]
     #[doc(alias = "SlowStochastic")]

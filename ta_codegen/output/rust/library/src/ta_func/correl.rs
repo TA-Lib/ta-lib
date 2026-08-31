@@ -80,6 +80,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CORREL_Lookback")]
     #[inline]
     pub fn CORREL_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -411,6 +412,7 @@ impl Core {
     /// # References
     ///
     /// * Karl Pearson
+    #[doc(alias = "TA_CORREL")]
     #[doc(alias = "PearsonCorrelation")]
     #[doc(alias = "CorrelationCoefficient")]
     #[doc(alias = "r")]

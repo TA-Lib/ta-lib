@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLSHORTLINE`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLSHORTLINE_Lookback")]
     pub fn CDLSHORTLINE_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
@@ -343,6 +344,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLLONGLINE`] · [`Core::CDLSPINNINGTOP`] · [`Core::CDLDOJI`]
+    #[doc(alias = "TA_CDLSHORTLINE")]
     #[doc(alias = "ShortLineCandle")]
     #[doc(alias = "ShortLine")]
     pub fn CDLSHORTLINE(

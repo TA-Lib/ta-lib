@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::SUB`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_SUB_Lookback")]
     pub fn SUB_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -159,6 +160,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ADD`] · [`Core::MULT`] · [`Core::DIV`]
+    #[doc(alias = "TA_SUB")]
     #[doc(alias = "Subtract")]
     #[doc(alias = "VectorSubtraction")]
     pub fn SUB(

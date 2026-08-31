@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLSEPARATINGLINES`]: the number of leading input values
     /// consumed before the first output value can be produced.
+    #[doc(alias = "TA_CDLSEPARATINGLINES_Lookback")]
     pub fn CDLSEPARATINGLINES_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -421,6 +422,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLBELTHOLD`] · CDLMEETINGLINES
+    #[doc(alias = "TA_CDLSEPARATINGLINES")]
     #[doc(alias = "SeparatingLines")]
     pub fn CDLSEPARATINGLINES(
         &self,

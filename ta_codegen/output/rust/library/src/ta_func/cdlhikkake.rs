@@ -72,6 +72,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLHIKKAKE`]: the number of leading input values consumed before
     /// the first output value can be produced.
+    #[doc(alias = "TA_CDLHIKKAKE_Lookback")]
     pub fn CDLHIKKAKE_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((5) as usize);
     }
@@ -261,6 +262,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHIKKAKEMOD`] · [`Core::CDLHARAMI`]
+    #[doc(alias = "TA_CDLHIKKAKE")]
     #[doc(alias = "HikkakePattern")]
     #[doc(alias = "Hikkake")]
     pub fn CDLHIKKAKE(

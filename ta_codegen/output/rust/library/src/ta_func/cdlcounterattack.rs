@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLCOUNTERATTACK`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLCOUNTERATTACK_Lookback")]
     pub fn CDLCOUNTERATTACK_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -376,6 +377,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLPIERCING`] · [`Core::CDLDARKCLOUDCOVER`] · [`Core::CDLGAPSIDESIDEWHITE`]
+    #[doc(alias = "TA_CDLCOUNTERATTACK")]
     #[doc(alias = "Counterattack")]
     #[doc(alias = "CounterattackLines")]
     #[doc(alias = "MeetingLines")]

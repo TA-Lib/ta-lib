@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDL3INSIDE`]: the number of leading input values consumed before
     /// the first output value can be produced.
+    #[doc(alias = "TA_CDL3INSIDE_Lookback")]
     pub fn CDL3INSIDE_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -353,6 +354,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDL3OUTSIDE`] · [`Core::CDLENGULFING`]
+    #[doc(alias = "TA_CDL3INSIDE")]
     #[doc(alias = "ThreeInsideUpDown")]
     #[doc(alias = "ThreeInside")]
     #[doc(alias = "ThreeInsideUp")]

@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::WAD`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_WAD_Lookback")]
     pub fn WAD_Lookback(&self) -> Result<usize, RetCode> {
         // The first bar has no previous close, so it accumulates nothing and the
         // line starts at 0.0 -- the same convention as the other four cumulative
@@ -247,6 +248,7 @@ impl Core {
     ///   Distribute*](https://www.incrediblecharts.com/indicators/williams_accumulate_distribute.php)
     ///   — the Achelis form under its disambiguating name, "not a volume indicator despite the
     ///   name".
+    #[doc(alias = "TA_WAD")]
     pub fn WAD(
         &self,
         startIdx: usize,

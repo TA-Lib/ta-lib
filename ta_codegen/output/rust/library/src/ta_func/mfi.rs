@@ -91,6 +91,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_MFI_Lookback")]
     #[inline]
     pub fn MFI_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -377,6 +378,7 @@ impl Core {
     ///
     /// * Gene Quong & Avrum Soudack, *Volume-Weighted RSI: Money Flow*, Technical Analysis of
     ///   Stocks & Commodities, V.7:3 (March 1989)
+    #[doc(alias = "TA_MFI")]
     #[doc(alias = "MoneyFlowIndex")]
     pub fn MFI(
         &self,

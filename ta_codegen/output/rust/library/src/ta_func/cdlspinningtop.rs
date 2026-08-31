@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLSPINNINGTOP`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLSPINNINGTOP_Lookback")]
     pub fn CDLSPINNINGTOP_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
@@ -277,6 +278,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`] · [`Core::CDLLONGLEGGEDDOJI`]
+    #[doc(alias = "TA_CDLSPINNINGTOP")]
     #[doc(alias = "SpinningTop")]
     pub fn CDLSPINNINGTOP(
         &self,

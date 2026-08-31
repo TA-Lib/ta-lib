@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLBELTHOLD`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLBELTHOLD_Lookback")]
     pub fn CDLBELTHOLD_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -345,6 +346,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLCLOSINGMARUBOZU`] · [`Core::CDLMARUBOZU`] · [`Core::CDLLONGLINE`]
+    #[doc(alias = "TA_CDLBELTHOLD")]
     #[doc(alias = "Belt-hold")]
     #[doc(alias = "BeltHoldLine")]
     pub fn CDLBELTHOLD(

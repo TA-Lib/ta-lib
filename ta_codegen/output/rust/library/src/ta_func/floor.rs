@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::FLOOR`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_FLOOR_Lookback")]
     pub fn FLOOR_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -157,6 +158,7 @@ impl Core {
     ///
     /// * Wikipedia, *Floor and ceiling functions*:
     ///   [en.wikipedia.org/wiki/Floor_and_ceiling_functions](https://en.wikipedia.org/wiki/Floor_and_ceiling_functions)
+    #[doc(alias = "TA_FLOOR")]
     pub fn FLOOR(
         &self,
         startIdx: usize,

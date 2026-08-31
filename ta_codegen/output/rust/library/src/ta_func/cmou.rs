@@ -80,6 +80,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CMOU_Lookback")]
     #[inline]
     pub fn CMOU_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -325,6 +326,7 @@ impl Core {
     /// # References
     ///
     /// * Tushar S. Chande, *The New Technical Trader*, John Wiley & Sons (ISBN 0471597805)
+    #[doc(alias = "TA_CMOU")]
     #[doc(alias = "ChandeMomentumOscillatorUnsmoothed")]
     pub fn CMOU(
         &self,

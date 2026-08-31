@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::COS`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_COS_Lookback")]
     pub fn COS_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -157,6 +158,7 @@ impl Core {
     ///
     /// * Wikipedia, *Trigonometric functions*:
     ///   [en.wikipedia.org/wiki/Trigonometric_functions](https://en.wikipedia.org/wiki/Trigonometric_functions)
+    #[doc(alias = "TA_COS")]
     #[doc(alias = "Cosine")]
     #[doc(alias = "VectorTrigonometricCos")]
     pub fn COS(

@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLSTALLEDPATTERN`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLSTALLEDPATTERN_Lookback")]
     pub fn CDLSTALLEDPATTERN_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -544,6 +545,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLADVANCEBLOCK`] · [`Core::CDL3WHITESOLDIERS`] · [`Core::CDLXSIDEGAP3METHODS`]
+    #[doc(alias = "TA_CDLSTALLEDPATTERN")]
     #[doc(alias = "StalledPattern")]
     #[doc(alias = "DeliberationPattern")]
     pub fn CDLSTALLEDPATTERN(

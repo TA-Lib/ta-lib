@@ -82,6 +82,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_TSF_Lookback")]
     #[inline]
     pub fn TSF_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -381,6 +382,7 @@ impl Core {
     ///
     /// [`Core::LINEARREG`] · [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_INTERCEPT`] ·
     /// [`Core::LINEARREG_ANGLE`]
+    #[doc(alias = "TA_TSF")]
     #[doc(alias = "TimeSeriesForecast")]
     pub fn TSF(
         &self,

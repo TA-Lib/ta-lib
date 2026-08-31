@@ -77,6 +77,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_ROCR_Lookback")]
     #[inline]
     pub fn ROCR_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -233,6 +234,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::ROC`] · [`Core::ROCP`] · [`Core::ROCR100`] · [`Core::MOM`]
+    #[doc(alias = "TA_ROCR")]
     #[doc(alias = "RateofChangeRatio")]
     pub fn ROCR(
         &self,

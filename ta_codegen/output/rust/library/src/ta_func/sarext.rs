@@ -95,6 +95,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_SAREXT_Lookback")]
     #[inline]
     pub fn SAREXT_Lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> Result<usize, RetCode> {
         if optInStartValue == Self::REAL_DEFAULT {
@@ -609,6 +610,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::SAR`] · [`Core::MINUS_DM`]
+    #[doc(alias = "TA_SAREXT")]
     #[doc(alias = "ParabolicSARExtended")]
     #[doc(alias = "ExtendedParabolicStopandReverse")]
     pub fn SAREXT(

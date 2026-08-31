@@ -80,6 +80,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_AC_Lookback")]
     #[inline]
     pub fn AC_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -379,6 +380,7 @@ impl Core {
     ///   reports its first value at the same bar. Its moving average re-sums the stored window on
     ///   every bar where TA-Lib rolls a running total, so the two agree to rounding rather than to
     ///   the bit.
+    #[doc(alias = "TA_AC")]
     #[doc(alias = "AcceleratorOscillator")]
     #[doc(alias = "DeceleratorOscillator")]
     #[doc(alias = "AcceleratorDecelerator")]

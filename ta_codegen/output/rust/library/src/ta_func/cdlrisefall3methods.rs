@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLRISEFALL3METHODS`]: the number of leading input values
     /// consumed before the first output value can be produced.
+    #[doc(alias = "TA_CDLRISEFALL3METHODS_Lookback")]
     pub fn CDLRISEFALL3METHODS_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
@@ -458,6 +459,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLXSIDEGAP3METHODS`] · [`Core::CDL3INSIDE`] · [`Core::CDL3OUTSIDE`]
+    #[doc(alias = "TA_CDLRISEFALL3METHODS")]
     #[doc(alias = "RisingFallingThreeMethods")]
     #[doc(alias = "RisingThreeMethods")]
     #[doc(alias = "FallingThreeMethods")]

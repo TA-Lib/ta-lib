@@ -81,6 +81,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Real parameters accept
     /// [`Core::REAL_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_SAR_Lookback")]
     #[inline]
     pub fn SAR_Lookback(&self, mut optInAcceleration: f64, mut optInMaximum: f64) -> Result<usize, RetCode> {
         if optInAcceleration == Self::REAL_DEFAULT {
@@ -451,6 +452,7 @@ impl Core {
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
+    #[doc(alias = "TA_SAR")]
     #[doc(alias = "ParabolicSAR")]
     #[doc(alias = "PSAR")]
     #[doc(alias = "StopandReverse")]

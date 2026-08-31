@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDL3LINESTRIKE`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDL3LINESTRIKE_Lookback")]
     pub fn CDL3LINESTRIKE_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
@@ -317,6 +318,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDL3WHITESOLDIERS`] · [`Core::CDL3BLACKCROWS`]
+    #[doc(alias = "TA_CDL3LINESTRIKE")]
     #[doc(alias = "Three-LineStrike")]
     #[doc(alias = "3-LineStrike")]
     pub fn CDL3LINESTRIKE(

@@ -65,6 +65,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::LOG10`]: the number of leading input values consumed before the
     /// first output value can be produced.
+    #[doc(alias = "TA_LOG10_Lookback")]
     pub fn LOG10_Lookback(&self) -> Result<usize, RetCode> {
         return Ok((0) as usize);
     }
@@ -157,6 +158,7 @@ impl Core {
     ///
     /// * Wikipedia, *Common logarithm*:
     ///   [en.wikipedia.org/wiki/Common_logarithm](https://en.wikipedia.org/wiki/Common_logarithm)
+    #[doc(alias = "TA_LOG10")]
     #[doc(alias = "LogBase10")]
     #[doc(alias = "CommonLogarithm")]
     pub fn LOG10(

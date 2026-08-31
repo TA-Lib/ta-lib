@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLMATCHINGLOW`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLMATCHINGLOW_Lookback")]
     pub fn CDLMATCHINGLOW_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
@@ -282,6 +283,7 @@ impl Core {
     /// # See also
     ///
     /// CDLMATCHINGHIGH · [`Core::CDLHOMINGPIGEON`]
+    #[doc(alias = "TA_CDLMATCHINGLOW")]
     #[doc(alias = "MatchingLow")]
     pub fn CDLMATCHINGLOW(
         &self,

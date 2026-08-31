@@ -75,6 +75,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_CMF_Lookback")]
     #[inline]
     pub fn CMF_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -325,6 +326,7 @@ impl Core {
     ///   example.
     /// * Kirkpatrick and Dahlquist, *Technical Analysis: The Complete Resource for Financial Market
     ///   Technicians*, 2nd edition, pages 419 and 421.
+    #[doc(alias = "TA_CMF")]
     #[doc(alias = "ChaikinMoneyFlow")]
     pub fn CMF(
         &self,

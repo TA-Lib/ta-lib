@@ -86,6 +86,7 @@ impl Core {
     ///
     /// [`RetCode::BadParam`] when a parameter is out of range. Integer parameters accept
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
+    #[doc(alias = "TA_APO_Lookback")]
     #[inline]
     pub fn APO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> Result<usize, RetCode> {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -263,6 +264,7 @@ impl Core {
     ///   newsletter). The APO is the same fast-minus-slow moving-average oscillator in price units;
     ///   with exponential moving averages and periods 12/26 it is the oscillator underlying the
     ///   MACD line. Appel's original definition uses **exponential** moving averages.
+    #[doc(alias = "TA_APO")]
     #[doc(alias = "AbsolutePriceOscillator")]
     pub fn APO(
         &self,

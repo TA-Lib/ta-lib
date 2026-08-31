@@ -66,6 +66,7 @@ use super::*;
 impl Core {
     /// Lookback period for [`Core::CDLRICKSHAWMAN`]: the number of leading input values consumed
     /// before the first output value can be produced.
+    #[doc(alias = "TA_CDLRICKSHAWMAN_Lookback")]
     pub fn CDLRICKSHAWMAN_Lookback(&self) -> Result<usize, RetCode> {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
@@ -419,6 +420,7 @@ impl Core {
     /// # See also
     ///
     /// [`Core::CDLLONGLEGGEDDOJI`] · [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`]
+    #[doc(alias = "TA_CDLRICKSHAWMAN")]
     #[doc(alias = "RickshawMan")]
     pub fn CDLRICKSHAWMAN(
         &self,
