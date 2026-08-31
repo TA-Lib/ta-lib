@@ -13335,26 +13335,6 @@ fn a_stream_step_reads_candle_settings_from_its_parameters() {
 }
 
 
-/// A store `validate_peekable` refuses: a compound one, which renders as a
-/// store reading its own target. A refusal drops the whole function back to the
-/// narrow set, so one such store justifies every copy in it. The other two
-/// refusals (a store in a loop, a counter-moving index) have no instance here;
-/// one would surface as an offender below rather than be waved through.
-fn csharp_refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool {
-    body.lines().any(|l| {
-        l.split_once('=').is_some_and(|(lhs, rhs)| {
-            // `!rhs.starts_with('=')`: `X[i] == X[j]` splits the same way a store
-            // does, and comparing two slots is not a store into either.
-            lhs.trim_end().ends_with(']')
-                && !rhs.starts_with('=')
-                && fields.iter().any(|f| {
-                    let sub = format!("{f}[");
-                    lhs.contains(&sub) && rhs.contains(&sub)
-                })
-        })
-    })
-}
-
 /// The handle's fixed-size accumulator fields: an array the BATCH body declares
 /// with a literal size. Off the emitted code, never a name list.
 fn csharp_accumulator_fields(section: &str, batch: &str) -> BTreeSet<String> {
@@ -13423,7 +13403,7 @@ fn no_csharp_peek_copies_the_handle() {
 
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
-    let (mut swept, mut frames, mut clones, mut writes) = (0usize, 0usize, 0usize, 0usize);
+    let (mut swept, mut frames, mut writes) = (0usize, 0usize, 0usize);
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
 
@@ -13444,7 +13424,6 @@ fn no_csharp_peek_copies_the_handle() {
             }
             let end = s[start..].find("\n      }").map_or(s.len(), |e| start + e);
             let peek = &s[start..end];
-            let mut copying: BTreeSet<String> = BTreeSet::new();
             swept += 1;
             if peek.contains("Stream sp = this;") {
                 frames += 1;
@@ -13481,40 +13460,12 @@ fn no_csharp_peek_copies_the_handle() {
                 {
                     continue;
                 }
-                // `<T>[] <f> = new <T>[sp.<f>.Length];` — allowed only where the
-                // batch body sizes `<f>` with a literal.
-                let ok = l
-                    .split_once("= new ")
-                    .and_then(|(_, rhs)| rhs.split_once("[sp."))
-                    .and_then(|(elem, tail)| tail.split_once(".Length];").map(|(f, _)| (elem, f)))
-                    .filter(|(elem, f)| {
-                        let decl = format!("{elem}[] {f} = new {elem}[");
-                        batch.match_indices(&decl).any(|(i, _)| {
-                            batch[i + decl.len()..]
-                                .split_once(']')
-                                .is_some_and(|(n, _)| n.parse::<u32>().is_ok())
-                        })
-                    })
-                    .map(|(_, f)| f);
-                match ok {
-                    Some(f) => {
-                        clones += 1;
-                        copying.insert(f.to_string());
-                    }
-                    None => offenders.push(format!("{name}: {l}")),
-                }
+                offenders.push(format!("{name}: {l}"));
             }
-            // A frame that copies with nothing refused was never offered the
-            // wide set, and allocates per Peek for nothing.
+            // The frame must READ an accumulator: a field it never names is
+            // no evidence about the copy either way.
             let accs = csharp_accumulator_fields(&s, &batch);
-            if !copying.is_empty() && !csharp_refused_accumulator_store(peek, &accs) {
-                offenders.push(format!(
-                    "{name}: copies {copying:?} but no accumulator store is refusable"
-                ));
-            }
-            // The other half of the split. The frame must TOUCH an accumulator:
-            // a field it never names is evidence either way.
-            if copying.is_empty() && accs.iter().any(|f| peek.contains(&format!("{f}["))) {
+            if accs.iter().any(|f| peek.contains(&format!("{f}["))) {
                 fully_shadowed.insert(name.clone());
             }
         }
@@ -13522,13 +13473,10 @@ fn no_csharp_peek_copies_the_handle() {
 
     assert!(swept > 170, "only {swept} Peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} Peek(s) run a frame");
-    // Both sides of the split are floored, because the corpus has both and a
-    // sweep that stopped finding either would read green while measuring one.
-    assert!(clones >= 1, "no accumulator copy seen — the exemption is untested");
     assert!(
-        fully_shadowed.len() >= 7,
-        "only {} handle(s) hold an accumulator the frame copies nothing of — the widened \
-         buffer set is no longer reaching them and Peek allocates again",
+        fully_shadowed.len() >= 21,
+        "only {} handle(s) have a Peek frame that reads an accumulator — the sweep \
+         is looking for something that is not there",
         fully_shadowed.len()
     );
     assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");

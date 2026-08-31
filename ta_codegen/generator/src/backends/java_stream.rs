@@ -1089,9 +1089,10 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     };
     let (sig_bars, _) = bar_params(func);
 
-    // Two things allocate here and both are per call: an accumulator the frame
-    // had to clone, and the `Value` a multi-output peek returns. Neither grows
-    // with the period, which is the claim the frame exists to keep.
+    // What still allocates per call is the `Value` a multi-output peek returns,
+    // and an accumulator a frame had to clone — no shipped one does, and the
+    // branch is the fallback. Neither grows with the period, which is the claim
+    // the frame exists to keep.
     let allocates =
         frame.is_some_and(|f| f.contains(".clone()")) || func.outputs.len() > 1;
     let cost = if allocates {
@@ -1467,7 +1468,7 @@ fn peek_frame_arm_named(
         fields.iter().map(|(n, t, _)| (n.as_str(), t.as_str())).collect();
 
     let mut out = String::new();
-    for (name, ty) in &model.temps {
+    for (name, ty) in &streaming::temps_used(&model.temps, &body_ir) {
         let (jty, default) = field_type_and_default(ty);
         let _ = writeln!(out, "{pad}{jty} {name} = {default};");
     }
@@ -1477,9 +1478,7 @@ fn peek_frame_arm_named(
         }
         let jty = types.get(name.as_str()).copied()?;
         // A Java array field is a reference: taking it plain would write the
-        // handle through it. Only the accumulators `peek_transition_widest`
-        // refused reach here — two to five elements, never a period-sized
-        // buffer, which the frame only ever reads.
+        // handle through it.
         let init = if jty.ends_with("[]") {
             format!("sp.{name}.clone()")
         } else {

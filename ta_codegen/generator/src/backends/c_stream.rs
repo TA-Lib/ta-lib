@@ -3926,7 +3926,11 @@ fn emit_step_inner(
         }
     };
     let transition = apply_step_scalars(&transition, &elected);
-    for (name, ty) in &model.temps {
+    let temps = match frame {
+        StepFrame::Commit => model.temps.clone(),
+        StepFrame::Peek => streaming::temps_used(&model.temps, &transition),
+    };
+    for (name, ty) in &temps {
         let _ = writeln!(decls, "{pad}{};", c_decl(ty, name));
     }
     for name in &elected {

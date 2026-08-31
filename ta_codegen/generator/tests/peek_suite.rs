@@ -576,40 +576,15 @@ fn handle_accumulators(src: &str, upper: &str) -> BTreeSet<String> {
     out
 }
 
-/// A store `validate_peekable` refuses: a compound one, which renders as a
-/// store reading its own target. A refusal drops the whole function back to the
-/// narrow set, so one such store justifies every copy in it. The other two
-/// refusals (a store in a loop, a counter-moving index) have no instance here;
-/// one would surface as an offender below rather than be waved through.
-fn refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool {
-    body.lines().any(|l| {
-        l.split_once('=').is_some_and(|(lhs, rhs)| {
-            // `!rhs.starts_with('=')`: `X[i] == X[j]` splits the same way a store
-            // does, and comparing two slots is not a store into either.
-            lhs.trim_end().ends_with(']')
-                && !rhs.starts_with('=')
-                && fields.iter().any(|f| {
-                    let sub = format!("{f}[");
-                    lhs.contains(&sub) && rhs.contains(&sub)
-                })
-        })
-    })
-}
-
-/// A peek frame deletes every accumulator store it can, and one that keeps a
-/// store shows why.
-///
-/// The refusal is per function, so ONE surviving store must be a refused shape,
-/// not each. Both floors guard a real split; `kept_by_refusal` shrinking is an
-/// improvement, so lower it rather than working around it.
+/// A peek frame deletes EVERY accumulator store, so Java and C# have nothing
+/// to copy the field for. A function that lands one the frame must keep fails
+/// here rather than quietly reintroducing a copy per peek.
 #[test]
-fn a_peek_frame_deletes_every_accumulator_store_it_can() {
+fn a_peek_frame_deletes_every_accumulator_store() {
     let mut with_accumulators = 0usize;
-    let mut fully_deleted = 0usize;
-    let mut kept_by_refusal = 0usize;
     let mut step_stores = 0usize;
     let mut unhandled: Vec<String> = Vec::new();
-    let mut offenders: Vec<String> = Vec::new();
+    let mut kept: Vec<String> = Vec::new();
 
     for name in indicators() {
         let Some((func, enums)) = load(&name) else { continue };
@@ -630,21 +605,13 @@ fn a_peek_frame_deletes_every_accumulator_store_it_can() {
         };
         let stored = buffer_stores(&step, &accs).len();
         if stored == 0 {
-            continue; // nothing for the frame to delete: neither side of the split
+            continue; // nothing for the frame to delete
         }
         with_accumulators += 1;
         step_stores += stored;
-        if buffer_stores(&peek, &accs).is_empty() {
-            fully_deleted += 1;
-            continue;
-        }
-        kept_by_refusal += 1;
-        if !refused_accumulator_store(&peek, &accs) {
-            offenders.push(format!(
-                "{upper}: keeps {} accumulator store(s), none of them a shape \
-                 `validate_peekable` refuses",
-                buffer_stores(&peek, &accs).len()
-            ));
+        let left = buffer_stores(&peek, &accs);
+        if !left.is_empty() {
+            kept.push(format!("{upper}: {} accumulator store(s)", left.len()));
         }
     }
 
@@ -660,19 +627,10 @@ fn a_peek_frame_deletes_every_accumulator_store_it_can() {
          sweep proves nothing"
     );
     assert!(
-        fully_deleted >= 7,
-        "only {fully_deleted} function(s) had every accumulator store deleted — the \
-         widened buffer set is no longer reaching them, and Java/C# are cloning again"
-    );
-    assert!(
-        kept_by_refusal >= 1,
-        "no function keeps an accumulator store, so the refusal arm below is untested"
-    );
-    assert!(
-        offenders.is_empty(),
-        "a peek frame keeps an accumulator store with no refusal to justify it, so the \
-         widened buffer set was not offered for it ({} site(s)):\n{}",
-        offenders.len(),
-        offenders.join("\n")
+        kept.is_empty(),
+        "a peek frame keeps an accumulator store, so Java and C# copy the field \
+         again ({} function(s)):\n{}",
+        kept.len(),
+        kept.join("\n")
     );
 }

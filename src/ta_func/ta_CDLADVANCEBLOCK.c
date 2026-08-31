@@ -887,31 +887,14 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Peek( const TA_CDLADVANCEBLOCK_Stream *
 {
    struct TA_CDLADVANCEBLOCK_Stream scratch;
    struct TA_CDLADVANCEBLOCK_Stream *sp = &scratch;
-   int totIdx;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
-   int pkSlot2 = -1;
-   double pkVal2 = 0.0;
-   int pkSlot3 = -1;
-   double pkVal3 = 0.0;
-   int pkSlot4 = -1;
-   double pkVal4 = 0.0;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
    pkSlot0 = sp->ringPos_BodyLongTrailingIdx;
    pkVal0 = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
-   pkSlot1 = sp->ringPos_FarTrailingIdx;
-   pkVal1 = TA_STREAM_CANDLERANGE(Far,inOpen,inHigh,inLow,inClose);
-   pkSlot2 = sp->ringPos_NearTrailingIdx;
-   pkVal2 = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
-   pkSlot3 = sp->ringPos_ShadowLongTrailingIdx;
-   pkVal3 = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
-   pkSlot4 = sp->ringPos_ShadowShortTrailingIdx;
-   pkVal4 = TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && /* 1st white */
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd white */
        ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                   /* 3rd white */
@@ -929,22 +912,6 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Peek( const TA_CDLADVANCEBLOCK_Stream *
    } else 
    {
       *outInteger= 0;
-   }
-   /* add the current range and subtract the first range: this is done after the pattern recognition
-    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-    */
-   for( totIdx = 2; totIdx >= 0; totIdx -= 1 )
-   {
-      sp->ShadowShortPeriodTotal[totIdx] = sp->ShadowShortPeriodTotal[totIdx] + (((((sp->ringPos_ShadowShortTrailingIdx + sp->ringCap_ShadowShortTrailingIdx - totIdx >= sp->ringCap_ShadowShortTrailingIdx) ? sp->ringPos_ShadowShortTrailingIdx + sp->ringCap_ShadowShortTrailingIdx - totIdx - sp->ringCap_ShadowShortTrailingIdx : sp->ringPos_ShadowShortTrailingIdx + sp->ringCap_ShadowShortTrailingIdx - totIdx) != pkSlot4) ? sp->ring_ShadowShortTrailingIdx_derived[(sp->ringPos_ShadowShortTrailingIdx + sp->ringCap_ShadowShortTrailingIdx - totIdx >= sp->ringCap_ShadowShortTrailingIdx) ? sp->ringPos_ShadowShortTrailingIdx + sp->ringCap_ShadowShortTrailingIdx - totIdx - sp->ringCap_ShadowShortTrailingIdx : sp->ringPos_ShadowShortTrailingIdx + sp->ringCap_ShadowShortTrailingIdx - totIdx] : pkVal4) - (((sp->ringPos_ShadowShortTrailingIdx + sp->ringCap_ShadowShortTrailingIdx - sp->ringLag_ShadowShortTrailingIdx - totIdx) % sp->ringCap_ShadowShortTrailingIdx != pkSlot4) ? sp->ring_ShadowShortTrailingIdx_derived[(sp->ringPos_ShadowShortTrailingIdx + sp->ringCap_ShadowShortTrailingIdx - sp->ringLag_ShadowShortTrailingIdx - totIdx) % sp->ringCap_ShadowShortTrailingIdx] : pkVal4));
-   }
-   for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-   {
-      sp->ShadowLongPeriodTotal[totIdx] = sp->ShadowLongPeriodTotal[totIdx] + (((((sp->ringPos_ShadowLongTrailingIdx + sp->ringCap_ShadowLongTrailingIdx - totIdx >= sp->ringCap_ShadowLongTrailingIdx) ? sp->ringPos_ShadowLongTrailingIdx + sp->ringCap_ShadowLongTrailingIdx - totIdx - sp->ringCap_ShadowLongTrailingIdx : sp->ringPos_ShadowLongTrailingIdx + sp->ringCap_ShadowLongTrailingIdx - totIdx) != pkSlot3) ? sp->ring_ShadowLongTrailingIdx_derived[(sp->ringPos_ShadowLongTrailingIdx + sp->ringCap_ShadowLongTrailingIdx - totIdx >= sp->ringCap_ShadowLongTrailingIdx) ? sp->ringPos_ShadowLongTrailingIdx + sp->ringCap_ShadowLongTrailingIdx - totIdx - sp->ringCap_ShadowLongTrailingIdx : sp->ringPos_ShadowLongTrailingIdx + sp->ringCap_ShadowLongTrailingIdx - totIdx] : pkVal3) - (((sp->ringPos_ShadowLongTrailingIdx + sp->ringCap_ShadowLongTrailingIdx - sp->ringLag_ShadowLongTrailingIdx - totIdx) % sp->ringCap_ShadowLongTrailingIdx != pkSlot3) ? sp->ring_ShadowLongTrailingIdx_derived[(sp->ringPos_ShadowLongTrailingIdx + sp->ringCap_ShadowLongTrailingIdx - sp->ringLag_ShadowLongTrailingIdx - totIdx) % sp->ringCap_ShadowLongTrailingIdx] : pkVal3));
-   }
-   for( totIdx = 2; totIdx >= 1; totIdx -= 1 )
-   {
-      sp->FarPeriodTotal[totIdx] = sp->FarPeriodTotal[totIdx] + (((((sp->ringPos_FarTrailingIdx + sp->ringCap_FarTrailingIdx - totIdx >= sp->ringCap_FarTrailingIdx) ? sp->ringPos_FarTrailingIdx + sp->ringCap_FarTrailingIdx - totIdx - sp->ringCap_FarTrailingIdx : sp->ringPos_FarTrailingIdx + sp->ringCap_FarTrailingIdx - totIdx) != pkSlot1) ? sp->ring_FarTrailingIdx_derived[(sp->ringPos_FarTrailingIdx + sp->ringCap_FarTrailingIdx - totIdx >= sp->ringCap_FarTrailingIdx) ? sp->ringPos_FarTrailingIdx + sp->ringCap_FarTrailingIdx - totIdx - sp->ringCap_FarTrailingIdx : sp->ringPos_FarTrailingIdx + sp->ringCap_FarTrailingIdx - totIdx] : pkVal1) - (((sp->ringPos_FarTrailingIdx + sp->ringCap_FarTrailingIdx - sp->ringLag_FarTrailingIdx - totIdx) % sp->ringCap_FarTrailingIdx != pkSlot1) ? sp->ring_FarTrailingIdx_derived[(sp->ringPos_FarTrailingIdx + sp->ringCap_FarTrailingIdx - sp->ringLag_FarTrailingIdx - totIdx) % sp->ringCap_FarTrailingIdx] : pkVal1));
-      sp->NearPeriodTotal[totIdx] = sp->NearPeriodTotal[totIdx] + (((((sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx >= sp->ringCap_NearTrailingIdx) ? sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx - sp->ringCap_NearTrailingIdx : sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx) != pkSlot2) ? sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx >= sp->ringCap_NearTrailingIdx) ? sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx - sp->ringCap_NearTrailingIdx : sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx] : pkVal2) - (((sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - totIdx) % sp->ringCap_NearTrailingIdx != pkSlot2) ? sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - totIdx) % sp->ringCap_NearTrailingIdx] : pkVal2));
    }
    sp->BodyLongPeriodTotal += TA_STREAM_CANDLERANGE(BodyLong,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) - (((sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - 2) % sp->ringCap_BodyLongTrailingIdx != pkSlot0) ? sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - 2) % sp->ringCap_BodyLongTrailingIdx] : pkVal0);
    sp->cur_outInteger = *outInteger;

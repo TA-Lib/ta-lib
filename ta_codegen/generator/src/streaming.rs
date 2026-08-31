@@ -7481,6 +7481,306 @@ fn buffer_is_read(stmts: &[Statement], buf: &str) -> bool {
     total > count_buffer_stores(stmts, buf)
 }
 
+/// A `bufs` buffer named by this statement's OWN expressions outside a
+/// subscript — handed to a call, dereferenced whole, or written through
+/// `&buf[i]` / `buf[i]++`. The rewrite can answer a subscripted load; it can
+/// answer none of these.
+fn escaping_buffer(s: &Statement, bufs: &BTreeMap<String, bool>) -> Option<String> {
+    let mut escaped: Option<String> = None;
+    walk_stmt_own_exprs(s, &mut |top| {
+        walk_expr(top, &mut |x| {
+            let named = match x {
+                Expr::Var(v) | Expr::PointerDeref(v) => Some(v),
+                Expr::AddressOf(i)
+                | Expr::PostIncrement(i)
+                | Expr::PostDecrement(i)
+                | Expr::PreIncrement(i)
+                | Expr::PreDecrement(i) => match i.as_ref() {
+                    Expr::ArrayAccess(v, _) => Some(v),
+                    _ => None,
+                },
+                _ => None,
+            };
+            if let Some(v) = named {
+                if bufs.contains_key(v) {
+                    escaped = Some(v.clone());
+                }
+            }
+        });
+    });
+    escaped
+}
+
+/// Buffers whose stores `peek` can drop whole: no load of the buffer can
+/// execute once one of them has run. A dropped store takes its own operands
+/// with it, so a self-reading `X[i] = X[i] + e` is not a load that keeps `X`
+/// alive — which is the whole of what a candlestick accumulator needs, read by
+/// the pattern condition above it and rewritten below it for a bar `peek` never
+/// keeps.
+fn stores_no_load_reaches(stmts: &[Statement], buf: &str) -> bool {
+    let mut scan = DeadStoreScan { buf, stored: false, live: false };
+    scan.list(stmts);
+    scan.stored && !scan.live
+}
+
+/// The program-order walk behind [`stores_no_load_reaches`], conservative in
+/// the direction that keeps a buffer: a loop holding a store reaches its own
+/// statements through the back edge, so every load in it counts as after, and a
+/// side effect in a dropped store's index or value would be lost with it.
+struct DeadStoreScan<'a> {
+    buf: &'a str,
+    /// Whether a store into `buf` may already have run.
+    stored: bool,
+    /// Whether a load has been seen while it had.
+    live: bool,
+}
+
+impl DeadStoreScan<'_> {
+    fn list(&mut self, stmts: &[Statement]) {
+        for s in stmts {
+            self.stmt(s);
+        }
+    }
+
+    fn loads(&mut self, e: &Expr) {
+        if !self.stored || self.live {
+            return;
+        }
+        walk_expr(e, &mut |x| {
+            if matches!(x, Expr::ArrayAccess(n, _) if n == self.buf) {
+                self.live = true;
+            }
+        });
+    }
+
+    fn stmt(&mut self, s: &Statement) {
+        if let Statement::Assign { target: Expr::ArrayAccess(n, idx), value, .. } = s {
+            if n == self.buf {
+                self.live |= has_side_effect(idx) || has_side_effect(value);
+                self.stored = true;
+                return;
+            }
+        }
+        let (bodies, crosses_loop) = nested_bodies(s);
+        if crosses_loop && count_buffer_stores(std::slice::from_ref(s), self.buf) > 0 {
+            self.stored = true;
+        }
+        walk_stmt_own_exprs(s, &mut |e| self.loads(e));
+        for b in bodies {
+            self.list(b);
+        }
+    }
+}
+
+/// The counter of a `for` a deletion would leave holding nothing but its
+/// header. Dropping such a loop is a no-op for everything except that counter's
+/// terminal value, so the caller drops it only where nothing else reads the
+/// counter — and where something does, the empty loop it leaves takes the whole
+/// rewrite back.
+fn spent_loop_counter(
+    s: &Statement,
+    dead: &BTreeSet<&str>,
+    bufs: &BTreeMap<String, bool>,
+) -> Option<String> {
+    let Statement::ForC { init, condition, update, body } = s else {
+        return None;
+    };
+    if has_side_effect(condition)
+        || !body.iter().any(|b| is_dead_store(b, dead, bufs))
+        || !body.iter().all(|b| is_dead_store(b, dead, bufs) || matches!(b, Statement::Comment(_)))
+    {
+        return None;
+    }
+    match (init.as_ref(), update.as_ref()) {
+        (
+            Statement::Assign { target: Expr::Var(a), value: from, .. },
+            Statement::Assign { target: Expr::Var(b), value: step, .. },
+        ) if a == b && !has_side_effect(from) && !has_side_effect(step) => Some(a.clone()),
+        _ => None,
+    }
+}
+
+/// A store the deletion may remove: into a buffer no load reaches, and handing
+/// no buffer out — [`escaping_buffer`] is a refusal, and dropping the store
+/// would drop the refusal with it.
+fn is_dead_store(s: &Statement, dead: &BTreeSet<&str>, bufs: &BTreeMap<String, bool>) -> bool {
+    matches!(s, Statement::Assign { target: Expr::ArrayAccess(n, _), .. } if dead.contains(n.as_str()))
+        && escaping_buffer(s, bufs).is_none()
+}
+
+/// Every name `stmts` mentions, skipping the statements `skip` accepts.
+fn names_mentioned(
+    stmts: &[Statement],
+    skip: &dyn Fn(&Statement) -> bool,
+    out: &mut BTreeSet<String>,
+) {
+    for s in stmts {
+        if skip(s) {
+            continue;
+        }
+        match s {
+            Statement::VarDecl { name, .. } => out.insert(name.clone()),
+            Statement::For { var, .. } => out.insert(var.clone()),
+            _ => false,
+        };
+        walk_stmt_own_exprs(s, &mut |e| expr_var_names(e, out));
+        for body in nested_bodies(s).0 {
+            names_mentioned(body, skip, out);
+        }
+    }
+}
+
+/// The subset of `temps` a body still names.
+///
+/// A peek frame deletes whole statements — the accumulator loops
+/// [`drop_stores_no_load_reaches`] empties go that way — and the declaration
+/// nothing then reads is CS0219 in C#, which the shipped csproj builds with
+/// `TreatWarningsAsErrors`. Ask this of a PEEK frame only: the committing frame
+/// keeps those statements, so filtering there would only let the two frames'
+/// declarations drift.
+#[must_use]
+pub fn temps_used(temps: &[(String, VarType)], body: &[Statement]) -> Vec<(String, VarType)> {
+    let mut named: BTreeSet<String> = BTreeSet::new();
+    names_mentioned(body, &|_| false, &mut named);
+    temps.iter().filter(|(n, _)| named.contains(n)).cloned().collect()
+}
+
+/// The expressions a statement evaluates itself, without the ones its nested
+/// bodies do — [`nested_bodies`] reaches those, and a caller that must treat a
+/// nested statement differently needs the two apart.
+fn walk_stmt_own_exprs(s: &Statement, f: &mut dyn FnMut(&Expr)) {
+    match s {
+        Statement::VarDecl { init: Some(e), .. }
+        | Statement::Return { value: Some(e) }
+        | Statement::Expr(e) => f(e),
+        Statement::Assign { target, value, .. } => {
+            f(target);
+            f(value);
+        }
+        Statement::While { condition, .. }
+        | Statement::DoWhile { condition, .. }
+        | Statement::If { condition, .. }
+        | Statement::ForC { condition, .. } => f(condition),
+        Statement::For { count, .. } => f(count),
+        Statement::Switch { expr, .. } => f(expr),
+        Statement::CircBuf(CircBuf::Init { size, .. }) => f(size),
+        _ => {}
+    }
+}
+
+/// `list` with the statements `drop` accepts removed, and with the comment run
+/// or unroll hint that introduced each removed too. A `Comment` is positioned
+/// against the ONE statement it preceded, so a run that outlives it describes
+/// code that is not there and a hint would land on whatever followed.
+fn strip_stmts(list: &[Statement], drop: &dyn Fn(&Statement) -> bool) -> Vec<Statement> {
+    let mut out: Vec<Statement> = Vec::new();
+    for s in list {
+        let kept = if drop(s) {
+            None
+        } else {
+            let inner = strip_inner(s, drop);
+            match &inner {
+                Statement::Block { body } if body.is_empty() => None,
+                _ => Some(inner),
+            }
+        };
+        match kept {
+            Some(k) => out.push(k),
+            None => {
+                while matches!(
+                    out.last(),
+                    Some(Statement::Comment(_) | Statement::UnrollHint { .. })
+                ) {
+                    out.pop();
+                }
+            }
+        }
+    }
+    out
+}
+
+fn strip_inner(s: &Statement, drop: &dyn Fn(&Statement) -> bool) -> Statement {
+    match s {
+        Statement::While { condition, body } => Statement::While {
+            condition: condition.clone(),
+            body: strip_stmts(body, drop),
+        },
+        Statement::DoWhile { condition, body } => Statement::DoWhile {
+            condition: condition.clone(),
+            body: strip_stmts(body, drop),
+        },
+        Statement::For { var, count, body } => Statement::For {
+            var: var.clone(),
+            count: count.clone(),
+            body: strip_stmts(body, drop),
+        },
+        Statement::ForC { init, condition, update, body } => Statement::ForC {
+            init: init.clone(),
+            condition: condition.clone(),
+            update: update.clone(),
+            body: strip_stmts(body, drop),
+        },
+        Statement::If { condition, then_body, else_body, cond_comments } => Statement::If {
+            condition: condition.clone(),
+            then_body: strip_stmts(then_body, drop),
+            else_body: strip_stmts(else_body, drop),
+            cond_comments: cond_comments.clone(),
+        },
+        Statement::Switch { expr, cases, default } => Statement::Switch {
+            expr: expr.clone(),
+            cases: cases.iter().map(|(l, b)| (l.clone(), strip_stmts(b, drop))).collect(),
+            default: strip_stmts(default, drop),
+        },
+        Statement::Block { body } => Statement::Block { body: strip_stmts(body, drop) },
+        other => other.clone(),
+    }
+}
+
+/// Whether any loop in `stmts` has an empty body.
+fn has_empty_loop(stmts: &[Statement]) -> bool {
+    stmts.iter().any(|s| {
+        matches!(
+            s,
+            Statement::While { body, .. }
+                | Statement::DoWhile { body, .. }
+                | Statement::For { body, .. }
+                | Statement::ForC { body, .. } if body.is_empty()
+        ) || nested_bodies(s).0.iter().any(|b| has_empty_loop(b))
+    })
+}
+
+/// `transition` with the stores [`stores_no_load_reaches`] proves nothing can
+/// read removed, and the `for` loops that leaves holding only their header
+/// removed with them.
+///
+/// Peek-only, and ahead of [`validate_peekable`] on purpose: the refusals there
+/// exist so that one shadow per store stays sound, and a store that is not
+/// going to be emitted needs no shadow — which is what lets these sit in a loop
+/// and be written `+=`.
+fn drop_stores_no_load_reaches(
+    transition: &[Statement],
+    bufs: &BTreeMap<String, bool>,
+) -> Vec<Statement> {
+    let dead: BTreeSet<&str> =
+        bufs.keys().filter(|b| stores_no_load_reaches(transition, b)).map(String::as_str).collect();
+    if dead.is_empty() {
+        return transition.to_vec();
+    }
+    let mut kept: BTreeSet<String> = BTreeSet::new();
+    names_mentioned(transition, &|s| spent_loop_counter(s, &dead, bufs).is_some(), &mut kept);
+    let out = strip_stmts(transition, &|s| {
+        is_dead_store(s, &dead, bufs)
+            || spent_loop_counter(s, &dead, bufs).is_some_and(|v| !kept.contains(&v))
+    });
+    // A loop the deletion emptied but could not remove would spin forever where
+    // the body was what ended it. Refuse the whole rewrite instead; the caller
+    // then falls back to the buffer set it uses today.
+    if has_empty_loop(&out) {
+        return transition.to_vec();
+    }
+    out
+}
+
 /// Rewrite `transition` so it computes the same values without storing into
 /// any handle buffer — see [`PeekShadow`].
 ///
@@ -7493,7 +7793,9 @@ fn buffer_is_read(stmts: &[Statement], buf: &str) -> bool {
 /// A buffer named outside an index expression, a compound store into one, or a
 /// store inside a loop — each would make one shadow per store unsound, and each
 /// is absent from the corpus, so the point of the check is that a new one fails
-/// generation instead of peeking against a buffer it also wrote.
+/// generation instead of peeking against a buffer it also wrote. Only stores
+/// that survive [`drop_stores_no_load_reaches`] are checked: one that is not
+/// emitted needs no shadow to be sound.
 ///
 /// `slot_cast` types the slot the select compares: C indexes with plain ints and
 /// passes `None`, Rust indexes with `usize` and passes `VarType::Index`, so the
@@ -7505,6 +7807,7 @@ pub fn peek_transition(
     slot_cast: Option<VarType>,
 ) -> Result<PeekTransition, String> {
     let bufs: BTreeMap<String, bool> = buffers.iter().map(|(n, i)| (n.clone(), *i)).collect();
+    let transition = &drop_stores_no_load_reaches(transition, &bufs)[..];
     validate_peekable(transition, &bufs, 0)?;
     let shadowed: BTreeSet<String> = buffers
         .iter()
@@ -7655,38 +7958,12 @@ fn validate_peekable(
                 // it back, dropped — and dropping it drops whatever it moved.
                 if has_side_effect(idx) || has_side_effect(value) {
                     return Err(format!(
-                        "peek: store into buffer `{n}` moves a counter, which a dropped                          store would lose"
+                        "peek: store into buffer `{n}` moves a counter, which a dropped store would lose"
                     ));
                 }
             }
         }
-        let mut escaped: Option<String> = None;
-        walk_stmt_exprs(s, &mut |top| {
-            walk_expr(top, &mut |x| {
-                let named = match x {
-                    // The buffer itself, not one of its elements.
-                    Expr::Var(v) | Expr::PointerDeref(v) => Some(v),
-                    // `&buf[i]` hands an element out; `buf[i]++` writes one.
-                    // Both name the buffer through an ArrayAccess, which the
-                    // rewrite treats as a load.
-                    Expr::AddressOf(i)
-                    | Expr::PostIncrement(i)
-                    | Expr::PostDecrement(i)
-                    | Expr::PreIncrement(i)
-                    | Expr::PreDecrement(i) => match i.as_ref() {
-                        Expr::ArrayAccess(v, _) => Some(v),
-                        _ => None,
-                    },
-                    _ => None,
-                };
-                if let Some(v) = named {
-                    if bufs.contains_key(v) {
-                        escaped = Some(v.clone());
-                    }
-                }
-            });
-        });
-        if let Some(n) = escaped {
+        if let Some(n) = escaping_buffer(s, bufs) {
             return Err(format!("peek: buffer `{n}` escapes or is written outside a plain store"));
         }
         let (inner, crosses_loop) = nested_bodies(s);
@@ -8076,17 +8353,188 @@ mod tests {
             ))),
             compound: false,
         };
-        for (stmt, want) in [
-            (in_loop, "inside a loop"),
-            (compound, "compound store"),
-            (bare, "escapes or is written"),
-            (moving_store, "moves a counter"),
-            (escaping, "escapes or is written"),
+        // The escape inside the store the deletion would otherwise take, which
+        // is the one place dropping first could hide it.
+        let handing_out = buf_store(
+            "buf",
+            Expr::Var("pos".into()),
+            Expr::FuncCall("sink".into(), vec![Expr::Var("buf".into())]),
+        );
+        // A store no load can reach is DROPPED rather than refused, so the
+        // two shapes that need one shadow per store are shown a load that only
+        // a shadow could answer.
+        let read_back = Statement::Assign {
+            target: Expr::Var("acc".into()),
+            value: Expr::ArrayAccess("buf".into(), Box::new(Expr::Var("pos".into()))),
+            compound: false,
+        };
+        for (stmts, want) in [
+            (vec![in_loop, read_back.clone()], "inside a loop"),
+            (vec![compound, read_back], "compound store"),
+            (vec![bare], "escapes or is written"),
+            (vec![moving_store], "moves a counter"),
+            (vec![escaping], "escapes or is written"),
+            (vec![handing_out], "escapes or is written"),
         ] {
-            let err = peek_transition(&[stmt], &[("buf".to_string(), false)], None)
+            let err = peek_transition(&stmts, &[("buf".to_string(), false)], None)
                 .expect_err("must refuse");
             assert!(err.contains(want), "expected `{want}`, got `{err}`");
         }
+    }
+
+    /// The counterpart to the refusals above: they exist so that one shadow per
+    /// store stays sound, and a store no load can reach needs no shadow. This
+    /// is the candlestick accumulator — read above, rewritten below in a `+=`
+    /// inside a `for`, for a bar `peek` never keeps.
+    #[test]
+    fn a_store_no_load_reaches_is_dropped_whatever_shape_it_is_in() {
+        let k = || Expr::Var("k".into());
+        let slot = || Expr::ArrayAccess("buf".into(), Box::new(k()));
+        let out = pk(&[
+            Statement::Comment(vec!["the pattern".into()]),
+            Statement::Assign {
+                target: Expr::Var("acc".into()),
+                value: Expr::ArrayAccess("buf".into(), Box::new(Expr::IntLiteral(2))),
+                compound: false,
+            },
+            Statement::Comment(vec!["the trailing update".into()]),
+            Statement::ForC {
+                init: Box::new(Statement::Assign {
+                    target: k(),
+                    value: Expr::IntLiteral(2),
+                    compound: false,
+                }),
+                condition: Expr::BinOp(
+                    Box::new(k()),
+                    BinOp::GreaterEq,
+                    Box::new(Expr::IntLiteral(0)),
+                ),
+                update: Box::new(Statement::Assign {
+                    target: k(),
+                    value: Expr::BinOp(Box::new(k()), BinOp::Sub, Box::new(Expr::IntLiteral(1))),
+                    compound: false,
+                }),
+                body: vec![Statement::Assign {
+                    target: slot(),
+                    value: Expr::BinOp(
+                        Box::new(slot()),
+                        BinOp::Add,
+                        Box::new(Expr::Var("bar".into())),
+                    ),
+                    compound: true,
+                }],
+            },
+        ]);
+        assert!(out.shadows.is_empty(), "no shadow: {:?}", out.shadows);
+        // The loop goes, and the comment that introduced it goes with it —
+        // left behind it would describe code that is not there.
+        assert_eq!(out.body.len(), 2, "kept more than the heading and the load: {:?}", out.body);
+        assert!(matches!(out.body[0], Statement::Comment(_)), "{:?}", out.body[0]);
+        assert!(
+            matches!(&out.body[1], Statement::Assign { target: Expr::Var(v), .. } if v == "acc"),
+            "{:?}", out.body[1]
+        );
+    }
+
+    /// A shadow nothing selects is pruned: the tail push, in a function whose
+    /// buffer an earlier store still has to carry.
+    #[test]
+    fn a_shadow_no_load_selects_is_pruned() {
+        let out = pk(&[
+            buf_store("buf", Expr::Var("pos".into()), Expr::Var("bar".into())),
+            Statement::Assign {
+                target: Expr::Var("acc".into()),
+                value: Expr::ArrayAccess("buf".into(), Box::new(Expr::Var("pos".into()))),
+                compound: true,
+            },
+            buf_store("buf", Expr::Var("pos2".into()), Expr::Var("bar2".into())),
+        ]);
+        assert_eq!(out.shadows.len(), 1, "only the carried store keeps a shadow: {:?}", out.shadows);
+        assert_eq!(out.shadows[0].slot_var, "pkSlot0");
+    }
+
+    /// A `for` the deletion empties but cannot drop — something else reads the
+    /// counter, so its terminal value still matters — takes the whole rewrite
+    /// back, and the store renders as it always did.
+    #[test]
+    fn a_spent_loop_whose_counter_is_read_elsewhere_takes_the_rewrite_back() {
+        let k = || Expr::Var("k".into());
+        let slot = || Expr::ArrayAccess("buf".into(), Box::new(k()));
+        let err = peek_transition(
+            &[
+                Statement::ForC {
+                    init: Box::new(Statement::Assign {
+                        target: k(),
+                        value: Expr::IntLiteral(2),
+                        compound: false,
+                    }),
+                    condition: Expr::BinOp(
+                        Box::new(k()),
+                        BinOp::GreaterEq,
+                        Box::new(Expr::IntLiteral(0)),
+                    ),
+                    update: Box::new(Statement::Assign {
+                        target: k(),
+                        value: Expr::BinOp(Box::new(k()), BinOp::Sub, Box::new(Expr::IntLiteral(1))),
+                        compound: false,
+                    }),
+                    body: vec![Statement::Assign {
+                        target: slot(),
+                        value: Expr::BinOp(
+                            Box::new(slot()),
+                            BinOp::Add,
+                            Box::new(Expr::Var("bar".into())),
+                        ),
+                        compound: true,
+                    }],
+                },
+                Statement::Assign { target: Expr::Var("acc".into()), value: k(), compound: false },
+            ],
+            &[("buf".to_string(), false)],
+            None,
+        )
+        .expect_err("must refuse");
+        assert!(err.contains("compound store"), "{err}");
+    }
+
+    /// A loop reaches its own earlier statements, so a load ABOVE the store in
+    /// the same body is still a load after it.
+    #[test]
+    fn a_load_above_the_store_in_the_same_loop_keeps_the_buffer() {
+        let err = peek_transition(
+            &[Statement::While {
+                condition: Expr::Var("go".into()),
+                body: vec![
+                    Statement::Assign {
+                        target: Expr::Var("acc".into()),
+                        value: Expr::ArrayAccess("buf".into(), Box::new(Expr::Var("pos".into()))),
+                        compound: false,
+                    },
+                    buf_store("buf", Expr::Var("pos".into()), Expr::Var("bar".into())),
+                ],
+            }],
+            &[("buf".to_string(), false)],
+            None,
+        )
+        .expect_err("must refuse");
+        assert!(err.contains("inside a loop"), "{err}");
+    }
+
+    /// Emptying a loop whose BODY was what ended it would spin forever, so the
+    /// deletion is refused rather than emitted — and the caller falls back to
+    /// the buffer set it uses today.
+    #[test]
+    fn a_loop_the_deletion_would_leave_empty_is_refused() {
+        let err = peek_transition(
+            &[Statement::While {
+                condition: Expr::Var("go".into()),
+                body: vec![buf_store("buf", Expr::Var("pos".into()), Expr::Var("bar".into()))],
+            }],
+            &[("buf".to_string(), false)],
+            None,
+        )
+        .expect_err("must refuse");
+        assert!(err.contains("inside a loop"), "{err}");
     }
     use super::*;
     use crate::ir::{Input, Output};
@@ -8523,6 +8971,83 @@ mod tests {
         fn extrema_mask(&self) -> String {
             "sp->xMask".to_string()
         }
+    }
+
+    /// The wide buffer set is an offer, not a requirement: a state array whose
+    /// store still has to be CARRIED takes the whole function back to the heap
+    /// buffers, where that store renders as it always did — and the backend
+    /// localizes the field for it, which is what a copy per peek buys.
+    #[test]
+    fn a_state_array_store_that_must_be_carried_falls_back_to_the_narrow_set() {
+        let step = |k: Expr| {
+            Statement::Assign {
+                target: acc("total", k.clone()),
+                value: add(acc("total", k), acc("inReal", var("i"))),
+                compound: true,
+            }
+        };
+        let f = func_with_body(vec![
+            decl("i", VarType::Integer),
+            decl("outIdx", VarType::Integer),
+            decl("k", VarType::Integer),
+            Statement::VarDecl {
+                var_type: VarType::RealArray("2".into()),
+                name: "total".into(),
+                init: None,
+            },
+            assign(var("outIdx"), Expr::IntLiteral(0)),
+            assign(acc("total", Expr::IntLiteral(0)), Expr::Literal(0.0)),
+            assign(acc("total", Expr::IntLiteral(1)), Expr::Literal(0.0)),
+            assign(var("i"), var("startIdx")),
+            Statement::While {
+                condition: le(var("i"), var("endIdx")),
+                body: vec![
+                    Statement::ForC {
+                        init: Box::new(assign(var("k"), Expr::IntLiteral(1))),
+                        condition: Expr::BinOp(
+                            Box::new(var("k")),
+                            BinOp::GreaterEq,
+                            Box::new(Expr::IntLiteral(0)),
+                        ),
+                        update: Box::new(assign(
+                            var("k"),
+                            Expr::BinOp(
+                                Box::new(var("k")),
+                                BinOp::Sub,
+                                Box::new(Expr::IntLiteral(1)),
+                            ),
+                        )),
+                        body: vec![step(var("k"))],
+                    },
+                    // The load the store has to answer: after it, so the store
+                    // cannot be dropped and one shadow per store cannot carry it.
+                    assign(acc("outReal", var("outIdx")), acc("total", Expr::IntLiteral(0))),
+                    assign(var("outIdx"), add(var("outIdx"), Expr::IntLiteral(1))),
+                    assign(var("i"), add(var("i"), Expr::IntLiteral(1))),
+                ],
+            },
+            Statement::Return { value: None },
+        ]);
+        let m = analyze(&f).expect("analyzes");
+        assert!(
+            m.state.iter().any(|(n, t)| n == "total" && matches!(t, VarType::RealArray(_))),
+            "the fixture must carry a fixed-size array: {:?}", m.state
+        );
+        let transition = build_transition(&m, &TestNames).expect("transition");
+        assert!(
+            peek_transition(
+                &transition,
+                &transition_buffers_with_state_arrays(&m, &TestNames),
+                None
+            )
+            .is_err(),
+            "the wide set must refuse, or this fixture proves nothing"
+        );
+        let pt = peek_transition_widest(&m, &TestNames, &transition, None).expect("peekable");
+        assert!(
+            count_buffer_stores(&pt.body, "sp->total") == 1,
+            "the fallback must render the store untouched: {:?}", pt.body
+        );
     }
 
     #[test]

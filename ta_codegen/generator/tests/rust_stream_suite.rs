@@ -494,26 +494,6 @@ fn rust_accumulator_fields(section: &str) -> BTreeSet<String> {
         .collect()
 }
 
-/// A store `validate_peekable` refuses: a compound one, which renders as a
-/// store reading its own target. A refusal drops the whole function back to the
-/// narrow set, so one such store justifies every copy in it. The other two
-/// refusals (a store in a loop, a counter-moving index) have no instance here;
-/// one would surface as an offender below rather than be waved through.
-fn rust_refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool {
-    body.lines().any(|l| {
-        l.split_once('=').is_some_and(|(lhs, rhs)| {
-            // `!rhs.starts_with('=')`: `X[i] == X[j]` splits the same way a store
-            // does, and comparing two slots is not a store into either.
-            lhs.trim_end().ends_with(']')
-                && !rhs.starts_with('=')
-                && fields.iter().any(|f| {
-                    let sub = format!("{f}[");
-                    lhs.contains(&sub) && rhs.contains(&sub)
-                })
-        })
-    })
-}
-
 /// No tier copies a handle to peek it — swept over the whole corpus.
 ///
 /// The property is structural, not a value one: a peek that copied and then
@@ -528,7 +508,6 @@ fn rust_refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool
 fn no_rust_peek_copies_the_handle() {
     let mut swept = 0usize;
     let mut frames = 0usize;
-    let mut localized = 0usize;
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
@@ -546,20 +525,12 @@ fn no_rust_peek_copies_the_handle() {
             }
         }
         let accs = rust_accumulator_fields(&s);
-        let held: BTreeSet<String> = accs
-            .iter()
-            .filter(|f| peek.contains(&format!("let mut {f} = sp.{f};")))
-            .cloned()
-            .collect();
-        localized += held.len();
-        if !held.is_empty() && !rust_refused_accumulator_store(peek, &accs) {
-            offenders.push(format!(
-                "{name}: localizes {held:?} but no accumulator store is refusable"
-            ));
+        for f in accs.iter().filter(|f| peek.contains(&format!("let mut {f} = sp.{f};"))) {
+            offenders.push(format!("{name}: localizes {f}"));
         }
-        // The frame must TOUCH an accumulator: a field it never names is
-        // evidence either way.
-        if held.is_empty() && accs.iter().any(|f| peek.contains(&format!("{f}["))) {
+        // The frame must READ an accumulator: a field it never names is
+        // no evidence about the copy either way.
+        if accs.iter().any(|f| peek.contains(&format!("{f}["))) {
             fully_shadowed.insert(name.clone());
         }
     }
@@ -569,17 +540,10 @@ fn no_rust_peek_copies_the_handle() {
         "{} of {swept} peek(s) run a frame — the rest copy something",
         frames
     );
-    // Both sides of the split are floored, because the corpus has both and a
-    // sweep that stopped finding either would read green while measuring one.
     assert!(
-        localized >= 1,
-        "no accumulator is still localized, so the refusal arm above is untested"
-    );
-    assert!(
-        fully_shadowed.len() >= 7,
-        "only {} handle(s) hold an accumulator the frame localizes none of — Rust has \
-         fallen back to the narrow buffer set while the other three did not, which is \
-         exactly the per-backend divergence the widened set must never have",
+        fully_shadowed.len() >= 21,
+        "only {} handle(s) have a peek frame that reads an accumulator — the sweep \
+         is looking for something that is not there",
         fully_shadowed.len()
     );
     assert!(

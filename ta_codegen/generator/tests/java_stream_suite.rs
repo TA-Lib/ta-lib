@@ -627,26 +627,6 @@ fn java_composed_copy_out_is_stride_guarded() {
     );
 }
 
-/// A store `validate_peekable` refuses: a compound one, which renders as a
-/// store reading its own target. A refusal drops the whole function back to the
-/// narrow set, so one such store justifies every copy in it. The other two
-/// refusals (a store in a loop, a counter-moving index) have no instance here;
-/// one would surface as an offender below rather than be waved through.
-fn refused_accumulator_store(body: &str, fields: &BTreeSet<String>) -> bool {
-    body.lines().any(|l| {
-        l.split_once('=').is_some_and(|(lhs, rhs)| {
-            // `!rhs.starts_with('=')`: `X[i] == X[j]` splits the same way a store
-            // does, and comparing two slots is not a store into either.
-            lhs.trim_end().ends_with(']')
-                && !rhs.starts_with('=')
-                && fields.iter().any(|f| {
-                    let sub = format!("{f}[");
-                    lhs.contains(&sub) && rhs.contains(&sub)
-                })
-        })
-    })
-}
-
 /// The handle's fixed-size accumulator fields: an array the BATCH body declares
 /// with a literal size. Off the emitted code, never a name list.
 fn accumulator_fields(section: &str, batch: &str) -> BTreeSet<String> {
@@ -711,11 +691,9 @@ fn no_java_peek_copies_the_handle() {
     let mut swept = 0usize;
     let mut frames = 0usize;
     let mut writes = 0usize;
-    let mut clones = 0usize;
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
-        let mut cloning: BTreeSet<String> = BTreeSet::new();
         let (func, enums) = load_indicator(&name);
         let registry = Registry::from_dir(&input_dir());
         let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
@@ -760,56 +738,31 @@ fn no_java_peek_copies_the_handle() {
                 && !l.contains("new Value(");
             // `.clone()` is the OTHER way to allocate here, and matching only
             // `new ` missed it: a frame clones a written array field because a
-            // Java array is a reference. It is allowed, but only for an
-            // accumulator the batch body sizes with a LITERAL — a period-sized
-            // buffer cloned per peek is the exact cost the frame exists to
-            // remove. Read off the emitted code, not from a list of names.
+            // Java array is a reference. No frame may.
             let cloned = (!code)
                 .then(|| l.split_once(" = sp."))
                 .flatten()
-                .and_then(|(lhs, rhs)| rhs.strip_suffix(".clone();").map(|f| (lhs, f)));
-            if let Some((lhs, f)) = cloned {
-                let ty = lhs.trim().split(' ').next().unwrap_or("");
-                let decl = format!("{ty} {f} = new {}[", ty.trim_end_matches("[]"));
-                let literal = batch.match_indices(&decl).any(|(i, _)| {
-                    batch[i + decl.len()..]
-                        .split_once(']')
-                        .is_some_and(|(n, _)| n.parse::<u32>().is_ok())
-                });
-                if literal {
-                    clones += 1;
-                    cloning.insert(f.to_string());
-                } else {
-                    offenders.push(format!("{name}: clones a non-fixed-size array: {l}"));
-                }
+                .and_then(|(_, rhs)| rhs.strip_suffix(".clone();"));
+            if let Some(f) = cloned {
+                offenders.push(format!("{name}: clones the handle's {f}: {l}"));
             } else if allocates_handle || l.contains("copyFrom") || l.contains("PEEK_SCRATCH") {
                 offenders.push(format!("{name}: {l}"));
             }
         }
-        // A frame that clones with nothing refused was never offered the wide
-        // set, and allocates per peek for nothing.
+        // The frame must READ an accumulator: a field it never names is
+        // no evidence about the copy either way.
         let accs = accumulator_fields(&s, &batch);
-        if !cloning.is_empty() && !refused_accumulator_store(peek, &accs) {
-            offenders.push(format!(
-                "{name}: clones {cloning:?} but no accumulator store is refusable"
-            ));
-        }
-        // The other half of the split. The frame must TOUCH an accumulator: a
-        // field it never names is evidence either way.
-        if cloning.is_empty() && accs.iter().any(|f| peek.contains(&format!("{f}["))) {
+        if accs.iter().any(|f| peek.contains(&format!("{f}["))) {
             fully_shadowed.insert(name.clone());
         }
     }
     assert!(swept > 170, "only {swept} peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} peek(s) run a frame");
     assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
-    // Both sides of the split are floored, because the corpus has both and a
-    // sweep that stopped finding either would read green while measuring one.
-    assert!(clones >= 1, "no accumulator clone seen — the exemption is untested");
     assert!(
-        fully_shadowed.len() >= 7,
-        "only {} handle(s) hold an accumulator the frame clones nothing of — the widened \
-         buffer set is no longer reaching them and peek allocates again",
+        fully_shadowed.len() >= 21,
+        "only {} handle(s) have a peek frame that reads an accumulator — the sweep \
+         is looking for something that is not there",
         fully_shadowed.len()
     );
     assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));

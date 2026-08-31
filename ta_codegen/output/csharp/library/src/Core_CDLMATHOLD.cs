@@ -598,11 +598,9 @@ public partial class Core
       /// would return — the same transition, with every store it would make carried
       /// in a local instead. Never writes this handle, so peeks may run
       /// concurrently with each other.</para>
-      /// <para>It copies no buffer: the frame runs against this handle, reading its
-      /// buffers and holding what the step would commit in locals, so the cost does
-      /// not grow with the period. It does copy this indicator's fixed-size per-bar
-      /// accumulators — a few elements, a count fixed by the indicator and not by
-      /// the period — so <c>Peek</c> allocates a small bounded amount per call.</para>
+      /// <para>It copies nothing: the frame runs against this handle, reading its buffers
+      /// and holding what the step would commit in locals. The cost does not grow
+      /// with the period, and <c>Peek</c> never allocates.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -613,9 +611,6 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMATHOLD", "peek", RetCode.BadParam);
          CdlmatholdStream sp = this;
-         int totIdx = 0;
-         double[] BodyPeriodTotal = new double[sp.BodyPeriodTotal.Length];
-         Array.Copy( sp.BodyPeriodTotal, BodyPeriodTotal, sp.BodyPeriodTotal.Length );
          int cur_outInteger = sp.cur_outInteger;
          double lag1_inClose = sp.lag1_inClose;
          double lag1_inHigh = sp.lag1_inHigh;
@@ -635,20 +630,12 @@ public partial class Core
          double lag4_inOpen = sp.lag4_inOpen;
          int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
          int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
          int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
          double BodyLong_factor = sp.cs_BodyLong_factor;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
          int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
          double BodyShort_factor = sp.cs_BodyShort_factor;
-         pkSlot0 = ringPos_BodyLongTrailingIdx;
-         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-         pkSlot1 = ringPos_BodyShortTrailingIdx;
-         pkVal1 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
          if( ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) == 1 &&                    /* white, black, 2 black or white, white */
              ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
              ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
@@ -661,21 +648,14 @@ public partial class Core
              Math.Max(lag1_inClose, lag1_inOpen) < Math.Max(lag2_inClose, lag2_inOpen) &&
              inOpen > lag1_inClose &&                                               /* 5th opens above the prior close */
              inClose > Math.Max(Math.Max(lag3_inHigh, lag2_inHigh), lag1_inHigh) && /* 5th closes above the highest high of the reaction days */
-             Math.Abs(lag4_inClose - lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyPeriodTotal[4] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long, then 3 small */
-             Math.Abs(lag3_inClose - lag3_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[3] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag3_inClose - lag3_inOpen)) : ((BodyShort_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((BodyShort_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             Math.Abs(lag2_inClose - lag2_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[2] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             Math.Abs(lag1_inClose - lag1_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[1] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) )
+             Math.Abs(lag4_inClose - lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyPeriodTotal[4] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long, then 3 small */
+             Math.Abs(lag3_inClose - lag3_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[3] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag3_inClose - lag3_inOpen)) : ((BodyShort_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((BodyShort_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.Abs(lag2_inClose - lag2_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[2] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.Abs(lag1_inClose - lag1_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[1] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) )
          {
             cur_outInteger = 100;
          } else {
             cur_outInteger = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         BodyPeriodTotal[4] = BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.Abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx] : pkVal0));
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
-            BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (((((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx) != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx] : pkVal1) - (((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx != pkSlot1) ? sp.ring_BodyShortTrailingIdx_derived[(ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx] : pkVal1));
          }
          lag4_inOpen = lag3_inOpen;
          lag3_inOpen = lag2_inOpen;

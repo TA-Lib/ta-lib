@@ -1322,7 +1322,7 @@ fn peek_frame_arm(
     });
 
     let mut out = String::new();
-    for (name, ty) in &model.temps {
+    for (name, ty) in &streaming::temps_used(&model.temps, &body_ir) {
         let (rty, default) = field_type_and_default(typing, name, ty, false);
         out.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
     }

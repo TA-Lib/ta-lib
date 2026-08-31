@@ -1158,11 +1158,10 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          return — the same transition, with every store it would make carried in a local \
          instead. Never writes this handle, so peeks may run concurrently with each other.",
     );
-    // Conditional, because for the handles whose accumulator the frame still
-    // copies the unconditional claim was false: a C# array field is a
-    // reference, so a frame that writes one has to copy it, and that copy is a
-    // real per-call allocation. The flat-in-period cost — the claim the frame
-    // exists to keep — holds either way, and is what both sentences lead with.
+    // Conditional, because a frame that still has to copy an accumulator — no
+    // shipped one does — allocates per call, and the unconditional claim would
+    // be false for it. The flat-in-period cost, the claim the frame exists to
+    // keep, holds either way and is what both sentences lead with.
     if frame.is_some_and(|f| f.contains("Array.Copy(")) {
         d.para(
             "It copies no buffer: the frame runs against this handle, reading its buffers \
@@ -1657,7 +1656,7 @@ fn peek_frame_arm_named(
         fields.iter().map(|(n, t, _)| (n.as_str(), t.as_str())).collect();
 
     let mut out = String::new();
-    for (name, ty) in &model.temps {
+    for (name, ty) in &streaming::temps_used(&model.temps, &body_ir) {
         let (cty, default) = field_type_and_default(ty);
         let _ = writeln!(out, "{pad}{cty} {name} = {default};");
     }
@@ -1667,11 +1666,8 @@ fn peek_frame_arm_named(
         }
         let cty = types.get(name.as_str()).copied()?;
         // A C# array field is a reference: taking it plain would write the
-        // handle through it. Only the accumulators `peek_transition_widest`
-        // refused reach here — two to five elements, never a period-sized
-        // buffer, which the frame only ever reads. Allocate and `Array.Copy`
-        // rather than `Clone()`, the same shape the copy constructor states its
-        // case for.
+        // handle through it. Allocate and `Array.Copy` rather than `Clone()`,
+        // the same shape the copy constructor states its case for.
         if let Some(elem) = cty.strip_suffix("[]") {
             let _ = writeln!(out, "{pad}{cty} {name} = new {elem}[sp.{name}.Length];");
             let _ = writeln!(out, "{pad}Array.Copy( sp.{name}, {name}, sp.{name}.Length );");
