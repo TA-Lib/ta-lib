@@ -291,6 +291,7 @@ struct MomStreamState {
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -304,6 +305,7 @@ impl Core {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
         (*outReal) = inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+        sp.cur_outReal = (*outReal);
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
         if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
@@ -405,6 +407,7 @@ impl Core {
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
         let state = MomStreamState {
             optInTimePeriod,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
@@ -598,6 +601,7 @@ impl MomStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut cur_outReal = sp.cur_outReal;
             let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -606,12 +610,26 @@ impl MomStream {
                 pkVal0 = inReal;
             }
             (*outReal) = inReal - (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 });
+            cur_outReal = (*outReal);
             ringPos_trailingIdx = ringPos_trailingIdx + 1;
             if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
                 ringPos_trailingIdx = 0;
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MOM_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

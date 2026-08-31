@@ -475,6 +475,7 @@ struct T3StreamState {
     c2: f64,
     c3: f64,
     c4: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -486,6 +487,7 @@ impl Core {
     fn t3_step_impl(sp: &mut T3StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
+            sp.cur_outReal = (*outReal);
             return;
         }
         sp.e1 = (sp.one_minus_k as f64).mul_add(sp.e1, sp.k * inReal);
@@ -495,6 +497,7 @@ impl Core {
         sp.e5 = (sp.one_minus_k as f64).mul_add(sp.e5, sp.k * sp.e4);
         sp.e6 = (sp.one_minus_k as f64).mul_add(sp.e6, sp.k * sp.e5);
         (*outReal) = (sp.c4 as f64).mul_add(sp.e3, (sp.c3 as f64).mul_add(sp.e4, (sp.c1 as f64).mul_add(sp.e6, sp.c2 * sp.e5)));
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::t3_open_internal`]
@@ -535,6 +538,7 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = T3StreamState {
+                cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
                 optInVFactor: optInVFactor,
                 k: 0.0_f64,
@@ -727,6 +731,7 @@ impl Core {
             c2,
             c3,
             c4,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(T3Stream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -917,6 +922,7 @@ impl T3Stream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut cur_outReal = sp.cur_outReal;
             let mut e1 = sp.e1;
             let mut e2 = sp.e2;
             let mut e3 = sp.e3;
@@ -925,6 +931,7 @@ impl T3Stream {
             let mut e6 = sp.e6;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
+                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             e1 = (sp.one_minus_k as f64).mul_add(e1, sp.k * inReal);
@@ -934,8 +941,22 @@ impl T3Stream {
             e5 = (sp.one_minus_k as f64).mul_add(e5, sp.k * e4);
             e6 = (sp.one_minus_k as f64).mul_add(e6, sp.k * e5);
             (*outReal) = (sp.c4 as f64).mul_add(e3, (sp.c3 as f64).mul_add(e4, (sp.c1 as f64).mul_add(e6, sp.c2 * e5)));
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_T3_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

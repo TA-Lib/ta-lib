@@ -129,6 +129,8 @@ struct TA_TANH_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_TANH_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -136,6 +138,7 @@ static void TA_TANH_StepImpl( struct TA_TANH_Stream *sp, double inReal, double *
 {
    (void)sp;
    *outReal= tanh(inReal);
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_TANH_OpenImpl( struct TA_TANH_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -178,6 +181,7 @@ static TA_RetCode TA_TANH_OpenImpl( struct TA_TANH_Stream **stream, const double
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -244,6 +248,7 @@ TA_LIB_API TA_RetCode TA_TANH_Peek( const TA_TANH_Stream *stream, double inReal,
    scratch = *stream;
    (void)sp;
    *outReal= tanh(inReal);
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -266,6 +271,27 @@ TA_LIB_API TA_RetCode TA_TANH_UpdateAndFill( TA_TANH_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_TANH_Close( TA_TANH_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TANH_Value( const TA_TANH_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TANH_Clone( const TA_TANH_Stream *stream, TA_TANH_Stream **clone )
+{
+   struct TA_TANH_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_TANH_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

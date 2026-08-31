@@ -421,6 +421,7 @@ struct LinearregInterceptStreamState {
     today: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -528,6 +529,7 @@ impl Core {
         sp.trailingIdx += 1;
         (*outReal) = (sp.SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
         sp.today += 1;
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::linearreg_intercept_open_internal`]
@@ -756,6 +758,7 @@ impl Core {
             sumAbs,
             j: (j) as i32,
             today: (today) as i32,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
         };
@@ -956,6 +959,7 @@ impl LinearregInterceptStream {
             let mut SumXY = sp.SumXY;
             let mut SumY = sp.SumY;
             let mut barsSinceReseed = sp.barsSinceReseed;
+            let mut cur_outReal = sp.cur_outReal;
             let mut j = sp.j;
             let mut sumAbs = sp.sumAbs;
             let mut today = sp.today;
@@ -1057,8 +1061,22 @@ impl LinearregInterceptStream {
             trailingIdx += 1;
             (*outReal) = (SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
             today += 1;
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_LINEARREG_INTERCEPT_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -277,6 +277,8 @@ struct TA_CDLGRAVESTONEDOJI_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLGRAVESTONEDOJI_Value). */
+   int cur_outInteger;
    double BodyDojiPeriodTotal;
    double ShadowVeryShortPeriodTotal;
    int ringPos_BodyDojiTrailingIdx;
@@ -319,6 +321,7 @@ static void TA_CDLGRAVESTONEDOJI_StepImpl( struct TA_CDLGRAVESTONEDOJI_Stream *s
     */
    sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx];
    sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose) - sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
    sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
    if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
@@ -466,6 +469,7 @@ static TA_RetCode TA_CDLGRAVESTONEDOJI_OpenImpl( struct TA_CDLGRAVESTONEDOJI_Str
       sp->ringPos_ShadowVeryShortTrailingIdx = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -556,6 +560,7 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Peek( const TA_CDLGRAVESTONEDOJI_Stre
     */
    sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] : pkVal0);
    sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_ShadowVeryShortTrailingIdx != pkSlot1) ? sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] : pkVal1);
+   sp->cur_outInteger = *outInteger;
    sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
    if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
    {
@@ -588,6 +593,37 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_UpdateAndFill( TA_CDLGRAVESTONEDOJI_S
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Close( TA_CDLGRAVESTONEDOJI_Stream *stream )
 {
    TA_CDLGRAVESTONEDOJI_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Value( const TA_CDLGRAVESTONEDOJI_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Clone( const TA_CDLGRAVESTONEDOJI_Stream *stream, TA_CDLGRAVESTONEDOJI_Stream **clone )
+{
+   struct TA_CDLGRAVESTONEDOJI_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLGRAVESTONEDOJI_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyDojiTrailingIdx_derived = NULL;
+   sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
+     sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyDojiTrailingIdx_derived, stream->ring_BodyDojiTrailingIdx_derived, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
+     sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLGRAVESTONEDOJI_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

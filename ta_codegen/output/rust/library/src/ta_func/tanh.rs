@@ -216,6 +216,7 @@ pub struct TanhStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct TanhStreamState {
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -226,6 +227,7 @@ struct TanhStreamState {
 impl Core {
     fn tanh_step_impl(sp: &mut TanhStreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).tanh();
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::tanh_open_internal`]
@@ -264,6 +266,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = TanhStreamState {
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(TanhStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -454,9 +457,24 @@ impl TanhStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
+            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = (inReal).tanh();
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_TANH_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

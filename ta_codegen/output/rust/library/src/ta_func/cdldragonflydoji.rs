@@ -437,6 +437,7 @@ struct CdldragonflydojiStreamState {
     ringPos_ShadowVeryShortTrailingIdx: usize,
     ringCap_ShadowVeryShortTrailingIdx: usize,
     ring_ShadowVeryShortTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -533,6 +534,7 @@ impl Core {
             }
         }
         sp.ShadowVeryShortPeriodTotal += _candlerange_3 - sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx];
+        sp.cur_outInteger = (*outInteger);
         let mut _candlerange_4: f64;
         match BodyDoji_rangeType {
             0 => {
@@ -797,6 +799,7 @@ impl Core {
         let state = CdldragonflydojiStreamState {
             BodyDojiPeriodTotal,
             ShadowVeryShortPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             ringPos_BodyDojiTrailingIdx: 0_usize,
             ringCap_BodyDojiTrailingIdx: cap_BodyDojiTrailingIdx as usize,
             ring_BodyDojiTrailingIdx_derived,
@@ -1011,6 +1014,7 @@ impl CdldragonflydojiStream {
             let outInteger = &mut outInteger;
             let mut BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
             let mut ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
             let mut ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
             let mut pkSlot0: usize = usize::MAX;
@@ -1106,6 +1110,7 @@ impl CdldragonflydojiStream {
                 }
             }
             ShadowVeryShortPeriodTotal += _candlerange_15 - (if (ringPos_ShadowVeryShortTrailingIdx as usize) != pkSlot1 { sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] } else { pkVal1 });
+            cur_outInteger = (*outInteger);
             ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
             if ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
                 ringPos_BodyDojiTrailingIdx = 0;
@@ -1116,6 +1121,19 @@ impl CdldragonflydojiStream {
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLDRAGONFLYDOJI_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

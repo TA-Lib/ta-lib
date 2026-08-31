@@ -287,6 +287,8 @@ struct TA_CDLGAPSIDESIDEWHITE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLGAPSIDESIDEWHITE_Value). */
+   int cur_outInteger;
    double NearPeriodTotal;
    double EqualPeriodTotal;
    double lag1_inOpen;
@@ -337,6 +339,7 @@ static void TA_CDLGAPSIDESIDEWHITE_StepImpl( struct TA_CDLGAPSIDESIDEWHITE_Strea
     */
    sp->NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 1) % sp->ringCap_NearTrailingIdx];
    sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
@@ -505,6 +508,7 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenImpl( struct TA_CDLGAPSIDESIDEWHITE
       sp->lag2_inClose = inClose[historyLen - 2];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -595,6 +599,7 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Peek( const TA_CDLGAPSIDESIDEWHITE_
     */
    sp->NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - (((sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 1) % sp->ringCap_NearTrailingIdx != pkSlot1) ? sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 1) % sp->ringCap_NearTrailingIdx] : pkVal1);
    sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - (((sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx != pkSlot0) ? sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx] : pkVal0);
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
@@ -633,6 +638,37 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_UpdateAndFill( TA_CDLGAPSIDESIDEWHI
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Close( TA_CDLGAPSIDESIDEWHITE_Stream *stream )
 {
    TA_CDLGAPSIDESIDEWHITE_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Value( const TA_CDLGAPSIDESIDEWHITE_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Clone( const TA_CDLGAPSIDESIDEWHITE_Stream *stream, TA_CDLGAPSIDESIDEWHITE_Stream **clone )
+{
+   struct TA_CDLGAPSIDESIDEWHITE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLGAPSIDESIDEWHITE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_EqualTrailingIdx_derived = NULL;
+   sp->ring_NearTrailingIdx_derived = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
+     sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+     sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLGAPSIDESIDEWHITE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_NearTrailingIdx_derived, stream->ring_NearTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

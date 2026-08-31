@@ -344,6 +344,7 @@ struct CdlhikkakeStreamState {
     lag2_inHigh: f64,
     lag1_inLow: f64,
     lag2_inLow: f64,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -373,6 +374,7 @@ impl Core {
         if sp.cd > 0 {
             sp.cd -= 1;
         }
+        sp.cur_outInteger = (*outInteger);
         sp.lag2_inHigh = sp.lag1_inHigh;
         sp.lag1_inHigh = inHigh;
         sp.lag2_inLow = sp.lag1_inLow;
@@ -497,6 +499,7 @@ impl Core {
             cd,
             savedHigh,
             savedLow,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             lag1_inHigh: inHigh[historyLen - 1],
             lag2_inHigh: inHigh[historyLen - 2],
             lag1_inLow: inLow[historyLen - 1],
@@ -708,6 +711,7 @@ impl CdlhikkakeStream {
             let sp = &self.state;
             let outInteger = &mut outInteger;
             let mut cd = sp.cd;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut lag1_inHigh = sp.lag1_inHigh;
             let mut lag1_inLow = sp.lag1_inLow;
             let mut lag2_inHigh = sp.lag2_inHigh;
@@ -735,12 +739,26 @@ impl CdlhikkakeStream {
             if cd > 0 {
                 cd -= 1;
             }
+            cur_outInteger = (*outInteger);
             lag2_inHigh = lag1_inHigh;
             lag1_inHigh = inHigh;
             lag2_inLow = lag1_inLow;
             lag1_inLow = inLow;
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLHIKKAKE_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

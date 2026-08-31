@@ -7565,7 +7565,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     );
     s.push_str("                        int mid = (p0 + svN) / 2;\n");
     let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t});");
-    let _ = writeln!(s, "                        Core.{class} sB = sA.copy();");
+    let _ = writeln!(s, "                        Core.{class} sB = sA.clone();");
     s.push_str("                        for (int t = mid; t < svN; t++) {\n");
     let _ = writeln!(s, "                            {up_ty} uA = sA.update({bars_t});");
     let _ = writeln!(s, "                            {up_ty} uB = sB.update({bars_t});");

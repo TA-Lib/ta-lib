@@ -490,6 +490,8 @@ struct TA_MFI_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_MFI_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double posSumMF;
    double negSumMF;
@@ -564,6 +566,7 @@ static void TA_MFI_StepImpl( struct TA_MFI_Stream *sp, double inHigh, double inL
    {
       sp->mflow_Idx = 0;
    }
+   sp->cur_outReal = *outReal;
    sp->posSumMF = posSumMF;
    sp->negSumMF = negSumMF;
 }
@@ -812,6 +815,7 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
       if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -923,6 +927,7 @@ TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, d
    {
       sp->mflow_Idx = 0;
    }
+   sp->cur_outReal = *outReal;
    sp->posSumMF = posSumMF;
    sp->negSumMF = negSumMF;
    return TA_SUCCESS;
@@ -947,6 +952,37 @@ TA_LIB_API TA_RetCode TA_MFI_UpdateAndFill( TA_MFI_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_MFI_Close( TA_MFI_Stream *stream )
 {
    TA_MFI_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MFI_Value( const TA_MFI_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MFI_Clone( const TA_MFI_Stream *stream, TA_MFI_Stream **clone )
+{
+   struct TA_MFI_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MFI_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->cb_mflow_positive = NULL;
+   sp->cb_mflow_negative = NULL;
+   { size_t copyN = (size_t)(sp->cbSize_mflow);
+     sp->cb_mflow_positive = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_mflow_positive ) { TA_MFI_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_mflow_positive, stream->cb_mflow_positive, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->cbSize_mflow);
+     sp->cb_mflow_negative = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_mflow_negative ) { TA_MFI_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_mflow_negative, stream->cb_mflow_negative, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

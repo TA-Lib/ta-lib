@@ -318,6 +318,8 @@ struct TA_CDLRISEFALL3METHODS_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLRISEFALL3METHODS_Value). */
+   int cur_outInteger;
    double BodyPeriodTotal[5];
    double lag1_inOpen;
    double lag2_inOpen;
@@ -395,6 +397,7 @@ static void TA_CDLRISEFALL3METHODS_StepImpl( struct TA_CDLRISEFALL3METHODS_Strea
       sp->BodyPeriodTotal[totIdx] = sp->BodyPeriodTotal[totIdx] + (sp->ring_BodyShortTrailingIdx_derived[(sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx >= sp->ringCap_BodyShortTrailingIdx) ? sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx - sp->ringCap_BodyShortTrailingIdx : sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx] - sp->ring_BodyShortTrailingIdx_derived[(sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - sp->ringLag_BodyShortTrailingIdx - totIdx) % sp->ringCap_BodyShortTrailingIdx]);
    }
    sp->BodyPeriodTotal[0] = sp->BodyPeriodTotal[0] + (TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose) - sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx) % sp->ringCap_BodyLongTrailingIdx]);
+   sp->cur_outInteger = *outInteger;
    sp->lag4_inOpen = sp->lag3_inOpen;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
@@ -603,6 +606,7 @@ static TA_RetCode TA_CDLRISEFALL3METHODS_OpenImpl( struct TA_CDLRISEFALL3METHODS
       sp->lag4_inClose = inClose[historyLen - 4];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -710,6 +714,7 @@ TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Peek( const TA_CDLRISEFALL3METHODS_
       sp->BodyPeriodTotal[totIdx] = sp->BodyPeriodTotal[totIdx] + (((((sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx >= sp->ringCap_BodyShortTrailingIdx) ? sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx - sp->ringCap_BodyShortTrailingIdx : sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx) != pkSlot1) ? sp->ring_BodyShortTrailingIdx_derived[(sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx >= sp->ringCap_BodyShortTrailingIdx) ? sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx - sp->ringCap_BodyShortTrailingIdx : sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - totIdx] : pkVal1) - (((sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - sp->ringLag_BodyShortTrailingIdx - totIdx) % sp->ringCap_BodyShortTrailingIdx != pkSlot1) ? sp->ring_BodyShortTrailingIdx_derived[(sp->ringPos_BodyShortTrailingIdx + sp->ringCap_BodyShortTrailingIdx - sp->ringLag_BodyShortTrailingIdx - totIdx) % sp->ringCap_BodyShortTrailingIdx] : pkVal1));
    }
    sp->BodyPeriodTotal[0] = sp->BodyPeriodTotal[0] + (TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose) - (((sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx) % sp->ringCap_BodyLongTrailingIdx != pkSlot0) ? sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx) % sp->ringCap_BodyLongTrailingIdx] : pkVal0));
+   sp->cur_outInteger = *outInteger;
    sp->lag4_inOpen = sp->lag3_inOpen;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
@@ -758,6 +763,37 @@ TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_UpdateAndFill( TA_CDLRISEFALL3METHO
 TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Close( TA_CDLRISEFALL3METHODS_Stream *stream )
 {
    TA_CDLRISEFALL3METHODS_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Value( const TA_CDLRISEFALL3METHODS_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Clone( const TA_CDLRISEFALL3METHODS_Stream *stream, TA_CDLRISEFALL3METHODS_Stream **clone )
+{
+   struct TA_CDLRISEFALL3METHODS_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLRISEFALL3METHODS_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyLongTrailingIdx_derived = NULL;
+   sp->ring_BodyShortTrailingIdx_derived = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+     sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLRISEFALL3METHODS_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyLongTrailingIdx_derived, stream->ring_BodyLongTrailingIdx_derived, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
+     sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDLRISEFALL3METHODS_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyShortTrailingIdx_derived, stream->ring_BodyShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

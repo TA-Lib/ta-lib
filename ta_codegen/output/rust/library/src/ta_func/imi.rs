@@ -294,6 +294,7 @@ struct ImiStreamState {
     winCap_i: usize,
     win_i_inOpen: Vec<f64>,
     win_i_inClose: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -329,6 +330,7 @@ impl Core {
             if i == 0 { break; }
             i -= 1;
         }
+        sp.cur_outReal = (*outReal);
         sp.winPos_i = sp.winPos_i + 1;
         if sp.winPos_i >= sp.winCap_i {
             sp.winPos_i = 0;
@@ -412,6 +414,7 @@ impl Core {
         win_i_inClose.copy_from_slice(&inClose[historyLen - cap_i as usize..]);
         let state = ImiStreamState {
             optInTimePeriod,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             winPos_i: 0_usize,
             winCap_i: cap_i as usize,
             win_i_inOpen,
@@ -624,6 +627,7 @@ impl ImiStream {
             let mut i: usize = 0_usize;
             let mut close: f64 = 0.0_f64;
             let mut open: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut winPos_i = sp.winPos_i;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -652,12 +656,26 @@ impl ImiStream {
                 if i == 0 { break; }
                 i -= 1;
             }
+            cur_outReal = (*outReal);
             winPos_i = winPos_i + 1;
             if winPos_i >= sp.winCap_i {
                 winPos_i = 0;
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_IMI_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

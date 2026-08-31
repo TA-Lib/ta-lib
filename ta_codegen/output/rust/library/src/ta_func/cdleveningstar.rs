@@ -534,6 +534,7 @@ struct CdleveningstarStreamState {
     ringCap_BodyShortTrailingIdx: usize,
     ringLag_BodyShortTrailingIdx: usize,
     ring_BodyShortTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -651,6 +652,7 @@ impl Core {
             }
         }
         sp.BodyShortPeriodTotal2 += _candlerange_4 - sp.ring_BodyShortTrailingIdx_derived[((sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx + 1) % sp.ringCap_BodyShortTrailingIdx) as usize];
+        sp.cur_outInteger = (*outInteger);
         sp.lag2_inOpen = sp.lag1_inOpen;
         sp.lag1_inOpen = inOpen;
         sp.lag2_inHigh = sp.lag1_inHigh;
@@ -975,6 +977,7 @@ impl Core {
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
             BodyShortPeriodTotal2,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inHigh: inHigh[historyLen - 1],
@@ -1199,6 +1202,7 @@ impl CdleveningstarStream {
             let mut BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
             let mut BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
             let mut BodyShortPeriodTotal2 = sp.BodyShortPeriodTotal2;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut lag1_inHigh = sp.lag1_inHigh;
             let mut lag1_inLow = sp.lag1_inLow;
@@ -1323,6 +1327,7 @@ impl CdleveningstarStream {
                 }
             }
             BodyShortPeriodTotal2 += _candlerange_19 - (if (((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx + 1) % sp.ringCap_BodyShortTrailingIdx) as usize) != pkSlot1 { sp.ring_BodyShortTrailingIdx_derived[((ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx + 1) % sp.ringCap_BodyShortTrailingIdx) as usize] } else { pkVal1 });
+            cur_outInteger = (*outInteger);
             lag2_inOpen = lag1_inOpen;
             lag1_inOpen = inOpen;
             lag2_inHigh = lag1_inHigh;
@@ -1341,6 +1346,19 @@ impl CdleveningstarStream {
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLEVENINGSTAR_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

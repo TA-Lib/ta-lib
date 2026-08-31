@@ -633,6 +633,9 @@ struct BbandsStreamState {
     optInMAType: MAType,
     sub0: MaStream,
     sub1: StddevStream,
+    cur_outRealUpperBand: f64,
+    cur_outRealMiddleBand: f64,
+    cur_outRealLowerBand: f64,
 }
 
 #[allow(unused_variables)]
@@ -814,7 +817,10 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::InsufficientHistory);
         }
-        let state = BbandsStreamState {
+        let mut state = BbandsStreamState {
+            cur_outRealUpperBand: 0.0_f64,
+            cur_outRealMiddleBand: 0.0_f64,
+            cur_outRealLowerBand: 0.0_f64,
             optInTimePeriod,
             optInNbDevUp,
             optInNbDevDn,
@@ -822,6 +828,9 @@ impl Core {
             sub0,
             sub1,
         };
+        state.cur_outRealUpperBand = sc_outRealUpperBand[*outNBElement - 1];
+        state.cur_outRealMiddleBand = sc_outRealMiddleBand[*outNBElement - 1];
+        state.cur_outRealLowerBand = sc_outRealLowerBand[*outNBElement - 1];
         if outStride != 1 && *outNBElement > 0 {
             let last_sc_outRealUpperBand = sc_outRealUpperBand[*outNBElement - 1];
             outRealUpperBand[0] = last_sc_outRealUpperBand;
@@ -992,6 +1001,9 @@ impl BbandsStream {
         let mut outRealMiddleBand: f64 = 0.0_f64;
         let mut outRealLowerBand: f64 = 0.0_f64;
         Core::bbands_step_impl(&mut self.state, inReal, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand)?;
+        self.state.cur_outRealUpperBand = outRealUpperBand;
+        self.state.cur_outRealMiddleBand = outRealMiddleBand;
+        self.state.cur_outRealLowerBand = outRealLowerBand;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1025,6 +1037,9 @@ impl BbandsStream {
                 return Err(RetCode::BadParam);
             }
             Core::bbands_step_impl(&mut self.state, inReal[i], &mut outRealUpperBand[i], &mut outRealMiddleBand[i], &mut outRealLowerBand[i])?;
+            self.state.cur_outRealUpperBand = outRealUpperBand[i];
+            self.state.cur_outRealMiddleBand = outRealMiddleBand[i];
+            self.state.cur_outRealLowerBand = outRealLowerBand[i];
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1082,6 +1097,19 @@ impl BbandsStream {
             (*outRealLowerBand) = cur_outRealLowerBand;
         }
         Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_BBANDS_Value")]
+    pub fn value(&self) -> (f64, f64, f64) {
+        (self.state.cur_outRealUpperBand, self.state.cur_outRealMiddleBand, self.state.cur_outRealLowerBand)
     }
 
     /// The bars this stream has produced a value for, in the input series'

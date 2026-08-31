@@ -228,6 +228,8 @@ struct TA_ROCP_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_ROCP_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
@@ -259,6 +261,7 @@ static void TA_ROCP_StepImpl( struct TA_ROCP_Stream *sp, double inReal, double *
    {
       *outReal= 0.0;
    }
+   sp->cur_outReal = *outReal;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
@@ -380,6 +383,7 @@ static TA_RetCode TA_ROCP_OpenImpl( struct TA_ROCP_Stream **stream, const double
       sp->ringPos_trailingIdx = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -460,6 +464,7 @@ TA_LIB_API TA_RetCode TA_ROCP_Peek( const TA_ROCP_Stream *stream, double inReal,
    {
       *outReal= 0.0;
    }
+   sp->cur_outReal = *outReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
    {
@@ -487,6 +492,32 @@ TA_LIB_API TA_RetCode TA_ROCP_UpdateAndFill( TA_ROCP_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_ROCP_Close( TA_ROCP_Stream *stream )
 {
    TA_ROCP_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ROCP_Value( const TA_ROCP_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ROCP_Clone( const TA_ROCP_Stream *stream, TA_ROCP_Stream **clone )
+{
+   struct TA_ROCP_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_ROCP_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingIdx_inReal = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+     sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingIdx_inReal ) { TA_ROCP_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

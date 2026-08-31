@@ -380,6 +380,7 @@ struct CciStreamState {
     maxIdx_circBuffer: usize,
     cbSize_circBuffer: usize,
     cb_circBuffer: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -437,6 +438,7 @@ impl Core {
         if sp.circBuffer_Idx > sp.maxIdx_circBuffer {
             sp.circBuffer_Idx = 0;
         }
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::cci_open_internal`]
@@ -576,6 +578,7 @@ impl Core {
             optInTimePeriod,
             circBuffer_Idx,
             maxIdx_circBuffer,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             cbSize_circBuffer: cbSize_circBuffer,
             cb_circBuffer: circBuffer,
         };
@@ -786,6 +789,7 @@ impl CciStream {
             let mut lastValue: f64 = 0.0_f64;
             let mut j: usize = 0_usize;
             let mut circBuffer_Idx = sp.circBuffer_Idx;
+            let mut cur_outReal = sp.cur_outReal;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             lastValue = (inHigh + inLow + inClose) / 3_f64;
@@ -831,8 +835,22 @@ impl CciStream {
             if circBuffer_Idx > sp.maxIdx_circBuffer {
                 circBuffer_Idx = 0;
             }
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CCI_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

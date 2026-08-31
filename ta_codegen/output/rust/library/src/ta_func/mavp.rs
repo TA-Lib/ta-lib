@@ -539,6 +539,7 @@ struct MavpStreamState {
     optInMAType: MAType,
     // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
     bank: Vec<MaStream>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -621,7 +622,7 @@ impl Core {
             cp = optInMaxPeriod;
         }
         let lastValue_outReal: f64 = scratch[(cp - optInMinPeriod) as usize];
-        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
+        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank, cur_outReal: lastValue_outReal };
         Ok((MavpStream { state, out: OutRange { beg_idx: subStart, count: historyLen - subStart } }, lastValue_outReal))
     }
 
@@ -758,7 +759,7 @@ impl Core {
             outReal[t - lookbackTotal] = scratch[(cp - optInMinPeriod) as usize];
             t += 1;
         }
-        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
+        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank, cur_outReal: outReal[historyLen - lookbackTotal - 1] };
         Ok((MavpStream { state, out: OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal } }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
     }
 
@@ -788,6 +789,7 @@ impl MavpStream {
         }
         let mut outReal: f64 = 0.0_f64;
         Core::mavp_step_impl(&mut self.state, inReal, inPeriods, &mut outReal)?;
+        self.state.cur_outReal = outReal;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -821,6 +823,7 @@ impl MavpStream {
                 return Err(RetCode::BadParam);
             }
             Core::mavp_step_impl(&mut self.state, inReal[i], inPeriods[i], &mut outReal[i])?;
+            self.state.cur_outReal = outReal[i];
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -857,6 +860,19 @@ impl MavpStream {
             outReal = sp.bank[slot].peek(inReal)?;
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MAVP_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

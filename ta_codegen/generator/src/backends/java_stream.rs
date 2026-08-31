@@ -39,7 +39,7 @@
 //!   AutoCloseable, no finalizer). Handles are deliberately NOT serializable;
 //!   the sanctioned checkpoint story is re-opening from retained history.
 //! - `peek` = deep-copy constructor + step on the throwaway copy (the design
-//!   doc's stated cost model); `copy()` exposes the same constructor as an
+//!   doc's stated cost model); `clone()` exposes the same constructor as an
 //!   independent stream. The copy is deep:
 //!   arrays clone, sub-handles copy recursively; only the `Core` reference is
 //!   shared (settings identity is the contract).
@@ -677,7 +677,7 @@ fn emit_handle_class_with_members(
          \x20   * the same handle. With no concurrent {{@code update}}, {{@code peek}}/\n\
          \x20   * {{@code value}}/{{@code copy}} never write the handle and may be called\n\
          \x20   * concurrently after safe publication. Independent handles (including\n\
-         \x20   * {{@code copy()}} results) are fully independent.\n\
+         \x20   * {{@code clone()}} results) are fully independent.\n\
          \x20   * <p>Not serializable by design: to checkpoint, retain the history and\n\
          \x20   * re-open — the result is bit-identical by contract.\n\
          \x20   */"
@@ -703,7 +703,7 @@ fn emit_handle_class_with_members(
          \x20      * <p>It is what {{@link Core#{base}}} reports over the same bars: the\n\
          \x20      * opener sets it to {{@code (lookback, historyLen - lookback)}}, every\n\
          \x20      * accepted {{@code update}} adds one to the count, {{@code peek}} leaves\n\
-         \x20      * it alone, and {{@code copy()}} carries it verbatim. A plain\n\
+         \x20      * it alone, and {{@code clone()}} carries it verbatim. A plain\n\
          \x20      * {{@code open}} hands back only the last value, a subset of this range,\n\
          \x20      * because the caller chose not to take the fill.\n\
          \x20      */\n\
@@ -1128,11 +1128,19 @@ fn emit_copy_method(o: &mut String, func: &FuncDef) {
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * An independent deep copy of this stream: both evolve separately from\n\
-         \x20      * here on (the Java rendering of the Rust handle's {{@code Clone}}).\n\
+         \x20      * An independent fork of this stream: both evolve separately from here\n\
+         \x20      * on. Buffers are copied and sub-streams cloned recursively; the\n\
+         \x20      * {{@link Core}} reference is shared, since a {{@code Core}} is immutable\n\
+         \x20      * for a stream's lifetime.\n\
+         \x20      *\n\
+         \x20      * <p>Not the {{@code Cloneable}} protocol: this calls a copy constructor,\n\
+         \x20      * never {{@code super.clone()}}, so it throws nothing.\n\
+         \x20      *\n\
+         \x20      * @return an independent stream at the same bar\n\
          \x20      */"
     );
-    let _ = writeln!(o, "      public {class} copy() {{");
+    let _ = writeln!(o, "      @Override");
+    let _ = writeln!(o, "      public {class} clone() {{");
     let _ = writeln!(o, "         return new {class}(this);");
     let _ = writeln!(o, "      }}");
 }
@@ -1266,7 +1274,7 @@ fn localize_state_writes(
 /// value. It sits above the mode predicate, so the outputs it names are
 /// declared by the frame rather than by either arm.
 fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<Statement>> {
-    let st = streaming::identity_step_branch(model, &JavaStreamNames)?;
+    let st = streaming::identity_peek_branch(model, &JavaStreamNames)?;
     let answer = fresh_value_expr_local(func);
     let bare: HashMap<String, String> = func
         .outputs

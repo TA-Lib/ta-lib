@@ -883,6 +883,9 @@ struct TA_MAMA_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_MAMA_Value). */
+   double cur_outMAMA;
+   double cur_outFAMA;
    double optInFastLimit;
    double optInSlowLimit;
    double period;
@@ -958,8 +961,10 @@ static void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *
    double I2;
    double todayValue;
    double mama;
+   double fama;
 
    mama = sp->mama;
+   fama = sp->fama;
    if( sp->ringCap_trailingWMAIdx == 0 )
    {
       sp->ring_trailingWMAIdx_inReal[0] = inReal;
@@ -1113,12 +1118,12 @@ static void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *
    /* Calculate MAMA, FAMA */
    mama = fma(1 - tempReal, mama, tempReal * todayValue);
    tempReal *= 0.5;
-   sp->fama = fma(1 - tempReal, sp->fama, tempReal * mama);
+   fama = fma(1 - tempReal, fama, tempReal * mama);
    /* FAMA is nullable (issue #125): its write carries no outIdx advance so
     * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
     */
    if( outFAMA != NULL )
-      *outFAMA= sp->fama;
+      *outFAMA= fama;
    *outMAMA= mama;
    /* Adjust the period for next price bar */
    sp->Re = fma(0.8, sp->Re, 0.2 * (fma(I2, sp->prevI2, Q2 * sp->prevQ2)));
@@ -1149,6 +1154,8 @@ static void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *
    }
    sp->period = fma(0.2, sp->period, 0.8 * tempReal);
    /* Ooof... let's do the next price bar now! */
+   sp->cur_outMAMA = *outMAMA;
+   sp->cur_outFAMA = fama;
    sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
    if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
@@ -1157,6 +1164,7 @@ static void TA_MAMA_StepImpl( struct TA_MAMA_Stream *sp, double inReal, double *
    }
    sp->streamParity = 1 - sp->streamParity;
    sp->mama = mama;
+   sp->fama = fama;
 }
 
 static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[], int outStride )
@@ -1583,6 +1591,7 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
       memset( sp, 0, sizeof(*sp) );
       sp->optInFastLimit = optInFastLimit;
       sp->optInSlowLimit = optInSlowLimit;
+      sp->cur_outFAMA = fama;
       sp->period = period;
       sp->periodWMASum = periodWMASum;
       sp->periodWMASub = periodWMASub;
@@ -1637,6 +1646,7 @@ static TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **stream, const double
       sp->ringPos_trailingWMAIdx = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outMAMA = outMAMA[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1712,6 +1722,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    double I2;
    double todayValue;
    double mama;
+   double fama;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
@@ -1719,6 +1730,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    mama = sp->mama;
+   fama = sp->fama;
    if( sp->ringCap_trailingWMAIdx == 0 )
    {
       pkSlot0 = 0;
@@ -1873,12 +1885,12 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    /* Calculate MAMA, FAMA */
    mama = fma(1 - tempReal, mama, tempReal * todayValue);
    tempReal *= 0.5;
-   sp->fama = fma(1 - tempReal, sp->fama, tempReal * mama);
+   fama = fma(1 - tempReal, fama, tempReal * mama);
    /* FAMA is nullable (issue #125): its write carries no outIdx advance so
     * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
     */
    if( outFAMA != NULL )
-      *outFAMA= sp->fama;
+      *outFAMA= fama;
    *outMAMA= mama;
    /* Adjust the period for next price bar */
    sp->Re = fma(0.8, sp->Re, 0.2 * (fma(I2, sp->prevI2, Q2 * sp->prevQ2)));
@@ -1909,6 +1921,8 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    }
    sp->period = fma(0.2, sp->period, 0.8 * tempReal);
    /* Ooof... let's do the next price bar now! */
+   sp->cur_outMAMA = *outMAMA;
+   sp->cur_outFAMA = fama;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
    if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
    {
@@ -1916,6 +1930,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    }
    sp->streamParity = 1 - sp->streamParity;
    sp->mama = mama;
+   sp->fama = fama;
    return TA_SUCCESS;
 }
 
@@ -1938,6 +1953,34 @@ TA_LIB_API TA_RetCode TA_MAMA_UpdateAndFill( TA_MAMA_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_MAMA_Close( TA_MAMA_Stream *stream )
 {
    TA_MAMA_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MAMA_Value( const TA_MAMA_Stream *stream, double *outMAMA, double *outFAMA )
+{
+   if( !stream || !outMAMA ) return TA_BAD_PARAM;
+   *outMAMA = stream->cur_outMAMA;
+   if( outFAMA != NULL )
+      *outFAMA = stream->cur_outFAMA;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MAMA_Clone( const TA_MAMA_Stream *stream, TA_MAMA_Stream **clone )
+{
+   struct TA_MAMA_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MAMA_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingWMAIdx_inReal = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
+     sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingWMAIdx_inReal ) { TA_MAMA_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

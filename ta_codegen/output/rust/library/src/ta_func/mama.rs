@@ -729,6 +729,8 @@ struct MamaStreamState {
     ringPos_trailingWMAIdx: usize,
     ringCap_trailingWMAIdx: usize,
     ring_trailingWMAIdx_inReal: Vec<f64>,
+    cur_outMAMA: f64,
+    cur_outFAMA: f64,
 }
 
 #[allow(unused_variables)]
@@ -918,6 +920,8 @@ impl Core {
         }
         sp.period = (0.2 as f64).mul_add(sp.period, 0.8 * tempReal);
         // Ooof... let's do the next price bar now!
+        sp.cur_outMAMA = (*outMAMA);
+        sp.cur_outFAMA = sp.fama;
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
         if sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
@@ -1371,6 +1375,8 @@ impl Core {
             fama,
             prevPhase,
             streamParity: historyLen % 2,
+            cur_outMAMA: outMAMA[(*outNBElement - 1) * outStride],
+            cur_outFAMA: fama,
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
@@ -1607,6 +1613,8 @@ impl MamaStream {
             let mut Q1_Even = sp.Q1_Even;
             let mut Q1_Odd = sp.Q1_Odd;
             let mut Re = sp.Re;
+            let mut cur_outFAMA = sp.cur_outFAMA;
+            let mut cur_outMAMA = sp.cur_outMAMA;
             let mut detrender_Even = sp.detrender_Even;
             let mut detrender_Odd = sp.detrender_Odd;
             let mut fama = sp.fama;
@@ -1812,6 +1820,8 @@ impl MamaStream {
             }
             period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
             // Ooof... let's do the next price bar now!
+            cur_outMAMA = (*outMAMA);
+            cur_outFAMA = fama;
             ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
             if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
                 ringPos_trailingWMAIdx = 0;
@@ -1819,6 +1829,19 @@ impl MamaStream {
             streamParity = 1 - streamParity;
         }
         Ok((outMAMA, outFAMA))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MAMA_Value")]
+    pub fn value(&self) -> (f64, f64) {
+        (self.state.cur_outMAMA, self.state.cur_outFAMA)
     }
 
     /// The bars this stream has produced a value for, in the input series'

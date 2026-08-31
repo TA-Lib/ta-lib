@@ -735,6 +735,10 @@ struct TA_BBANDS_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_BBANDS_Value). */
+   double cur_outRealUpperBand;
+   double cur_outRealMiddleBand;
+   double cur_outRealLowerBand;
    int optInTimePeriod;
    double optInNbDevUp;
    double optInNbDevDn;
@@ -1005,6 +1009,9 @@ static TA_RetCode TA_BBANDS_OpenImpl( struct TA_BBANDS_Stream **stream, const do
       if( !outStride ) TA_Free( sc_outRealLowerBand );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outRealUpperBand = outRealUpperBand[(*outNBElement - 1) * outStride];
+      sp->cur_outRealMiddleBand = outRealMiddleBand[(*outNBElement - 1) * outStride];
+      sp->cur_outRealLowerBand = outRealLowerBand[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1064,6 +1071,9 @@ TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal,
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    retCode = TA_BBANDS_StepImpl( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
    if( retCode != TA_SUCCESS ) return retCode;
+   stream->cur_outRealUpperBand = *outRealUpperBand;
+   stream->cur_outRealMiddleBand = *outRealMiddleBand;
+   stream->cur_outRealLowerBand = *outRealLowerBand;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -1124,6 +1134,9 @@ TA_LIB_API TA_RetCode TA_BBANDS_UpdateAndFill( TA_BBANDS_Stream *stream, const d
       if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
       retCode = TA_BBANDS_StepImpl( stream, inReal[i], &outRealUpperBand[i], &outRealMiddleBand[i], &outRealLowerBand[i] );
       if( retCode != TA_SUCCESS ) return retCode;
+      stream->cur_outRealUpperBand = outRealUpperBand[i];
+      stream->cur_outRealMiddleBand = outRealMiddleBand[i];
+      stream->cur_outRealLowerBand = outRealLowerBand[i];
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
    return TA_SUCCESS;
@@ -1135,6 +1148,35 @@ TA_LIB_API TA_RetCode TA_BBANDS_Close( TA_BBANDS_Stream *stream )
    TA_MA_Close( stream->sub0 );
    TA_STDDEV_Close( stream->sub1 );
    TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_BBANDS_Value( const TA_BBANDS_Stream *stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+{
+   if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   *outRealUpperBand = stream->cur_outRealUpperBand;
+   *outRealMiddleBand = stream->cur_outRealMiddleBand;
+   *outRealLowerBand = stream->cur_outRealLowerBand;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_BBANDS_Clone( const TA_BBANDS_Stream *stream, TA_BBANDS_Stream **clone )
+{
+   struct TA_BBANDS_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_BBANDS_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->sub0 = NULL;
+   sp->sub1 = NULL;
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub0, &sp->sub0 );
+     if( subRc != TA_SUCCESS ) { TA_BBANDS_Close( sp ); return subRc; } }
+   { TA_RetCode subRc = TA_STDDEV_Clone( stream->sub1, &sp->sub1 );
+     if( subRc != TA_SUCCESS ) { TA_BBANDS_Close( sp ); return subRc; } }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

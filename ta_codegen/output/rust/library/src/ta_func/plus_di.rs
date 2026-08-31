@@ -585,6 +585,7 @@ struct PlusDiStreamState {
     prevClose: f64,
     prevPlusDM: f64,
     prevTR: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -629,6 +630,7 @@ impl Core {
                 (*outReal) = 0.0 as f64;
             }
             sp.prevClose = inClose;
+            sp.cur_outReal = (*outReal);
         } else {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
@@ -670,6 +672,7 @@ impl Core {
             } else {
                 (*outReal) = 0.0;
             }
+            sp.cur_outReal = (*outReal);
         }
     }
 
@@ -879,6 +882,7 @@ impl Core {
                 prevClose,
                 prevPlusDM,
                 prevTR,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
             Ok(PlusDiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
@@ -1145,6 +1149,7 @@ impl Core {
                 prevClose,
                 prevPlusDM,
                 prevTR,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
             Ok(PlusDiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
@@ -1351,6 +1356,7 @@ impl PlusDiStream {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
+                let mut cur_outReal = sp.cur_outReal;
                 let mut prevClose = sp.prevClose;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
@@ -1385,10 +1391,12 @@ impl PlusDiStream {
                     (*outReal) = 0.0 as f64;
                 }
                 prevClose = inClose;
+                cur_outReal = (*outReal);
             } else {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
+                let mut cur_outReal = sp.cur_outReal;
                 let mut prevClose = sp.prevClose;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
@@ -1431,9 +1439,23 @@ impl PlusDiStream {
                 } else {
                     (*outReal) = 0.0;
                 }
+                cur_outReal = (*outReal);
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_PLUS_DI_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

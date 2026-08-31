@@ -529,6 +529,9 @@ struct MacdStreamState {
     slowK: f64,
     fastK: f64,
     signalK: f64,
+    cur_outMACD: f64,
+    cur_outMACDSignal: f64,
+    cur_outMACDHist: f64,
 }
 
 #[allow(unused_variables)]
@@ -552,6 +555,9 @@ impl Core {
         (*outMACD) = macdValue;
         (*outMACDSignal) = sp.prevSignal;
         (*outMACDHist) = macdValue - sp.prevSignal;
+        sp.cur_outMACD = (*outMACD);
+        sp.cur_outMACDSignal = (*outMACDSignal);
+        sp.cur_outMACDHist = (*outMACDHist);
     }
 
     /// The single whole-history transcription behind [`Core::macd_open_internal`]
@@ -777,6 +783,9 @@ impl Core {
             slowK,
             fastK,
             signalK,
+            cur_outMACD: outMACD[(*outNBElement - 1) * outStride],
+            cur_outMACDSignal: outMACDSignal[(*outNBElement - 1) * outStride],
+            cur_outMACDHist: outMACDHist[(*outNBElement - 1) * outStride],
         };
         Ok(MacdStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -1002,6 +1011,9 @@ impl MacdStream {
             let outMACDHist = &mut outMACDHist;
             let mut macdValue: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut cur_outMACD = sp.cur_outMACD;
+            let mut cur_outMACDHist = sp.cur_outMACDHist;
+            let mut cur_outMACDSignal = sp.cur_outMACDSignal;
             let mut prevFast = sp.prevFast;
             let mut prevSignal = sp.prevSignal;
             let mut prevSlow = sp.prevSlow;
@@ -1017,8 +1029,24 @@ impl MacdStream {
             (*outMACD) = macdValue;
             (*outMACDSignal) = prevSignal;
             (*outMACDHist) = macdValue - prevSignal;
+            cur_outMACD = (*outMACD);
+            cur_outMACDSignal = (*outMACDSignal);
+            cur_outMACDHist = (*outMACDHist);
         }
         Ok((outMACD, outMACDSignal, outMACDHist))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MACD_Value")]
+    pub fn value(&self) -> (f64, f64, f64) {
+        (self.state.cur_outMACD, self.state.cur_outMACDSignal, self.state.cur_outMACDHist)
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -347,6 +347,7 @@ struct VwmaStreamState {
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
     ring_trailingIdx_inVolume: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -361,6 +362,7 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
+            sp.cur_outReal = (*outReal);
             return;
         }
         if sp.ringCap_trailingIdx == 0 {
@@ -381,6 +383,7 @@ impl Core {
         sp.sumPV -= tempReal;
         sp.sumV -= sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx];
         (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
+        sp.cur_outReal = (*outReal);
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] = inVolume;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -425,6 +428,7 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = VwmaStreamState {
+                cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
                 sumPV: 0.0_f64,
                 sumV: 0.0_f64,
@@ -530,6 +534,7 @@ impl Core {
             optInTimePeriod,
             sumPV,
             sumV,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
@@ -736,6 +741,7 @@ impl VwmaStream {
             let mut tempPV: f64 = 0.0_f64;
             let mut tempV: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut sumPV = sp.sumPV;
             let mut sumV = sp.sumV;
@@ -745,6 +751,7 @@ impl VwmaStream {
             let mut pkVal1: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
+                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             if sp.ringCap_trailingIdx == 0 {
@@ -767,12 +774,26 @@ impl VwmaStream {
             sumPV -= tempReal;
             sumV -= (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] } else { pkVal1 });
             (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
+            cur_outReal = (*outReal);
             ringPos_trailingIdx = ringPos_trailingIdx + 1;
             if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
                 ringPos_trailingIdx = 0;
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_VWMA_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

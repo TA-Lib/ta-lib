@@ -481,6 +481,7 @@ struct CdlthrustingStreamState {
     ringCap_EqualTrailingIdx: usize,
     ringLag_EqualTrailingIdx: usize,
     ring_EqualTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -579,6 +580,7 @@ impl Core {
             }
         }
         sp.BodyLongPeriodTotal += _candlerange_3 - sp.ring_BodyLongTrailingIdx_derived[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize];
+        sp.cur_outInteger = (*outInteger);
         sp.lag1_inOpen = inOpen;
         sp.lag1_inHigh = inHigh;
         sp.lag1_inLow = inLow;
@@ -825,6 +827,7 @@ impl Core {
         let state = CdlthrustingStreamState {
             EqualPeriodTotal,
             BodyLongPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inHigh: inHigh[historyLen - 1],
             lag1_inLow: inLow[historyLen - 1],
@@ -1045,6 +1048,7 @@ impl CdlthrustingStream {
             let outInteger = &mut outInteger;
             let mut BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
             let mut EqualPeriodTotal = sp.EqualPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut lag1_inHigh = sp.lag1_inHigh;
             let mut lag1_inLow = sp.lag1_inLow;
@@ -1146,6 +1150,7 @@ impl CdlthrustingStream {
                 }
             }
             BodyLongPeriodTotal += _candlerange_13 - (if (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize) != pkSlot0 { sp.ring_BodyLongTrailingIdx_derived[((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] } else { pkVal0 });
+            cur_outInteger = (*outInteger);
             lag1_inOpen = inOpen;
             lag1_inHigh = inHigh;
             lag1_inLow = inLow;
@@ -1160,6 +1165,19 @@ impl CdlthrustingStream {
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLTHRUSTING_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

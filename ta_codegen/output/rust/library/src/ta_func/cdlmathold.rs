@@ -545,6 +545,7 @@ struct CdlmatholdStreamState {
     ringCap_BodyShortTrailingIdx: usize,
     ringLag_BodyShortTrailingIdx: usize,
     ring_BodyShortTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -645,6 +646,7 @@ impl Core {
             if totIdx == 1 { break; }
             totIdx -= 1;
         }
+        sp.cur_outInteger = (*outInteger);
         sp.lag4_inOpen = sp.lag3_inOpen;
         sp.lag3_inOpen = sp.lag2_inOpen;
         sp.lag2_inOpen = sp.lag1_inOpen;
@@ -963,6 +965,7 @@ impl Core {
         let state = CdlmatholdStreamState {
             optInPenetration,
             BodyPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag3_inOpen: inOpen[historyLen - 3],
@@ -1195,6 +1198,7 @@ impl CdlmatholdStream {
             let outInteger = &mut outInteger;
             let mut totIdx: usize = 0_usize;
             let mut BodyPeriodTotal = sp.BodyPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut lag1_inHigh = sp.lag1_inHigh;
             let mut lag1_inLow = sp.lag1_inLow;
@@ -1309,6 +1313,7 @@ impl CdlmatholdStream {
                 if totIdx == 1 { break; }
                 totIdx -= 1;
             }
+            cur_outInteger = (*outInteger);
             lag4_inOpen = lag3_inOpen;
             lag3_inOpen = lag2_inOpen;
             lag2_inOpen = lag1_inOpen;
@@ -1335,6 +1340,19 @@ impl CdlmatholdStream {
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLMATHOLD_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

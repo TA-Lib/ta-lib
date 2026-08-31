@@ -91,8 +91,13 @@ fn test_java_sma_ring_stream_section() {
     assert!(s.contains("public double update( double inReal ) {"));
     assert!(s.contains("public double peek( double inReal ) {"));
     assert!(s.contains("public double value() {"));
-    assert!(s.contains("public SmaStream copy() {"));
-    assert!(!s.contains("public SmaStream fork()"), "copy(), never fork()");
+    assert!(s.contains("public SmaStream clone() {"));
+    assert!(!s.contains("public SmaStream fork()"), "clone(), never fork()");
+    // The override is what makes the name legal without the Cloneable protocol;
+    // dropping it would compile but stop being an override the day the return
+    // type or visibility drifts.
+    assert!(s.contains("@Override\n      public SmaStream clone()"), "clone() is an @Override");
+    assert!(!s.contains("implements Cloneable"), "no Cloneable: the body is a copy constructor");
     // Step is a package-private Core method writing the cur_ field.
     assert!(s.contains("void smaStepImpl( SmaStream sp, double inReal )"));
     assert!(s.contains("sp.cur_outReal ="));

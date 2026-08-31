@@ -9902,9 +9902,19 @@ fn test_c_mama_two_outputs_and_params() {
     // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
     // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
     assert!(step.contains("*outMAMA= mama;"), "MAMA line written unconditionally");
+    // The GUARD is the invariant, not the right-hand side's spelling: FAMA is
+    // carried as a local since the value accessor reads it back (#287), and a
+    // future carry could move it again without weakening anything here.
     assert!(
-        step.contains("if( outFAMA != NULL )") && step.contains("*outFAMA= sp->fama;"),
+        step.contains("if( outFAMA != NULL )")
+            && (step.contains("*outFAMA= fama;") || step.contains("*outFAMA= sp->fama;")),
         "FAMA is nullable (#125): its write is NULL-guarded"
+    );
+    // The retained copy must NOT be guarded — a declined FAMA is still computed,
+    // and `TA_MAMA_Value` has to report it (that is what the accessor is for).
+    assert!(
+        step.contains("sp->cur_outFAMA = fama;") || step.contains("sp->cur_outFAMA = sp->fama;"),
+        "the value retain reads the body's own variable, never the declinable sink"
     );
     assert!(step.contains("sp->optInFastLimit") && step.contains("sp->optInSlowLimit"), "params drive the adaptive alpha");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");

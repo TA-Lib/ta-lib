@@ -485,10 +485,24 @@ OutRange r = s2.outRange();                      // bars produced so far, on the
 - `value()` re-reads the last committed value(s) without recomputing (seeded by
   open, refreshed by `update`, untouched by `peek`); multi-output `update`
   caches the immutable `Value` it returns, so `value()` is allocation-free.
-- `copy()` is the universal deep copy (arrays cloned, sub-handles copied
-  recursively, the `Core` reference shared) — the Java rendering of Rust's
-  `Clone`; it is named to avoid `ForkJoinTask.fork()`'s async connotation and
-  Java's broken `clone()`. It is the only path left that copies a handle.
+- `clone()` is the universal deep copy (arrays cloned, sub-handles copied
+  recursively, the `Core` reference shared), and it is spelled the same in all
+  four backends: `TA_<N>_Clone`, `.clone()`, `clone()`, `Clone()`. It is the
+  only path left that copies a handle.
+
+  It was `copy()` in Java, to avoid `ForkJoinTask.fork()`'s async connotation
+  and "Java's broken `clone()`". The first reason stands and is why the verb is
+  not `fork`. The second does not: what is broken is `Cloneable` +
+  `super.clone()` — the marker interface that changes `Object.clone()`'s
+  behaviour from outside the language, the field-by-field copy that fights
+  `final`, the contract that comes apart under inheritance. Every one of those
+  attaches to `super.clone()`, and the remedy the same critique prescribes is a
+  copy constructor, which is what every backend already emits. A `public <N>Stream
+  clone()` that never calls `super.clone()` needs no `Cloneable`, throws no
+  `CloneNotSupportedException`, and on a `final` handle cannot be inherited into
+  the broken case. C# reached this conclusion first and shipped a typed
+  `Clone()` with no `ICloneable`, for the same reason and against the same
+  objection. Rust has no choice at all — the fork is `Clone::clone`.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality (complete in Java: arrays are identical or disjoint) — Java is the
   one managed backend where `smaOpenAndFill(history, …, history)` compiles, so

@@ -241,6 +241,7 @@ pub struct ObvStream {
 struct ObvStreamState {
     prevReal: f64,
     prevOBV: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -259,6 +260,7 @@ impl Core {
         }
         (*outReal) = sp.prevOBV;
         sp.prevReal = tempReal;
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::obv_open_internal`]
@@ -311,6 +313,7 @@ impl Core {
         let state = ObvStreamState {
             prevReal,
             prevOBV,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(ObvStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -511,6 +514,7 @@ impl ObvStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut prevOBV = sp.prevOBV;
             let mut prevReal = sp.prevReal;
             tempReal = inReal;
@@ -521,8 +525,22 @@ impl ObvStream {
             }
             (*outReal) = prevOBV;
             prevReal = tempReal;
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_OBV_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

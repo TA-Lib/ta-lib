@@ -319,6 +319,8 @@ struct TA_CDLIDENTICAL3CROWS_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLIDENTICAL3CROWS_Value). */
+   int cur_outInteger;
    double ShadowVeryShortPeriodTotal[3];
    double EqualPeriodTotal[3];
    double lag1_inOpen;
@@ -384,6 +386,7 @@ static void TA_CDLIDENTICAL3CROWS_StepImpl( struct TA_CDLIDENTICAL3CROWS_Stream 
    {
       sp->EqualPeriodTotal[totIdx] = sp->EqualPeriodTotal[totIdx] + (sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx >= sp->ringCap_EqualTrailingIdx) ? sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx - sp->ringCap_EqualTrailingIdx : sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx] - sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - totIdx) % sp->ringCap_EqualTrailingIdx]);
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag2_inHigh = sp->lag1_inHigh;
@@ -574,6 +577,7 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_OpenImpl( struct TA_CDLIDENTICAL3CROWS_S
       sp->lag2_inClose = inClose[historyLen - 2];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -676,6 +680,7 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Peek( const TA_CDLIDENTICAL3CROWS_St
    {
       sp->EqualPeriodTotal[totIdx] = sp->EqualPeriodTotal[totIdx] + (((((sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx >= sp->ringCap_EqualTrailingIdx) ? sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx - sp->ringCap_EqualTrailingIdx : sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx) != pkSlot0) ? sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx >= sp->ringCap_EqualTrailingIdx) ? sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx - sp->ringCap_EqualTrailingIdx : sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - totIdx] : pkVal0) - (((sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - totIdx) % sp->ringCap_EqualTrailingIdx != pkSlot0) ? sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - totIdx) % sp->ringCap_EqualTrailingIdx] : pkVal0));
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag2_inHigh = sp->lag1_inHigh;
@@ -716,6 +721,37 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_UpdateAndFill( TA_CDLIDENTICAL3CROWS
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Close( TA_CDLIDENTICAL3CROWS_Stream *stream )
 {
    TA_CDLIDENTICAL3CROWS_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Value( const TA_CDLIDENTICAL3CROWS_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Clone( const TA_CDLIDENTICAL3CROWS_Stream *stream, TA_CDLIDENTICAL3CROWS_Stream **clone )
+{
+   struct TA_CDLIDENTICAL3CROWS_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLIDENTICAL3CROWS_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_EqualTrailingIdx_derived = NULL;
+   sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
+     sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLIDENTICAL3CROWS_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
+     sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLIDENTICAL3CROWS_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

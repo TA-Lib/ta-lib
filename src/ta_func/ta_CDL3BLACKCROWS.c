@@ -276,6 +276,8 @@ struct TA_CDL3BLACKCROWS_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDL3BLACKCROWS_Value). */
+   int cur_outInteger;
    double ShadowVeryShortPeriodTotal[3];
    double lag1_inOpen;
    double lag2_inOpen;
@@ -335,6 +337,7 @@ static void TA_CDL3BLACKCROWS_StepImpl( struct TA_CDL3BLACKCROWS_Stream *sp, dou
    {
       sp->ShadowVeryShortPeriodTotal[totIdx] = sp->ShadowVeryShortPeriodTotal[totIdx] + (sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp->ringCap_ShadowVeryShortTrailingIdx) ? sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx - sp->ringCap_ShadowVeryShortTrailingIdx : sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp->ringCap_ShadowVeryShortTrailingIdx]);
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
@@ -496,6 +499,7 @@ static TA_RetCode TA_CDL3BLACKCROWS_OpenImpl( struct TA_CDL3BLACKCROWS_Stream **
       sp->lag3_inClose = inClose[historyLen - 3];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -592,6 +596,7 @@ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Peek( const TA_CDL3BLACKCROWS_Stream *st
    {
       sp->ShadowVeryShortPeriodTotal[totIdx] = sp->ShadowVeryShortPeriodTotal[totIdx] + (((((sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp->ringCap_ShadowVeryShortTrailingIdx) ? sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx - sp->ringCap_ShadowVeryShortTrailingIdx : sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx) != pkSlot0) ? sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp->ringCap_ShadowVeryShortTrailingIdx) ? sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx - sp->ringCap_ShadowVeryShortTrailingIdx : sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx] : pkVal0) - (((sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp->ringCap_ShadowVeryShortTrailingIdx != pkSlot0) ? sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp->ringCap_ShadowVeryShortTrailingIdx] : pkVal0));
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
@@ -630,6 +635,32 @@ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_UpdateAndFill( TA_CDL3BLACKCROWS_Stream 
 TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Close( TA_CDL3BLACKCROWS_Stream *stream )
 {
    TA_CDL3BLACKCROWS_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Value( const TA_CDL3BLACKCROWS_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Clone( const TA_CDL3BLACKCROWS_Stream *stream, TA_CDL3BLACKCROWS_Stream **clone )
+{
+   struct TA_CDL3BLACKCROWS_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDL3BLACKCROWS_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_ShadowVeryShortTrailingIdx_derived = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
+     sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDL3BLACKCROWS_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_ShadowVeryShortTrailingIdx_derived, stream->ring_ShadowVeryShortTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -457,6 +457,7 @@ struct RsiStreamState {
     prevGain: f64,
     prevLoss: f64,
     prevValue: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -470,6 +471,7 @@ impl Core {
         let mut tempValue2: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
+            sp.cur_outReal = (*outReal);
             return;
         }
         tempValue1 = inReal as f64;
@@ -490,6 +492,7 @@ impl Core {
         } else {
             (*outReal) = 0.0;
         }
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::rsi_open_internal`]
@@ -525,6 +528,7 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = RsiStreamState {
+                cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
                 prevGain: 0.0_f64,
                 prevLoss: 0.0_f64,
@@ -740,6 +744,7 @@ impl Core {
             prevGain,
             prevLoss,
             prevValue,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(RsiStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -932,11 +937,13 @@ impl RsiStream {
             let outReal = &mut outReal;
             let mut tempValue1: f64 = 0.0_f64;
             let mut tempValue2: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut prevGain = sp.prevGain;
             let mut prevLoss = sp.prevLoss;
             let mut prevValue = sp.prevValue;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
+                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             tempValue1 = inReal as f64;
@@ -957,8 +964,22 @@ impl RsiStream {
             } else {
                 (*outReal) = 0.0;
             }
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_RSI_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

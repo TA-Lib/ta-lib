@@ -1469,7 +1469,7 @@ fn localize_state_writes(
 /// value. It sits above the mode predicate, so the outputs it names are
 /// declared by the frame rather than by either arm.
 fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<Statement>> {
-    let st = streaming::identity_step_branch(model, &CsStreamNames)?;
+    let st = streaming::identity_peek_branch(model, &CsStreamNames)?;
     let answer = fresh_value_expr(func, "");
     let bare: HashMap<String, String> = func
         .outputs

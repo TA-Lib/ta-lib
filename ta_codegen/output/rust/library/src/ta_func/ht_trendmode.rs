@@ -788,6 +788,7 @@ struct HtTrendmodeStreamState {
     win_j_inReal: Vec<f64>,
     cbSize_smoothPrice: usize,
     cb_smoothPrice: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -1059,6 +1060,7 @@ impl Core {
         if sp.smoothPrice_Idx > sp.maxIdx_smoothPrice {
             sp.smoothPrice_Idx = 0;
         }
+        sp.cur_outInteger = (*outInteger);
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
         if sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
@@ -1635,6 +1637,7 @@ impl Core {
             smoothPrice_Idx,
             maxIdx_smoothPrice,
             streamParity: historyLen % 2,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
@@ -1865,6 +1868,7 @@ impl HtTrendmodeStream {
             let mut Q1_Even = sp.Q1_Even;
             let mut Q1_Odd = sp.Q1_Odd;
             let mut Re = sp.Re;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut daysInTrend = sp.daysInTrend;
             let mut detrender_Even = sp.detrender_Even;
             let mut detrender_Odd = sp.detrender_Odd;
@@ -2152,6 +2156,7 @@ impl HtTrendmodeStream {
             if smoothPrice_Idx > sp.maxIdx_smoothPrice {
                 smoothPrice_Idx = 0;
             }
+            cur_outInteger = (*outInteger);
             ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
             if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
                 ringPos_trailingWMAIdx = 0;
@@ -2163,6 +2168,19 @@ impl HtTrendmodeStream {
             streamParity = 1 - streamParity;
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_HT_TRENDMODE_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

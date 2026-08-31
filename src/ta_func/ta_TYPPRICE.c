@@ -148,6 +148,8 @@ struct TA_TYPPRICE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_TYPPRICE_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -155,6 +157,7 @@ static void TA_TYPPRICE_StepImpl( struct TA_TYPPRICE_Stream *sp, double inHigh, 
 {
    (void)sp;
    *outReal= (inHigh + inLow + inClose) / 3.0;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_TYPPRICE_OpenImpl( struct TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -199,6 +202,7 @@ static TA_RetCode TA_TYPPRICE_OpenImpl( struct TA_TYPPRICE_Stream **stream, cons
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -265,6 +269,7 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_Peek( const TA_TYPPRICE_Stream *stream, double
    scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow + inClose) / 3.0;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -287,6 +292,27 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_UpdateAndFill( TA_TYPPRICE_Stream *stream, con
 TA_LIB_API TA_RetCode TA_TYPPRICE_Close( TA_TYPPRICE_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Value( const TA_TYPPRICE_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Clone( const TA_TYPPRICE_Stream *stream, TA_TYPPRICE_Stream **clone )
+{
+   struct TA_TYPPRICE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_TYPPRICE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

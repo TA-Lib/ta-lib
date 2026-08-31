@@ -242,6 +242,8 @@ struct TA_CDLDOJI_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLDOJI_Value). */
+   int cur_outInteger;
    double BodyDojiPeriodTotal;
    int ringPos_BodyDojiTrailingIdx;
    int ringCap_BodyDojiTrailingIdx;
@@ -274,6 +276,7 @@ static void TA_CDLDOJI_StepImpl( struct TA_CDLDOJI_Stream *sp, double inOpen, do
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
    sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
    if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
@@ -388,6 +391,7 @@ static TA_RetCode TA_CDLDOJI_OpenImpl( struct TA_CDLDOJI_Stream **stream, const 
       sp->ringPos_BodyDojiTrailingIdx = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -470,6 +474,7 @@ TA_LIB_API TA_RetCode TA_CDLDOJI_Peek( const TA_CDLDOJI_Stream *stream, double i
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] : pkVal0);
+   sp->cur_outInteger = *outInteger;
    sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
    if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
    {
@@ -497,6 +502,32 @@ TA_LIB_API TA_RetCode TA_CDLDOJI_UpdateAndFill( TA_CDLDOJI_Stream *stream, const
 TA_LIB_API TA_RetCode TA_CDLDOJI_Close( TA_CDLDOJI_Stream *stream )
 {
    TA_CDLDOJI_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLDOJI_Value( const TA_CDLDOJI_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLDOJI_Clone( const TA_CDLDOJI_Stream *stream, TA_CDLDOJI_Stream **clone )
+{
+   struct TA_CDLDOJI_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLDOJI_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_BodyDojiTrailingIdx_derived = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_BodyDojiTrailingIdx > 0 ? sp->ringCap_BodyDojiTrailingIdx : 1);
+     sp->ring_BodyDojiTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_BodyDojiTrailingIdx_derived ) { TA_CDLDOJI_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_BodyDojiTrailingIdx_derived, stream->ring_BodyDojiTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

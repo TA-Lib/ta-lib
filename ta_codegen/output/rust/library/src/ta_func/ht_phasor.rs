@@ -621,6 +621,8 @@ struct HtPhasorStreamState {
     ringPos_trailingWMAIdx: usize,
     ringCap_trailingWMAIdx: usize,
     ring_trailingWMAIdx_inReal: Vec<f64>,
+    cur_outInPhase: f64,
+    cur_outQuadrature: f64,
 }
 
 #[allow(unused_variables)]
@@ -779,6 +781,8 @@ impl Core {
         }
         sp.period = (0.2 as f64).mul_add(sp.period, 0.8 * tempReal);
         // Ooof... let's do the next price bar now!
+        sp.cur_outInPhase = (*outInPhase);
+        sp.cur_outQuadrature = (*outQuadrature);
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
         if sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
@@ -1180,6 +1184,8 @@ impl Core {
             I1ForEvenPrev3,
             rad2Deg,
             streamParity: historyLen % 2,
+            cur_outInPhase: outInPhase[(*outNBElement - 1) * outStride],
+            cur_outQuadrature: outQuadrature[(*outNBElement - 1) * outStride],
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
@@ -1408,6 +1414,8 @@ impl HtPhasorStream {
             let mut Q1_Even = sp.Q1_Even;
             let mut Q1_Odd = sp.Q1_Odd;
             let mut Re = sp.Re;
+            let mut cur_outInPhase = sp.cur_outInPhase;
+            let mut cur_outQuadrature = sp.cur_outQuadrature;
             let mut detrender_Even = sp.detrender_Even;
             let mut detrender_Odd = sp.detrender_Odd;
             let mut hilbertIdx = sp.hilbertIdx;
@@ -1579,6 +1587,8 @@ impl HtPhasorStream {
             }
             period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
             // Ooof... let's do the next price bar now!
+            cur_outInPhase = (*outInPhase);
+            cur_outQuadrature = (*outQuadrature);
             ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
             if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
                 ringPos_trailingWMAIdx = 0;
@@ -1586,6 +1596,19 @@ impl HtPhasorStream {
             streamParity = 1 - streamParity;
         }
         Ok((outInPhase, outQuadrature))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_HT_PHASOR_Value")]
+    pub fn value(&self) -> (f64, f64) {
+        (self.state.cur_outInPhase, self.state.cur_outQuadrature)
     }
 
     /// The bars this stream has produced a value for, in the input series'

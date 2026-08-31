@@ -542,6 +542,10 @@ struct TA_MACD_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_MACD_Value). */
+   double cur_outMACD;
+   double cur_outMACDSignal;
+   double cur_outMACDHist;
    int optInFastPeriod;
    int optInSlowPeriod;
    int optInSignalPeriod;
@@ -575,6 +579,9 @@ static void TA_MACD_StepImpl( struct TA_MACD_Stream *sp, double inReal, double *
    *outMACD= macdValue;
    *outMACDSignal= prevSignal;
    *outMACDHist= macdValue - prevSignal;
+   sp->cur_outMACD = *outMACD;
+   sp->cur_outMACDSignal = *outMACDSignal;
+   sp->cur_outMACDHist = *outMACDHist;
    sp->prevSignal = prevSignal;
 }
 
@@ -837,6 +844,9 @@ static TA_RetCode TA_MACD_OpenImpl( struct TA_MACD_Stream **stream, const double
       sp->signalK = signalK;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outMACD = outMACD[(*outNBElement - 1) * outStride];
+      sp->cur_outMACDSignal = outMACDSignal[(*outNBElement - 1) * outStride];
+      sp->cur_outMACDHist = outMACDHist[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -923,6 +933,9 @@ TA_LIB_API TA_RetCode TA_MACD_Peek( const TA_MACD_Stream *stream, double inReal,
    *outMACD= macdValue;
    *outMACDSignal= prevSignal;
    *outMACDHist= macdValue - prevSignal;
+   sp->cur_outMACD = *outMACD;
+   sp->cur_outMACDSignal = *outMACDSignal;
+   sp->cur_outMACDHist = *outMACDHist;
    sp->prevSignal = prevSignal;
    return TA_SUCCESS;
 }
@@ -946,6 +959,29 @@ TA_LIB_API TA_RetCode TA_MACD_UpdateAndFill( TA_MACD_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_MACD_Close( TA_MACD_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MACD_Value( const TA_MACD_Stream *stream, double *outMACD, double *outMACDSignal, double *outMACDHist )
+{
+   if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   *outMACD = stream->cur_outMACD;
+   *outMACDSignal = stream->cur_outMACDSignal;
+   *outMACDHist = stream->cur_outMACDHist;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MACD_Clone( const TA_MACD_Stream *stream, TA_MACD_Stream **clone )
+{
+   struct TA_MACD_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MACD_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

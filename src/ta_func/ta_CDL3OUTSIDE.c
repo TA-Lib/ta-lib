@@ -213,6 +213,8 @@ struct TA_CDL3OUTSIDE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDL3OUTSIDE_Value). */
+   int cur_outInteger;
    double lag1_inOpen;
    double lag2_inOpen;
    double lag1_inClose;
@@ -233,6 +235,7 @@ static void TA_CDL3OUTSIDE_StepImpl( struct TA_CDL3OUTSIDE_Stream *sp, double in
    {
       *outInteger= 0;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag2_inClose = sp->lag1_inClose;
@@ -327,6 +330,7 @@ static TA_RetCode TA_CDL3OUTSIDE_OpenImpl( struct TA_CDL3OUTSIDE_Stream **stream
       sp->lag2_inClose = inClose[historyLen - 2];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -402,6 +406,7 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Peek( const TA_CDL3OUTSIDE_Stream *stream, 
    {
       *outInteger= 0;
    }
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag2_inClose = sp->lag1_inClose;
@@ -428,6 +433,27 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_UpdateAndFill( TA_CDL3OUTSIDE_Stream *strea
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Close( TA_CDL3OUTSIDE_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Value( const TA_CDL3OUTSIDE_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Clone( const TA_CDL3OUTSIDE_Stream *stream, TA_CDL3OUTSIDE_Stream **clone )
+{
+   struct TA_CDL3OUTSIDE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDL3OUTSIDE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -591,6 +591,7 @@ struct CdlhangingmanStreamState {
     ringPos_ShadowVeryShortTrailingIdx: usize,
     ringCap_ShadowVeryShortTrailingIdx: usize,
     ring_ShadowVeryShortTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -771,6 +772,7 @@ impl Core {
             }
         }
         sp.NearPeriodTotal += _candlerange_7 - sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx];
+        sp.cur_outInteger = (*outInteger);
         sp.lag1_inOpen = inOpen;
         sp.lag1_inHigh = inHigh;
         sp.lag1_inLow = inLow;
@@ -1236,6 +1238,7 @@ impl Core {
             ShadowLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
             NearPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inHigh: inHigh[historyLen - 1],
             lag1_inLow: inLow[historyLen - 1],
@@ -1462,6 +1465,7 @@ impl CdlhangingmanStream {
             let mut NearPeriodTotal = sp.NearPeriodTotal;
             let mut ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
             let mut ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut lag1_inHigh = sp.lag1_inHigh;
             let mut lag1_inLow = sp.lag1_inLow;
@@ -1653,6 +1657,7 @@ impl CdlhangingmanStream {
                 }
             }
             NearPeriodTotal += _candlerange_31 - (if (ringPos_NearTrailingIdx as usize) != pkSlot1 { sp.ring_NearTrailingIdx_derived[ringPos_NearTrailingIdx] } else { pkVal1 });
+            cur_outInteger = (*outInteger);
             lag1_inOpen = inOpen;
             lag1_inHigh = inHigh;
             lag1_inLow = inLow;
@@ -1675,6 +1680,19 @@ impl CdlhangingmanStream {
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLHANGINGMAN_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

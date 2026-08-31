@@ -222,6 +222,8 @@ struct TA_IMI_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_IMI_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    int winPos_i;
    int winCap_i;
@@ -268,6 +270,7 @@ static void TA_IMI_StepImpl( struct TA_IMI_Stream *sp, double inOpen, double inC
        */
       *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
    }
+   sp->cur_outReal = *outReal;
    sp->winPos_i = sp->winPos_i + 1;
    if( sp->winPos_i >= sp->winCap_i )
    {
@@ -362,6 +365,7 @@ static TA_RetCode TA_IMI_OpenImpl( struct TA_IMI_Stream **stream, const double i
       sp->winPos_i = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -458,6 +462,7 @@ TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, d
        */
       *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
    }
+   sp->cur_outReal = *outReal;
    sp->winPos_i = sp->winPos_i + 1;
    if( sp->winPos_i >= sp->winCap_i )
    {
@@ -485,6 +490,37 @@ TA_LIB_API TA_RetCode TA_IMI_UpdateAndFill( TA_IMI_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_IMI_Close( TA_IMI_Stream *stream )
 {
    TA_IMI_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_IMI_Value( const TA_IMI_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_IMI_Clone( const TA_IMI_Stream *stream, TA_IMI_Stream **clone )
+{
+   struct TA_IMI_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_IMI_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->win_i_inOpen = NULL;
+   sp->win_i_inClose = NULL;
+   { size_t copyN = (size_t)(sp->winCap_i);
+     sp->win_i_inOpen = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->win_i_inOpen ) { TA_IMI_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->win_i_inOpen, stream->win_i_inOpen, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->winCap_i);
+     sp->win_i_inClose = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->win_i_inClose ) { TA_IMI_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->win_i_inClose, stream->win_i_inClose, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

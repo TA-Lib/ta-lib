@@ -246,6 +246,8 @@ struct TA_CDLMATCHINGLOW_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLMATCHINGLOW_Value). */
+   int cur_outInteger;
    double EqualPeriodTotal;
    double lag1_inOpen;
    double lag1_inHigh;
@@ -283,6 +285,7 @@ static void TA_CDLMATCHINGLOW_StepImpl( struct TA_CDLMATCHINGLOW_Stream *sp, dou
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
@@ -408,6 +411,7 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenImpl( struct TA_CDLMATCHINGLOW_Stream **
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -490,6 +494,7 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Peek( const TA_CDLMATCHINGLOW_Stream *st
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - (((sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx != pkSlot0) ? sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx] : pkVal0);
+   sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
@@ -521,6 +526,32 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_UpdateAndFill( TA_CDLMATCHINGLOW_Stream 
 TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Close( TA_CDLMATCHINGLOW_Stream *stream )
 {
    TA_CDLMATCHINGLOW_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Value( const TA_CDLMATCHINGLOW_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Clone( const TA_CDLMATCHINGLOW_Stream *stream, TA_CDLMATCHINGLOW_Stream **clone )
+{
+   struct TA_CDLMATCHINGLOW_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLMATCHINGLOW_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_EqualTrailingIdx_derived = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
+     sp->ring_EqualTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_EqualTrailingIdx_derived ) { TA_CDLMATCHINGLOW_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_EqualTrailingIdx_derived, stream->ring_EqualTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

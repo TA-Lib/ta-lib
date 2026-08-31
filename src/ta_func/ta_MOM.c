@@ -213,6 +213,8 @@ struct TA_MOM_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_MOM_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    int ringPos_trailingIdx;
    int ringCap_trailingIdx;
@@ -235,6 +237,7 @@ static void TA_MOM_StepImpl( struct TA_MOM_Stream *sp, double inReal, double *ou
       sp->ring_trailingIdx_inReal[0] = inReal;
    }
    *outReal= inReal - sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx];
+   sp->cur_outReal = *outReal;
    sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] = inReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
@@ -350,6 +353,7 @@ static TA_RetCode TA_MOM_OpenImpl( struct TA_MOM_Stream **stream, const double i
       sp->ringPos_trailingIdx = 0;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -422,6 +426,7 @@ TA_LIB_API TA_RetCode TA_MOM_Peek( const TA_MOM_Stream *stream, double inReal, d
       pkVal0 = inReal;
    }
    *outReal= inReal - ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0);
+   sp->cur_outReal = *outReal;
    sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
    if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
    {
@@ -449,6 +454,32 @@ TA_LIB_API TA_RetCode TA_MOM_UpdateAndFill( TA_MOM_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_MOM_Close( TA_MOM_Stream *stream )
 {
    TA_MOM_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MOM_Value( const TA_MOM_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MOM_Clone( const TA_MOM_Stream *stream, TA_MOM_Stream **clone )
+{
+   struct TA_MOM_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_MOM_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingIdx_inReal = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
+     sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingIdx_inReal ) { TA_MOM_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

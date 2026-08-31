@@ -445,6 +445,7 @@ struct PlusDmStreamState {
     prevHigh: f64,
     prevLow: f64,
     prevPlusDM: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -472,6 +473,7 @@ impl Core {
             } else {
                 (*outReal) = 0.0;
             }
+            sp.cur_outReal = (*outReal);
         } else {
             let mut tempReal: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
@@ -492,6 +494,7 @@ impl Core {
                 sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / ((sp.optInTimePeriod) as f64);
             }
             (*outReal) = sp.prevPlusDM;
+            sp.cur_outReal = (*outReal);
         }
     }
 
@@ -649,6 +652,7 @@ impl Core {
                 prevHigh,
                 prevLow,
                 prevPlusDM,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
             Ok(PlusDmStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         } else {
@@ -819,6 +823,7 @@ impl Core {
                 prevHigh,
                 prevLow,
                 prevPlusDM,
+                cur_outReal: outReal[(*outNBElement - 1) * outStride],
             };
             Ok(PlusDmStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
         }
@@ -1019,6 +1024,7 @@ impl PlusDmStream {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
+                let mut cur_outReal = sp.cur_outReal;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
                 tempReal = inHigh;
@@ -1035,10 +1041,12 @@ impl PlusDmStream {
                 } else {
                     (*outReal) = 0.0;
                 }
+                cur_outReal = (*outReal);
             } else {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
+                let mut cur_outReal = sp.cur_outReal;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
                 let mut prevPlusDM = sp.prevPlusDM;
@@ -1058,9 +1066,23 @@ impl PlusDmStream {
                     prevPlusDM = prevPlusDM - prevPlusDM / ((sp.optInTimePeriod) as f64);
                 }
                 (*outReal) = prevPlusDM;
+                cur_outReal = (*outReal);
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_PLUS_DM_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

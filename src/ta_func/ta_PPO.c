@@ -291,6 +291,8 @@ struct TA_PPO_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_PPO_Value). */
+   double cur_outReal;
    int optInFastPeriod;
    int optInSlowPeriod;
    TA_MAType optInMAType;
@@ -497,6 +499,7 @@ static TA_RetCode TA_PPO_OpenImpl( struct TA_PPO_Stream **stream, const double i
       if( !outStride ) TA_Free( sc_outReal );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -552,6 +555,7 @@ TA_LIB_API TA_RetCode TA_PPO_Update( TA_PPO_Stream *stream, double inReal, doubl
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    retCode = TA_PPO_StepImpl( stream, inReal, outReal );
    if( retCode != TA_SUCCESS ) return retCode;
+   stream->cur_outReal = *outReal;
    if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
@@ -603,6 +607,7 @@ TA_LIB_API TA_RetCode TA_PPO_UpdateAndFill( TA_PPO_Stream *stream, const double 
       if( !TA_IS_FINITE( inReal[i] ) ) return TA_BAD_PARAM;
       retCode = TA_PPO_StepImpl( stream, inReal[i], &outReal[i] );
       if( retCode != TA_SUCCESS ) return retCode;
+      stream->cur_outReal = outReal[i];
       if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    }
    return TA_SUCCESS;
@@ -614,6 +619,33 @@ TA_LIB_API TA_RetCode TA_PPO_Close( TA_PPO_Stream *stream )
    TA_MA_Close( stream->sub0 );
    TA_MA_Close( stream->sub1 );
    TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_PPO_Value( const TA_PPO_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_PPO_Clone( const TA_PPO_Stream *stream, TA_PPO_Stream **clone )
+{
+   struct TA_PPO_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_PPO_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->sub0 = NULL;
+   sp->sub1 = NULL;
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub0, &sp->sub0 );
+     if( subRc != TA_SUCCESS ) { TA_PPO_Close( sp ); return subRc; } }
+   { TA_RetCode subRc = TA_MA_Clone( stream->sub1, &sp->sub1 );
+     if( subRc != TA_SUCCESS ) { TA_PPO_Close( sp ); return subRc; } }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

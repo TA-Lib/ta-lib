@@ -267,6 +267,7 @@ struct PviStreamState {
     prevPVI: f64,
     prevClose: f64,
     prevVolume: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -304,6 +305,7 @@ impl Core {
         (*outReal) = sp.prevPVI;
         sp.prevClose = tempClose;
         sp.prevVolume = tempVolume;
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::pvi_open_internal`]
@@ -380,6 +382,7 @@ impl Core {
             prevPVI,
             prevClose,
             prevVolume,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(PviStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -586,6 +589,7 @@ impl PviStream {
             let mut tempClose: f64 = 0.0_f64;
             let mut tempVolume: f64 = 0.0_f64;
             let mut tempPVI: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut prevClose = sp.prevClose;
             let mut prevPVI = sp.prevPVI;
             let mut prevVolume = sp.prevVolume;
@@ -614,8 +618,22 @@ impl PviStream {
             (*outReal) = prevPVI;
             prevClose = tempClose;
             prevVolume = tempVolume;
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_PVI_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -368,7 +368,7 @@
     * the same handle. With no concurrent {@code update}, {@code peek}/
     * {@code value}/{@code copy} never write the handle and may be called
     * concurrently after safe publication. Independent handles (including
-    * {@code copy()} results) are fully independent.
+    * {@code clone()} results) are fully independent.
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
@@ -391,7 +391,7 @@
        * <p>It is what {@link Core#APO} reports over the same bars: the
        * opener sets it to {@code (lookback, historyLen - lookback)}, every
        * accepted {@code update} adds one to the count, {@code peek} leaves
-       * it alone, and {@code copy()} carries it verbatim. A plain
+       * it alone, and {@code clone()} carries it verbatim. A plain
        * {@code open} hands back only the last value, a subset of this range,
        * because the caller chose not to take the fill.
        */
@@ -489,10 +489,18 @@
       }
 
       /**
-       * An independent deep copy of this stream: both evolve separately from
-       * here on (the Java rendering of the Rust handle's {@code Clone}).
+       * An independent fork of this stream: both evolve separately from here
+       * on. Buffers are copied and sub-streams cloned recursively; the
+       * {@link Core} reference is shared, since a {@code Core} is immutable
+       * for a stream's lifetime.
+       *
+       * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+       * never {@code super.clone()}, so it throws nothing.
+       *
+       * @return an independent stream at the same bar
        */
-      public ApoStream copy() {
+      @Override
+      public ApoStream clone() {
          return new ApoStream(this);
       }
    }

@@ -493,6 +493,7 @@ struct KamaStreamState {
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
     ring_trailingIdx_inReal: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -507,6 +508,7 @@ impl Core {
         let mut periodROC: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
+            sp.cur_outReal = (*outReal);
             return;
         }
         if sp.ringCap_trailingIdx == 0 {
@@ -550,6 +552,7 @@ impl Core {
         // smoothing constant as the adaptive factor.
         sp.prevKAMA = (inReal - sp.prevKAMA as f64).mul_add(tempReal, sp.prevKAMA);
         (*outReal) = sp.prevKAMA;
+        sp.cur_outReal = (*outReal);
         sp.lag1_inReal = inReal;
         sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
@@ -591,6 +594,7 @@ impl Core {
                 return Err(RetCode::InsufficientHistory);
             }
             let state = KamaStreamState {
+                cur_outReal: inReal[historyLen - 1],
                 optInTimePeriod: optInTimePeriod,
                 constMax: 0.0_f64,
                 constDiff: 0.0_f64,
@@ -810,6 +814,7 @@ impl Core {
             prevKAMA,
             nullRun,
             trailingValue,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             lag1_inReal: inReal[historyLen - 1],
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
@@ -1007,6 +1012,7 @@ impl KamaStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut tempReal2: f64 = 0.0_f64;
             let mut periodROC: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut lag1_inReal = sp.lag1_inReal;
             let mut nullRun = sp.nullRun;
             let mut prevKAMA = sp.prevKAMA;
@@ -1017,6 +1023,7 @@ impl KamaStream {
             let mut pkVal0: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
+                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             if sp.ringCap_trailingIdx == 0 {
@@ -1061,6 +1068,7 @@ impl KamaStream {
             // smoothing constant as the adaptive factor.
             prevKAMA = (inReal - prevKAMA as f64).mul_add(tempReal, prevKAMA);
             (*outReal) = prevKAMA;
+            cur_outReal = (*outReal);
             lag1_inReal = inReal;
             ringPos_trailingIdx = ringPos_trailingIdx + 1;
             if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
@@ -1068,6 +1076,19 @@ impl KamaStream {
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_KAMA_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

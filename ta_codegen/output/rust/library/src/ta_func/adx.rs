@@ -628,6 +628,7 @@ struct AdxStreamState {
     prevPlusDM: f64,
     prevTR: f64,
     prevADX: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -688,6 +689,7 @@ impl Core {
         }
         // Output the ADX
         (*outReal) = sp.prevADX;
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::adx_open_internal`]
@@ -1080,6 +1082,7 @@ impl Core {
             prevPlusDM,
             prevTR,
             prevADX,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(AdxStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -1286,6 +1289,7 @@ impl AdxStream {
             let mut diffM: f64 = 0.0_f64;
             let mut minusDI: f64 = 0.0_f64;
             let mut plusDI: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut prevADX = sp.prevADX;
             let mut prevClose = sp.prevClose;
             let mut prevHigh = sp.prevHigh;
@@ -1339,8 +1343,22 @@ impl AdxStream {
             }
             // Output the ADX
             (*outReal) = prevADX;
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_ADX_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

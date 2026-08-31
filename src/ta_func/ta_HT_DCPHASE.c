@@ -897,6 +897,8 @@ struct TA_HT_DCPHASE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_HT_DCPHASE_Value). */
+   double cur_outReal;
    double period;
    double periodWMASum;
    double periodWMASub;
@@ -1184,6 +1186,7 @@ static void TA_HT_DCPHASE_StepImpl( struct TA_HT_DCPHASE_Stream *sp, double inRe
    {
       sp->smoothPrice_Idx = 0;
    }
+   sp->cur_outReal = *outReal;
    sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
    if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
@@ -1702,6 +1705,7 @@ static TA_RetCode TA_HT_DCPHASE_OpenImpl( struct TA_HT_DCPHASE_Stream **stream, 
       if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -1993,6 +1997,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    {
       sp->smoothPrice_Idx = 0;
    }
+   sp->cur_outReal = *outReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
    if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
    {
@@ -2021,6 +2026,37 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_UpdateAndFill( TA_HT_DCPHASE_Stream *stream,
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_Close( TA_HT_DCPHASE_Stream *stream )
 {
    TA_HT_DCPHASE_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_Value( const TA_HT_DCPHASE_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HT_DCPHASE_Clone( const TA_HT_DCPHASE_Stream *stream, TA_HT_DCPHASE_Stream **clone )
+{
+   struct TA_HT_DCPHASE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_HT_DCPHASE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingWMAIdx_inReal = NULL;
+   sp->cb_smoothPrice = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
+     sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_DCPHASE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->cbSize_smoothPrice);
+     sp->cb_smoothPrice = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_smoothPrice ) { TA_HT_DCPHASE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_smoothPrice, stream->cb_smoothPrice, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

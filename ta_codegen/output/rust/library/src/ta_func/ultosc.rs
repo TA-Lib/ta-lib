@@ -578,6 +578,7 @@ struct UltoscStreamState {
     cbSize_term: usize,
     cb_term_closeMinusTrueLow: Vec<f64>,
     cb_term_trueRange: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -681,6 +682,7 @@ impl Core {
         // array.
         (*outReal) = 100.0 * (output / 7.0);
         // Increment indexes
+        sp.cur_outReal = (*outReal);
         sp.lag1_inClose = inClose;
     }
 
@@ -995,6 +997,7 @@ impl Core {
             nullRun,
             term_Idx,
             maxIdx_term,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             lag1_inClose: inClose[historyLen - 1],
             cbSize_term: cbSize_term,
             cb_term_closeMinusTrueLow: term_closeMinusTrueLow,
@@ -1214,6 +1217,7 @@ impl UltoscStream {
             let mut b1Total = sp.b1Total;
             let mut b2Total = sp.b2Total;
             let mut b3Total = sp.b3Total;
+            let mut cur_outReal = sp.cur_outReal;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut nullRun = sp.nullRun;
             let mut term_Idx = sp.term_Idx;
@@ -1311,9 +1315,23 @@ impl UltoscStream {
             // array.
             (*outReal) = 100.0 * (output / 7.0);
             // Increment indexes
+            cur_outReal = (*outReal);
             lag1_inClose = inClose;
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_ULTOSC_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

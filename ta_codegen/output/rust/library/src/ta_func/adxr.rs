@@ -320,6 +320,7 @@ struct AdxrStreamState {
     lagRingPos_adx: usize,
     lagRingCap_adx: usize,
     lagRing_adx: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -437,13 +438,15 @@ impl Core {
                 lagI += 1;
             }
         }
-        let state = AdxrStreamState {
+        let mut state = AdxrStreamState {
+            cur_outReal: 0.0_f64,
             optInTimePeriod,
             sub0,
             lagRingPos_adx: 0_usize,
             lagRingCap_adx: lagCap_adx,
             lagRing_adx,
         };
+        state.cur_outReal = sc_outReal[*outNBElement - 1];
         if outStride != 1 && *outNBElement > 0 {
             let last_sc_outReal = sc_outReal[*outNBElement - 1];
             outReal[0] = last_sc_outReal;
@@ -588,6 +591,7 @@ impl AdxrStream {
         }
         let mut outReal: f64 = 0.0_f64;
         Core::adxr_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal)?;
+        self.state.cur_outReal = outReal;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -621,6 +625,7 @@ impl AdxrStream {
                 return Err(RetCode::BadParam);
             }
             Core::adxr_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outReal[i])?;
+            self.state.cur_outReal = outReal[i];
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -658,6 +663,19 @@ impl AdxrStream {
             (*outReal) = cur_outReal;
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_ADXR_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

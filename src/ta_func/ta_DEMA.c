@@ -378,6 +378,8 @@ struct TA_DEMA_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_DEMA_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double prevEMA1;
    double prevEMA2;
@@ -390,11 +392,13 @@ static void TA_DEMA_StepImpl( struct TA_DEMA_Stream *sp, double inReal, double *
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
+      sp->cur_outReal = *outReal;
       return;
    }
    sp->prevEMA1 = fma(inReal - sp->prevEMA1, sp->optInK_1, sp->prevEMA1);
    sp->prevEMA2 = fma(sp->prevEMA1 - sp->prevEMA2, sp->optInK_1, sp->prevEMA2);
    *outReal= 2.0 * sp->prevEMA1 - sp->prevEMA2;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_DEMA_OpenImpl( struct TA_DEMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -452,6 +456,7 @@ static TA_RetCode TA_DEMA_OpenImpl( struct TA_DEMA_Stream **stream, const double
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -605,6 +610,7 @@ static TA_RetCode TA_DEMA_OpenImpl( struct TA_DEMA_Stream **stream, const double
       sp->optInK_1 = optInK_1;
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -672,11 +678,13 @@ TA_LIB_API TA_RetCode TA_DEMA_Peek( const TA_DEMA_Stream *stream, double inReal,
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
+      sp->cur_outReal = *outReal;
       return TA_SUCCESS;
    }
    sp->prevEMA1 = fma(inReal - sp->prevEMA1, sp->optInK_1, sp->prevEMA1);
    sp->prevEMA2 = fma(sp->prevEMA1 - sp->prevEMA2, sp->optInK_1, sp->prevEMA2);
    *outReal= 2.0 * sp->prevEMA1 - sp->prevEMA2;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -699,6 +707,27 @@ TA_LIB_API TA_RetCode TA_DEMA_UpdateAndFill( TA_DEMA_Stream *stream, const doubl
 TA_LIB_API TA_RetCode TA_DEMA_Close( TA_DEMA_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DEMA_Value( const TA_DEMA_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DEMA_Clone( const TA_DEMA_Stream *stream, TA_DEMA_Stream **clone )
+{
+   struct TA_DEMA_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_DEMA_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

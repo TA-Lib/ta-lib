@@ -354,6 +354,7 @@ struct CdldojiStreamState {
     ringPos_BodyDojiTrailingIdx: usize,
     ringCap_BodyDojiTrailingIdx: usize,
     ring_BodyDojiTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -410,6 +411,7 @@ impl Core {
             }
         }
         sp.BodyDojiPeriodTotal += _candlerange_1 - sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx];
+        sp.cur_outInteger = (*outInteger);
         let mut _candlerange_2: f64;
         match BodyDoji_rangeType {
             0 => {
@@ -576,6 +578,7 @@ impl Core {
         }
         let state = CdldojiStreamState {
             BodyDojiPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             ringPos_BodyDojiTrailingIdx: 0_usize,
             ringCap_BodyDojiTrailingIdx: cap_BodyDojiTrailingIdx as usize,
             ring_BodyDojiTrailingIdx_derived,
@@ -786,6 +789,7 @@ impl CdldojiStream {
             let sp = &self.state;
             let outInteger = &mut outInteger;
             let mut BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -837,12 +841,26 @@ impl CdldojiStream {
                 }
             }
             BodyDojiPeriodTotal += _candlerange_7 - (if (ringPos_BodyDojiTrailingIdx as usize) != pkSlot0 { sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] } else { pkVal0 });
+            cur_outInteger = (*outInteger);
             ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
             if ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
                 ringPos_BodyDojiTrailingIdx = 0;
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLDOJI_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

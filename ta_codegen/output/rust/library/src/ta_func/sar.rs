@@ -529,6 +529,7 @@ struct SarStreamState {
     af: f64,
     ep: f64,
     sar: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -647,6 +648,7 @@ impl Core {
                 sp.sar = sp.newHigh;
             }
         }
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::sar_open_internal`]
@@ -908,6 +910,7 @@ impl Core {
             af,
             ep,
             sar,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(SarStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -1106,6 +1109,7 @@ impl SarStream {
             let mut prevHigh: f64 = 0.0_f64;
             let mut prevLow: f64 = 0.0_f64;
             let mut af = sp.af;
+            let mut cur_outReal = sp.cur_outReal;
             let mut ep = sp.ep;
             let mut isLong = sp.isLong;
             let mut newHigh = sp.newHigh;
@@ -1218,8 +1222,22 @@ impl SarStream {
                     sar = newHigh;
                 }
             }
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_SAR_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -135,6 +135,8 @@ struct TA_DIV_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_DIV_Value). */
+   double cur_outReal;
 };
 
 /* Private function, not in public API. */
@@ -142,6 +144,7 @@ static void TA_DIV_StepImpl( struct TA_DIV_Stream *sp, double inReal0, double in
 {
    (void)sp;
    *outReal= inReal0 / inReal1;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_DIV_OpenImpl( struct TA_DIV_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -184,6 +187,7 @@ static TA_RetCode TA_DIV_OpenImpl( struct TA_DIV_Stream **stream, const double i
       memset( sp, 0, sizeof(*sp) );
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -250,6 +254,7 @@ TA_LIB_API TA_RetCode TA_DIV_Peek( const TA_DIV_Stream *stream, double inReal0, 
    scratch = *stream;
    (void)sp;
    *outReal= inReal0 / inReal1;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -272,6 +277,27 @@ TA_LIB_API TA_RetCode TA_DIV_UpdateAndFill( TA_DIV_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_DIV_Close( TA_DIV_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DIV_Value( const TA_DIV_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DIV_Clone( const TA_DIV_Stream *stream, TA_DIV_Stream **clone )
+{
+   struct TA_DIV_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_DIV_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

@@ -561,6 +561,8 @@ struct StochStreamState {
     x_inClose: Vec<f64>,
     sub0: MaStream,
     sub1: MaStream,
+    cur_outSlowK: f64,
+    cur_outSlowD: f64,
 }
 
 #[allow(unused_variables)]
@@ -932,6 +934,8 @@ impl Core {
             trailingIdx: (trailingIdx) as i32,
             i: (i) as i32,
             today: (today) as i32,
+            cur_outSlowK: sc_outSlowK[*outNBElement - 1],
+            cur_outSlowD: sc_outSlowD[*outNBElement - 1],
             xMask: (physX - 1) as i32,
             x_inHigh,
             x_inLow,
@@ -1100,6 +1104,8 @@ impl StochStream {
         let mut outSlowK: f64 = 0.0_f64;
         let mut outSlowD: f64 = 0.0_f64;
         Core::stoch_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD)?;
+        self.state.cur_outSlowK = outSlowK;
+        self.state.cur_outSlowD = outSlowD;
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;
         }
@@ -1133,6 +1139,8 @@ impl StochStream {
                 return Err(RetCode::BadParam);
             }
             Core::stoch_step_impl(&mut self.state, inHigh[i], inLow[i], inClose[i], &mut outSlowK[i], &mut outSlowD[i])?;
+            self.state.cur_outSlowK = outSlowK[i];
+            self.state.cur_outSlowD = outSlowD[i];
             if self.out.count < Core::MAX_INDEX {
                 self.out.count += 1;
             }
@@ -1253,6 +1261,19 @@ impl StochStream {
             (*outSlowD) = cur_outSlowD;
         }
         Ok((outSlowK, outSlowD))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_STOCH_Value")]
+    pub fn value(&self) -> (f64, f64) {
+        (self.state.cur_outSlowK, self.state.cur_outSlowD)
     }
 
     /// The bars this stream has produced a value for, in the input series'

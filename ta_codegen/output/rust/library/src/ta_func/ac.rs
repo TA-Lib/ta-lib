@@ -469,6 +469,7 @@ struct AcStreamState {
     ring_trailingSlowIdx_derived: Vec<f64>,
     cbSize_oscBuffer: usize,
     cb_oscBuffer: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -515,6 +516,7 @@ impl Core {
         // that admitting a signal period of 1 would not silently reintroduce
         // the collision ao.c has to guard against.
         (*outReal) = tempReal;
+        sp.cur_outReal = (*outReal);
         sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
         sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
         if sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
@@ -750,6 +752,7 @@ impl Core {
             sumSignal,
             oscBuffer_Idx,
             maxIdx_oscBuffer,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingFastIdx: 0_usize,
             ringCap_trailingFastIdx: cap_trailingFastIdx as usize,
             ring_trailingFastIdx_derived,
@@ -956,6 +959,7 @@ impl AcStream {
             let mut medianPrice: f64 = 0.0_f64;
             let mut osc: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut oscBuffer_Idx = sp.oscBuffer_Idx;
             let mut ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
             let mut ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
@@ -1005,6 +1009,7 @@ impl AcStream {
             // that admitting a signal period of 1 would not silently reintroduce
             // the collision ao.c has to guard against.
             (*outReal) = tempReal;
+            cur_outReal = (*outReal);
             ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
             if ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
                 ringPos_trailingFastIdx = 0;
@@ -1015,6 +1020,19 @@ impl AcStream {
             }
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_AC_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

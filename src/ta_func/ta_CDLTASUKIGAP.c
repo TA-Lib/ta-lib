@@ -262,6 +262,8 @@ struct TA_CDLTASUKIGAP_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_CDLTASUKIGAP_Value). */
+   int cur_outInteger;
    double NearPeriodTotal;
    double lag1_inOpen;
    double lag2_inOpen;
@@ -312,6 +314,7 @@ static void TA_CDLTASUKIGAP_StepImpl( struct TA_CDLTASUKIGAP_Stream *sp, double 
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 1) % sp->ringCap_NearTrailingIdx];
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
@@ -457,6 +460,7 @@ static TA_RetCode TA_CDLTASUKIGAP_OpenImpl( struct TA_CDLTASUKIGAP_Stream **stre
       sp->lag2_inClose = inClose[historyLen - 2];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -550,6 +554,7 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Peek( const TA_CDLTASUKIGAP_Stream *stream
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - (((sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 1) % sp->ringCap_NearTrailingIdx != pkSlot0) ? sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 1) % sp->ringCap_NearTrailingIdx] : pkVal0);
+   sp->cur_outInteger = *outInteger;
    sp->lag2_inOpen = sp->lag1_inOpen;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
@@ -583,6 +588,32 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_UpdateAndFill( TA_CDLTASUKIGAP_Stream *str
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Close( TA_CDLTASUKIGAP_Stream *stream )
 {
    TA_CDLTASUKIGAP_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Value( const TA_CDLTASUKIGAP_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Clone( const TA_CDLTASUKIGAP_Stream *stream, TA_CDLTASUKIGAP_Stream **clone )
+{
+   struct TA_CDLTASUKIGAP_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_CDLTASUKIGAP_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_NearTrailingIdx_derived = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+     sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLTASUKIGAP_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_NearTrailingIdx_derived, stream->ring_NearTrailingIdx_derived, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

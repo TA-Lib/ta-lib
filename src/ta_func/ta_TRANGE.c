@@ -228,6 +228,8 @@ struct TA_TRANGE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_TRANGE_Value). */
+   double cur_outReal;
    double lag1_inClose;
 };
 
@@ -258,6 +260,7 @@ static void TA_TRANGE_StepImpl( struct TA_TRANGE_Stream *sp, double inHigh, doub
       greatest = val3;
    }
    *outReal= greatest;
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
 }
 
@@ -354,6 +357,7 @@ static TA_RetCode TA_TRANGE_OpenImpl( struct TA_TRANGE_Stream **stream, const do
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -441,6 +445,7 @@ TA_LIB_API TA_RetCode TA_TRANGE_Peek( const TA_TRANGE_Stream *stream, double inH
       greatest = val3;
    }
    *outReal= greatest;
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
@@ -464,6 +469,27 @@ TA_LIB_API TA_RetCode TA_TRANGE_UpdateAndFill( TA_TRANGE_Stream *stream, const d
 TA_LIB_API TA_RetCode TA_TRANGE_Close( TA_TRANGE_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TRANGE_Value( const TA_TRANGE_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TRANGE_Clone( const TA_TRANGE_Stream *stream, TA_TRANGE_Stream **clone )
+{
+   struct TA_TRANGE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_TRANGE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

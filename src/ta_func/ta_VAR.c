@@ -407,6 +407,8 @@ struct TA_VAR_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_VAR_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double optInNbDev;
    double shift;
@@ -560,6 +562,7 @@ static void TA_VAR_StepImpl( struct TA_VAR_Stream *sp, double inReal, double *ou
    }
    *outReal= variance;
    sp->i += 1;
+   sp->cur_outReal = *outReal;
 }
 
 static TA_RetCode TA_VAR_OpenImpl( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -798,6 +801,7 @@ static TA_RetCode TA_VAR_OpenImpl( struct TA_VAR_Stream **stream, const double i
       }
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -988,6 +992,7 @@ TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, d
    }
    *outReal= variance;
    sp->i += 1;
+   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
@@ -1010,6 +1015,32 @@ TA_LIB_API TA_RetCode TA_VAR_UpdateAndFill( TA_VAR_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_VAR_Close( TA_VAR_Stream *stream )
 {
    TA_VAR_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_VAR_Value( const TA_VAR_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_VAR_Clone( const TA_VAR_Stream *stream, TA_VAR_Stream **clone )
+{
+   struct TA_VAR_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_VAR_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inReal = NULL;
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inReal ) { TA_VAR_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inReal, stream->x_inReal, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

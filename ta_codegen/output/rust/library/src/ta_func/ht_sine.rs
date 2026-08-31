@@ -707,6 +707,8 @@ struct HtSineStreamState {
     ring_trailingWMAIdx_inReal: Vec<f64>,
     cbSize_smoothPrice: usize,
     cb_smoothPrice: Vec<f64>,
+    cur_outSine: f64,
+    cur_outLeadSine: f64,
 }
 
 #[allow(unused_variables)]
@@ -918,6 +920,8 @@ impl Core {
         if sp.smoothPrice_Idx > sp.maxIdx_smoothPrice {
             sp.smoothPrice_Idx = 0;
         }
+        sp.cur_outSine = (*outSine);
+        sp.cur_outLeadSine = (*outLeadSine);
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
         if sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
@@ -1401,6 +1405,8 @@ impl Core {
             smoothPrice_Idx,
             maxIdx_smoothPrice,
             streamParity: historyLen % 2,
+            cur_outSine: outSine[(*outNBElement - 1) * outStride],
+            cur_outLeadSine: outLeadSine[(*outNBElement - 1) * outStride],
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
@@ -1638,6 +1644,8 @@ impl HtSineStream {
             let mut Q1_Even = sp.Q1_Even;
             let mut Q1_Odd = sp.Q1_Odd;
             let mut Re = sp.Re;
+            let mut cur_outLeadSine = sp.cur_outLeadSine;
+            let mut cur_outSine = sp.cur_outSine;
             let mut detrender_Even = sp.detrender_Even;
             let mut detrender_Odd = sp.detrender_Odd;
             let mut hilbertIdx = sp.hilbertIdx;
@@ -1861,6 +1869,8 @@ impl HtSineStream {
             if smoothPrice_Idx > sp.maxIdx_smoothPrice {
                 smoothPrice_Idx = 0;
             }
+            cur_outSine = (*outSine);
+            cur_outLeadSine = (*outLeadSine);
             ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
             if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
                 ringPos_trailingWMAIdx = 0;
@@ -1868,6 +1878,19 @@ impl HtSineStream {
             streamParity = 1 - streamParity;
         }
         Ok((outSine, outLeadSine))
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_HT_SINE_Value")]
+    pub fn value(&self) -> (f64, f64) {
+        (self.state.cur_outSine, self.state.cur_outLeadSine)
     }
 
     /// The bars this stream has produced a value for, in the input series'

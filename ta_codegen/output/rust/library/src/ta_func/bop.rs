@@ -255,6 +255,7 @@ pub struct BopStream {
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct BopStreamState {
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -276,6 +277,7 @@ impl Core {
         } else {
             (*outReal) = (inClose - inOpen) / tempReal;
         }
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::bop_open_internal`]
@@ -326,6 +328,7 @@ impl Core {
 
         // Capture the live batch state into the handle.
         let state = BopStreamState {
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(BopStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -534,6 +537,7 @@ impl BopStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             // BOP is a fraction of the bar's own range, so it is scale-free and the
             // divisor only has to be positive. An exact test, not the fixed
             // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
@@ -545,8 +549,22 @@ impl BopStream {
             } else {
                 (*outReal) = (inClose - inOpen) / tempReal;
             }
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_BOP_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

@@ -797,7 +797,7 @@ public class StreamSmokeTest {
      *
      * <p><b>The gap this closes is the RANGE, not the fork.</b> The server's
      * {@code stream_verify} does fork a handle, and drives the fork and the
-     * original to the end against batch, so a {@code copy()} that returned
+     * original to the end against batch, so a {@code clone()} that returned
      * {@code this} goes red there too. What that leg compares is values; its
      * range checks sit on the fill, the prefix, the update-fill and the
      * anchored open — none on a copy, none after a peek. So a copy constructor
@@ -811,12 +811,12 @@ public class StreamSmokeTest {
      *   <li>{@code peek} leaves {@code value()} and {@code outRange()} where
      *       they were, and returns what the {@code update} that follows returns;
      *   <li>{@code update} advances {@code outRange().count()} by exactly one;
-     *   <li>a fresh {@code copy()} carries the range and the value; and
+     *   <li>a fresh {@code clone()} carries the range and the value; and
      *   <li>updating the copy moves NOTHING on the original, and feeding the
      *       original that same bar afterwards reproduces the copy bit for bit.
      * </ol>
      *
-     * <p>Property 4 is what a shared-state {@code copy()} fails: the original's
+     * <p>Property 4 is what a shared-state {@code clone()} fails: the original's
      * count moves with the copy's update. It is checked on the count as well as
      * on the value because a count always moves, where a value need not — a CDL
      * pattern returning 0 on both bars would hide a shared handle behind a
@@ -826,7 +826,7 @@ public class StreamSmokeTest {
      * paired with the same sabotage driven through {@code stream_verify}, and
      * the miss recorded rather than rounded off:</b>
      * <ul>
-     *   <li>{@code copy()} → {@code return this}: 176 of 176 named here, and
+     *   <li>{@code clone()} → {@code return this}: 176 of 176 named here, and
      *       the range assertions are what do it — the value assertions alone
      *       name 108, so 68 handles would have shared state silently.
      *       {@code stream_verify} also goes red.
@@ -868,12 +868,12 @@ public class StreamSmokeTest {
             java.lang.reflect.Method open = methodNamed(Core.class, camelCase(name) + "Open");
             java.lang.reflect.Method update = methodNamed(handle, "update");
             java.lang.reflect.Method peek = methodNamed(handle, "peek");
-            java.lang.reflect.Method copy = methodNamed(handle, "copy");
+            java.lang.reflect.Method copy = methodNamed(handle, "clone");
             java.lang.reflect.Method value = methodNamed(handle, "value");
             java.lang.reflect.Method range = methodNamed(handle, "outRange");
             if (open == null || update == null || peek == null
                     || copy == null || value == null || range == null) {
-                unhandled.add(name + ": handle is missing one of open/update/peek/copy/value/outRange");
+                unhandled.add(name + ": handle is missing one of open/update/peek/clone/value/outRange");
                 continue;
             }
 
@@ -1060,12 +1060,12 @@ public class StreamSmokeTest {
                   "update adds one to outRange.count @" + t);
         }
 
-        /* peek does not commit; copy() forks independently. */
+        /* peek does not commit; clone() forks independently. */
         Core.SmaStream a = core.smaOpen(java.util.Arrays.copyOf(close, 40), 14);
         double before = a.value();
         a.peek(12345.0);
         check(bitEq(a.value(), before), "peek must not commit");
-        Core.SmaStream b = a.copy();
+        Core.SmaStream b = a.clone();
         a.update(111.0);
         check(!bitEq(a.value(), b.value()), "copy is independent (diverges)");
         b.update(111.0);
@@ -1084,9 +1084,9 @@ public class StreamSmokeTest {
         check(f.outRange().equals(batchRange), "openAndFill outRange == the batch range");
         check(bitEq(warm[batchRange.count() - 1], f.value()),
               "last filled value == the handle's value");
-        check(f.copy().outRange().equals(batchRange), "copy carries the range");
+        check(f.clone().outRange().equals(batchRange), "clone carries the range");
         /* A fork diverges: the copy's count only grows with ITS updates. */
-        Core.SmaStream g = f.copy();
+        Core.SmaStream g = f.clone();
         g.update(close[n - 1]);
         check(g.outRange().equals(new OutRange(batchRange.begIdx(), batchRange.count() + 1)),
               "a copy's own update extends only the copy");

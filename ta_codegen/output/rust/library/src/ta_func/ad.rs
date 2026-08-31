@@ -280,6 +280,7 @@ pub struct AdStream {
 #[allow(non_snake_case, dead_code)]
 struct AdStreamState {
     ad: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -301,6 +302,7 @@ impl Core {
             sp.ad += (close - low - (high - close)) / tmp * (inVolume as f64);
         }
         (*outReal) = sp.ad;
+        sp.cur_outReal = (*outReal);
     }
 
     /// The single whole-history transcription behind [`Core::ad_open_internal`]
@@ -371,6 +373,7 @@ impl Core {
         // Capture the live batch state into the handle.
         let state = AdStreamState {
             ad,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
         };
         Ok(AdStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
     }
@@ -583,6 +586,7 @@ impl AdStream {
             let mut close: f64 = 0.0_f64;
             let mut tmp: f64 = 0.0_f64;
             let mut ad = sp.ad;
+            let mut cur_outReal = sp.cur_outReal;
             high = inHigh;
             low = inLow;
             tmp = high - low;
@@ -591,8 +595,22 @@ impl AdStream {
                 ad += (close - low - (high - close)) / tmp * (inVolume as f64);
             }
             (*outReal) = ad;
+            cur_outReal = (*outReal);
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_AD_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

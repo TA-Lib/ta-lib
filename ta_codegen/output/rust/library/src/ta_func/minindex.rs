@@ -303,6 +303,7 @@ struct MinindexStreamState {
     today: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -340,6 +341,7 @@ impl Core {
         (*outInteger) = (sp.lowestIdx) as i32;
         sp.trailingIdx += 1;
         sp.today += 1;
+        sp.cur_outInteger = (*outInteger);
     }
 
     /// The single whole-history transcription behind [`Core::minindex_open_internal`]
@@ -449,6 +451,7 @@ impl Core {
             lowestIdx: (lowestIdx) as i32,
             i: (i) as i32,
             today: (today) as i32,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             xMask: (physX - 1) as i32,
             x_inReal,
         };
@@ -641,6 +644,7 @@ impl MinindexStream {
             let sp = &self.state;
             let outInteger = &mut outInteger;
             let mut tmp: f64 = 0.0_f64;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut i = sp.i;
             let mut lowest = sp.lowest;
             let mut lowestIdx = sp.lowestIdx;
@@ -676,8 +680,22 @@ impl MinindexStream {
             (*outInteger) = (lowestIdx) as i32;
             trailingIdx += 1;
             today += 1;
+            cur_outInteger = (*outInteger);
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_MININDEX_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

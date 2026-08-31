@@ -401,6 +401,8 @@ struct TA_ATR_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_ATR_Value). */
+   double cur_outReal;
    int optInTimePeriod;
    double prevATR;
    double lag1_inClose;
@@ -436,6 +438,7 @@ static void TA_ATR_StepImpl( struct TA_ATR_Stream *sp, double inHigh, double inL
    sp->prevATR += greatest;
    sp->prevATR /= sp->optInTimePeriod;
    *outReal= sp->prevATR;
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
 }
 
@@ -632,6 +635,7 @@ static TA_RetCode TA_ATR_OpenImpl( struct TA_ATR_Stream **stream, const double i
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -722,6 +726,7 @@ TA_LIB_API TA_RetCode TA_ATR_Peek( const TA_ATR_Stream *stream, double inHigh, d
    sp->prevATR += greatest;
    sp->prevATR /= sp->optInTimePeriod;
    *outReal= sp->prevATR;
+   sp->cur_outReal = *outReal;
    sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
@@ -745,6 +750,27 @@ TA_LIB_API TA_RetCode TA_ATR_UpdateAndFill( TA_ATR_Stream *stream, const double 
 TA_LIB_API TA_RetCode TA_ATR_Close( TA_ATR_Stream *stream )
 {
    if( stream ) TA_Free( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ATR_Value( const TA_ATR_Stream *stream, double *outReal )
+{
+   if( !stream || !outReal ) return TA_BAD_PARAM;
+   *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ATR_Clone( const TA_ATR_Stream *stream, TA_ATR_Stream **clone )
+{
+   struct TA_ATR_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_ATR_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   *clone = sp;
    return TA_SUCCESS;
 }
 

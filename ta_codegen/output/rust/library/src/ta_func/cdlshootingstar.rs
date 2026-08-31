@@ -516,6 +516,7 @@ struct CdlshootingstarStreamState {
     ringPos_ShadowVeryShortTrailingIdx: usize,
     ringCap_ShadowVeryShortTrailingIdx: usize,
     ring_ShadowVeryShortTrailingIdx_derived: Vec<f64>,
+    cur_outInteger: i32,
 }
 
 #[allow(unused_variables)]
@@ -657,6 +658,7 @@ impl Core {
             }
         }
         sp.ShadowVeryShortPeriodTotal += _candlerange_5 - sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx];
+        sp.cur_outInteger = (*outInteger);
         sp.lag1_inOpen = inOpen;
         sp.lag1_inClose = inClose;
         let mut _candlerange_6: f64;
@@ -1024,6 +1026,7 @@ impl Core {
             BodyPeriodTotal,
             ShadowLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
+            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inClose: inClose[historyLen - 1],
             ringPos_BodyTrailingIdx: 0_usize,
@@ -1244,6 +1247,7 @@ impl CdlshootingstarStream {
             let mut BodyPeriodTotal = sp.BodyPeriodTotal;
             let mut ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
             let mut ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
+            let mut cur_outInteger = sp.cur_outInteger;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut lag1_inOpen = sp.lag1_inOpen;
             let mut ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
@@ -1390,6 +1394,7 @@ impl CdlshootingstarStream {
                 }
             }
             ShadowVeryShortPeriodTotal += _candlerange_23 - (if (ringPos_ShadowVeryShortTrailingIdx as usize) != pkSlot2 { sp.ring_ShadowVeryShortTrailingIdx_derived[ringPos_ShadowVeryShortTrailingIdx] } else { pkVal2 });
+            cur_outInteger = (*outInteger);
             lag1_inOpen = inOpen;
             lag1_inClose = inClose;
             ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
@@ -1406,6 +1411,19 @@ impl CdlshootingstarStream {
             }
         }
         Ok(outInteger)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_CDLSHOOTINGSTAR_Value")]
+    pub fn value(&self) -> i32 {
+        self.state.cur_outInteger
     }
 
     /// The bars this stream has produced a value for, in the input series'

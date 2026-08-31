@@ -681,6 +681,7 @@ static int sv_steq_TA_AC( const struct TA_AC_Stream *a, const struct TA_AC_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
    if( a->optInSignalPeriod != b->optInSignalPeriod ) { *w = "optInSignalPeriod"; return 1; }
@@ -717,6 +718,9 @@ static int sv_steq_TA_ACCBANDS( const struct TA_ACCBANDS_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outRealUpperBand, b->cur_outRealUpperBand, z) ) { *w = "cur_outRealUpperBand"; return 1; }
+   if( sv_xtier_ne(a->cur_outRealMiddleBand, b->cur_outRealMiddleBand, z) ) { *w = "cur_outRealMiddleBand"; return 1; }
+   if( sv_xtier_ne(a->cur_outRealLowerBand, b->cur_outRealLowerBand, z) ) { *w = "cur_outRealLowerBand"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->periodTotalUpper, b->periodTotalUpper, z) ) { *w = "periodTotalUpper"; return 1; }
    if( sv_xtier_ne(a->periodTotalMiddle, b->periodTotalMiddle, z) ) { *w = "periodTotalMiddle"; return 1; }
@@ -752,6 +756,7 @@ static int sv_steq_TA_ACOS( const struct TA_ACOS_Stream *a, const struct TA_ACOS
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -761,6 +766,7 @@ static int sv_steq_TA_AD( const struct TA_AD_Stream *a, const struct TA_AD_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->ad, b->ad, z) ) { *w = "ad"; return 1; }
    return 0;
 }
@@ -771,6 +777,7 @@ static int sv_steq_TA_ADD( const struct TA_ADD_Stream *a, const struct TA_ADD_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -780,6 +787,7 @@ static int sv_steq_TA_ADOSC( const struct TA_ADOSC_Stream *a, const struct TA_AD
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
    if( sv_xtier_ne(a->slowEMA, b->slowEMA, z) ) { *w = "slowEMA"; return 1; }
@@ -798,6 +806,7 @@ static int sv_steq_TA_ADX( const struct TA_ADX_Stream *a, const struct TA_ADX_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
@@ -815,6 +824,7 @@ static int sv_steq_TA_ADXR( const struct TA_ADXR_Stream *a, const struct TA_ADXR
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
    if( a->sub0 && sv_steq_TA_ADX( a->sub0, b->sub0, w, z ) ) return 1;
@@ -835,6 +845,7 @@ static int sv_steq_TA_AO( const struct TA_AO_Stream *a, const struct TA_AO_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
    if( sv_xtier_ne(a->sumFast, b->sumFast, z) ) { *w = "sumFast"; return 1; }
@@ -864,6 +875,7 @@ static int sv_steq_TA_APO( const struct TA_APO_Stream *a, const struct TA_APO_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
    if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
@@ -880,6 +892,8 @@ static int sv_steq_TA_AROON( const struct TA_AROON_Stream *a, const struct TA_AR
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outAroonDown, b->cur_outAroonDown, z) ) { *w = "cur_outAroonDown"; return 1; }
+   if( sv_xtier_ne(a->cur_outAroonUp, b->cur_outAroonUp, z) ) { *w = "cur_outAroonUp"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
@@ -913,6 +927,7 @@ static int sv_steq_TA_AROONOSC( const struct TA_AROONOSC_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
@@ -946,6 +961,7 @@ static int sv_steq_TA_ASIN( const struct TA_ASIN_Stream *a, const struct TA_ASIN
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -955,6 +971,7 @@ static int sv_steq_TA_ATAN( const struct TA_ATAN_Stream *a, const struct TA_ATAN
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -964,6 +981,7 @@ static int sv_steq_TA_ATR( const struct TA_ATR_Stream *a, const struct TA_ATR_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevATR, b->prevATR, z) ) { *w = "prevATR"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
@@ -976,6 +994,7 @@ static int sv_steq_TA_AVGDEV( const struct TA_AVGDEV_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
    if( (a->win_i_inReal == NULL) != (b->win_i_inReal == NULL) ) { *w = "win_i_inReal"; return 1; }
@@ -994,6 +1013,7 @@ static int sv_steq_TA_AVGPRICE( const struct TA_AVGPRICE_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -1003,6 +1023,9 @@ static int sv_steq_TA_BBANDS( const struct TA_BBANDS_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outRealUpperBand, b->cur_outRealUpperBand, z) ) { *w = "cur_outRealUpperBand"; return 1; }
+   if( sv_xtier_ne(a->cur_outRealMiddleBand, b->cur_outRealMiddleBand, z) ) { *w = "cur_outRealMiddleBand"; return 1; }
+   if( sv_xtier_ne(a->cur_outRealLowerBand, b->cur_outRealLowerBand, z) ) { *w = "cur_outRealLowerBand"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInNbDevUp, b->optInNbDevUp, z) ) { *w = "optInNbDevUp"; return 1; }
    if( sv_xtier_ne(a->optInNbDevDn, b->optInNbDevDn, z) ) { *w = "optInNbDevDn"; return 1; }
@@ -1020,6 +1043,7 @@ static int sv_steq_TA_BETA( const struct TA_BETA_Stream *a, const struct TA_BETA
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->S_xx, b->S_xx, z) ) { *w = "S_xx"; return 1; }
    if( sv_xtier_ne(a->S_xy, b->S_xy, z) ) { *w = "S_xy"; return 1; }
@@ -1063,6 +1087,7 @@ static int sv_steq_TA_BOP( const struct TA_BOP_Stream *a, const struct TA_BOP_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -1072,6 +1097,7 @@ static int sv_steq_TA_CCI( const struct TA_CCI_Stream *a, const struct TA_CCI_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->circBuffer_Idx != b->circBuffer_Idx ) { *w = "circBuffer_Idx"; return 1; }
    if( a->maxIdx_circBuffer != b->maxIdx_circBuffer ) { *w = "maxIdx_circBuffer"; return 1; }
@@ -1087,6 +1113,7 @@ static int sv_steq_TA_CDL2CROWS( const struct TA_CDL2CROWS_Stream *a, const stru
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -1113,6 +1140,7 @@ static int sv_steq_TA_CDL3BLACKCROWS( const struct TA_CDL3BLACKCROWS_Stream *a, 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -1143,6 +1171,7 @@ static int sv_steq_TA_CDL3INSIDE( const struct TA_CDL3INSIDE_Stream *a, const st
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -1178,6 +1207,7 @@ static int sv_steq_TA_CDL3LINESTRIKE( const struct TA_CDL3LINESTRIKE_Stream *a, 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 4; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -1209,6 +1239,7 @@ static int sv_steq_TA_CDL3OUTSIDE( const struct TA_CDL3OUTSIDE_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
@@ -1222,6 +1253,7 @@ static int sv_steq_TA_CDL3STARSINSOUTH( const struct TA_CDL3STARSINSOUTH_Stream 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
@@ -1278,6 +1310,7 @@ static int sv_steq_TA_CDL3WHITESOLDIERS( const struct TA_CDL3WHITESOLDIERS_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->FarPeriodTotal[k], b->FarPeriodTotal[k], z) ) { *w = "FarPeriodTotal"; return 1; }
@@ -1334,6 +1367,7 @@ static int sv_steq_TA_CDLABANDONEDBABY( const struct TA_CDLABANDONEDBABY_Stream 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
@@ -1379,6 +1413,7 @@ static int sv_steq_TA_CDLADVANCEBLOCK( const struct TA_CDLADVANCEBLOCK_Stream *a
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowShortPeriodTotal[k], b->ShadowShortPeriodTotal[k], z) ) { *w = "ShadowShortPeriodTotal"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowLongPeriodTotal[k], b->ShadowLongPeriodTotal[k], z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
@@ -1446,6 +1481,7 @@ static int sv_steq_TA_CDLBELTHOLD( const struct TA_CDLBELTHOLD_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
@@ -1473,6 +1509,7 @@ static int sv_steq_TA_CDLBREAKAWAY( const struct TA_CDLBREAKAWAY_Stream *a, cons
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -1508,6 +1545,7 @@ static int sv_steq_TA_CDLCLOSINGMARUBOZU( const struct TA_CDLCLOSINGMARUBOZU_Str
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
@@ -1535,6 +1573,7 @@ static int sv_steq_TA_CDLCONCEALBABYSWALL( const struct TA_CDLCONCEALBABYSWALL_S
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 4; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -1566,6 +1605,7 @@ static int sv_steq_TA_CDLCOUNTERATTACK( const struct TA_CDLCOUNTERATTACK_Stream 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -1599,6 +1639,7 @@ static int sv_steq_TA_CDLDARKCLOUDCOVER( const struct TA_CDLDARKCLOUDCOVER_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -1623,6 +1664,7 @@ static int sv_steq_TA_CDLDOJI( const struct TA_CDLDOJI_Stream *a, const struct T
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
    if( (a->ring_BodyDojiTrailingIdx_derived == NULL) != (b->ring_BodyDojiTrailingIdx_derived == NULL) ) { *w = "ring_BodyDojiTrailingIdx_derived"; return 1; }
@@ -1641,6 +1683,7 @@ static int sv_steq_TA_CDLDOJISTAR( const struct TA_CDLDOJISTAR_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -1672,6 +1715,7 @@ static int sv_steq_TA_CDLDRAGONFLYDOJI( const struct TA_CDLDRAGONFLYDOJI_Stream 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
@@ -1699,6 +1743,7 @@ static int sv_steq_TA_CDLENGULFING( const struct TA_CDLENGULFING_Stream *a, cons
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    return 0;
@@ -1710,6 +1755,7 @@ static int sv_steq_TA_CDLEVENINGDOJISTAR( const struct TA_CDLEVENINGDOJISTAR_Str
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
@@ -1755,6 +1801,7 @@ static int sv_steq_TA_CDLEVENINGSTAR( const struct TA_CDLEVENINGSTAR_Stream *a, 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
@@ -1793,6 +1840,7 @@ static int sv_steq_TA_CDLGAPSIDESIDEWHITE( const struct TA_CDLGAPSIDESIDEWHITE_S
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -1828,6 +1876,7 @@ static int sv_steq_TA_CDLGRAVESTONEDOJI( const struct TA_CDLGRAVESTONEDOJI_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
@@ -1855,6 +1904,7 @@ static int sv_steq_TA_CDLHAMMER( const struct TA_CDLHAMMER_Stream *a, const stru
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
@@ -1904,6 +1954,7 @@ static int sv_steq_TA_CDLHANGINGMAN( const struct TA_CDLHANGINGMAN_Stream *a, co
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
@@ -1953,6 +2004,7 @@ static int sv_steq_TA_CDLHARAMI( const struct TA_CDLHARAMI_Stream *a, const stru
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -1984,6 +2036,7 @@ static int sv_steq_TA_CDLHARAMICROSS( const struct TA_CDLHARAMICROSS_Stream *a, 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2015,6 +2068,7 @@ static int sv_steq_TA_CDLHIGHWAVE( const struct TA_CDLHIGHWAVE_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowPeriodTotal, b->ShadowPeriodTotal, z) ) { *w = "ShadowPeriodTotal"; return 1; }
    if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
@@ -2042,6 +2096,7 @@ static int sv_steq_TA_CDLHIKKAKE( const struct TA_CDLHIKKAKE_Stream *a, const st
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( a->patternResult != b->patternResult ) { *w = "patternResult"; return 1; }
    if( a->cd != b->cd ) { *w = "cd"; return 1; }
    if( sv_xtier_ne(a->savedHigh, b->savedHigh, z) ) { *w = "savedHigh"; return 1; }
@@ -2059,6 +2114,7 @@ static int sv_steq_TA_CDLHIKKAKEMOD( const struct TA_CDLHIKKAKEMOD_Stream *a, co
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
    if( a->patternResult != b->patternResult ) { *w = "patternResult"; return 1; }
    if( a->patternCount != b->patternCount ) { *w = "patternCount"; return 1; }
@@ -2092,6 +2148,7 @@ static int sv_steq_TA_CDLHOMINGPIGEON( const struct TA_CDLHOMINGPIGEON_Stream *a
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2124,6 +2181,7 @@ static int sv_steq_TA_CDLIDENTICAL3CROWS( const struct TA_CDLIDENTICAL3CROWS_Str
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->EqualPeriodTotal[k], b->EqualPeriodTotal[k], z) ) { *w = "EqualPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2161,6 +2219,7 @@ static int sv_steq_TA_CDLINNECK( const struct TA_CDLINNECK_Stream *a, const stru
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2194,6 +2253,7 @@ static int sv_steq_TA_CDLINVERTEDHAMMER( const struct TA_CDLINVERTEDHAMMER_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
@@ -2232,6 +2292,7 @@ static int sv_steq_TA_CDLKICKING( const struct TA_CDLKICKING_Stream *a, const st
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2265,6 +2326,7 @@ static int sv_steq_TA_CDLKICKINGBYLENGTH( const struct TA_CDLKICKINGBYLENGTH_Str
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2298,6 +2360,7 @@ static int sv_steq_TA_CDLLADDERBOTTOM( const struct TA_CDLLADDERBOTTOM_Stream *a
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -2327,6 +2390,7 @@ static int sv_steq_TA_CDLLONGLEGGEDDOJI( const struct TA_CDLLONGLEGGEDDOJI_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    if( a->ringCap_BodyDojiTrailingIdx != b->ringCap_BodyDojiTrailingIdx ) { *w = "ringCap_BodyDojiTrailingIdx"; return 1; }
@@ -2354,6 +2418,7 @@ static int sv_steq_TA_CDLLONGLINE( const struct TA_CDLLONGLINE_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowPeriodTotal, b->ShadowPeriodTotal, z) ) { *w = "ShadowPeriodTotal"; return 1; }
    if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
@@ -2381,6 +2446,7 @@ static int sv_steq_TA_CDLMARUBOZU( const struct TA_CDLMARUBOZU_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
@@ -2408,6 +2474,7 @@ static int sv_steq_TA_CDLMATCHINGLOW( const struct TA_CDLMATCHINGLOW_Stream *a, 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
@@ -2431,6 +2498,7 @@ static int sv_steq_TA_CDLMATHOLD( const struct TA_CDLMATHOLD_Stream *a, const st
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
    for( k = 0; k < 5; k++ ) if( sv_xtier_ne(a->BodyPeriodTotal[k], b->BodyPeriodTotal[k], z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2476,6 +2544,7 @@ static int sv_steq_TA_CDLMORNINGDOJISTAR( const struct TA_CDLMORNINGDOJISTAR_Str
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
@@ -2521,6 +2590,7 @@ static int sv_steq_TA_CDLMORNINGSTAR( const struct TA_CDLMORNINGSTAR_Stream *a, 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
@@ -2559,6 +2629,7 @@ static int sv_steq_TA_CDLONNECK( const struct TA_CDLONNECK_Stream *a, const stru
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2592,6 +2663,7 @@ static int sv_steq_TA_CDLPIERCING( const struct TA_CDLPIERCING_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
@@ -2615,6 +2687,7 @@ static int sv_steq_TA_CDLRICKSHAWMAN( const struct TA_CDLRICKSHAWMAN_Stream *a, 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
@@ -2651,6 +2724,7 @@ static int sv_steq_TA_CDLRISEFALL3METHODS( const struct TA_CDLRISEFALL3METHODS_S
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 5; k++ ) if( sv_xtier_ne(a->BodyPeriodTotal[k], b->BodyPeriodTotal[k], z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -2695,6 +2769,7 @@ static int sv_steq_TA_CDLSEPARATINGLINES( const struct TA_CDLSEPARATINGLINES_Str
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
@@ -2736,6 +2811,7 @@ static int sv_steq_TA_CDLSHOOTINGSTAR( const struct TA_CDLSHOOTINGSTAR_Stream *a
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
@@ -2774,6 +2850,7 @@ static int sv_steq_TA_CDLSHORTLINE( const struct TA_CDLSHORTLINE_Stream *a, cons
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowPeriodTotal, b->ShadowPeriodTotal, z) ) { *w = "ShadowPeriodTotal"; return 1; }
    if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
@@ -2801,6 +2878,7 @@ static int sv_steq_TA_CDLSPINNINGTOP( const struct TA_CDLSPINNINGTOP_Stream *a, 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( a->ringCap_BodyTrailingIdx != b->ringCap_BodyTrailingIdx ) { *w = "ringCap_BodyTrailingIdx"; return 1; }
    if( (a->ring_BodyTrailingIdx_derived == NULL) != (b->ring_BodyTrailingIdx_derived == NULL) ) { *w = "ring_BodyTrailingIdx_derived"; return 1; }
@@ -2819,6 +2897,7 @@ static int sv_steq_TA_CDLSTALLEDPATTERN( const struct TA_CDLSTALLEDPATTERN_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
@@ -2875,6 +2954,7 @@ static int sv_steq_TA_CDLSTICKSANDWICH( const struct TA_CDLSTICKSANDWICH_Stream 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -2902,6 +2982,7 @@ static int sv_steq_TA_CDLTAKURI( const struct TA_CDLTAKURI_Stream *a, const stru
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyDojiPeriodTotal, b->BodyDojiPeriodTotal, z) ) { *w = "BodyDojiPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryLongPeriodTotal, b->ShadowVeryLongPeriodTotal, z) ) { *w = "ShadowVeryLongPeriodTotal"; return 1; }
@@ -2938,6 +3019,7 @@ static int sv_steq_TA_CDLTASUKIGAP( const struct TA_CDLTASUKIGAP_Stream *a, cons
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->NearPeriodTotal, b->NearPeriodTotal, z) ) { *w = "NearPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -2963,6 +3045,7 @@ static int sv_steq_TA_CDLTHRUSTING( const struct TA_CDLTHRUSTING_Stream *a, cons
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -2996,6 +3079,7 @@ static int sv_steq_TA_CDLTRISTAR( const struct TA_CDLTRISTAR_Stream *a, const st
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyPeriodTotal, b->BodyPeriodTotal, z) ) { *w = "BodyPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -3022,6 +3106,7 @@ static int sv_steq_TA_CDLUNIQUE3RIVER( const struct TA_CDLUNIQUE3RIVER_Stream *a
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -3057,6 +3142,7 @@ static int sv_steq_TA_CDLUPSIDEGAP2CROWS( const struct TA_CDLUPSIDEGAP2CROWS_Str
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
@@ -3092,6 +3178,7 @@ static int sv_steq_TA_CDLXSIDEGAP3METHODS( const struct TA_CDLXSIDEGAP3METHODS_S
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
@@ -3105,6 +3192,7 @@ static int sv_steq_TA_CEIL( const struct TA_CEIL_Stream *a, const struct TA_CEIL
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -3114,6 +3202,7 @@ static int sv_steq_TA_CMF( const struct TA_CMF_Stream *a, const struct TA_CMF_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->sumMFV, b->sumMFV, z) ) { *w = "sumMFV"; return 1; }
    if( sv_xtier_ne(a->sumVol, b->sumVol, z) ) { *w = "sumVol"; return 1; }
@@ -3133,6 +3222,7 @@ static int sv_steq_TA_CMO( const struct TA_CMO_Stream *a, const struct TA_CMO_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevGain, b->prevGain, z) ) { *w = "prevGain"; return 1; }
    if( sv_xtier_ne(a->prevLoss, b->prevLoss, z) ) { *w = "prevLoss"; return 1; }
@@ -3146,6 +3236,7 @@ static int sv_steq_TA_CMOU( const struct TA_CMOU_Stream *a, const struct TA_CMOU
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->nullRun != b->nullRun ) { *w = "nullRun"; return 1; }
    if( sv_xtier_ne(a->upSum, b->upSum, z) ) { *w = "upSum"; return 1; }
@@ -3169,6 +3260,7 @@ static int sv_steq_TA_CORREL( const struct TA_CORREL_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->sumXY, b->sumXY, z) ) { *w = "sumXY"; return 1; }
    if( sv_xtier_ne(a->sumX, b->sumX, z) ) { *w = "sumX"; return 1; }
@@ -3209,6 +3301,7 @@ static int sv_steq_TA_COS( const struct TA_COS_Stream *a, const struct TA_COS_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -3218,6 +3311,7 @@ static int sv_steq_TA_COSH( const struct TA_COSH_Stream *a, const struct TA_COSH
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -3227,6 +3321,7 @@ static int sv_steq_TA_DEMA( const struct TA_DEMA_Stream *a, const struct TA_DEMA
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevEMA1, b->prevEMA1, z) ) { *w = "prevEMA1"; return 1; }
    if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
@@ -3240,6 +3335,7 @@ static int sv_steq_TA_DIV( const struct TA_DIV_Stream *a, const struct TA_DIV_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -3249,6 +3345,7 @@ static int sv_steq_TA_DX( const struct TA_DX_Stream *a, const struct TA_DX_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
@@ -3266,6 +3363,7 @@ static int sv_steq_TA_EFI( const struct TA_EFI_Stream *a, const struct TA_EFI_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
@@ -3279,6 +3377,7 @@ static int sv_steq_TA_EMA( const struct TA_EMA_Stream *a, const struct TA_EMA_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
    if( sv_xtier_ne(a->prevMA, b->prevMA, z) ) { *w = "prevMA"; return 1; }
@@ -3291,6 +3390,7 @@ static int sv_steq_TA_EXP( const struct TA_EXP_Stream *a, const struct TA_EXP_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -3300,6 +3400,7 @@ static int sv_steq_TA_FLOOR( const struct TA_FLOOR_Stream *a, const struct TA_FL
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -3309,6 +3410,7 @@ static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->dividerFull, b->dividerFull, z) ) { *w = "dividerFull"; return 1; }
    if( sv_xtier_ne(a->periodSubFull, b->periodSubFull, z) ) { *w = "periodSubFull"; return 1; }
@@ -3376,6 +3478,7 @@ static int sv_steq_TA_HT_DCPERIOD( const struct TA_HT_DCPERIOD_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
    if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
    if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
@@ -3435,6 +3538,7 @@ static int sv_steq_TA_HT_DCPHASE( const struct TA_HT_DCPHASE_Stream *a, const st
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
    if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
    if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
@@ -3501,6 +3605,8 @@ static int sv_steq_TA_HT_PHASOR( const struct TA_HT_PHASOR_Stream *a, const stru
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outInPhase, b->cur_outInPhase, z) ) { *w = "cur_outInPhase"; return 1; }
+   if( sv_xtier_ne(a->cur_outQuadrature, b->cur_outQuadrature, z) ) { *w = "cur_outQuadrature"; return 1; }
    if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
    if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
    if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
@@ -3559,6 +3665,8 @@ static int sv_steq_TA_HT_SINE( const struct TA_HT_SINE_Stream *a, const struct T
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outSine, b->cur_outSine, z) ) { *w = "cur_outSine"; return 1; }
+   if( sv_xtier_ne(a->cur_outLeadSine, b->cur_outLeadSine, z) ) { *w = "cur_outLeadSine"; return 1; }
    if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
    if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
    if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
@@ -3626,6 +3734,7 @@ static int sv_steq_TA_HT_TRENDLINE( const struct TA_HT_TRENDLINE_Stream *a, cons
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
    if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
    if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
@@ -3696,6 +3805,7 @@ static int sv_steq_TA_HT_TRENDMODE( const struct TA_HT_TRENDMODE_Stream *a, cons
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
    if( sv_xtier_ne(a->periodWMASum, b->periodWMASum, z) ) { *w = "periodWMASum"; return 1; }
    if( sv_xtier_ne(a->periodWMASub, b->periodWMASub, z) ) { *w = "periodWMASub"; return 1; }
@@ -3777,6 +3887,7 @@ static int sv_steq_TA_IMI( const struct TA_IMI_Stream *a, const struct TA_IMI_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
    if( (a->win_i_inOpen == NULL) != (b->win_i_inOpen == NULL) ) { *w = "win_i_inOpen"; return 1; }
@@ -3802,6 +3913,7 @@ static int sv_steq_TA_KAMA( const struct TA_KAMA_Stream *a, const struct TA_KAMA
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->constMax, b->constMax, z) ) { *w = "constMax"; return 1; }
    if( sv_xtier_ne(a->constDiff, b->constDiff, z) ) { *w = "constDiff"; return 1; }
@@ -3827,6 +3939,7 @@ static int sv_steq_TA_LINEARREG( const struct TA_LINEARREG_Stream *a, const stru
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -3857,6 +3970,7 @@ static int sv_steq_TA_LINEARREG_ANGLE( const struct TA_LINEARREG_ANGLE_Stream *a
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -3887,6 +4001,7 @@ static int sv_steq_TA_LINEARREG_INTERCEPT( const struct TA_LINEARREG_INTERCEPT_S
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -3917,6 +4032,7 @@ static int sv_steq_TA_LINEARREG_SLOPE( const struct TA_LINEARREG_SLOPE_Stream *a
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -3947,6 +4063,7 @@ static int sv_steq_TA_LN( const struct TA_LN_Stream *a, const struct TA_LN_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -3956,6 +4073,7 @@ static int sv_steq_TA_LOG10( const struct TA_LOG10_Stream *a, const struct TA_LO
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -3965,6 +4083,7 @@ static int sv_steq_TA_MA( const struct TA_MA_Stream *a, const struct TA_MA_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
    if( (a->sub == NULL) != (b->sub == NULL) ) { *w = "sub"; return 1; }
@@ -4013,6 +4132,9 @@ static int sv_steq_TA_MACD( const struct TA_MACD_Stream *a, const struct TA_MACD
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACD, b->cur_outMACD, z) ) { *w = "cur_outMACD"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACDSignal, b->cur_outMACDSignal, z) ) { *w = "cur_outMACDSignal"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACDHist, b->cur_outMACDHist, z) ) { *w = "cur_outMACDHist"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
    if( a->optInSignalPeriod != b->optInSignalPeriod ) { *w = "optInSignalPeriod"; return 1; }
@@ -4031,6 +4153,9 @@ static int sv_steq_TA_MACDEXT( const struct TA_MACDEXT_Stream *a, const struct T
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACD, b->cur_outMACD, z) ) { *w = "cur_outMACD"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACDSignal, b->cur_outMACDSignal, z) ) { *w = "cur_outMACDSignal"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACDHist, b->cur_outMACDHist, z) ) { *w = "cur_outMACDHist"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInFastMAType != b->optInFastMAType ) { *w = "optInFastMAType"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
@@ -4052,6 +4177,9 @@ static int sv_steq_TA_MACDFIX( const struct TA_MACDFIX_Stream *a, const struct T
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACD, b->cur_outMACD, z) ) { *w = "cur_outMACD"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACDSignal, b->cur_outMACDSignal, z) ) { *w = "cur_outMACDSignal"; return 1; }
+   if( sv_xtier_ne(a->cur_outMACDHist, b->cur_outMACDHist, z) ) { *w = "cur_outMACDHist"; return 1; }
    if( a->optInSignalPeriod != b->optInSignalPeriod ) { *w = "optInSignalPeriod"; return 1; }
    if( sv_xtier_ne(a->prevFast, b->prevFast, z) ) { *w = "prevFast"; return 1; }
    if( sv_xtier_ne(a->prevSlow, b->prevSlow, z) ) { *w = "prevSlow"; return 1; }
@@ -4068,6 +4196,8 @@ static int sv_steq_TA_MAMA( const struct TA_MAMA_Stream *a, const struct TA_MAMA
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outMAMA, b->cur_outMAMA, z) ) { *w = "cur_outMAMA"; return 1; }
+   if( sv_xtier_ne(a->cur_outFAMA, b->cur_outFAMA, z) ) { *w = "cur_outFAMA"; return 1; }
    if( sv_xtier_ne(a->optInFastLimit, b->optInFastLimit, z) ) { *w = "optInFastLimit"; return 1; }
    if( sv_xtier_ne(a->optInSlowLimit, b->optInSlowLimit, z) ) { *w = "optInSlowLimit"; return 1; }
    if( sv_xtier_ne(a->period, b->period, z) ) { *w = "period"; return 1; }
@@ -4131,6 +4261,7 @@ static int sv_steq_TA_MARKETFI( const struct TA_MARKETFI_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4140,6 +4271,7 @@ static int sv_steq_TA_MAVP( const struct TA_MAVP_Stream *a, const struct TA_MAVP
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInMinPeriod != b->optInMinPeriod ) { *w = "optInMinPeriod"; return 1; }
    if( a->optInMaxPeriod != b->optInMaxPeriod ) { *w = "optInMaxPeriod"; return 1; }
    if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
@@ -4161,6 +4293,7 @@ static int sv_steq_TA_MAX( const struct TA_MAX_Stream *a, const struct TA_MAX_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -4185,6 +4318,7 @@ static int sv_steq_TA_MAXINDEX( const struct TA_MAXINDEX_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -4209,6 +4343,7 @@ static int sv_steq_TA_MEDPRICE( const struct TA_MEDPRICE_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4218,6 +4353,7 @@ static int sv_steq_TA_MFI( const struct TA_MFI_Stream *a, const struct TA_MFI_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->posSumMF, b->posSumMF, z) ) { *w = "posSumMF"; return 1; }
    if( sv_xtier_ne(a->negSumMF, b->negSumMF, z) ) { *w = "negSumMF"; return 1; }
@@ -4239,6 +4375,7 @@ static int sv_steq_TA_MIDPOINT( const struct TA_MIDPOINT_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
@@ -4265,6 +4402,7 @@ static int sv_steq_TA_MIDPRICE( const struct TA_MIDPRICE_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
@@ -4297,6 +4435,7 @@ static int sv_steq_TA_MIN( const struct TA_MIN_Stream *a, const struct TA_MIN_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -4321,6 +4460,7 @@ static int sv_steq_TA_MININDEX( const struct TA_MININDEX_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -4345,6 +4485,8 @@ static int sv_steq_TA_MINMAX( const struct TA_MINMAX_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outMin, b->cur_outMin, z) ) { *w = "cur_outMin"; return 1; }
+   if( sv_xtier_ne(a->cur_outMax, b->cur_outMax, z) ) { *w = "cur_outMax"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
@@ -4371,6 +4513,8 @@ static int sv_steq_TA_MINMAXINDEX( const struct TA_MINMAXINDEX_Stream *a, const 
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outMinIdx != b->cur_outMinIdx ) { *w = "cur_outMinIdx"; return 1; }
+   if( a->cur_outMaxIdx != b->cur_outMaxIdx ) { *w = "cur_outMaxIdx"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
@@ -4397,6 +4541,7 @@ static int sv_steq_TA_MINUS_DI( const struct TA_MINUS_DI_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
@@ -4412,6 +4557,7 @@ static int sv_steq_TA_MINUS_DM( const struct TA_MINUS_DM_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
@@ -4425,6 +4571,7 @@ static int sv_steq_TA_MOM( const struct TA_MOM_Stream *a, const struct TA_MOM_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
    if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
@@ -4443,6 +4590,7 @@ static int sv_steq_TA_MULT( const struct TA_MULT_Stream *a, const struct TA_MULT
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4452,6 +4600,7 @@ static int sv_steq_TA_NATR( const struct TA_NATR_Stream *a, const struct TA_NATR
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevATR, b->prevATR, z) ) { *w = "prevATR"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
@@ -4464,6 +4613,7 @@ static int sv_steq_TA_NVI( const struct TA_NVI_Stream *a, const struct TA_NVI_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->prevNVI, b->prevNVI, z) ) { *w = "prevNVI"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
    if( sv_xtier_ne(a->prevVolume, b->prevVolume, z) ) { *w = "prevVolume"; return 1; }
@@ -4476,6 +4626,7 @@ static int sv_steq_TA_OBV( const struct TA_OBV_Stream *a, const struct TA_OBV_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->prevReal, b->prevReal, z) ) { *w = "prevReal"; return 1; }
    if( sv_xtier_ne(a->prevOBV, b->prevOBV, z) ) { *w = "prevOBV"; return 1; }
    return 0;
@@ -4487,6 +4638,7 @@ static int sv_steq_TA_PLUS_DI( const struct TA_PLUS_DI_Stream *a, const struct T
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
@@ -4502,6 +4654,7 @@ static int sv_steq_TA_PLUS_DM( const struct TA_PLUS_DM_Stream *a, const struct T
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevHigh, b->prevHigh, z) ) { *w = "prevHigh"; return 1; }
    if( sv_xtier_ne(a->prevLow, b->prevLow, z) ) { *w = "prevLow"; return 1; }
@@ -4515,6 +4668,7 @@ static int sv_steq_TA_PPO( const struct TA_PPO_Stream *a, const struct TA_PPO_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
    if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
@@ -4531,6 +4685,7 @@ static int sv_steq_TA_PVI( const struct TA_PVI_Stream *a, const struct TA_PVI_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->prevPVI, b->prevPVI, z) ) { *w = "prevPVI"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
    if( sv_xtier_ne(a->prevVolume, b->prevVolume, z) ) { *w = "prevVolume"; return 1; }
@@ -4543,6 +4698,7 @@ static int sv_steq_TA_PVO( const struct TA_PVO_Stream *a, const struct TA_PVO_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
    if( a->optInMAType != b->optInMAType ) { *w = "optInMAType"; return 1; }
@@ -4559,6 +4715,7 @@ static int sv_steq_TA_QSTICK( const struct TA_QSTICK_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
@@ -4578,6 +4735,7 @@ static int sv_steq_TA_ROC( const struct TA_ROC_Stream *a, const struct TA_ROC_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
    if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
@@ -4596,6 +4754,7 @@ static int sv_steq_TA_ROCP( const struct TA_ROCP_Stream *a, const struct TA_ROCP
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
    if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
@@ -4614,6 +4773,7 @@ static int sv_steq_TA_ROCR( const struct TA_ROCR_Stream *a, const struct TA_ROCR
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
    if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
@@ -4632,6 +4792,7 @@ static int sv_steq_TA_ROCR100( const struct TA_ROCR100_Stream *a, const struct T
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
    if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
@@ -4650,6 +4811,7 @@ static int sv_steq_TA_RSI( const struct TA_RSI_Stream *a, const struct TA_RSI_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevGain, b->prevGain, z) ) { *w = "prevGain"; return 1; }
    if( sv_xtier_ne(a->prevLoss, b->prevLoss, z) ) { *w = "prevLoss"; return 1; }
@@ -4663,6 +4825,7 @@ static int sv_steq_TA_SAR( const struct TA_SAR_Stream *a, const struct TA_SAR_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->optInAcceleration, b->optInAcceleration, z) ) { *w = "optInAcceleration"; return 1; }
    if( sv_xtier_ne(a->optInMaximum, b->optInMaximum, z) ) { *w = "optInMaximum"; return 1; }
    if( a->isLong != b->isLong ) { *w = "isLong"; return 1; }
@@ -4680,6 +4843,7 @@ static int sv_steq_TA_SAREXT( const struct TA_SAREXT_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->optInStartValue, b->optInStartValue, z) ) { *w = "optInStartValue"; return 1; }
    if( sv_xtier_ne(a->optInOffsetOnReverse, b->optInOffsetOnReverse, z) ) { *w = "optInOffsetOnReverse"; return 1; }
    if( sv_xtier_ne(a->optInAccelerationInitLong, b->optInAccelerationInitLong, z) ) { *w = "optInAccelerationInitLong"; return 1; }
@@ -4704,6 +4868,7 @@ static int sv_steq_TA_SIN( const struct TA_SIN_Stream *a, const struct TA_SIN_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4713,6 +4878,7 @@ static int sv_steq_TA_SINH( const struct TA_SINH_Stream *a, const struct TA_SINH
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4722,6 +4888,7 @@ static int sv_steq_TA_SMA( const struct TA_SMA_Stream *a, const struct TA_SMA_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
@@ -4741,6 +4908,8 @@ static int sv_steq_TA_SMI( const struct TA_SMI_Stream *a, const struct TA_SMI_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outSMI, b->cur_outSMI, z) ) { *w = "cur_outSMI"; return 1; }
+   if( sv_xtier_ne(a->cur_outSMISignal, b->cur_outSMISignal, z) ) { *w = "cur_outSMISignal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
    if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
@@ -4790,6 +4959,7 @@ static int sv_steq_TA_SQRT( const struct TA_SQRT_Stream *a, const struct TA_SQRT
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4799,6 +4969,7 @@ static int sv_steq_TA_STDDEV( const struct TA_STDDEV_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInNbDev, b->optInNbDev, z) ) { *w = "optInNbDev"; return 1; }
    if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
@@ -4812,6 +4983,8 @@ static int sv_steq_TA_STOCH( const struct TA_STOCH_Stream *a, const struct TA_ST
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outSlowK, b->cur_outSlowK, z) ) { *w = "cur_outSlowK"; return 1; }
+   if( sv_xtier_ne(a->cur_outSlowD, b->cur_outSlowD, z) ) { *w = "cur_outSlowD"; return 1; }
    if( a->optInFastK_Period != b->optInFastK_Period ) { *w = "optInFastK_Period"; return 1; }
    if( a->optInSlowK_Period != b->optInSlowK_Period ) { *w = "optInSlowK_Period"; return 1; }
    if( a->optInSlowK_MAType != b->optInSlowK_MAType ) { *w = "optInSlowK_MAType"; return 1; }
@@ -4859,6 +5032,8 @@ static int sv_steq_TA_STOCHF( const struct TA_STOCHF_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outFastK, b->cur_outFastK, z) ) { *w = "cur_outFastK"; return 1; }
+   if( sv_xtier_ne(a->cur_outFastD, b->cur_outFastD, z) ) { *w = "cur_outFastD"; return 1; }
    if( a->optInFastK_Period != b->optInFastK_Period ) { *w = "optInFastK_Period"; return 1; }
    if( a->optInFastD_Period != b->optInFastD_Period ) { *w = "optInFastD_Period"; return 1; }
    if( a->optInFastD_MAType != b->optInFastD_MAType ) { *w = "optInFastD_MAType"; return 1; }
@@ -4902,6 +5077,8 @@ static int sv_steq_TA_STOCHRSI( const struct TA_STOCHRSI_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outFastK, b->cur_outFastK, z) ) { *w = "cur_outFastK"; return 1; }
+   if( sv_xtier_ne(a->cur_outFastD, b->cur_outFastD, z) ) { *w = "cur_outFastD"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->optInFastK_Period != b->optInFastK_Period ) { *w = "optInFastK_Period"; return 1; }
    if( a->optInFastD_Period != b->optInFastD_Period ) { *w = "optInFastD_Period"; return 1; }
@@ -4919,6 +5096,7 @@ static int sv_steq_TA_SUB( const struct TA_SUB_Stream *a, const struct TA_SUB_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4928,6 +5106,7 @@ static int sv_steq_TA_SUM( const struct TA_SUM_Stream *a, const struct TA_SUM_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
    if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
@@ -4947,6 +5126,7 @@ static int sv_steq_TA_T3( const struct TA_T3_Stream *a, const struct TA_T3_Strea
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInVFactor, b->optInVFactor, z) ) { *w = "optInVFactor"; return 1; }
    if( sv_xtier_ne(a->k, b->k, z) ) { *w = "k"; return 1; }
@@ -4970,6 +5150,7 @@ static int sv_steq_TA_TAN( const struct TA_TAN_Stream *a, const struct TA_TAN_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4979,6 +5160,7 @@ static int sv_steq_TA_TANH( const struct TA_TANH_Stream *a, const struct TA_TANH
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -4988,6 +5170,7 @@ static int sv_steq_TA_TEMA( const struct TA_TEMA_Stream *a, const struct TA_TEMA
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevEMA1, b->prevEMA1, z) ) { *w = "prevEMA1"; return 1; }
    if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
@@ -5002,6 +5185,7 @@ static int sv_steq_TA_TRANGE( const struct TA_TRANGE_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    return 0;
 }
@@ -5012,6 +5196,7 @@ static int sv_steq_TA_TRIMA( const struct TA_TRIMA_Stream *a, const struct TA_TR
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->numerator, b->numerator, z) ) { *w = "numerator"; return 1; }
    if( sv_xtier_ne(a->numeratorSub, b->numeratorSub, z) ) { *w = "numeratorSub"; return 1; }
@@ -5043,6 +5228,7 @@ static int sv_steq_TA_TRIX( const struct TA_TRIX_Stream *a, const struct TA_TRIX
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevEMA1, b->prevEMA1, z) ) { *w = "prevEMA1"; return 1; }
    if( sv_xtier_ne(a->prevEMA2, b->prevEMA2, z) ) { *w = "prevEMA2"; return 1; }
@@ -5057,6 +5243,7 @@ static int sv_steq_TA_TSF( const struct TA_TSF_Stream *a, const struct TA_TSF_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
@@ -5087,6 +5274,7 @@ static int sv_steq_TA_TYPPRICE( const struct TA_TYPPRICE_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -5096,6 +5284,7 @@ static int sv_steq_TA_ULTOSC( const struct TA_ULTOSC_Stream *a, const struct TA_
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod1 != b->optInTimePeriod1 ) { *w = "optInTimePeriod1"; return 1; }
    if( a->optInTimePeriod2 != b->optInTimePeriod2 ) { *w = "optInTimePeriod2"; return 1; }
    if( a->optInTimePeriod3 != b->optInTimePeriod3 ) { *w = "optInTimePeriod3"; return 1; }
@@ -5125,6 +5314,7 @@ static int sv_steq_TA_VAR( const struct TA_VAR_Stream *a, const struct TA_VAR_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInNbDev, b->optInNbDev, z) ) { *w = "optInNbDev"; return 1; }
    if( sv_xtier_ne(a->shift, b->shift, z) ) { *w = "shift"; return 1; }
@@ -5155,6 +5345,7 @@ static int sv_steq_TA_VWAP( const struct TA_VWAP_Stream *a, const struct TA_VWAP
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->sumPV, b->sumPV, z) ) { *w = "sumPV"; return 1; }
    if( sv_xtier_ne(a->sumV, b->sumV, z) ) { *w = "sumV"; return 1; }
    if( sv_xtier_ne(a->vwap, b->vwap, z) ) { *w = "vwap"; return 1; }
@@ -5167,6 +5358,7 @@ static int sv_steq_TA_VWMA( const struct TA_VWMA_Stream *a, const struct TA_VWMA
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->sumPV, b->sumPV, z) ) { *w = "sumPV"; return 1; }
    if( sv_xtier_ne(a->sumV, b->sumV, z) ) { *w = "sumV"; return 1; }
@@ -5194,6 +5386,7 @@ static int sv_steq_TA_WAD( const struct TA_WAD_Stream *a, const struct TA_WAD_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->sum, b->sum, z) ) { *w = "sum"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }
    return 0;
@@ -5205,6 +5398,7 @@ static int sv_steq_TA_WCLPRICE( const struct TA_WCLPRICE_Stream *a, const struct
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    return 0;
 }
 
@@ -5214,6 +5408,7 @@ static int sv_steq_TA_WILLR( const struct TA_WILLR_Stream *a, const struct TA_WI
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
@@ -5253,6 +5448,7 @@ static int sv_steq_TA_WMA( const struct TA_WMA_Stream *a, const struct TA_WMA_St
    (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( a->lookbackWin != b->lookbackWin ) { *w = "lookbackWin"; return 1; }
    if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }

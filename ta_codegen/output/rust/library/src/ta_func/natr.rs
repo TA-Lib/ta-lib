@@ -452,6 +452,7 @@ struct NatrStreamState {
     optInTimePeriod: i32,
     prevATR: f64,
     lag1_inClose: f64,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -496,6 +497,7 @@ impl Core {
                 (*outReal) = 0.0;
             }
         }
+        sp.cur_outReal = (*outReal);
         sp.lag1_inClose = inClose;
     }
 
@@ -714,6 +716,7 @@ impl Core {
         let state = NatrStreamState {
             optInTimePeriod,
             prevATR,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             lag1_inClose: inClose[historyLen - 1],
         };
         Ok(NatrStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -923,6 +926,7 @@ impl NatrStream {
             let mut tempCY: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
             let mut tempHT: f64 = 0.0_f64;
+            let mut cur_outReal = sp.cur_outReal;
             let mut lag1_inClose = sp.lag1_inClose;
             let mut prevATR = sp.prevATR;
             // Find the greatest of the 3 values.
@@ -953,9 +957,23 @@ impl NatrStream {
                     (*outReal) = 0.0;
                 }
             }
+            cur_outReal = (*outReal);
             lag1_inClose = inClose;
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_NATR_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

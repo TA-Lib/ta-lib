@@ -666,6 +666,7 @@ struct HtTrendlineStreamState {
     winPos_i: usize,
     winCap_i: usize,
     win_i_inReal: Vec<f64>,
+    cur_outReal: f64,
 }
 
 #[allow(unused_variables)]
@@ -855,6 +856,7 @@ impl Core {
         sp.iTrend1 = tempReal;
         (*outReal) = tempReal2;
         // Ooof... let's do the next price bar now!
+        sp.cur_outReal = (*outReal);
         sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
         sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
         if sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
@@ -1308,6 +1310,7 @@ impl Core {
             rad2Deg,
             smoothPeriod,
             streamParity: historyLen % 2,
+            cur_outReal: outReal[(*outNBElement - 1) * outStride],
             ringPos_trailingWMAIdx: 0_usize,
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
@@ -1527,6 +1530,7 @@ impl HtTrendlineStream {
             let mut Q1_Even = sp.Q1_Even;
             let mut Q1_Odd = sp.Q1_Odd;
             let mut Re = sp.Re;
+            let mut cur_outReal = sp.cur_outReal;
             let mut detrender_Even = sp.detrender_Even;
             let mut detrender_Odd = sp.detrender_Odd;
             let mut hilbertIdx = sp.hilbertIdx;
@@ -1734,6 +1738,7 @@ impl HtTrendlineStream {
             iTrend1 = tempReal;
             (*outReal) = tempReal2;
             // Ooof... let's do the next price bar now!
+            cur_outReal = (*outReal);
             ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
             if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
                 ringPos_trailingWMAIdx = 0;
@@ -1745,6 +1750,19 @@ impl HtTrendlineStream {
             streamParity = 1 - streamParity;
         }
         Ok(outReal)
+    }
+
+    /// The value(s) at the last committed bar, without recomputing —
+    /// seeded by the opener, refreshed by every accepted `update` and
+    /// `update_and_fill`, and left alone by `peek`.
+    ///
+    /// The bars they belong to are what [`Self::out_range`] reports. A clone
+    /// carries them verbatim, so a forked handle can be asked its current
+    /// value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_HT_TRENDLINE_Value")]
+    pub fn value(&self) -> f64 {
+        self.state.cur_outReal
     }
 
     /// The bars this stream has produced a value for, in the input series'

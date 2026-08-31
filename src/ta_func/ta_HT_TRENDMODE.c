@@ -1059,6 +1059,8 @@ struct TA_HT_TRENDMODE_Stream {
     * Kept first, and in this order, in every stream struct. */
    int outRangeBegIdx;
    int outRangeCount;
+   /* The value(s) at the last committed bar (see TA_HT_TRENDMODE_Value). */
+   int cur_outInteger;
    double period;
    double periodWMASum;
    double periodWMASub;
@@ -1424,6 +1426,7 @@ static void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_Stream *sp, double 
    {
       sp->smoothPrice_Idx = 0;
    }
+   sp->cur_outInteger = *outInteger;
    sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] = inReal;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
    if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
@@ -2046,6 +2049,7 @@ static TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TRENDMODE_Stream **stre
       if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
@@ -2407,6 +2411,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Peek( const TA_HT_TRENDMODE_Stream *stream
    {
       sp->smoothPrice_Idx = 0;
    }
+   sp->cur_outInteger = *outInteger;
    sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
    if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
    {
@@ -2440,6 +2445,42 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_UpdateAndFill( TA_HT_TRENDMODE_Stream *str
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Close( TA_HT_TRENDMODE_Stream *stream )
 {
    TA_HT_TRENDMODE_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Value( const TA_HT_TRENDMODE_Stream *stream, int *outInteger )
+{
+   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Clone( const TA_HT_TRENDMODE_Stream *stream, TA_HT_TRENDMODE_Stream **clone )
+{
+   struct TA_HT_TRENDMODE_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_HT_TRENDMODE_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->ring_trailingWMAIdx_inReal = NULL;
+   sp->win_j_inReal = NULL;
+   sp->cb_smoothPrice = NULL;
+   { size_t copyN = (size_t)(sp->ringCap_trailingWMAIdx > 0 ? sp->ringCap_trailingWMAIdx : 1);
+     sp->ring_trailingWMAIdx_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->ring_trailingWMAIdx_inReal ) { TA_HT_TRENDMODE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->winCap_j);
+     sp->win_j_inReal = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->win_j_inReal ) { TA_HT_TRENDMODE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->win_j_inReal, stream->win_j_inReal, sizeof(double) * copyN ); }
+   { size_t copyN = (size_t)(sp->cbSize_smoothPrice);
+     sp->cb_smoothPrice = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->cb_smoothPrice ) { TA_HT_TRENDMODE_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->cb_smoothPrice, stream->cb_smoothPrice, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 
