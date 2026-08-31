@@ -671,21 +671,122 @@ fn no_java_peek_copies_the_handle() {
             .collect()
     }
 
-    /// The name `line` assigns to, with any subscript stripped — `None` when it
-    /// is not a plain assignment.
-    fn assign_target(line: &str) -> Option<&str> {
-        let (lhs, _) = line.split_once('=')?;
-        let lhs = lhs.trim();
-        if lhs.ends_with(['=', '!', '<', '>', '+', '-', '*', '/']) {
-            return None; // ==, !=, <=, +=, ...
+    /// Every name `line` writes, with any subscript stripped, each paired with
+    /// whether that write also DECLARES the name. Empty when it writes nothing.
+    ///
+    /// Every operator that stores, not just `=`. `x += e`, `x++` and `++x`
+    /// reach the same slot `x = e` does, and none of them can declare a name,
+    /// so each is a write to a name the frame must already have declared —
+    /// which is the rule this sweep exists to enforce. The emitted frames carry
+    /// all three shapes: `periodTotal += inReal;` is SMA's, `pkIdx0 = i++ &
+    /// sp.xMask;` and `while( ++i <= today )` are the extrema and Hilbert
+    /// tiers'. Reading `=` alone enforced the rule on one operator out of
+    /// several and passed the rest through as if they wrote nothing.
+    fn write_targets(line: &str) -> Vec<(&str, bool)> {
+        /// The trailing name of `lhs`: `x` / `sp.x` / `x[i]` -> the name.
+        fn name_of(lhs: &str) -> Option<&str> {
+            // The declared name is the LAST token; strip its subscript there,
+            // not over the whole left side — `double[] x = ...` carries a `[`
+            // in the TYPE, and cutting at it would name the type instead.
+            let last = lhs.trim().rsplit(' ').next()?;
+            let last = last.split_once('[').map_or(last, |(h, _)| h);
+            (!last.is_empty() && last.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '.'))
+                .then_some(last)
         }
-        // The declared name is the LAST token; strip its subscript there, not
-        // over the whole left side — `double[] x = ...` carries a `[` in the
-        // TYPE, and cutting at it would name the type instead of the variable.
-        let last = lhs.rsplit(' ').next()?;
-        let last = last.split_once('[').map_or(last, |(h, _)| h);
-        (!last.is_empty() && last.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '.'))
-            .then_some(last)
+
+        fn is_name_byte(c: u8) -> bool {
+            c.is_ascii_alphanumeric() || c == b'_' || c == b'.'
+        }
+
+        /// The identifier ending at `end`, skipping back over a subscript so
+        /// `buf[k]++` names `buf`. Empty when there is none.
+        fn ident_before(s: &str, end: usize) -> &str {
+            let b = s.as_bytes();
+            let mut end = end;
+            if end > 0 && b[end - 1] == b']' {
+                let mut depth = 0usize;
+                let mut k = end;
+                while k > 0 {
+                    k -= 1;
+                    match b[k] {
+                        b']' => depth += 1,
+                        b'[' => {
+                            depth -= 1;
+                            if depth == 0 {
+                                break;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                if depth != 0 {
+                    return "";
+                }
+                end = k;
+            }
+            let mut start = end;
+            while start > 0 && is_name_byte(b[start - 1]) {
+                start -= 1;
+            }
+            &s[start..end]
+        }
+
+        /// The identifier starting at `start`. Empty when there is none.
+        fn ident_after(s: &str, start: usize) -> &str {
+            let b = s.as_bytes();
+            let mut end = start;
+            while end < b.len() && is_name_byte(b[end]) {
+                end += 1;
+            }
+            &s[start..end]
+        }
+
+        let l = line.trim().trim_end_matches(';').trim_end();
+        let b = l.as_bytes();
+        let mut out = Vec::new();
+
+        // The assignment first, so a `for( int i = 0; ...; i++ )` header has
+        // declared `i` before its own increment is read below.
+        //
+        // The first `=` that stores: `==`/`!=`/`<=`/`>=` compare, while
+        // `<<=`/`>>=` store — which is why the `<`/`>` case looks one
+        // character further back.
+        let eq = (0..b.len()).find(|&i| {
+            if b[i] != b'=' {
+                return false;
+            }
+            let prev = i.checked_sub(1).map(|k| b[k]);
+            let compare = b.get(i + 1) == Some(&b'=')
+                || matches!(prev, Some(b'=' | b'!'))
+                || (matches!(prev, Some(b'<' | b'>')) && i.checked_sub(2).map(|k| b[k]) != prev);
+            !compare
+        });
+        if let Some(eq) = eq {
+            const OPS: [char; 10] = ['+', '-', '*', '/', '%', '&', '|', '^', '<', '>'];
+            let lhs = &l[..eq];
+            let compound = lhs.ends_with(OPS);
+            let lhs = lhs.trim_end_matches(OPS);
+            // A declaration is `<type> <name> =`; a compound store never one.
+            let declares = !compound && lhs.trim().split(' ').count() > 1;
+            out.extend(name_of(lhs).map(|n| (n, declares)));
+        }
+
+        // `x++` / `++x`, anywhere on the line — an increment inside a `while`
+        // or `if` header writes exactly as one on its own does.
+        let mut i = 0usize;
+        while i + 1 < b.len() {
+            if !((b[i] == b'+' && b[i + 1] == b'+') || (b[i] == b'-' && b[i + 1] == b'-')) {
+                i += 1;
+                continue;
+            }
+            let before = ident_before(l, i);
+            let name = if before.is_empty() { ident_after(l, i + 2) } else { before };
+            if !name.is_empty() {
+                out.push((name, false));
+            }
+            i += 2;
+        }
+        out
     }
 
     let mut swept = 0usize;
@@ -716,10 +817,11 @@ fn no_java_peek_copies_the_handle() {
             // commits it — which is what a composed output reached only through
             // an alias used to do, and no value gate here can see it: `value()`
             // returns the CACHED record, which such a write does not move.
-            if let Some(t) = assign_target(l) {
-                let declared = l
-                    .split_once('=')
-                    .is_some_and(|(lhs, _)| lhs.trim().split(' ').count() > 1);
+            // A comment carries these operators too, so the write sweep reads
+            // code lines only — as the allocation checks below already do.
+            let code = l.starts_with("//") || l.starts_with("/*") || l.starts_with("*");
+            let targets = if code { Vec::new() } else { write_targets(l) };
+            for (t, declared) in targets {
                 if declared {
                     locals.insert(t);
                 } else if t.starts_with("sp.") || (fields.contains(t) && !locals.contains(t)) {
@@ -731,7 +833,6 @@ fn no_java_peek_copies_the_handle() {
             // Comments carry the word too, and `throw new
             // TaLibArgumentException` is the bar rejection while `new Value(`
             // packs the answer — none of the three copies a handle.
-            let code = l.starts_with("//") || l.starts_with("/*") || l.starts_with("*");
             let allocates_handle = !code
                 && l.contains("new ")
                 && !l.starts_with("throw new")
