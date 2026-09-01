@@ -352,6 +352,18 @@ impl LanguageBackend for JavaBackend {
         std::fs::create_dir_all(&tools_dir).unwrap();
         let template = server_gen::generate_java_server(funcs, enums);
         let output = server_gen::inline_java_core_methods(&template, &frag_dir, funcs);
+        // The server and the shipped library are the same text only for as long
+        // as both are regenerated together. `generate --func=<NAME>` rewrites a
+        // fragment and deliberately skips Core.java, and `build.py servers`
+        // re-splices the server from the fragments — so in that window the
+        // cross-language sweep measures new code while the shipped library is
+        // old, and `--codegen --language=java` reads green (#322).
+        //
+        // Checked here rather than in a test: this is the moment the server is
+        // built from the fragments, so it is the moment the two can part. The
+        // fragment is the same text `java_shipped` splices into Core.java's
+        // GENCODE section, so containment is exact rather than approximate.
+        server_gen::assert_java_core_matches_fragments(&frag_dir, out_base, funcs);
         let path = tools_dir.join("TaCodegenServe.java");
         crate::emit::write_if_changed(&path, &output).unwrap();
         println!("  Java server -> {}", path.display());

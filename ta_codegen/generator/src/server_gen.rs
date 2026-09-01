@@ -188,6 +188,75 @@ fn func_unst_id(name: &str, enums: &HashMap<String, EnumDef>) -> Option<i32> {
 /// merely hide that behind a server whose bytes differ from the library's. All
 /// 168 fragments contain zero such pairs, so this costs nothing today and stops
 /// a future emitter from quietly breaking the identity.
+/// Fail if the shipped `Core.java`'s generated section is no longer the fragments.
+///
+/// Both texts come from `backends::java::generate`, but by different routes: the
+/// shipped one is spliced in memory by `java_shipped::generate_core`, the
+/// server's is read off disk from `fragments/Core_<NAME>.java`. `build.py
+/// servers` re-splices the server from the fragments and does NOT rewrite
+/// Core.java, so in that window the cross-language sweep measures new code while
+/// the shipped library is old and `--codegen --language=java` reads green
+/// (#322). `regen-check` does not backstop it locally: it runs on a clean
+/// checkout and excludes the files being worked on.
+///
+/// EQUALITY of the whole GENCODE section, not per-line containment. Containment
+/// cannot see an ADDITION -- a line the shipped file gained is still "carried"
+/// by every fragment line it contains -- which is most of the drift worth
+/// catching. Normalized on both sides the way `inline_java_core_methods`
+/// normalizes: the `/* Generated */` prefix dropped, blank lines dropped, each
+/// line trimmed, since the two differ in indentation by construction.
+pub fn assert_java_core_matches_fragments(frag_dir: &Path, out_base: &Path, funcs: &[FuncDef]) {
+    const CORE_START: &str = "/**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/";
+    const CORE_END: &str = "/**** END GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/";
+
+    let core_path = out_base.join("java/library/src/main/java/io/github/talib/Core.java");
+    let Ok(core) = std::fs::read_to_string(&core_path) else {
+        return; // No shipped Core yet on a fresh tree; generate writes it.
+    };
+    let (Some(s0), Some(e0)) = (core.find(CORE_START), core.find(CORE_END)) else {
+        return; // Markers absent: java_shipped::generate_core reports that itself.
+    };
+    let norm = |text: &str| -> Vec<String> {
+        text.lines()
+            .map(|l| l.strip_prefix("/* Generated */").unwrap_or(l).trim().to_string())
+            .filter(|l| !l.is_empty())
+            .collect()
+    };
+
+    let shipped = norm(&core[s0 + CORE_START.len()..e0]);
+    let mut wanted: Vec<String> = Vec::new();
+    for func in funcs {
+        let frag_path = frag_dir.join(format!("Core_{}.java", func.name));
+        let Ok(frag) = std::fs::read_to_string(&frag_path) else {
+            continue;
+        };
+        wanted.extend(norm(&frag));
+    }
+
+    if shipped != wanted {
+        let at = shipped
+            .iter()
+            .zip(wanted.iter())
+            .position(|(a, b)| a != b)
+            .unwrap_or_else(|| shipped.len().min(wanted.len()));
+        let got = shipped.get(at).map_or("<end of section>", String::as_str);
+        let exp = wanted.get(at).map_or("<end of fragments>", String::as_str);
+        panic!(
+            "{}: its generated section is not what the fragments say, so the Java \
+             server would be spliced from text the shipped library no longer matches \
+             and `--codegen --language=java` would measure the wrong thing (#322).\n\
+             \x20 first difference at generated line {}:\n    shipped:  {got}\n    \
+             fragments: {exp}\n  ({} shipped lines vs {} from fragments)\n  Re-run a \
+             full `scripts/build.py generate` — a `--func=` run deliberately skips \
+             Core.java.",
+            core_path.display(),
+            at + 1,
+            shipped.len(),
+            wanted.len()
+        );
+    }
+}
+
 pub fn inline_java_core_methods(template: &str, java_dir: &Path, funcs: &[FuncDef]) -> String {
     let mut result = template.to_string();
     for func in funcs {
