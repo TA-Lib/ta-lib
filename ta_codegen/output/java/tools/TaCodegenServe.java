@@ -164458,6 +164458,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
+    static final String SPLICED_GENCODE_DIGEST = "5e448c46cf01ad1e";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -165632,6 +165633,11 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_WCLPRICE\"")) return handle_WCLPRICE(json);
         else if (json.contains("\"TA_WILLR\"")) return handle_WILLR(json);
         else if (json.contains("\"TA_WMA\"")) return handle_WMA(json);
+        else if (json.contains("\"gencode_digest\"")) {
+            return "{\"spliced\":\"" + SPLICED_GENCODE_DIGEST
+                 + "\",\"shipped\":\"" + io.github.talib.BuildStamp.GENCODE_DIGEST
+                 + "\"}";
+        }
         else if (json.contains("\"list_functions\"")) {
             StringBuilder sb = new StringBuilder("{\"functions\":[");
             sb.append("\"TA_AC\"");

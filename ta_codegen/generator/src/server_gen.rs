@@ -3674,6 +3674,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // Main server class
     s.push_str("public class TaCodegenServe {\n");
     s.push_str("    static Core core = new Core();\n");
+    // The spliced half of the identity pair. Substituted by JavaBackend::
+    // generate_server from the fragments actually read off disk, so it names the
+    // text of THIS file's Core, not the shipped library's (#322).
+    s.push_str("    static final String SPLICED_GENCODE_DIGEST = \"@@GENCODE_DIGEST@@\";\n");
     s.push_str("    static final int MAX_ARRAY_SIZE = 200000;\n");
     s.push_str("    static double[] refOpen = new double[MAX_ARRAY_SIZE];\n");
     s.push_str("    static double[] refHigh = new double[MAX_ARRAY_SIZE];\n");
@@ -3860,6 +3864,17 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             func.name
         ));
     }
+
+    // gencode_digest — the two stamps ta_regtest compares. Java only: every other
+    // backend's server compiles or links the shipped artifact, so it has no second
+    // text that could drift (#322). Reads the SHIPPED constant off the loaded
+    // class, never a source file, which is what makes a stale class directory
+    // visible here.
+    s.push_str("        else if (json.contains(\"\\\"gencode_digest\\\"\")) {\n");
+    s.push_str("            return \"{\\\"spliced\\\":\\\"\" + SPLICED_GENCODE_DIGEST\n");
+    s.push_str("                 + \"\\\",\\\"shipped\\\":\\\"\" + io.github.talib.BuildStamp.GENCODE_DIGEST\n");
+    s.push_str("                 + \"\\\"}\";\n");
+    s.push_str("        }\n");
 
     // list_functions method — returns {"functions":["TA_SMA","TA_RSI",...]}
     s.push_str("        else if (json.contains(\"\\\"list_functions\\\"\")) {\n");
