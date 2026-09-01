@@ -23,7 +23,6 @@ assert; a green run has no other output to add a line to.
 | `--function=CSV` | Substring filter — matched against the **group tag** in `DO_TEST`, not the function name. A function absent from its group's tag is unreachable by this filter (that is why the composite groups spell out their members, e.g. `PVO,VWMA,CMF,...`). A tag element ending in `*` is a **prefix claim** instead: `All Candlesticks,CDL*` reaches all 61 candlesticks without spelling them out, and keeps reaching a 62nd. **A filter matching no group is now an error** (`TA_REGTEST_FILTER_MATCHED_NOTHING`) on a run with no `--codegen`/`--xlang-hash`/`--fuzz-064` — those legs filter by real function name and legitimately match no group. |
 | `--codegen` | Run codegen verification after C reference tests |
 | `--language=CSV` | Filter languages for codegen verification (e.g., `c,rust,java`) |
-| `-p` | Profile mode |
 | `--fuzz-064` | Differential vs the frozen v0.6.4 oracle. **Self-contained** |
 | `--xlang-hash` | Cross-language bitwise parity gate. **Self-contained** |
 
@@ -50,7 +49,7 @@ Examples:
 
 | File | Purpose |
 |------|---------|
-| `ta_regtest.c` | Main entry point. CLI flags: `--function=CSV`, `--codegen`, `--language=CSV`, `-p` |
+| `ta_regtest.c` | Main entry point. CLI flags: `--function=CSV`, `--codegen`, `--language=CSV` |
 | `test_codegen.c` | Codegen verification: spawns servers, sends JSON-RPC, compares results |
 | `test_codegen.h` | API: `test_codegen(history, languageFilter, functionFilter)` |
 | `codegen_pipe.c/h` | Subprocess pipe abstraction for JSON-RPC over stdin/stdout |

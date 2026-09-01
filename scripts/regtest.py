@@ -296,7 +296,7 @@ def main():
     # --codegen is EXACT, not a prefix: a bare `startswith("--codegen")` accepts
     # any `--codegen<anything>` and forwards the typo to ta_regtest, which is a
     # louder failure than it needs to be and a quieter one than it looks.
-    EXACT_PASSTHROUGH = ("-p", "--codegen")
+    EXACT_PASSTHROUGH = ("--codegen",)
     unknown = [a for a in passthrough
                if a not in EXACT_PASSTHROUGH and not a.startswith(KNOWN_PASSTHROUGH)]
     if unknown:
@@ -430,10 +430,9 @@ def main():
         # and the corpus selectors — aborted this step before the bench in step
         # 6/7 ever ran. An allowlist keeps a future bench flag from breaking it.
         REGTEST_FLAGS = ("--function=", "--language=", "--codegen", "--codegen=",
-                         "--no-guarded", "-p")
+                         "--no-guarded")
         codegen_args = [a for a in passthrough
-                        if a == "-p" or a.startswith(tuple(
-                            f for f in REGTEST_FLAGS if f != "-p"))]
+                        if a.startswith(REGTEST_FLAGS)]
         if not any(a.startswith("--codegen") for a in codegen_args):
             codegen_args = ["--codegen"] + codegen_args
         rc = subprocess.run(
