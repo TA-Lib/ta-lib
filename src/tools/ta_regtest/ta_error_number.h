@@ -491,6 +491,7 @@ typedef enum
   TA_MFI_VACUOUS                     = 1650,
   TA_CMOU_VACUOUS                    = 1651,
   TA_MAVP_VACUOUS                    = 1652,
+  TA_UNSTABLE_MAP_INCOMPLETE         = 1653,
 
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */

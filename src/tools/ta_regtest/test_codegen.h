@@ -10,6 +10,8 @@
  * functionFilter: CSV list of function names to test (NULL = test all).
  * Errors loudly if a requested language's server cannot be started.
  */
+ErrorNumber test_codegen_unstable_map( void );
+
 ErrorNumber test_codegen(const TA_History *history,
                          const char *languageFilter,
                          const char *functionFilter);

@@ -130,7 +130,8 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
 
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                                             TA_RangeStability stability,
-                                            TA_FuncUnstId unstId,
+                                            const TA_FuncUnstId *unstIds,
+                                            int nbUnstIds,
                                             void *opaqueData,
                                             unsigned int outputNb,
                                             unsigned int integerTolerance );
@@ -579,6 +580,13 @@ static TA_RangeStability classify_range_stability( TA_FuncUnstId unstId,
    return TA_STABLE_EPSILON;
 }
 
+void sweep_set_unstable( const TA_FuncUnstId *ids, int nbIds, unsigned int value )
+{
+   int i;
+   for( i = 0; i < nbIds; i++ )
+      TA_SetUnstablePeriod( ids[i], value );
+}
+
 ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
@@ -600,8 +608,23 @@ ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
                            unsigned int nbOutput,
                            unsigned int integerTolerance )
 {
+   /* One id is the common case; the set form below is the general one. */
+   return doRangeTestMulti( testFunction, stability,
+                            &unstId, unstId == TA_TEST_UNST_NONE ? 0 : 1,
+                            opaqueData, nbOutput, integerTolerance );
+}
+
+ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
+                              TA_RangeStability stability,
+                              const TA_FuncUnstId *unstIds,
+                              int nbUnstIds,
+                              void *opaqueData,
+                              unsigned int nbOutput,
+                              unsigned int integerTolerance )
+{
    unsigned int outputNb;
    ErrorNumber errNb;
+   TA_FuncUnstId unstId = nbUnstIds > 0 ? unstIds[0] : TA_TEST_UNST_NONE;
 
    /* Guard: keep the stability class and the unstable-period id consistent.
     *  - CONVERGING needs an unstable period to warm up the recursion (so the
@@ -634,7 +657,8 @@ ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
    {
       errNb = doRangeTestForOneOutput( testFunction,
                                        stability,
-                                       unstId,
+                                       unstIds,
+                                       nbUnstIds,
                                        opaqueData,
                                        outputNb,
                                        integerTolerance );
@@ -663,11 +687,15 @@ void printRetCode( TA_RetCode retCode )
 /**** Local functions definitions.     ****/
 static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                                             TA_RangeStability stability,
-                                            TA_FuncUnstId unstId,
+                                            const TA_FuncUnstId *unstIds,
+                                            int nbUnstIds,
                                             void *opaqueData,
                                             unsigned int outputNb,
                                             unsigned int integerTolerance )
 {
+   /* The envelope needs one id to read the swept value back and to pick
+    * periodToIgnore; every member carries the same value, so the first will do. */
+   TA_FuncUnstId unstId = nbUnstIds > 0 ? unstIds[0] : TA_TEST_UNST_NONE;
    TA_RetCode retCode;
    TA_Integer refOutBeg, refOutNbElement, refLookback;
    TA_Integer fixSize;
@@ -702,7 +730,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
        * on the whole range by keeping that unstable period
        * to zero.
        */
-      TA_SetUnstablePeriod( unstId, 0 );
+      sweep_set_unstable( unstIds, nbUnstIds, 0 );
    }
 
    outputIsInteger = 0;
@@ -765,7 +793,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
       {
          for( unstablePeriod=0; unstablePeriod <= MAX_RANGE_SIZE; unstablePeriod++ )
          {
-            TA_SetUnstablePeriod( unstId, unstablePeriod );
+            sweep_set_unstable( unstIds, nbUnstIds, (unsigned int)unstablePeriod );
 
             errNb = doRangeTestFixSize( testFunction, opaqueData,
                                         refOutBeg, refOutNbElement, refLookback,

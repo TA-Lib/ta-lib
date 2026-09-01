@@ -283,6 +283,14 @@ int main( int argc, char **argv )
       printf( "\nFailed an internal test with code=%d\n", retValue );
       return retValue;
    }
+   /* Shares this group's output line: the range sweep's unstable-id table is
+    * harness state, and a bare run must not be able to leave it inconsistent. */
+   retValue = test_codegen_unstable_map();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed the unstable-period map check with code=%d\n", retValue );
+      return retValue;
+   }
    hideFeedback();
    printf( "done.\n" );
    fflush(stdout);

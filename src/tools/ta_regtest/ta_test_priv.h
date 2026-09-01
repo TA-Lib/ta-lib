@@ -251,6 +251,16 @@ typedef enum
                           * #127; e.g. AD, OBV, SAR). */
 } TA_RangeStability;
 
+/* The most unstable-period ids one function may inherit. Two today (KC, through
+ * TA_EMA and TA_ATR); the cap only sizes the caller's array. */
+#define TA_MAX_SWEPT_UNST 4
+
+/* Set every id of a sweep set to the same value. The range sweep warms only the
+ * ids it is handed, so a function recursive through two different ids has to
+ * move both together or the unhandled leg stays cold while the convergence
+ * envelope tightens around it. */
+void sweep_set_unstable( const TA_FuncUnstId *ids, int nbIds, unsigned int value );
+
 ErrorNumber doRangeTest( RangeTestFunction testFunction,
                          TA_FuncUnstId unstId,
                          void *opaqueData,
@@ -269,6 +279,17 @@ ErrorNumber doRangeTestEx( RangeTestFunction testFunction,
                            void *opaqueData,
                            unsigned int nbOutput,
                            unsigned int integerTolerance );
+
+/* Same, for a function recursive through callees carrying DIFFERENT unstable
+ * ids: every id in the set is swept together. doRangeTestEx is the one-id case.
+ * The envelope reads the set's first member -- they all hold the same value. */
+ErrorNumber doRangeTestMulti( RangeTestFunction testFunction,
+                              TA_RangeStability stability,
+                              const TA_FuncUnstId *unstIds,
+                              int nbUnstIds,
+                              void *opaqueData,
+                              unsigned int nbOutput,
+                              unsigned int integerTolerance );
 
 /* Compare one computed value against an external-oracle golden.
  *

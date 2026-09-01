@@ -747,15 +747,15 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     /* EFI smooths its force series with the same EMA. */
     {"EFI",          TA_FUNC_UNST_EMA},
     /* KC is recursive through BOTH of its callees -- EMA of the typical price
-     * and the Wilder ATR -- so it is converging, not finite-window. It is the
-     * first function here whose two legs carry DIFFERENT unstable-period ids,
-     * and only the one named below is swept; UNST_EMA is named because the
-     * centre line is where the sweep has to bite (the ATR leg's residual decays
-     * geometrically at (1-1/M) per bar, far inside the 0.5/outputPosition
-     * envelope, so leaving it unswept does not relax anything). Without an entry
-     * KC classified EPSILON and the range gate measured it moving 0.25% across
-     * startIdx, where a genuine EPSILON function moves by ~1e-13. */
+     * and the Wilder ATR -- so it is converging, not finite-window, and it is
+     * the first function here whose legs carry DIFFERENT ids. BOTH rows are
+     * required: each leg seeds at its own lookback, so sweeping one id warms one
+     * leg and leaves the other exactly as cold as it was, while the envelope
+     * tightens around it. Measured with only UNST_EMA listed, KC moved 1.8%
+     * across startIdx at unstable period 140 where 0.15% was allowed. Without
+     * any entry it classified EPSILON and moved 0.25% where ~1e-13 was allowed. */
     {"KC",           TA_FUNC_UNST_EMA},
+    {"KC",           TA_FUNC_UNST_ATR},
     /* SMI's three EMA stages are seeded and advanced exactly as ema.c does,
      * and its lookback is the sum of three ema_lookback() terms, so the whole
      * pipeline shifts with UNST_EMA. Measured: outBegIdx 45 -> 54 at the
@@ -776,6 +776,104 @@ static TA_FuncUnstId get_unst_id(const char *funcName)
             return UNSTABLE_MAP[i].id;
     }
     return TA_TEST_UNST_NONE;
+}
+
+/* Every unstable-period id one function inherits, not just the first.
+ *
+ * A function may appear on more than one row: it is recursive through callees
+ * that carry DIFFERENT ids (KC, through TA_EMA and TA_ATR). The range sweep has
+ * to move all of them together -- it warms only the ids it is handed, so an id
+ * left at zero is a leg that never converges while the envelope tightens around
+ * it, and the sweep then fails for a reason that has nothing to do with the
+ * function being wrong. Returns the count written. */
+static int get_unst_ids(const char *funcName, TA_FuncUnstId *out, int maxOut)
+{
+    int n = 0;
+    for( unsigned int i = 0; i < NUM_UNSTABLE_MAP; i++ )
+    {
+        if( strcmp(funcName, UNSTABLE_MAP[i].name) != 0 )
+            continue;
+        if( n < maxOut )
+            out[n] = UNSTABLE_MAP[i].id;
+        n++;
+    }
+    return n > maxOut ? maxOut : n;
+}
+
+/* Self-check on UNSTABLE_MAP, run on every ta_regtest invocation.
+ *
+ * The table is hand-maintained against the generator's own answer (see
+ * generator/tests/stability_suite.rs, which pins what each function inherits),
+ * so the two can drift. What is checked here is the property the sweep depends
+ * on rather than the contents: no row names TA_TEST_UNST_NONE, no (name,id) pair
+ * repeats, setting a function's set moves every member, and at least one
+ * function carries more than one id -- without that last one the multi-id path
+ * below is dead code and nothing would notice it breaking. */
+ErrorNumber test_codegen_unstable_map( void )
+{
+    unsigned int i, j;
+    int multi = 0;
+
+    for( i = 0; i < NUM_UNSTABLE_MAP; i++ )
+    {
+        if( UNSTABLE_MAP[i].id == TA_TEST_UNST_NONE )
+        {
+            printf( "\nUNSTABLE_MAP: row %u (%s) names TA_TEST_UNST_NONE\n",
+                    i, UNSTABLE_MAP[i].name );
+            return TA_UNSTABLE_MAP_INCOMPLETE;
+        }
+        for( j = i + 1; j < NUM_UNSTABLE_MAP; j++ )
+        {
+            if( strcmp( UNSTABLE_MAP[i].name, UNSTABLE_MAP[j].name ) == 0
+                && UNSTABLE_MAP[i].id == UNSTABLE_MAP[j].id )
+            {
+                printf( "\nUNSTABLE_MAP: %s repeats id %d\n",
+                        UNSTABLE_MAP[i].name, (int)UNSTABLE_MAP[i].id );
+                return TA_UNSTABLE_MAP_INCOMPLETE;
+            }
+        }
+    }
+
+    for( i = 0; i < NUM_UNSTABLE_MAP; i++ )
+    {
+        TA_FuncUnstId ids[TA_MAX_SWEPT_UNST];
+        int n, k, seen = 0;
+
+        for( j = 0; j < i; j++ )
+            if( strcmp( UNSTABLE_MAP[i].name, UNSTABLE_MAP[j].name ) == 0 )
+                seen = 1;
+        if( seen )
+            continue;   /* count each function once, not each row */
+
+        n = get_unst_ids( UNSTABLE_MAP[i].name, ids, TA_MAX_SWEPT_UNST );
+        if( n >= 2 )
+            multi++;
+
+        /* Behavioural: the sweep's setter must move every id of the set. */
+        for( k = 0; k < n; k++ )
+            TA_SetUnstablePeriod( ids[k], 0 );
+        sweep_set_unstable( ids, n, 7 );
+        for( k = 0; k < n; k++ )
+        {
+            if( TA_GetUnstablePeriod( ids[k] ) != 7 )
+            {
+                printf( "\nUNSTABLE_MAP: %s id %d did not move with its set\n",
+                        UNSTABLE_MAP[i].name, (int)ids[k] );
+                return TA_UNSTABLE_MAP_INCOMPLETE;
+            }
+            TA_SetUnstablePeriod( ids[k], 0 );
+        }
+    }
+
+    if( multi < 1 )
+    {
+        printf( "\nUNSTABLE_MAP: no function declares more than one unstable id, "
+                "so the multi-id sweep is never exercised. A composite recursive "
+                "through two different ids (KC: TA_EMA + TA_ATR) must list both.\n" );
+        return TA_UNSTABLE_MAP_INCOMPLETE;
+    }
+
+    return TA_TEST_PASS;
 }
 
 /* ---- Generic CodegenRangeTestParam (Task 6) ---- */
@@ -2114,10 +2212,13 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     (int)ctx->history->nbBars > postLookback )
                 {
                     TA_RangeStability postStability = stability_class(funcInfo);
-                    ErrorNumber rangeErr = doRangeTestEx(
+                    TA_FuncUnstId postIds[TA_MAX_SWEPT_UNST];
+                    int nbPostIds = get_unst_ids(funcInfo->name, postIds,
+                                                 TA_MAX_SWEPT_UNST);
+                    ErrorNumber rangeErr = doRangeTestMulti(
                         codegen_range_generic,
                         postStability,
-                        get_unst_id(funcInfo->name),
+                        postIds, nbPostIds,
                         (void *)&params,
                         funcInfo->nbOutput,
                         get_integer_tolerance(funcInfo));
@@ -2327,10 +2428,12 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ErrorNumber errNb = TA_TEST_PASS;
     if( nbElem > 0 && params.codegenError == TA_TEST_PASS )
     {
-        errNb = doRangeTestEx(
+        TA_FuncUnstId sweepIds[TA_MAX_SWEPT_UNST];
+        int nbSweepIds = get_unst_ids(funcInfo->name, sweepIds, TA_MAX_SWEPT_UNST);
+        errNb = doRangeTestMulti(
             codegen_range_generic,
             stability_class(funcInfo),
-            get_unst_id(funcInfo->name),
+            sweepIds, nbSweepIds,
             (void *)&params,
             funcInfo->nbOutput,
             get_integer_tolerance(funcInfo));
