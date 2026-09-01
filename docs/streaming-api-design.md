@@ -469,7 +469,8 @@ double p = s.peek(formingBarClose);              // forming bar, non-committing
 s.updateAndFill(gapBars, out);                   // n bars, n values, one call
 Core.SmaStream t = s.clone();                   // independent stream fork
 Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
-Core.MacdStream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
+Core.MacdOut mv = new Core.MacdOut();            // allocate once, reuse per bar
+m.update(bar, mv);                               // mv.macd / mv.macdSignal / mv.macdHist
 Core.SmaStream s2 = core.smaOpenAndFill(history, 14, warmup);
 OutRange r = s2.outRange();                      // the bars this handle has an
                                                  // output for
@@ -492,8 +493,17 @@ OutRange r = s2.outRange();                      // the bars this handle has an
   `"<NAME> peek:"`), leaving the handle's *state* untouched
   (`docs/error-handling-spec.md` §2.4).
 - `value()` re-reads the value(s) at the last bar the stream counted — the bar
-  `outRange()` ends on — without recomputing; multi-output `update`
-  caches the immutable `Value` it returns, so `value()` is allocation-free.
+  `outRange()` ends on — without recomputing.
+- A **multi-output** handle answers through a caller-owned sink rather than a
+  return: `void update(bars…, <N>Out)`, `void peek(…, <N>Out)`,
+  `void value(<N>Out)`, with `<N>Out` a mutable public-field class at `Core`
+  level. The caller allocates it once and reuses it, so every bar costs zero
+  bytes unconditionally — where a returned object depended on escape analysis
+  firing, which measurement showed it does not at the sites that matter (#310).
+  `<N>Out` carries no `equals`/`hashCode`: it is a buffer whose contents change
+  under any reference kept past the next call, and value equality on that breaks
+  `HashMap`/`HashSet` the moment a reused sink becomes a key. Single-output
+  handles are untouched and still return the bare `double`/`int`.
 - `clone()` is the universal deep copy (arrays cloned, sub-handles copied
   recursively, the `Core` reference shared), and it is spelled the same in all
   four backends: `TA_<N>_Clone`, `.clone()`, `clone()`, `Clone()`. It is the
@@ -536,16 +546,14 @@ emitter and accepted the later delivery date.
 One place the C# tier deliberately departs from the Java one, because the
 language offers something Java does not:
 
-- **Multi-output values are a `readonly record struct`, not a class.** Java
-  caches the boxed `Value` so that `value()` allocates nothing; a struct is
-  allocation-free by construction, so C# has no `cachedValue` field at all.
-  The consequence for callers is that C# equality is .NET's `double` equality
-  — `NaN` equals `NaN` **and** `+0.0` equals `-0.0` — where Java's record
-  compares bitwise and disagrees on the second. Compare
-  `BitConverter.DoubleToInt64Bits` per component when bit identity is what you
-  mean. (JLS 17.5's final-field safe-publication guarantee has no ECMA-335
-  analogue, but none is needed: a returned record struct is copied into the
-  caller's frame, which is stronger.)
+- **Multi-output values are a `readonly record struct`, not a caller-owned
+  sink.** A struct is returned by value into the caller's frame, so it is
+  allocation-free by construction and needs no out-parameter to be free; Java
+  has no such type and reaches the same zero through the sink (#310). The
+  consequence for callers is that the C# value carries .NET's `double` equality
+  — `NaN` equals `NaN` **and** `+0.0` equals `-0.0` — while `<N>Out` carries no
+  equality at all. Compare per component when bit identity is what you mean:
+  `BitConverter.DoubleToInt64Bits` in C#, `Double.doubleToRawLongBits` in Java.
 
 ### Rust concurrency
 
@@ -624,8 +632,10 @@ enforcing it its own way:
   publication (a stronger guarantee than C documents for `const` peek). No
   synchronization in the generated code; safe publication when handing a
   handle between threads is the caller's usual memory-model responsibility.
-  A returned multi-output `Value` is a record, so its components are final —
-  safely publishable even through a data race (JLS 17.5).
+  A multi-output `<N>Out` is the opposite case and needs saying: it is a
+  mutable buffer with no final fields, so it carries no publication guarantee
+  of its own and must not be shared between threads at all. Give each thread
+  its own sink.
 
 ### Python (future consumer — exploration, not in scope)
 

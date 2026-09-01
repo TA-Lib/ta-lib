@@ -441,12 +441,12 @@
       }
 
       /**
-       * Commit one closed bar, returning the new current value.
+       * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
        * Never allocates handle state.
        * <p>Throws {@link IllegalArgumentException} if any bar value is not
        * finite (NaN or an infinity). That check runs before anything is
        * written, so the state is left exactly as it was: the rejected bar's
-       * output is the previous value, held, and {@link #value()} answers it.
+       * output is the previous value, held, and {@link #value(MinmaxindexOut)} answers it.
        * The stream stays usable, so skip the bar or re-open on a clean
        * history. {@link #outRange()} does advance: the bar happened and
        * occupies a position in the series, so the handle counts it, which is
@@ -457,6 +457,7 @@
        * later value it produces.
        */
       public void update( double inReal, MinmaxindexOut out ) {
+         requireArgument("MINMAXINDEX update", "out", out);
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
@@ -501,15 +502,15 @@
 
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
-       * next {@code update} with the same bar would return — the same
+       * next {@code update} with the same bar would write — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
        * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period. It does allocate a small bounded amount
-       * per call — a size fixed by the indicator, never by the period.
+       * does not grow with the period and {@code peek} never allocates.
        */
       public void peek( double inReal, MinmaxindexOut out ) {
+         requireArgument("MINMAXINDEX peek", "out", out);
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
          MinmaxindexStream sp = this;
@@ -579,10 +580,11 @@
       /**
        * The value at the last bar this stream counted — the bar
        * {@link #outRange()} ends on. The last history bar right after open,
-       * then whatever the latest accepted {@code update} returned.
-       * A pure field read; {@code peek} does not change it.
+       * then whatever the latest accepted {@code update} wrote.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
        */
       public void value( MinmaxindexOut out ) {
+         requireArgument("MINMAXINDEX value", "out", out);
          out.minIdx = this.cur_outMinIdx;
          out.maxIdx = this.cur_outMaxIdx;
       }
@@ -607,7 +609,8 @@
    /**
     * The outputs of one MINMAXINDEX bar, written by the stream into an object the
     * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-    * and {@code value} overwrite its fields and allocate nothing.
+    * and {@code value} overwrite its fields, so the sink itself costs
+    * nothing per bar.
     *
     * <p><b>Its contents are only valid until the next call that writes it.</b>
     * It is a mutable buffer, not a reading: a reference kept past that call,

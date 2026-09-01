@@ -646,9 +646,10 @@
        * next {@code update} with the same bar would return — the same
        * transition, with every store it would make carried in a local instead.
        * Never writes this handle, so peeks may
-       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+       * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
        * buffers and storing what the step would commit into locals, so the cost
-       * does not grow with the period and {@code peek} never allocates.
+       * does not grow with the period. It does allocate a small bounded amount
+       * per call — a size fixed by the indicator, never by the period.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
@@ -772,8 +773,9 @@
          break;
       }
       case MAMA: {
-         ((MamaStream) sp.sub).update(inReal);
-         sp.cur_outReal = ((MamaStream) sp.sub).cur_outMAMA;
+         MamaOut subOut = new MamaOut();
+         ((MamaStream) sp.sub).update(inReal, subOut);
+         sp.cur_outReal = subOut.mama;
          break;
       }
       case T3: {

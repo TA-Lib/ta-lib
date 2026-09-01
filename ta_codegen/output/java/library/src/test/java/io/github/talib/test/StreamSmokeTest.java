@@ -307,21 +307,27 @@ public class StreamSmokeTest {
 
             final Core.BbandsStream ba = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
             final Core.BbandsStream bb = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
-            barMustReject("BBANDS.update", () -> ba.update(v));
-            barMustReject("BBANDS.peek", () -> ba.peek(v));
-            Core.BbandsStream.Value bav = ba.update(close[warm]);
-            Core.BbandsStream.Value bbv = bb.update(close[warm]);
-            stateMustHold("BBANDS.upper", bav.realUpperBand(), bbv.realUpperBand());
-            stateMustHold("BBANDS.lower", bav.realLowerBand(), bbv.realLowerBand());
+            final Core.BbandsOut bscratch = new Core.BbandsOut();
+            barMustReject("BBANDS.update", () -> ba.update(v, bscratch));
+            barMustReject("BBANDS.peek", () -> ba.peek(v, bscratch));
+            final Core.BbandsOut bav = new Core.BbandsOut();
+            final Core.BbandsOut bbv = new Core.BbandsOut();
+            ba.update(close[warm], bav);
+            bb.update(close[warm], bbv);
+            stateMustHold("BBANDS.upper", bav.realUpperBand, bbv.realUpperBand);
+            stateMustHold("BBANDS.lower", bav.realLowerBand, bbv.realLowerBand);
 
             final Core.StochStream ka = core.stochOpen(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
             final Core.StochStream kb = core.stochOpen(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
-            barMustReject("STOCH.update", () -> ka.update(v, low[warm], close[warm]));
-            barMustReject("STOCH.peek", () -> ka.peek(high[warm], v, close[warm]));
-            Core.StochStream.Value kav = ka.update(high[warm], low[warm], close[warm]);
-            Core.StochStream.Value kbv = kb.update(high[warm], low[warm], close[warm]);
-            stateMustHold("STOCH.slowK", kav.slowK(), kbv.slowK());
-            stateMustHold("STOCH.slowD", kav.slowD(), kbv.slowD());
+            final Core.StochOut kscratch = new Core.StochOut();
+            barMustReject("STOCH.update", () -> ka.update(v, low[warm], close[warm], kscratch));
+            barMustReject("STOCH.peek", () -> ka.peek(high[warm], v, close[warm], kscratch));
+            final Core.StochOut kav = new Core.StochOut();
+            final Core.StochOut kbv = new Core.StochOut();
+            ka.update(high[warm], low[warm], close[warm], kav);
+            kb.update(high[warm], low[warm], close[warm], kbv);
+            stateMustHold("STOCH.slowK", kav.slowK, kbv.slowK);
+            stateMustHold("STOCH.slowD", kav.slowD, kbv.slowD);
 
             final Core.CdldojiStream ja = core.cdldojiOpen(ow, hw, lw, cw);
             final Core.CdldojiStream jb = core.cdldojiOpen(ow, hw, lw, cw);
@@ -429,11 +435,16 @@ public class StreamSmokeTest {
             /* --- composed, three outputs ------------------------------------ */
             final Core.BbandsStream ba = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
             final Core.BbandsStream bb = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
-            final Core.BbandsStream.Value[] wantB = new Core.BbandsStream.Value[UF_BAD];
+            /* One sink PER SLOT, not one reused: these readings have to outlive
+             * the calls that wrote them, which is exactly what the `<N>Out`
+             * javadoc tells a caller a single reused sink cannot do. */
+            final Core.BbandsOut[] wantB = new Core.BbandsOut[UF_BAD];
             for (int i = 0; i < UF_BAD; i++) {
-                wantB[i] = bb.update(bars[i]);
+                wantB[i] = new Core.BbandsOut();
+                bb.update(bars[i], wantB[i]);
             }
-            barMustReject("BBANDS.update(control)", () -> bb.update(bars[UF_BAD]));
+            final Core.BbandsOut bctl = new Core.BbandsOut();
+            barMustReject("BBANDS.update(control)", () -> bb.update(bars[UF_BAD], bctl));
             final double[] bu = new double[UF_N];
             final double[] bm = new double[UF_N];
             final double[] bl = new double[UF_N];
@@ -443,9 +454,9 @@ public class StreamSmokeTest {
             barMustReject("BBANDS.updateAndFill", () -> ba.updateAndFill(bars, bu, bm, bl));
             ufRangeEq("BBANDS", ba.outRange(), bb.outRange());
             for (int i = 0; i < UF_BAD; i++) {
-                ufValueEq("BBANDS.upper", bu[i], wantB[i].realUpperBand());
-                ufValueEq("BBANDS.middle", bm[i], wantB[i].realMiddleBand());
-                ufValueEq("BBANDS.lower", bl[i], wantB[i].realLowerBand());
+                ufValueEq("BBANDS.upper", bu[i], wantB[i].realUpperBand);
+                ufValueEq("BBANDS.middle", bm[i], wantB[i].realMiddleBand);
+                ufValueEq("BBANDS.lower", bl[i], wantB[i].realLowerBand);
             }
             for (int i = UF_BAD; i < UF_N; i++) {
                 ufUntouched("BBANDS.upper", bu[i], UF_CANARY);
@@ -453,9 +464,10 @@ public class StreamSmokeTest {
                 ufUntouched("BBANDS.lower", bl[i], UF_CANARY);
             }
             /* value() must name the last COMMITTED bar, not the one before the
-             * call: the multi-output cache is refreshed on the throwing path
-             * too. */
-            check(bitEq(ba.value().realUpperBand(), wantB[UF_BAD - 1].realUpperBand()),
+             * call. */
+            final Core.BbandsOut bav2 = new Core.BbandsOut();
+            ba.value(bav2);
+            check(bitEq(bav2.realUpperBand, wantB[UF_BAD - 1].realUpperBand),
                   "BBANDS: value() must name the last committed bar after a partial fill");
             ufValues++;
 
@@ -778,44 +790,59 @@ public class StreamSmokeTest {
 
             /* --- composed, three outputs: all three must be left alone ----- */
             final Core.BbandsStream b = core.bbandsOpen(cw, 20, 2.0, 2.0, MAType.SMA);
-            final Core.BbandsStream.Value bPeekHeld = b.value();
-            advPeekStill("BBANDS(bad)", b::outRange, () -> b.peek(v), true);
-            advHeld("BBANDS.upper(peek)", bPeekHeld.realUpperBand(), b.value().realUpperBand());
-            advHeld("BBANDS.middle(peek)", bPeekHeld.realMiddleBand(), b.value().realMiddleBand());
-            advHeld("BBANDS.lower(peek)", bPeekHeld.realLowerBand(), b.value().realLowerBand());
-            advPeekStill("BBANDS(good)", b::outRange, () -> b.peek(close[warm]), false);
-            final Core.BbandsStream.Value bHeld = b.value();
-            advReject("BBANDS", b::outRange, () -> b.update(v));
-            advHeld("BBANDS.upper", bHeld.realUpperBand(), b.value().realUpperBand());
-            advHeld("BBANDS.middle", bHeld.realMiddleBand(), b.value().realMiddleBand());
-            advHeld("BBANDS.lower", bHeld.realLowerBand(), b.value().realLowerBand());
-            final Core.BbandsStream.Value[] gotB = new Core.BbandsStream.Value[1];
+            /* `bNow` is the live read and `bPeekHeld`/`bHeld` are snapshots taken
+             * before the call under test: three DISTINCT sinks, or every compare
+             * below reads one buffer against itself and holds vacuously. */
+            final Core.BbandsOut bNow = new Core.BbandsOut();
+            final Core.BbandsOut bPeekHeld = new Core.BbandsOut();
+            b.value(bPeekHeld);
+            advPeekStill("BBANDS(bad)", b::outRange, () -> b.peek(v, bNow), true);
+            b.value(bNow);
+            advHeld("BBANDS.upper(peek)", bPeekHeld.realUpperBand, bNow.realUpperBand);
+            advHeld("BBANDS.middle(peek)", bPeekHeld.realMiddleBand, bNow.realMiddleBand);
+            advHeld("BBANDS.lower(peek)", bPeekHeld.realLowerBand, bNow.realLowerBand);
+            advPeekStill("BBANDS(good)", b::outRange, () -> b.peek(close[warm], bNow), false);
+            final Core.BbandsOut bHeld = new Core.BbandsOut();
+            b.value(bHeld);
+            advReject("BBANDS", b::outRange, () -> b.update(v, bNow));
+            b.value(bNow);
+            advHeld("BBANDS.upper", bHeld.realUpperBand, bNow.realUpperBand);
+            advHeld("BBANDS.middle", bHeld.realMiddleBand, bNow.realMiddleBand);
+            advHeld("BBANDS.lower", bHeld.realLowerBand, bNow.realLowerBand);
+            final Core.BbandsOut gotB = new Core.BbandsOut();
             advResume("BBANDS", b::outRange, () -> {
-                gotB[0] = b.update(close[warm]);
+                b.update(close[warm], gotB);
             });
-            advProduced("BBANDS.upper", gotB[0].realUpperBand(), b.value().realUpperBand());
-            advProduced("BBANDS.middle", gotB[0].realMiddleBand(), b.value().realMiddleBand());
-            advProduced("BBANDS.lower", gotB[0].realLowerBand(), b.value().realLowerBand());
+            b.value(bNow);
+            advProduced("BBANDS.upper", gotB.realUpperBand, bNow.realUpperBand);
+            advProduced("BBANDS.middle", gotB.realMiddleBand, bNow.realMiddleBand);
+            advProduced("BBANDS.lower", gotB.realLowerBand, bNow.realLowerBand);
 
             /* --- composed, one sub feeding the next ------------------------ */
             final Core.StochStream k = core.stochOpen(hw, lw, cw, 5, 3, MAType.SMA, 3, MAType.SMA);
-            final Core.StochStream.Value kPeekHeld = k.value();
+            final Core.StochOut kNow = new Core.StochOut();
+            final Core.StochOut kPeekHeld = new Core.StochOut();
+            k.value(kPeekHeld);
             advPeekStill("STOCH(bad)", k::outRange,
-                () -> k.peek(high[warm], v, close[warm]), true);
-            advHeld("STOCH.slowK(peek)", kPeekHeld.slowK(), k.value().slowK());
-            advHeld("STOCH.slowD(peek)", kPeekHeld.slowD(), k.value().slowD());
+                () -> k.peek(high[warm], v, close[warm], kNow), true);
+            k.value(kNow);
+            advHeld("STOCH.slowK(peek)", kPeekHeld.slowK, kNow.slowK);
+            advHeld("STOCH.slowD(peek)", kPeekHeld.slowD, kNow.slowD);
             advPeekStill("STOCH(good)", k::outRange,
-                () -> k.peek(high[warm], low[warm], close[warm]), false);
-            final Core.StochStream.Value kHeld = k.value();
-            advReject("STOCH", k::outRange, () -> k.update(v, low[warm], close[warm]));
-            advHeld("STOCH.slowK", kHeld.slowK(), k.value().slowK());
-            advHeld("STOCH.slowD", kHeld.slowD(), k.value().slowD());
-            final Core.StochStream.Value[] gotK = new Core.StochStream.Value[1];
+                () -> k.peek(high[warm], low[warm], close[warm], kNow), false);
+            final Core.StochOut kHeld = new Core.StochOut();
+            k.value(kHeld);
+            advReject("STOCH", k::outRange, () -> k.update(v, low[warm], close[warm], kNow));
+            k.value(kNow);
+            advHeld("STOCH.slowK", kHeld.slowK, kNow.slowK);
+            advHeld("STOCH.slowD", kHeld.slowD, kNow.slowD);
+            final Core.StochOut gotK = new Core.StochOut();
             advResume("STOCH", k::outRange, () -> {
-                gotK[0] = k.update(high[warm], low[warm], close[warm]);
+                k.update(high[warm], low[warm], close[warm], gotK);
             });
-            advProduced("STOCH.slowK", gotK[0].slowK(), k.value().slowK());
-            advProduced("STOCH.slowD", gotK[0].slowD(), k.value().slowD());
+            k.value(kNow);
+            advProduced("STOCH.slowK", gotK.slowK, kNow.slowK);
+            advProduced("STOCH.slowD", gotK.slowD, kNow.slowD);
 
             /* --- integer output over four price inputs --------------------- */
             final Core.CdldojiStream j = core.cdldojiOpen(ow, hw, lw, cw);
@@ -989,30 +1016,99 @@ public class StreamSmokeTest {
     }
 
     /**
-     * A handle's current value as raw components — one element for a
-     * single-output handle, one per batch output for a {@code Value} record.
+     * One handle's outputs, snapshotted through whichever shape its tier answers
+     * with: a boxed number for a single-output {@code update}/{@code peek}/
+     * {@code value}, and since #310 a caller-owned {@code <N>Out} those three
+     * take as a trailing argument and return {@code void} for.
+     *
+     * <p>The sink is allocated once and reused — the usage its javadoc
+     * prescribes — and every read copies out immediately, so nothing here holds
+     * a reference past the call that wrote it.
+     *
+     * <p><b>Every read POISONS the sink first.</b> Without that, a reused sink
+     * carries the previous call's values into the next one, and a tier that
+     * wrote nothing at all would return them: {@code peek} then {@code update}
+     * on the same bar would agree because both read {@code peek}'s leftovers,
+     * and the whole 176-handle sweep would hold while the sink was never
+     * written. The canaries are the same ones the fill gates use, so a field
+     * left unwritten reads as an absurd value rather than as a plausible one.
+     */
+    private static final class HandleReader {
+        private static final double POISON_D = -1.2345678901234e300;
+        private static final int POISON_I = -987654321;
+
+        private final Object sink;                      // null when single-output
+        private final java.lang.reflect.Field[] fields;
+
+        HandleReader(Class<?> outClass) throws ReflectiveOperationException {
+            if (outClass == null) {
+                this.sink = null;
+                this.fields = null;
+            } else {
+                this.sink = outClass.getDeclaredConstructor().newInstance();
+                this.fields = outClass.getFields();
+            }
+        }
+
+        int width() {
+            return fields == null ? 1 : fields.length;
+        }
+
+        /** True when the last read came back holding a canary — an unwritten field.
+         *  Matched against the canary for the field's OWN type, so a legitimate
+         *  output can only collide with one absurd value, not two. */
+        boolean unwritten(double[] got) {
+            if (fields == null) {
+                return false;
+            }
+            for (int i = 0; i < got.length; i++) {
+                double canary = fields[i].getType() == int.class ? POISON_I : POISON_D;
+                if (bitEq(got[i], canary)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        double[] read(java.lang.reflect.Method m, Object target, Object... bars)
+                throws ReflectiveOperationException {
+            Object[] args = bars;
+            if (sink != null) {
+                args = java.util.Arrays.copyOf(bars, bars.length + 1);
+                args[bars.length] = sink;
+                for (java.lang.reflect.Field fl : fields) {
+                    if (fl.getType() == int.class) {
+                        fl.setInt(sink, POISON_I);
+                    } else {
+                        fl.setDouble(sink, POISON_D);
+                    }
+                }
+            }
+            Object ret = m.invoke(target, args);
+            if (sink == null) {
+                return components(ret);
+            }
+            double[] out = new double[fields.length];
+            for (int i = 0; i < fields.length; i++) {
+                out[i] = ((Number) fields[i].get(sink)).doubleValue();
+            }
+            return out;
+        }
+    }
+
+    /**
+     * A single-output handle's current value as a one-element array.
      *
      * <p>Boxing through {@link Number} is lossless for both shapes the
      * generator emits ({@code double} and {@code int}), so the callers can
      * still compare bit for bit.
      */
+
     private static double[] components(Object v) {
-        if (v instanceof Number) {
-            return new double[] { ((Number) v).doubleValue() };
+        if (!(v instanceof Number)) {
+            throw new AssertionError("not a single-output value: " + v.getClass());
         }
-        java.lang.reflect.RecordComponent[] rc = v.getClass().getRecordComponents();
-        if (rc == null) {
-            throw new AssertionError("not a value: " + v.getClass());
-        }
-        double[] out = new double[rc.length];
-        for (int i = 0; i < rc.length; i++) {
-            try {
-                out[i] = ((Number) rc[i].getAccessor().invoke(v)).doubleValue();
-            } catch (ReflectiveOperationException e) {
-                throw new AssertionError(e);
-            }
-        }
-        return out;
+        return new double[] { ((Number) v).doubleValue() };
     }
 
     /** Component-wise {@link #bitEq(double, double)}; a length mismatch is a
@@ -1188,11 +1284,38 @@ public class StreamSmokeTest {
                               + " series, the opener takes " + slot);
                 continue;
             }
-            if (update.getParameterCount() != slots.size()
-                    || peek.getParameterCount() != slots.size()) {
+            /* Since #310 a multi-output tier writes a caller-owned `<N>Out`
+             * passed as a trailing argument, so `value` takes one parameter
+             * where a single-output tier takes none — which is how the shape is
+             * discovered rather than assumed. All three verbs must agree on it,
+             * and it must be the sink named after THIS function: a handle
+             * writing another function's sink type type-checks and would be
+             * caught nowhere else. */
+            Class<?> outClass = value.getParameterCount() == 1 ? value.getParameterTypes()[0] : null;
+            boolean multi = f.outputs().size() > 1;
+            if ((outClass != null) != multi) {
+                unhandled.add(name + ": registry declares " + f.outputs().size()
+                              + " outputs but value() takes " + value.getParameterCount() + " sink(s)");
+                continue;
+            }
+            if (outClass != null
+                    && !outClass.getSimpleName().equals(pascalCase(name) + "Out")) {
+                unhandled.add(name + ": value() writes a " + outClass.getSimpleName()
+                              + ", expected " + pascalCase(name) + "Out");
+                continue;
+            }
+            int sinkArgs = outClass == null ? 0 : 1;
+            if (update.getParameterCount() != slots.size() + sinkArgs
+                    || peek.getParameterCount() != slots.size() + sinkArgs) {
                 unhandled.add(name + ": update/peek take " + update.getParameterCount() + "/"
-                              + peek.getParameterCount() + " bars, the opener " + slots.size()
-                              + " series");
+                              + peek.getParameterCount() + " args, the opener " + slots.size()
+                              + " series plus " + sinkArgs + " sink");
+                continue;
+            }
+            if (outClass != null
+                    && (update.getParameterTypes()[slots.size()] != outClass
+                        || peek.getParameterTypes()[slots.size()] != outClass)) {
+                unhandled.add(name + ": update/peek/value disagree on the sink type");
                 continue;
             }
 
@@ -1208,24 +1331,33 @@ public class StreamSmokeTest {
             }
 
             try {
+                HandleReader rd = new HandleReader(outClass);
+                if (rd.width() != f.outputs().size()) {
+                    unhandled.add(name + ": the sink carries " + rd.width()
+                                  + " public fields, the registry declares " + f.outputs().size());
+                    continue;
+                }
                 Object h = open.invoke(core, args);
                 Object ref = open.invoke(core, args);   // the same handle, never peeked
-                double[] v0 = components(value.invoke(h));
+                double[] v0 = rd.read(value, h);
+                check(!rd.unwritten(v0), name + ": value() left a sink field unwritten");
                 OutRange r0 = (OutRange) range.invoke(h);
 
                 /* 1 — peek commits nothing, probed with a bar far enough off
                  * the series to move a window or reclassify a candle. */
-                peek.invoke(h, barUp);
-                peek.invoke(h, barDown);
-                check(allBitEq(v0, components(value.invoke(h))),
+                rd.read(peek, h, barUp);
+                rd.read(peek, h, barDown);
+                check(allBitEq(v0, rd.read(value, h)),
                       name + ": peek must not commit value()");
                 check(r0.equals(range.invoke(h)),
                       name + ": peek must not move outRange()");
                 swNonCommit++;
 
                 /* 1b/2 — and it predicts the update that follows. */
-                double[] peeked = components(peek.invoke(h, barA));
-                double[] updated = components(update.invoke(h, barA));
+                double[] peeked = rd.read(peek, h, barA);
+                double[] updated = rd.read(update, h, barA);
+                check(!rd.unwritten(peeked), name + ": peek left a sink field unwritten");
+                check(!rd.unwritten(updated), name + ": update left a sink field unwritten");
                 check(allBitEq(peeked, updated), name + ": peek == the update that follows");
                 /* ...having left nothing of the two peeks behind. value() alone
                  * cannot see that: a handle whose ring was corrupted by a
@@ -1233,9 +1365,9 @@ public class StreamSmokeTest {
                  * bar just fed, and for a candlestick pattern that is 0 either
                  * way. The reference handle is what makes the corruption
                  * visible — same opener, same bar, never peeked. */
-                check(allBitEq(updated, components(update.invoke(ref, barA))),
+                check(allBitEq(updated, rd.read(update, ref, barA)),
                       name + ": peek left state behind (the next update differs from a handle that never peeked)");
-                check(allBitEq(updated, components(value.invoke(h))),
+                check(allBitEq(updated, rd.read(value, h)),
                       name + ": value() == the last update");
                 OutRange r1 = (OutRange) range.invoke(h);
                 check(r1.equals(new OutRange(r0.begIdx(), r0.count() + 1)),
@@ -1247,16 +1379,16 @@ public class StreamSmokeTest {
                 /* 3 — a fresh copy carries the range and the value. */
                 Object c = copy.invoke(h);
                 check(r1.equals(range.invoke(c)), name + ": copy carries the range");
-                check(allBitEq(updated, components(value.invoke(c))),
+                check(allBitEq(updated, rd.read(value, c)),
                       name + ": copy carries the value");
 
                 /* 4 — and forks: the copy's update moves only the copy. */
-                double[] onCopy = components(update.invoke(c, barB));
+                double[] onCopy = rd.read(update, c, barB);
                 check(r1.equals(range.invoke(h)),
                       name + ": the copy's update moved the original's outRange");
-                check(allBitEq(updated, components(value.invoke(h))),
+                check(allBitEq(updated, rd.read(value, h)),
                       name + ": the copy's update moved the original's value()");
-                double[] onOriginal = components(update.invoke(h, barB));
+                double[] onOriginal = rd.read(update, h, barB);
                 check(allBitEq(onCopy, onOriginal),
                       name + ": copy is equivalent (same bar, same bits)");
                 check(range.invoke(h).equals(range.invoke(c)),
@@ -1266,7 +1398,7 @@ public class StreamSmokeTest {
             } catch (java.lang.reflect.InvocationTargetException e) {
                 unhandled.add(name + " -> " + e.getCause().getClass().getSimpleName()
                               + ": " + e.getCause().getMessage());
-            } catch (IllegalAccessException e) {
+            } catch (ReflectiveOperationException e) {
                 unhandled.add(name + ": " + e);
             }
         }
@@ -1424,16 +1556,59 @@ public class StreamSmokeTest {
                     core.smaOpen(close, 30).value()),
               "MIN_VALUE selects the default");
 
-        /* Multi-output Value: named components, equals/hashCode/toString. */
+        /* Multi-output tier: a caller-owned sink, written by all three verbs. */
         Core.MacdStream m = core.macdOpen(close, 12, 26, 9);
-        Core.MacdStream.Value v1 = m.update(close[n - 1]);
-        check(m.value() == v1, "multi-output value() returns the cached instance");
-        Core.MacdStream.Value v2 = m.peek(close[n - 1] + 1.0);
-        check(!v1.equals(v2), "distinct bars produce non-equal Values");
-        check(v1.toString().contains("macdSignal="), "Value toString names fields");
-        java.util.HashSet<Core.MacdStream.Value> set = new java.util.HashSet<Core.MacdStream.Value>();
-        set.add(v1);
-        check(set.contains(m.value()), "Value hashCode/equals contract");
+        Core.MacdOut v1 = new Core.MacdOut();
+        Core.MacdOut vv = new Core.MacdOut();
+        m.update(close[n - 1], v1);
+        m.value(vv);
+        check(bitEq(vv.macd, v1.macd) && bitEq(vv.macdSignal, v1.macdSignal)
+                  && bitEq(vv.macdHist, v1.macdHist),
+              "value() writes the bits update wrote");
+        Core.MacdOut v2 = new Core.MacdOut();
+        m.peek(close[n - 1] + 1.0, v2);
+        check(!bitEq(v1.macd, v2.macd), "distinct bars produce distinct readings");
+
+        /* A sink is a mutable buffer, so it must NOT carry value equality: a
+         * reused instance as a HashMap key would break the map's invariant the
+         * moment the next call rewrites it. Two sinks with identical contents
+         * are therefore two distinct objects, never equal — asserted on the
+         * CONTENTS being equal, or `!equals` would hold for the boring reason. */
+        Core.MacdOut same = new Core.MacdOut();
+        m.value(same);
+        m.value(vv);
+        check(bitEq(same.macd, vv.macd) && bitEq(same.macdSignal, vv.macdSignal)
+                  && bitEq(same.macdHist, vv.macdHist),
+              "two sinks written from the same bar carry the same contents");
+        check(!same.equals(vv), "equal contents must not make two sinks equal");
+        check(Core.MacdOut.class.getDeclaredMethods().length == 0,
+              "the sink declares no methods at all, so equals/hashCode stay Object's");
+
+        /* An absent sink is a typed rejection taken BEFORE the bar is committed:
+         * the handle must not have advanced, or a caller who passed null would
+         * silently lose a bar behind a NullPointerException. */
+        Core.MacdStream mn = core.macdOpen(close, 12, 26, 9);
+        OutRange mnBefore = mn.outRange();
+        for (String verb : new String[] { "update", "peek", "value" }) {
+            try {
+                if (verb.equals("update")) {
+                    mn.update(close[n - 1], null);
+                } else if (verb.equals("peek")) {
+                    mn.peek(close[n - 1], null);
+                } else {
+                    mn.value(null);
+                }
+                check(false, "a null " + verb + " sink must be rejected");
+            } catch (NullPointerException e) {
+                check(false, verb + ": a null sink must be a typed rejection, not an NPE");
+            } catch (IllegalArgumentException e) {
+                check(e.getMessage().contains("MACD " + verb) && e.getMessage().contains("out"),
+                      verb + ": the rejection names the function and the argument");
+            }
+        }
+        check(mn.outRange().begIdx() == mnBefore.begIdx()
+                  && mn.outRange().count() == mnBefore.count(),
+              "a rejected null sink must not advance the handle");
 
         /* Components are readable by name, in batch output order, and carry the
          * same bits the batch call produces. Nothing else pins the component
@@ -1445,35 +1620,28 @@ public class StreamSmokeTest {
          * advances it past the end of what any batch call computes. */
         double[] bM = new double[n], bS = new double[n], bH = new double[n];
         OutRange mr = core.MACD(0, n - 1, close, 12, 26, 9, bM, bS, bH);
-        Core.MacdStream.Value vOpen = core.macdOpen(close, 12, 26, 9).value();
+        Core.MacdOut vOpen = new Core.MacdOut();
+        core.macdOpen(close, 12, 26, 9).value(vOpen);
         int lastM = mr.count() - 1;
-        check(bitEq(vOpen.macd(),       bM[lastM]), "Value.macd() == batch outMACD");
-        check(bitEq(vOpen.macdSignal(), bS[lastM]), "Value.macdSignal() == batch outMACDSignal");
-        check(bitEq(vOpen.macdHist(),   bH[lastM]), "Value.macdHist() == batch outMACDHist");
-        /* Value is a record, so a consumer on JDK 21+ can destructure it in a
-         * record pattern. Asserted by reflection rather than by the pattern
-         * itself: this suite compiles at --release 17, where the syntax does not
-         * exist. */
-        check(Core.MacdStream.Value.class.isRecord(), "Value is a record");
-        check(Core.MacdStream.Value.class.getRecordComponents().length == 3,
-              "Value has one component per batch output");
+        check(bitEq(vOpen.macd,       bM[lastM]), "MacdOut.macd == batch outMACD");
+        check(bitEq(vOpen.macdSignal, bS[lastM]), "MacdOut.macdSignal == batch outMACDSignal");
+        check(bitEq(vOpen.macdHist,   bH[lastM]), "MacdOut.macdHist == batch outMACDHist");
 
         /* ...and EVERY multi-output handle, not just MACD: one class checked by
-         * name would let the others regress to a hand-rolled class. The count is
-         * asserted exactly, so a Value that stopped being generated is a failure
-         * rather than a smaller sweep.
+         * name would let the others regress. The count is asserted exactly, so a
+         * sink that stopped being generated is a failure rather than a smaller
+         * sweep.
          *
          * The expectation is DERIVED FROM THE REGISTRY, not a literal. A literal
          * is a corpus count, and this suite also runs against an input/ that the
          * synth gate has injected fixtures into (scripts/synth_gate.py copies
          * every input_synth/synth<n>/ in before regenerating). The first fixture
          * with more than one real output therefore turns a correct tree red here,
-         * with a message about MACD's Value that names nothing to do with the
-         * change under test. Deriving it also strengthens the check: the
-         * component count is now pinned per function against the registry's
-         * output list, where before only MACD's was. */
-        java.util.List<String> wrongValue = new java.util.ArrayList<String>();
-        int expectedValueTypes = 0;
+         * with a message about MACD that names nothing to do with the change
+         * under test. Deriving it also strengthens the check: the field count is
+         * pinned per function against the registry's output list. */
+        java.util.List<String> wrongOut = new java.util.ArrayList<String>();
+        int expectedOutTypes = 0;
         for (io.github.talib.metadata.FunctionInfo vf : io.github.talib.metadata.Functions.all()) {
             if (vf.outputs().size() <= 1) {
                 continue;
@@ -1488,48 +1656,60 @@ public class StreamSmokeTest {
             if (handle == null) {
                 continue;                       // not stream-capable
             }
-            expectedValueTypes++;
-            Class<?> value = null;
-            for (Class<?> inner : handle.getDeclaredClasses()) {
-                if (inner.getSimpleName().equals("Value")) {
-                    value = inner;
+            expectedOutTypes++;
+            Class<?> sink = null;
+            for (Class<?> nested : Core.class.getDeclaredClasses()) {
+                if (nested.getSimpleName().equals(pascalCase(vf.name()) + "Out")) {
+                    sink = nested;
                     break;
                 }
             }
-            if (value == null) {
-                wrongValue.add(vf.name() + ": no Value");
-            } else if (!value.isRecord()) {
-                wrongValue.add(vf.name() + ": Value is not a record");
-            } else if (value.getRecordComponents().length != vf.outputs().size()) {
-                wrongValue.add(vf.name() + ": Value has "
-                    + value.getRecordComponents().length + " components, registry declares "
-                    + vf.outputs().size());
+            if (sink == null) {
+                wrongOut.add(vf.name() + ": no " + pascalCase(vf.name()) + "Out");
+                continue;
+            }
+            if (sink.isRecord()) {
+                wrongOut.add(vf.name() + ": the sink is a record, so it carries value equality");
+            }
+            if (sink.getFields().length != vf.outputs().size()) {
+                wrongOut.add(vf.name() + ": the sink carries " + sink.getFields().length
+                    + " public fields, registry declares " + vf.outputs().size());
+            }
+            for (java.lang.reflect.Field fl : sink.getFields()) {
+                if (java.lang.reflect.Modifier.isFinal(fl.getModifiers())) {
+                    wrongOut.add(vf.name() + ": sink field " + fl.getName() + " is final");
+                }
+            }
+            /* Declared, not inherited: Object's own equals/hashCode are what a
+             * mutable buffer must keep. */
+            for (String forbidden : new String[] { "equals", "hashCode" }) {
+                for (java.lang.reflect.Method dm : sink.getDeclaredMethods()) {
+                    if (dm.getName().equals(forbidden)) {
+                        wrongOut.add(vf.name() + ": the sink overrides " + forbidden);
+                    }
+                }
+            }
+            try {
+                sink.getDeclaredConstructor();   // callers allocate it themselves
+            } catch (NoSuchMethodException e) {
+                wrongOut.add(vf.name() + ": the sink has no no-arg constructor");
             }
         }
-        int valueTypes = 0, records = 0;
+        int outTypes = 0;
         for (Class<?> nested : Core.class.getDeclaredClasses()) {
-            for (Class<?> inner : nested.getDeclaredClasses()) {
-                if (!inner.getSimpleName().equals("Value")) {
-                    continue;
-                }
-                valueTypes++;
-                if (inner.isRecord()) {
-                    records++;
-                } else {
-                    System.out.println("  (not a record: " + nested.getSimpleName() + ".Value)");
-                }
+            if (nested.getSimpleName().endsWith("Out")) {
+                outTypes++;
             }
         }
-        for (String w : wrongValue) {
-            System.out.println("  (wrong Value: " + w + ")");
+        for (String w : wrongOut) {
+            System.out.println("  (wrong sink: " + w + ")");
         }
-        check(wrongValue.isEmpty(),
-              "every multi-output stream handle carries a Value matching its registry outputs");
-        check(expectedValueTypes > 0,
+        check(wrongOut.isEmpty(),
+              "every multi-output stream handle carries an <N>Out matching its registry outputs");
+        check(expectedOutTypes > 0,
               "the registry named at least one multi-output stream handle (non-vacuity)");
-        check(valueTypes == expectedValueTypes,
-              expectedValueTypes + " multi-output handles carry a Value (found " + valueTypes + ")");
-        check(records == valueTypes, "every Value is a record");
+        check(outTypes == expectedOutTypes,
+              expectedOutTypes + " multi-output handles carry a sink (found " + outTypes + ")");
 
         /* Dispatch DX: every MAType opens through the same entry point. */
         for (MAType ty : MAType.values()) {

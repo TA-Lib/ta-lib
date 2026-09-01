@@ -1129,12 +1129,16 @@ public class BatchApiTest {
                 && both.outRange().count() == declined.outRange().count(),
             "declining outFAMA leaves the reported range unchanged");
         b6aOpen++;
-        check(Double.doubleToRawLongBits(both.value().fama())
-                == Double.doubleToRawLongBits(declined.value().fama()),
+        Core.MamaOut bothV = new Core.MamaOut();
+        Core.MamaOut declinedV = new Core.MamaOut();
+        both.value(bothV);
+        declined.value(declinedV);
+        check(Double.doubleToRawLongBits(bothV.fama)
+                == Double.doubleToRawLongBits(declinedV.fama),
             "a declined outFAMA is still computed: the handle reports it");
         b6aOpen++;
         check(Double.doubleToRawLongBits(refFama[produced - 1])
-                == Double.doubleToRawLongBits(declined.value().fama()),
+                == Double.doubleToRawLongBits(declinedV.fama),
             "and it is the value the supplied run wrote last");
         b6aOpen++;
 
@@ -1202,8 +1206,10 @@ public class BatchApiTest {
         oracle.updateAndFill(bars, refMama, refFama);
         u6aFill++;
         check(wasWritten(refMama) && wasWritten(refFama), "the oracle fill wrote both outputs");
-        long oracleFama = Double.doubleToRawLongBits(oracle.value().fama());
-        long oracleMama = Double.doubleToRawLongBits(oracle.value().mama());
+        Core.MamaOut oracleV = new Core.MamaOut();
+        oracle.value(oracleV);
+        long oracleFama = Double.doubleToRawLongBits(oracleV.fama);
+        long oracleMama = Double.doubleToRawLongBits(oracleV.mama);
 
         for (boolean declinedAtOpen : new boolean[] { false, true }) {
             String what = declinedAtOpen ? "declined at open" : "supplied at open";
@@ -1223,10 +1229,12 @@ public class BatchApiTest {
                 what + ", declined here: the range");
             // The state, not the write: FAMA feeds the next bar.
             u6aFill++;
-            check(Double.doubleToRawLongBits(h.value().fama()) == oracleFama,
+            Core.MamaOut hV = new Core.MamaOut();
+            h.value(hV);
+            check(Double.doubleToRawLongBits(hV.fama) == oracleFama,
                 what + ", declined here: a declined outFAMA is still computed");
             u6aFill++;
-            check(Double.doubleToRawLongBits(h.value().mama()) == oracleMama,
+            check(Double.doubleToRawLongBits(hV.mama) == oracleMama,
                 what + ", declined here: the handle's outMAMA");
 
             Core.MamaStream h2 = declinedAtOpen
@@ -1275,8 +1283,12 @@ public class BatchApiTest {
                 "alternating leg " + k + ": outMAMA and the range");
         }
         u6aFill++;
-        check(Double.doubleToRawLongBits(alt.value().fama())
-                == Double.doubleToRawLongBits(altRef.value().fama()),
+        Core.MamaOut altV = new Core.MamaOut();
+        Core.MamaOut altRefV = new Core.MamaOut();
+        alt.value(altV);
+        altRef.value(altRefV);
+        check(Double.doubleToRawLongBits(altV.fama)
+                == Double.doubleToRawLongBits(altRefV.fama),
             "alternating the declined set left the handle's FAMA identical");
 
         // A DECLINED output is not an absent one: the required arrays are still

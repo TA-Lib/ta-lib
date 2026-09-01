@@ -15,8 +15,12 @@ Each streamable function adds two factory methods on `Core` and a handful of met
 | Call | When | Does |
 |------|------|------|
 | `core.<name>Open(history, params)` | once | validate params, consume warm-up history, return a **stream** |
-| `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
+| `stream.update(bar)` | once per **closed** bar | commit one bar and answer the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
+
+A single-output function answers with a `double` (or an `int` for a candlestick
+pattern) return. A multi-output one writes into a sink you pass and own — see
+[Multi-input / multi-output](#multi-input-multi-output).
 
 Two more calls, `openAndFill` and `updateAndFill`, write array output instead of a single value — see [Array-Fill Calls](#array-fill-calls) below.
 
@@ -54,20 +58,33 @@ double provisional = s.peek(formingClose);      // state left unchanged
 
 ## Multi-input / multi-output
 
-Inputs and outputs mirror the batch method. Multi-output functions return a small immutable `Value` record with one component per output, in batch output order; candlestick patterns return `int`:
+Inputs and outputs mirror the batch method. A multi-output function writes its
+outputs into a `Core.<Name>Out` — a plain mutable object with one public field
+per output, in batch output order — that **you** allocate and pass in.
+Candlestick patterns return `int`:
 
 ```java
 // MACD: one input, three outputs
 Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
-Core.MacdStream.Value out = m.update(newClose);
-// out.macd(), out.macdSignal(), out.macdHist()
-// On JDK 21+ it also destructures:
-//   if (out instanceof Core.MacdStream.Value(double macd, double signal, double hist)) { ... }
+Core.MacdOut out = new Core.MacdOut();   // allocate once, reuse every bar
+m.update(newClose, out);
+// out.macd, out.macdSignal, out.macdHist
 
 // A candlestick pattern returns int
 Core.CdldojiStream c = core.cdldojiOpen(open, high, low, close);
 int pattern = c.update(o, h, l, cl);
 ```
+
+Reusing one sink is the point: `update`, `peek` and `value` overwrite its fields
+and allocate nothing, so a hot loop costs zero bytes per bar. The price is that
+**its contents are only valid until the next call that writes it**. It is a
+buffer, not a reading — a reference kept past that call, or one put in a
+collection, sees the value change underneath it. Copy the fields out if the
+reading has to outlive the call, or allocate one sink per slot. For the same
+reason `<Name>Out` deliberately has no `equals`/`hashCode`: value equality on a
+mutable object breaks `HashMap`/`HashSet` the moment a reused sink becomes a key.
+Passing `null` is an `IllegalArgumentException`, taken before the bar is
+committed.
 
 ## Array-Fill Calls
 
@@ -119,7 +136,7 @@ counts one more than the values written.
 
 | Call | When | Does |
 |------|------|------|
-| `stream.value()` | any time | the value(s) at the last bar the stream counted, without recomputing |
+| `stream.value()` / `stream.value(out)` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
 | `stream.outRange()` | any time | the bars the stream has an output for — the batch range over the same bars |
 
@@ -133,7 +150,7 @@ OutRange r = s.outRange();          // the bars s has an output for
 
 `value()` hands back what `open` or the last `update` already gave you: it
 recomputes nothing and takes no bar. A single-output function returns `double`; a
-multi-output one returns its nested `Value` record, so all its outputs come back at
+multi-output one takes a `Core.<Name>Out` and writes every output into it at
 once. `open` seeds it, an accepted bar replaces it, and a rejected bar holds it —
 a held value is that bar's output — while `peek` leaves it alone. So it always
 names the bar `outRange()` reports.

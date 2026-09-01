@@ -43,10 +43,10 @@
 //!   indicator, never by the period. `clone()` exposes the copy constructor as
 //!   an independent stream — arrays clone, sub-streams clone recursively, and
 //!   only the `Core` reference is shared (settings identity is the contract).
-//! - Multi-output functions return a per-function immutable `Value` class
-//!   (public final fields, batch output order, generated toString/equals/
-//!   hashCode); `update` caches the instance so `value()` is a pure field
-//!   read. Single-output functions return the primitive directly.
+//! - Multi-output functions write a per-function `<N>Out` the CALLER owns and
+//!   passes in (mutable public fields, batch output order, no equality), so a
+//!   reused sink costs nothing per bar. Single-output functions return the
+//!   primitive directly.
 //! - Candle settings are SNAPSHOTTED into the handle at open (primitive
 //!   fields), matching Rust's frozen-by-copy observable semantics — the step
 //!   never reads the live (mutable, torn-read-prone) `CandleSetting` objects.
@@ -741,21 +741,8 @@ fn emit_handle_class_with_members(
     emit_out_class(o, func);
 }
 
-/// The immutable multi-output value record (batch output order, components
-/// named after the outputs: `outSlowK` → `slowK`).
-///
-/// A record, not a hand-rolled class: `equals`/`hashCode`/`toString` become
-/// spec-guaranteed rather than 20 generated lines each that have to be argued
-/// correct. The semantics are identical — a record compares `double` components
-/// with `Double.compare`, which agrees with the `doubleToLongBits` comparison
-/// this replaces on every input, `±0.0` and every NaN bit pattern included —
-/// and the rendered `toString` is byte-for-byte the same `Value[slowK=…, …]`.
-///
-/// The one thing it costs is the canonical constructor: a public record cannot
-/// hide one, so users can fabricate a `Value`. It carries no invariant to
-/// protect (any tuple of outputs is a legitimate reading), and in exchange the
-/// type destructures in record patterns and binds in JSON mappers with no
-/// configuration.
+/// The caller-owned sink a multi-output stream writes (batch output order,
+/// fields named after the outputs: `outSlowK` → `slowK`).
 fn emit_out_class(o: &mut String, func: &FuncDef) {
     if !has_value_class(func) {
         return;
@@ -766,7 +753,8 @@ fn emit_out_class(o: &mut String, func: &FuncDef) {
         o,
         "    * The outputs of one {} bar, written by the stream into an object the\n\
          \x20   * CALLER owns. Allocate one and reuse it: {{@code update}}, {{@code peek}}\n\
-         \x20   * and {{@code value}} overwrite its fields and allocate nothing.\n\
+         \x20   * and {{@code value}} overwrite its fields, so the sink itself costs\n\
+         \x20   * nothing per bar.\n\
          \x20   *\n\
          \x20   * <p><b>Its contents are only valid until the next call that writes it.</b>\n\
          \x20   * It is a mutable buffer, not a reading: a reference kept past that call,\n\
@@ -796,8 +784,6 @@ fn emit_out_class(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "   }}");
 }
 
-
-
 /// Statements writing the current outputs into a caller-owned sink. `src` names
 /// where the values are read from -- `this` for a committed handle, `""` for a
 /// peek frame whose outputs are locals.
@@ -818,29 +804,53 @@ fn write_out_stmts(func: &FuncDef, sink: &str, src: &str, indent: &str) -> Strin
 /// The frame's outputs are locals — `cur_<out>` is a state field, so localizing
 /// the stores makes it one — which is what `peek` answers with.
 fn fresh_value_expr_local(func: &FuncDef) -> String {
-    if has_value_class(func) {
-        let args: Vec<String> = func
-            .outputs
-            .iter()
-            .map(|out| format!("cur_{}", out.name))
-            .collect();
-        format!("new Value({})", args.join(", "))
-    } else {
-        format!("cur_{}", func.outputs[0].name)
-    }
+    // A multi-output `peek` returns void and writes the caller's sink AFTER the
+    // frame, so an early `return` inside the frame would exit having written
+    // nothing -- silently, since the value it skips is not in the signature.
+    // No shipped multi-output function has such an exit; the day one does, this
+    // must grow a sink write per exit rather than the generator emitting it.
+    assert_single_output(func, "peek frame early exit");
+    format!("cur_{}", func.outputs[0].name)
 }
 
 fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
+    assert_single_output(func, "value expression");
+    format!("{handle_var}.cur_{}", func.outputs[0].name)
+}
+
+/// `{@link #value(...)}` spelled for whichever overload this function has: a
+/// multi-output handle's is `value(<N>Out)`, and an @link naming a signature
+/// that does not exist fails the pom's `-Xdoclint:all,-missing` build gate.
+fn value_link(func: &FuncDef) -> String {
     if has_value_class(func) {
-        let args: Vec<String> = func
-            .outputs
-            .iter()
-            .map(|out| format!("{handle_var}.cur_{}", out.name))
-            .collect();
-        format!("new Value({})", args.join(", "))
+        format!("{{@link #value({})}}", out_class_name(func))
     } else {
-        format!("{handle_var}.cur_{}", func.outputs[0].name)
+        "{@link #value()}".to_string()
     }
+}
+
+/// The absent-sink rejection, first in the method body. `updateAndFill` already
+/// guards its output arrays this way; without it here a null sink reaches
+/// `update` AFTER the step has committed the bar, so the caller gets a raw
+/// NullPointerException and a handle that silently advanced.
+fn require_sink(func: &FuncDef, indent: &str, verb: &str) -> String {
+    if !has_value_class(func) {
+        return String::new();
+    }
+    format!(
+        "{indent}requireArgument(\"{} {verb}\", \"out\", out);\n",
+        func.name
+    )
+}
+
+fn assert_single_output(func: &FuncDef, site: &str) {
+    assert!(
+        !has_value_class(func),
+        "{}: {site} has no multi-output spelling -- those write a caller-owned \
+         {} instead of answering a value (#310)",
+        func.name,
+        out_class_name(func)
+    );
 }
 
 /// The one spelling of the `outRange` advance. Saturating: nothing bounds how
@@ -913,15 +923,21 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     let base = method_base(func);
     let (sig_bars, fwd_bars) = bar_params(func);
 
+    let answers = if multi {
+        "writing the new current values into the {@code out} the CALLER owns".to_string()
+    } else {
+        "returning the new current value".to_string()
+    };
+    let vlink = value_link(func);
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * Commit one closed bar, returning the new current value.\n\
+         \x20      * Commit one closed bar, {answers}.\n\
          \x20      * Never allocates handle state.\n\
          \x20      * <p>Throws {{@link IllegalArgumentException}} if any bar value is not\n\
          \x20      * finite (NaN or an infinity). That check runs before anything is\n\
          \x20      * written, so the state is left exactly as it was: the rejected bar's\n\
-         \x20      * output is the previous value, held, and {{@link #value()}} answers it.\n\
+         \x20      * output is the previous value, held, and {vlink} answers it.\n\
          \x20      * The stream stays usable, so skip the bar or re-open on a clean\n\
          \x20      * history. {{@link #outRange()}} does advance: the bar happened and\n\
          \x20      * occupies a position in the series, so the handle counts it, which is\n\
@@ -933,6 +949,9 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} update( {sig_bars}{sink} ) {{");
+    // Ahead of the finite-bar check, which counts the bar it rejects: an absent
+    // sink is a caller fault, not a bar, and must not move `outRange`.
+    o.push_str(&require_sink(func, "         ", "update"));
     o.push_str(&finite_bar_check(func, "         ", "update", true));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
     // After the step, so a bar the step throws out of is not counted. The
@@ -968,7 +987,8 @@ fn update_and_fill_doc(func: &FuncDef, count_src: &str) -> String {
             format!(
                 "\x20      * <p>{list} may be declined with {{@code null}}, per call and\n\
                  \x20      * independently of what the opener was given: the value is still\n\
-                 \x20      * computed — {{@link #value()}} reports it — and nothing is written out.\n"
+                 \x20      * computed — {} reports it — and nothing is written out.\n",
+                value_link(func)
             )
         }
     };
@@ -1052,27 +1072,11 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
         let _ = writeln!(o, "         if( {} )", checks.join(" || "));
         let _ = writeln!(o, "            {reject}");
     }
-    // `value()` must name the last COMMITTED bar on EVERY exit, the throwing
-    // ones included, so the multi-output cache is refreshed in a `finally`.
-    //
-    // That is sound because of an invariant of the step, not by luck: a
-    // composed `<base>StepImpl` writes its `sp.cur_<out>` fields as its LAST
-    // statements, after every sub-stream call — so the one thing that can throw
-    // out of the middle of a bar (a sub rejecting a non-finite intermediate,
-    // the documented composed hole) leaves `cur_*` still holding bar `i-1`,
-    // which is exactly the bar `done` counts. `no_throwing_call_follows_the_cur_capture`
-    // pins it, because without that ordering the `finally` would publish a
-    // half-written bar.
-    //
-    // C# needs none of this: its `Value` is a record struct built fresh from
-    // the same fields, so it is correct at every exit by construction. Leaving
-    // Java's cache stale would make the two backends disagree on an observable
-    // the streaming design says they agree on. Single-output handles read
-    // `cur_<out>` directly and have no cache at all.
-    // No cache to refresh: `updateAndFill` writes each bar straight into the
-    // caller's arrays, and a multi-output `value` now writes a caller-owned
-    // sink rather than replaying a stored instance (#310). So no `done`, no
-    // `try`/`finally`, and the loop body needs no extra indent.
+    // `value(out)` must name the last COMMITTED bar on every exit, the throwing
+    // ones included. It reads `cur_*`, and a composed step writes those as its
+    // LAST statements — so a sub rejecting a non-finite intermediate mid-bar
+    // (the documented composed hole) leaves them holding bar `i-1`, with
+    // nothing here to publish or keep fresh.
     let pad = "         ";
     let _ = writeln!(o, "{pad}for( int i = 0; i < barCount; i++ ) {{");
     let idx_bars: Vec<String> = inputs.iter().map(|a| format!("{a}[i]")).collect();
@@ -1114,13 +1118,17 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
         String::new()
     };
     let (sig_bars, _) = bar_params(func);
+    let verb = if multi { "write" } else { "return" };
 
-    // What still allocates per call is the `Value` a multi-output peek returns,
-    // and an accumulator a frame had to clone — no shipped one does, and the
-    // branch is the fallback. Neither grows with the period, which is the claim
-    // the frame exists to keep.
-    let allocates =
-        frame.is_some_and(|f| f.contains(".clone()")) || func.outputs.len() > 1;
+    // What still allocates per call is the sink a COMPOSED frame hands its
+    // multi-output sub-handle (#325), and an accumulator a frame had to clone —
+    // no shipped one does, and the branch is the fallback. Read off the frame
+    // rather than off the output count: the outputs go to the caller's own sink
+    // now, so the count says nothing about what a peek allocates.
+    let allocates = frame.is_some_and(|f| {
+        f.contains(".clone()")
+            || f.lines().any(|l| l.contains(" = new ") && l.trim_end().ends_with("Out();"))
+    });
     let cost = if allocates {
         "It copies no buffer: the frame runs against this handle, reading its\n\
          \x20      * buffers and storing what the step would commit into locals, so the cost\n\
@@ -1135,7 +1143,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
         o,
         "\n      /**\n\
          \x20      * Evaluate a forming bar without committing — bit-identical to what the\n\
-         \x20      * next {{@code update}} with the same bar would return — the same\n\
+         \x20      * next {{@code update}} with the same bar would {verb} — the same\n\
          \x20      * transition, with every store it would make carried in a local instead.\n\
          \x20      * Never writes this handle, so peeks may\n\
          \x20      * run concurrently with each other. {cost}\n\
@@ -1144,6 +1152,7 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     let _ = writeln!(o, "      public {vt} peek( {sig_bars}{sink} ) {{");
     // Ahead of the frame, not left to the transition: a rejected bar must not
     // run any of it.
+    o.push_str(&require_sink(func, "         ", "peek"));
     o.push_str(&finite_bar_check(func, "         ", "peek", false));
     let body = frame.expect("every tier emits a peek frame");
     let _ = writeln!(o, "         {class} sp = this;");
@@ -1165,17 +1174,23 @@ fn emit_value_method(o: &mut String, func: &FuncDef) {
         out_java_type(func, &func.outputs[0].name).to_string()
     };
     let sink = if multi { format!(" {} out ", out_class_name(func)) } else { String::new() };
+    let (past_verb, write_note) = if multi {
+        ("wrote", " Overwrites {@code out}, allocating nothing.")
+    } else {
+        ("returned", "")
+    };
 
     let _ = writeln!(
         o,
         "\n      /**\n\
          \x20      * The value at the last bar this stream counted — the bar\n\
          \x20      * {{@link #outRange()}} ends on. The last history bar right after open,\n\
-         \x20      * then whatever the latest accepted {{@code update}} returned.\n\
-         \x20      * A pure field read; {{@code peek}} does not change it.\n\
+         \x20      * then whatever the latest accepted {{@code update}} {past_verb}.\n\
+         \x20      * A pure field read; {{@code peek}} does not change it.{write_note}\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} value({sink}) {{");
+    o.push_str(&require_sink(func, "         ", "value"));
     if multi {
         o.push_str(&write_out_stmts(func, "out", "this", "         "));
     } else {
@@ -1338,7 +1353,6 @@ fn localize_state_writes(
 /// declared by the frame rather than by either arm.
 fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<Statement>> {
     let st = streaming::identity_peek_branch(model, &JavaStreamNames)?;
-    let answer = fresh_value_expr_local(func);
     let bare: HashMap<String, String> = func
         .outputs
         .iter()
@@ -1352,7 +1366,7 @@ fn identity_branch_as_frame(func: &FuncDef, model: &StreamModel) -> Option<Vec<S
         },
         &|s| match s {
             Statement::Return { value: None } => Some(Statement::Return {
-                value: Some(Expr::Var(answer.clone())),
+                value: Some(Expr::Var(fresh_value_expr_local(func))),
             }),
             other => Some(other),
         },
@@ -1491,10 +1505,9 @@ fn peek_frame_arm_named(
     // The transition's own early exit — the param-degenerate identity
     // short-circuit — is valueless, because a step returns `void`. Inline in
     // `peek` it exits a method that answers a value.
-    let answer = fresh_value_expr_local(func);
     let body_ir = streaming::rewrite_stmts(&body_ir, &|e| e, &|st| match st {
         Statement::Return { value: None } => Some(Statement::Return {
-            value: Some(Expr::Var(answer.clone())),
+            value: Some(Expr::Var(fresh_value_expr_local(func))),
         }),
         other => Some(other),
     });
@@ -2604,9 +2617,10 @@ fn declinable_note(func: &FuncDef, class: &str) -> String {
         return String::new();
     }
     let list = names.iter().map(|n| format!("{{@code {n}}}")).collect::<Vec<_>>().join(", ");
+    let vlink = value_link(func).replacen("#value", &format!("{class}#value"), 1);
     format!(
         "\n\x20   * <p>{list} may be declined with {{@code null}}: the value is still\n\
-         \x20   * computed — {{@link {class}#value()}} reports it — and nothing is written out."
+         \x20   * computed — {vlink} reports it — and nothing is written out."
     )
 }
 
@@ -3111,17 +3125,21 @@ fn emit_dispatch(
                 outputs[k]
             );
         } else {
-            // `update` commits, so the sub-handle's own `cur_*` fields hold the
-            // bar it just wrote -- no sink and no allocation here at all. Only
-            // `peek` needs one, because it commits nothing (#310).
-            let _ = writeln!(o, "         (({cls}) sp.sub).update({bar_args});");
+            // Java has no out-params, so N outputs leave a call in an object --
+            // the same per-call local the peek frame carries, and the residue
+            // #325 removes from both at once. Reading the sub-handle's own
+            // `cur_*` instead would be free here, since `update` commits, but
+            // it needs a sink-less `update` that the API does not have.
+            let ocls = callee_out_class(registry, &arm.callee);
+            let _ = writeln!(o, "         {ocls} subOut = new {ocls}();");
+            let _ = writeln!(o, "         (({cls}) sp.sub).update({bar_args}, subOut);");
             for (i, slot) in arm.out_map.iter().enumerate() {
                 if let streaming::OutSlot::Forward(k) = slot {
                     let _ = writeln!(
                         o,
-                        "         sp.cur_{} = (({cls}) sp.sub).cur_{};",
+                        "         sp.cur_{} = subOut.{};",
                         outputs[*k],
-                        registry.callee_outputs(&arm.callee)[i]
+                        callee_value_field(registry, &arm.callee, i)
                     );
                 }
             }

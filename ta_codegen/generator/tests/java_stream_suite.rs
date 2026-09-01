@@ -8,7 +8,7 @@
 //! check: the transition build panics on a cursor/startIdx leak, so a clean
 //! render proves the analyzer normalizations fired.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::registry::Registry;
@@ -179,8 +179,13 @@ fn test_java_mama_value_class_protocol() {
     assert!(s.contains("public double mama;"));
     assert!(s.contains("public double fama;"));
     assert!(!s.contains("public record Value("), "the record is gone, not renamed");
+    let out_body = {
+        let b = s.find("public static final class MamaOut {").expect("MamaOut");
+        let rest = &s[b..];
+        &rest[..rest.find("\n   }").expect("MamaOut close")]
+    };
     assert!(
-        !s.contains("equals(") && !s.contains("hashCode("),
+        !out_body.contains("equals(") && !out_body.contains("hashCode("),
         "an Out carries no value equality"
     );
     // The object protocol is the record's, so what used to be three generated
@@ -284,15 +289,18 @@ fn test_java_ma_dispatch() {
             "arm {label} must appear in both the copy constructor and dispatch switches"
         );
     }
-    // MAMA arm routes OutSlot Forward(0) and discards FAMA. `update` commits, so
-    // the forwarded value is read off the sub-handle's own committed field — no
-    // sink and no allocation on this path at all (#310); only a composed PEEK
-    // needs one, because it commits nothing.
-    assert!(s.contains("((MamaStream) sp.sub).update(inReal);"));
-    assert!(s.contains("sp.cur_outReal = ((MamaStream) sp.sub).cur_outMAMA;"));
+    // MAMA arm routes OutSlot Forward(0) and discards FAMA, through the same
+    // caller-owned sink the composed peek uses: Java has no out-params, so a
+    // multi-output sub-handle's N values leave the call in an object whichever
+    // verb asks for them (#310, residue tracked by #325). Reading the
+    // sub-handle's own committed `cur_*` would be free on this path, but that
+    // needs a sink-less `update` the API does not have.
+    assert!(s.contains("MamaOut subOut = new MamaOut();"));
+    assert!(s.contains("((MamaStream) sp.sub).update(inReal, subOut);"));
+    assert!(s.contains("sp.cur_outReal = subOut.mama;"));
     assert!(
         !s.contains("MamaStream.Value"),
-        "the dispatch update path allocates nothing"
+        "the record is gone, not renamed"
     );
     // …and the Discard slot DECLINES the callee's nullable output rather than
     // materializing a throwaway buffer for it (rule B6a at the opener).
@@ -848,8 +856,8 @@ fn no_java_peek_copies_the_handle() {
             // A frame writes locals. A bare `cur_x = ...` whose name the frame
             // never DECLARED resolves to the handle field of that name and
             // commits it — which is what a composed output reached only through
-            // an alias used to do, and no value gate here can see it: `value()`
-            // returns the CACHED record, which such a write does not move.
+            // an alias used to do. A value gate sees it only if the corrupted
+            // field is one an output reads back; this sweep names it directly.
             // A comment carries these operators too, so the write sweep reads
             // code lines only — as the allocation checks below already do.
             let code = l.starts_with("//") || l.starts_with("/*") || l.starts_with("*");
@@ -921,6 +929,44 @@ fn no_java_peek_copies_the_handle() {
     assert_eq!(
         sink_sites, expected,
         "the set of composed peeks allocating a sub-handle sink moved"
+    );
+}
+
+/// The SAME residue on the committing verbs, which the peek sweep above cannot
+/// see: a composed `update` reaches its multi-output sub-handle through the same
+/// caller-owned sink, because Java has no out-params and the API has no
+/// sink-less `update`. Pinned as an exact per-function COUNT, not a set — the
+/// two functions each carry one site per verb, and losing or gaining one on
+/// either verb is the thing #325 changes.
+///
+/// Non-vacuity: the map is asserted non-empty and every counted line is required
+/// to be a real `new <N>Out()` allocation, so an emitter that stopped writing
+/// them fails here rather than passing with an empty sweep.
+#[test]
+fn the_composed_sub_handle_sinks_are_exactly_the_costed_four() {
+    let mut sites: BTreeMap<String, usize> = BTreeMap::new();
+    for name in streaming_indicators() {
+        let s = java_stream_section(&name);
+        let n = s
+            .lines()
+            .filter(|l| {
+                let l = l.trim();
+                !l.starts_with("//") && !l.starts_with("*") && l.contains(" = new ") && l.ends_with("Out();")
+            })
+            .count();
+        if n > 0 {
+            sites.insert(name, n);
+        }
+    }
+    let expected: BTreeMap<String, usize> =
+        [("ma".to_string(), 2usize), ("stochrsi".to_string(), 2usize)]
+            .into_iter()
+            .collect();
+    assert!(!sites.is_empty(), "the sweep found no sink allocation at all");
+    assert_eq!(
+        sites, expected,
+        "the composed sub-handle sink sites moved (one per verb on each of the two \
+         composed multi-output callees, #325)"
     );
 }
 

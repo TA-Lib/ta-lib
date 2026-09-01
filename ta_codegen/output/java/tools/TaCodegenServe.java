@@ -1807,12 +1807,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(AccbandsOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -1823,6 +1823,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inHigh, double inLow, double inClose, AccbandsOut out ) {
+             requireArgument("ACCBANDS update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
@@ -1872,15 +1873,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inHigh, double inLow, double inClose, AccbandsOut out ) {
+             requireArgument("ACCBANDS peek", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
              AccbandsStream sp = this;
@@ -1951,10 +1952,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( AccbandsOut out ) {
+             requireArgument("ACCBANDS value", "out", out);
              out.realUpperBand = this.cur_outRealUpperBand;
              out.realMiddleBand = this.cur_outRealMiddleBand;
              out.realLowerBand = this.cur_outRealLowerBand;
@@ -1980,7 +1982,8 @@ class Core {
        /**
         * The outputs of one ACCBANDS bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -8993,12 +8996,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(AroonOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -9009,6 +9012,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inHigh, double inLow, AroonOut out ) {
+             requireArgument("AROON update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
@@ -9054,15 +9058,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inHigh, double inLow, AroonOut out ) {
+             requireArgument("AROON peek", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
              AroonStream sp = this;
@@ -9140,10 +9144,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( AroonOut out ) {
+             requireArgument("AROON value", "out", out);
              out.aroonDown = this.cur_outAroonDown;
              out.aroonUp = this.cur_outAroonUp;
           }
@@ -9168,7 +9173,8 @@ class Core {
        /**
         * The outputs of one AROON bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -14180,12 +14186,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(BbandsOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -14196,6 +14202,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, BbandsOut out ) {
+             requireArgument("BBANDS update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
@@ -14243,15 +14250,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, BbandsOut out ) {
+             requireArgument("BBANDS peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
              BbandsStream sp = this;
@@ -14285,10 +14292,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( BbandsOut out ) {
+             requireArgument("BBANDS value", "out", out);
              out.realUpperBand = this.cur_outRealUpperBand;
              out.realMiddleBand = this.cur_outRealMiddleBand;
              out.realLowerBand = this.cur_outRealLowerBand;
@@ -14314,7 +14322,8 @@ class Core {
        /**
         * The outputs of one BBANDS bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -89208,12 +89217,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(HtPhasorOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -89224,6 +89233,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, HtPhasorOut out ) {
+             requireArgument("HT_PHASOR update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
@@ -89268,15 +89278,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, HtPhasorOut out ) {
+             requireArgument("HT_PHASOR peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
              HtPhasorStream sp = this;
@@ -89471,10 +89481,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( HtPhasorOut out ) {
+             requireArgument("HT_PHASOR value", "out", out);
              out.inPhase = this.cur_outInPhase;
              out.quadrature = this.cur_outQuadrature;
           }
@@ -89499,7 +89510,8 @@ class Core {
        /**
         * The outputs of one HT_PHASOR bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -91235,12 +91247,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(HtSineOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -91251,6 +91263,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, HtSineOut out ) {
+             requireArgument("HT_SINE update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
@@ -91295,15 +91308,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, HtSineOut out ) {
+             requireArgument("HT_SINE peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
              HtSineStream sp = this;
@@ -91556,10 +91569,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( HtSineOut out ) {
+             requireArgument("HT_SINE value", "out", out);
              out.sine = this.cur_outSine;
              out.leadSine = this.cur_outLeadSine;
           }
@@ -91584,7 +91598,8 @@ class Core {
        /**
         * The outputs of one HT_SINE bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -99356,12 +99371,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(KcOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -99372,6 +99387,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inHigh, double inLow, double inClose, KcOut out ) {
+             requireArgument("KC update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("KC update: BadParam", RetCode.BadParam);
@@ -99421,15 +99437,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inHigh, double inLow, double inClose, KcOut out ) {
+             requireArgument("KC peek", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("KC peek: BadParam", RetCode.BadParam);
              KcStream sp = this;
@@ -99457,10 +99473,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( KcOut out ) {
+             requireArgument("KC value", "out", out);
              out.realUpperBand = this.cur_outRealUpperBand;
              out.realMiddleBand = this.cur_outRealMiddleBand;
              out.realLowerBand = this.cur_outRealLowerBand;
@@ -99486,7 +99503,8 @@ class Core {
        /**
         * The outputs of one KC bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -105815,9 +105833,10 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -105941,8 +105960,9 @@ class Core {
              break;
           }
           case MAMA: {
-             ((MamaStream) sp.sub).update(inReal);
-             sp.cur_outReal = ((MamaStream) sp.sub).cur_outMAMA;
+             MamaOut subOut = new MamaOut();
+             ((MamaStream) sp.sub).update(inReal, subOut);
+             sp.cur_outReal = subOut.mama;
              break;
           }
           case T3: {
@@ -107060,12 +107080,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(MacdOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -107076,6 +107096,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, MacdOut out ) {
+             requireArgument("MACD update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("MACD update: BadParam", RetCode.BadParam);
@@ -107123,15 +107144,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, MacdOut out ) {
+             requireArgument("MACD peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACD peek: BadParam", RetCode.BadParam);
              MacdStream sp = this;
@@ -107163,10 +107184,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( MacdOut out ) {
+             requireArgument("MACD value", "out", out);
              out.macd = this.cur_outMACD;
              out.macdSignal = this.cur_outMACDSignal;
              out.macdHist = this.cur_outMACDHist;
@@ -107192,7 +107214,8 @@ class Core {
        /**
         * The outputs of one MACD bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -108166,12 +108189,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(MacdextOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -108182,6 +108205,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, MacdextOut out ) {
+             requireArgument("MACDEXT update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
@@ -108229,15 +108253,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, MacdextOut out ) {
+             requireArgument("MACDEXT peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
              MacdextStream sp = this;
@@ -108263,10 +108287,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( MacdextOut out ) {
+             requireArgument("MACDEXT value", "out", out);
              out.macd = this.cur_outMACD;
              out.macdSignal = this.cur_outMACDSignal;
              out.macdHist = this.cur_outMACDHist;
@@ -108292,7 +108317,8 @@ class Core {
        /**
         * The outputs of one MACDEXT bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -109138,12 +109164,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(MacdfixOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -109154,6 +109180,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, MacdfixOut out ) {
+             requireArgument("MACDFIX update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
@@ -109201,15 +109228,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, MacdfixOut out ) {
+             requireArgument("MACDFIX peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
              MacdfixStream sp = this;
@@ -109241,10 +109268,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( MacdfixOut out ) {
+             requireArgument("MACDFIX value", "out", out);
              out.macd = this.cur_outMACD;
              out.macdSignal = this.cur_outMACDSignal;
              out.macdHist = this.cur_outMACDHist;
@@ -109270,7 +109298,8 @@ class Core {
        /**
         * The outputs of one MACDFIX bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -110670,12 +110699,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(MamaOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -110686,6 +110715,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, MamaOut out ) {
+             requireArgument("MAMA update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
@@ -110704,7 +110734,7 @@ class Core {
            * not be the same array as an input or as each other.
            * <p>{@code outFAMA} may be declined with {@code null}, per call and
            * independently of what the opener was given: the value is still
-           * computed — {@link #value()} reports it — and nothing is written out.
+           * computed — {@link #value(MamaOut)} reports it — and nothing is written out.
            * <p>{@link #outRange()} counts what this call took in, which is what makes a
            * rejection readable: a non-finite bar {@code k} throws
            * {@link IllegalArgumentException} exactly as {@code update} would, with
@@ -110732,15 +110762,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, MamaOut out ) {
+             requireArgument("MAMA peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
              MamaStream sp = this;
@@ -110970,10 +111000,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( MamaOut out ) {
+             requireArgument("MAMA value", "out", out);
              out.mama = this.cur_outMAMA;
              out.fama = this.cur_outFAMA;
           }
@@ -110998,7 +111029,8 @@ class Core {
        /**
         * The outputs of one MAMA bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -111728,7 +111760,7 @@ class Core {
         * written, so an undersized array is an {@link IllegalArgumentException}
         * naming it rather than a fault from inside the fill.
         * <p>{@code outFAMA} may be declined with {@code null}: the value is still
-        * computed — {@link MamaStream#value()} reports it — and nothing is written out.
+        * computed — {@link MamaStream#value(MamaOut)} reports it — and nothing is written out.
         * <p>The range written is on the returned handle:
         * {@link MamaStream#outRange()}.
         */
@@ -120634,12 +120666,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(MinmaxOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -120650,6 +120682,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, MinmaxOut out ) {
+             requireArgument("MINMAX update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("MINMAX update: BadParam", RetCode.BadParam);
@@ -120694,15 +120727,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, MinmaxOut out ) {
+             requireArgument("MINMAX peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MINMAX peek: BadParam", RetCode.BadParam);
              MinmaxStream sp = this;
@@ -120772,10 +120805,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( MinmaxOut out ) {
+             requireArgument("MINMAX value", "out", out);
              out.min = this.cur_outMin;
              out.max = this.cur_outMax;
           }
@@ -120800,7 +120834,8 @@ class Core {
        /**
         * The outputs of one MINMAX bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -121541,12 +121576,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(MinmaxindexOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -121557,6 +121592,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, MinmaxindexOut out ) {
+             requireArgument("MINMAXINDEX update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
@@ -121601,15 +121637,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inReal, MinmaxindexOut out ) {
+             requireArgument("MINMAXINDEX peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
              MinmaxindexStream sp = this;
@@ -121679,10 +121715,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( MinmaxindexOut out ) {
+             requireArgument("MINMAXINDEX value", "out", out);
              out.minIdx = this.cur_outMinIdx;
              out.maxIdx = this.cur_outMaxIdx;
           }
@@ -121707,7 +121744,8 @@ class Core {
        /**
         * The outputs of one MINMAXINDEX bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -142787,12 +142825,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(SmiOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -142803,6 +142841,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inHigh, double inLow, double inClose, SmiOut out ) {
+             requireArgument("SMI update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
@@ -142849,15 +142888,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inHigh, double inLow, double inClose, SmiOut out ) {
+             requireArgument("SMI peek", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
              SmiStream sp = this;
@@ -142969,10 +143008,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( SmiOut out ) {
+             requireArgument("SMI value", "out", out);
              out.smi = this.cur_outSMI;
              out.smiSignal = this.cur_outSMISignal;
           }
@@ -142997,7 +143037,8 @@ class Core {
        /**
         * The outputs of one SMI bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -145361,12 +145402,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(StochOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -145377,6 +145418,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inHigh, double inLow, double inClose, StochOut out ) {
+             requireArgument("STOCH update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("STOCH update: BadParam", RetCode.BadParam);
@@ -145423,15 +145465,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inHigh, double inLow, double inClose, StochOut out ) {
+             requireArgument("STOCH peek", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("STOCH peek: BadParam", RetCode.BadParam);
              StochStream sp = this;
@@ -145531,10 +145573,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( StochOut out ) {
+             requireArgument("STOCH value", "out", out);
              out.slowK = this.cur_outSlowK;
              out.slowD = this.cur_outSlowD;
           }
@@ -145559,7 +145602,8 @@ class Core {
        /**
         * The outputs of one STOCH bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -146716,12 +146760,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(StochfOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -146732,6 +146776,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inHigh, double inLow, double inClose, StochfOut out ) {
+             requireArgument("STOCHF update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
@@ -146778,15 +146823,15 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * does not grow with the period and {@code peek} never allocates.
            */
           public void peek( double inHigh, double inLow, double inClose, StochfOut out ) {
+             requireArgument("STOCHF peek", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("STOCHF peek: BadParam", RetCode.BadParam);
              StochfStream sp = this;
@@ -146885,10 +146930,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( StochfOut out ) {
+             requireArgument("STOCHF value", "out", out);
              out.fastK = this.cur_outFastK;
              out.fastD = this.cur_outFastD;
           }
@@ -146913,7 +146959,8 @@ class Core {
        /**
         * The outputs of one STOCHF bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -147847,12 +147894,12 @@ class Core {
           }
 
           /**
-           * Commit one closed bar, returning the new current value.
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
            * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so the state is left exactly as it was: the rejected bar's
-           * output is the previous value, held, and {@link #value()} answers it.
+           * output is the previous value, held, and {@link #value(StochrsiOut)} answers it.
            * The stream stays usable, so skip the bar or re-open on a clean
            * history. {@link #outRange()} does advance: the bar happened and
            * occupies a position in the series, so the handle counts it, which is
@@ -147863,6 +147910,7 @@ class Core {
            * later value it produces.
            */
           public void update( double inReal, StochrsiOut out ) {
+             requireArgument("STOCHRSI update", "out", out);
              if( !Double.isFinite(inReal) ) {
                 if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
                 throw new TaLibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
@@ -147907,7 +147955,7 @@ class Core {
 
           /**
            * Evaluate a forming bar without committing — bit-identical to what the
-           * next {@code update} with the same bar would return — the same
+           * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
            * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
@@ -147916,6 +147964,7 @@ class Core {
            * per call — a size fixed by the indicator, never by the period.
            */
           public void peek( double inReal, StochrsiOut out ) {
+             requireArgument("STOCHRSI peek", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
              StochrsiStream sp = this;
@@ -147937,10 +147986,11 @@ class Core {
           /**
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
-           * then whatever the latest accepted {@code update} returned.
-           * A pure field read; {@code peek} does not change it.
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
            */
           public void value( StochrsiOut out ) {
+             requireArgument("STOCHRSI value", "out", out);
              out.fastK = this.cur_outFastK;
              out.fastD = this.cur_outFastD;
           }
@@ -147965,7 +148015,8 @@ class Core {
        /**
         * The outputs of one STOCHRSI bar, written by the stream into an object the
         * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
-        * and {@code value} overwrite its fields and allocate nothing.
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
         *
         * <p><b>Its contents are only valid until the next call that writes it.</b>
         * It is a mutable buffer, not a reading: a reference kept past that call,
@@ -164501,7 +164552,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "5e448c46cf01ad1e";
+    static final String SPLICED_GENCODE_DIGEST = "c1fc06b2bdeef8f6";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -193616,26 +193667,33 @@ public class TaCodegenServe {
                 try { st = c2.accbandsOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.AccbandsStream.Value v0 = st.value();
-                if (svXtierNe(v0.realUpperBand(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.realMiddleBand(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.realLowerBand(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.AccbandsOut v0 = new Core.AccbandsOut(); st.value(v0);
+                if (svXtierNe(v0.realUpperBand, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.realMiddleBand, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.realLowerBand, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.AccbandsOut pk = new Core.AccbandsOut();
+                Core.AccbandsOut up = new Core.AccbandsOut();
+                Core.AccbandsOut vc = new Core.AccbandsOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.AccbandsStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.AccbandsStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svBne(pk.realUpperBand(), up.realUpperBand())) peekAll = false;
-                        if (svBne(pk.realMiddleBand(), up.realMiddleBand())) peekAll = false;
-                        if (svBne(pk.realLowerBand(), up.realLowerBand())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
-                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
-                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
+                        st.peek(fz_h[t], fz_l[t], fz_c[t], pk);
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svBne(pk.realUpperBand, up.realUpperBand)) peekAll = false;
+                        if (svBne(pk.realMiddleBand, up.realMiddleBand)) peekAll = false;
+                        if (svBne(pk.realLowerBand, up.realLowerBand)) peekAll = false;
+                        st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.realUpperBand, up.realUpperBand)) allOk = false;
+                        if (svBne(vc.realMiddleBand, up.realMiddleBand)) allOk = false;
+                        if (svBne(vc.realLowerBand, up.realLowerBand)) allOk = false;
+                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
+                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
+                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
                     } else {
-                        Core.AccbandsStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
-                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
-                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
+                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
+                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -193681,14 +193739,16 @@ public class TaCodegenServe {
                     try {
                         Core.AccbandsStream sA = c2.accbandsOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.AccbandsOut uA = new Core.AccbandsOut();
+                        Core.AccbandsOut uB = new Core.AccbandsOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.AccbandsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.AccbandsStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.AccbandsStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA.realUpperBand(), uB.realUpperBand()) || svXtierNe(uA.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand(), uB.realMiddleBand()) || svXtierNe(uA.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand(), uB.realLowerBand()) || svXtierNe(uA.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -193706,9 +193766,11 @@ public class TaCodegenServe {
             try {
                 Core.AccbandsStream sD = c2.accbandsOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
                 Core.AccbandsStream sE = c2.accbandsOpen(fz_h, fz_l, fz_c, 20);
-                if (svBne(sD.value().realUpperBand(), sE.value().realUpperBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realMiddleBand(), sE.value().realMiddleBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realLowerBand(), sE.value().realLowerBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.AccbandsOut vD = new Core.AccbandsOut(); sD.value(vD);
+                Core.AccbandsOut vE = new Core.AccbandsOut(); sE.value(vE);
+                if (svBne(vD.realUpperBand, vE.realUpperBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.realMiddleBand, vE.realMiddleBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.realLowerBand, vE.realLowerBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -195150,22 +195212,28 @@ public class TaCodegenServe {
                 try { st = c2.aroonOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.AroonStream.Value v0 = st.value();
-                if (svXtierNe(v0.aroonDown(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.aroonUp(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.AroonOut v0 = new Core.AroonOut(); st.value(v0);
+                if (svXtierNe(v0.aroonDown, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.aroonUp, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.AroonOut pk = new Core.AroonOut();
+                Core.AroonOut up = new Core.AroonOut();
+                Core.AroonOut vc = new Core.AroonOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.AroonStream.Value pk = st.peek(fz_h[t], fz_l[t]);
-                        Core.AroonStream.Value up = st.update(fz_h[t], fz_l[t]);
-                        if (svBne(pk.aroonDown(), up.aroonDown())) peekAll = false;
-                        if (svBne(pk.aroonUp(), up.aroonUp())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.aroonDown(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonDown())) + "\""; }
-                        if (svXtierNe(up.aroonUp(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonUp())) + "\""; }
+                        st.peek(fz_h[t], fz_l[t], pk);
+                        st.update(fz_h[t], fz_l[t], up);
+                        if (svBne(pk.aroonDown, up.aroonDown)) peekAll = false;
+                        if (svBne(pk.aroonUp, up.aroonUp)) peekAll = false;
+                        st.peek(fz_h[t - 1], fz_l[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.aroonDown, up.aroonDown)) allOk = false;
+                        if (svBne(vc.aroonUp, up.aroonUp)) allOk = false;
+                        if (svXtierNe(up.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonDown)) + "\""; }
+                        if (svXtierNe(up.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonUp)) + "\""; }
                     } else {
-                        Core.AroonStream.Value up = st.update(fz_h[t], fz_l[t]);
-                        if (svXtierNe(up.aroonDown(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonDown())) + "\""; }
-                        if (svXtierNe(up.aroonUp(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonUp())) + "\""; }
+                        st.update(fz_h[t], fz_l[t], up);
+                        if (svXtierNe(up.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonDown)) + "\""; }
+                        if (svXtierNe(up.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.aroonUp)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -195206,13 +195274,15 @@ public class TaCodegenServe {
                     try {
                         Core.AroonStream sA = c2.aroonOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t]);
+                        Core.AroonOut uA = new Core.AroonOut();
+                        Core.AroonOut uB = new Core.AroonOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
                         Core.AroonStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.AroonStream.Value uA = sA.update(fz_h[t], fz_l[t]);
-                            Core.AroonStream.Value uB = sB.update(fz_h[t], fz_l[t]);
-                            if (svBne(uA.aroonDown(), uB.aroonDown()) || svXtierNe(uA.aroonDown(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.aroonUp(), uB.aroonUp()) || svXtierNe(uA.aroonUp(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_h[t], fz_l[t], uA);
+                            sB.update(fz_h[t], fz_l[t], uB);
+                            if (svBne(uA.aroonDown, uB.aroonDown) || svXtierNe(uA.aroonDown, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.aroonUp, uB.aroonUp) || svXtierNe(uA.aroonUp, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -195230,8 +195300,10 @@ public class TaCodegenServe {
             try {
                 Core.AroonStream sD = c2.aroonOpen(fz_h, fz_l, Integer.MIN_VALUE);
                 Core.AroonStream sE = c2.aroonOpen(fz_h, fz_l, 14);
-                if (svBne(sD.value().aroonDown(), sE.value().aroonDown())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().aroonUp(), sE.value().aroonUp())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.AroonOut vD = new Core.AroonOut(); sD.value(vD);
+                Core.AroonOut vE = new Core.AroonOut(); sE.value(vE);
+                if (svBne(vD.aroonDown, vE.aroonDown)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.aroonUp, vE.aroonUp)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -196337,26 +196409,33 @@ public class TaCodegenServe {
                 try { st = c2.bbandsOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.BbandsStream.Value v0 = st.value();
-                if (svXtierNe(v0.realUpperBand(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.realMiddleBand(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.realLowerBand(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.BbandsOut v0 = new Core.BbandsOut(); st.value(v0);
+                if (svXtierNe(v0.realUpperBand, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.realMiddleBand, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.realLowerBand, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.BbandsOut pk = new Core.BbandsOut();
+                Core.BbandsOut up = new Core.BbandsOut();
+                Core.BbandsOut vc = new Core.BbandsOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.BbandsStream.Value pk = st.peek(fz_c[t]);
-                        Core.BbandsStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.realUpperBand(), up.realUpperBand())) peekAll = false;
-                        if (svBne(pk.realMiddleBand(), up.realMiddleBand())) peekAll = false;
-                        if (svBne(pk.realLowerBand(), up.realLowerBand())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
-                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
-                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.realUpperBand, up.realUpperBand)) peekAll = false;
+                        if (svBne(pk.realMiddleBand, up.realMiddleBand)) peekAll = false;
+                        if (svBne(pk.realLowerBand, up.realLowerBand)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.realUpperBand, up.realUpperBand)) allOk = false;
+                        if (svBne(vc.realMiddleBand, up.realMiddleBand)) allOk = false;
+                        if (svBne(vc.realLowerBand, up.realLowerBand)) allOk = false;
+                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
+                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
+                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
                     } else {
-                        Core.BbandsStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
-                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
-                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
+                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
+                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -196400,14 +196479,16 @@ public class TaCodegenServe {
                     try {
                         Core.BbandsStream sA = c2.bbandsOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.BbandsOut uA = new Core.BbandsOut();
+                        Core.BbandsOut uB = new Core.BbandsOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.BbandsStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.BbandsStream.Value uA = sA.update(fz_c[t]);
-                            Core.BbandsStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.realUpperBand(), uB.realUpperBand()) || svXtierNe(uA.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand(), uB.realMiddleBand()) || svXtierNe(uA.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand(), uB.realLowerBand()) || svXtierNe(uA.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -196425,9 +196506,11 @@ public class TaCodegenServe {
             try {
                 Core.BbandsStream sD = c2.bbandsOpen(fz_c, Integer.MIN_VALUE, optInNbDevUp, optInNbDevDn, optInMAType);
                 Core.BbandsStream sE = c2.bbandsOpen(fz_c, 20, optInNbDevUp, optInNbDevDn, optInMAType);
-                if (svBne(sD.value().realUpperBand(), sE.value().realUpperBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realMiddleBand(), sE.value().realMiddleBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realLowerBand(), sE.value().realLowerBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.BbandsOut vD = new Core.BbandsOut(); sD.value(vD);
+                Core.BbandsOut vE = new Core.BbandsOut(); sE.value(vE);
+                if (svBne(vD.realUpperBand, vE.realUpperBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.realMiddleBand, vE.realMiddleBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.realLowerBand, vE.realLowerBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -209888,22 +209971,28 @@ public class TaCodegenServe {
                 try { st = c2.htPhasorOpen(java.util.Arrays.copyOf(fz_c, p)); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.HtPhasorStream.Value v0 = st.value();
-                if (svXtierNe(v0.inPhase(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.quadrature(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.HtPhasorOut v0 = new Core.HtPhasorOut(); st.value(v0);
+                if (svXtierNe(v0.inPhase, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.quadrature, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.HtPhasorOut pk = new Core.HtPhasorOut();
+                Core.HtPhasorOut up = new Core.HtPhasorOut();
+                Core.HtPhasorOut vc = new Core.HtPhasorOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.HtPhasorStream.Value pk = st.peek(fz_c[t]);
-                        Core.HtPhasorStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.inPhase(), up.inPhase())) peekAll = false;
-                        if (svBne(pk.quadrature(), up.quadrature())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.inPhase(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.inPhase())) + "\""; }
-                        if (svXtierNe(up.quadrature(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.quadrature())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.inPhase, up.inPhase)) peekAll = false;
+                        if (svBne(pk.quadrature, up.quadrature)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.inPhase, up.inPhase)) allOk = false;
+                        if (svBne(vc.quadrature, up.quadrature)) allOk = false;
+                        if (svXtierNe(up.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.inPhase)) + "\""; }
+                        if (svXtierNe(up.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.quadrature)) + "\""; }
                     } else {
-                        Core.HtPhasorStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.inPhase(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.inPhase())) + "\""; }
-                        if (svXtierNe(up.quadrature(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.quadrature())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.inPhase)) + "\""; }
+                        if (svXtierNe(up.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.quadrature)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -209943,13 +210032,15 @@ public class TaCodegenServe {
                     try {
                         Core.HtPhasorStream sA = c2.htPhasorOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.HtPhasorOut uA = new Core.HtPhasorOut();
+                        Core.HtPhasorOut uB = new Core.HtPhasorOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.HtPhasorStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.HtPhasorStream.Value uA = sA.update(fz_c[t]);
-                            Core.HtPhasorStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.inPhase(), uB.inPhase()) || svXtierNe(uA.inPhase(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.quadrature(), uB.quadrature()) || svXtierNe(uA.quadrature(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.inPhase, uB.inPhase) || svXtierNe(uA.inPhase, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.quadrature, uB.quadrature) || svXtierNe(uA.quadrature, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -210065,22 +210156,28 @@ public class TaCodegenServe {
                 try { st = c2.htSineOpen(java.util.Arrays.copyOf(fz_c, p)); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.HtSineStream.Value v0 = st.value();
-                if (svXtierNe(v0.sine(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.leadSine(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.HtSineOut v0 = new Core.HtSineOut(); st.value(v0);
+                if (svXtierNe(v0.sine, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.leadSine, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.HtSineOut pk = new Core.HtSineOut();
+                Core.HtSineOut up = new Core.HtSineOut();
+                Core.HtSineOut vc = new Core.HtSineOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.HtSineStream.Value pk = st.peek(fz_c[t]);
-                        Core.HtSineStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.sine(), up.sine())) peekAll = false;
-                        if (svBne(pk.leadSine(), up.leadSine())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.sine(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.sine())) + "\""; }
-                        if (svXtierNe(up.leadSine(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.leadSine())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.sine, up.sine)) peekAll = false;
+                        if (svBne(pk.leadSine, up.leadSine)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.sine, up.sine)) allOk = false;
+                        if (svBne(vc.leadSine, up.leadSine)) allOk = false;
+                        if (svXtierNe(up.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.sine)) + "\""; }
+                        if (svXtierNe(up.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.leadSine)) + "\""; }
                     } else {
-                        Core.HtSineStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.sine(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.sine())) + "\""; }
-                        if (svXtierNe(up.leadSine(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.leadSine())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.sine)) + "\""; }
+                        if (svXtierNe(up.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.leadSine)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -210120,13 +210217,15 @@ public class TaCodegenServe {
                     try {
                         Core.HtSineStream sA = c2.htSineOpen(java.util.Arrays.copyOf(fz_c, p0));
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.HtSineOut uA = new Core.HtSineOut();
+                        Core.HtSineOut uB = new Core.HtSineOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.HtSineStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.HtSineStream.Value uA = sA.update(fz_c[t]);
-                            Core.HtSineStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.sine(), uB.sine()) || svXtierNe(uA.sine(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.leadSine(), uB.leadSine()) || svXtierNe(uA.leadSine(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.sine, uB.sine) || svXtierNe(uA.sine, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.leadSine, uB.leadSine) || svXtierNe(uA.leadSine, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -210905,26 +211004,33 @@ public class TaCodegenServe {
                 try { st = c2.kcOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInATRPeriod, optInNbDev); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.KcStream.Value v0 = st.value();
-                if (svXtierNe(v0.realUpperBand(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.realMiddleBand(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.realLowerBand(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.KcOut v0 = new Core.KcOut(); st.value(v0);
+                if (svXtierNe(v0.realUpperBand, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.realMiddleBand, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.realLowerBand, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.KcOut pk = new Core.KcOut();
+                Core.KcOut up = new Core.KcOut();
+                Core.KcOut vc = new Core.KcOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.KcStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.KcStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svBne(pk.realUpperBand(), up.realUpperBand())) peekAll = false;
-                        if (svBne(pk.realMiddleBand(), up.realMiddleBand())) peekAll = false;
-                        if (svBne(pk.realLowerBand(), up.realLowerBand())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
-                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
-                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
+                        st.peek(fz_h[t], fz_l[t], fz_c[t], pk);
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svBne(pk.realUpperBand, up.realUpperBand)) peekAll = false;
+                        if (svBne(pk.realMiddleBand, up.realMiddleBand)) peekAll = false;
+                        if (svBne(pk.realLowerBand, up.realLowerBand)) peekAll = false;
+                        st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.realUpperBand, up.realUpperBand)) allOk = false;
+                        if (svBne(vc.realMiddleBand, up.realMiddleBand)) allOk = false;
+                        if (svBne(vc.realLowerBand, up.realLowerBand)) allOk = false;
+                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
+                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
+                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
                     } else {
-                        Core.KcStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
-                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
-                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
+                        if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
+                        if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -210970,14 +211076,16 @@ public class TaCodegenServe {
                     try {
                         Core.KcStream sA = c2.kcOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInATRPeriod, optInNbDev);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.KcOut uA = new Core.KcOut();
+                        Core.KcOut uB = new Core.KcOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.KcStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.KcStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.KcStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA.realUpperBand(), uB.realUpperBand()) || svXtierNe(uA.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realMiddleBand(), uB.realMiddleBand()) || svXtierNe(uA.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.realLowerBand(), uB.realLowerBand()) || svXtierNe(uA.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -210995,9 +211103,11 @@ public class TaCodegenServe {
             try {
                 Core.KcStream sD = c2.kcOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInNbDev);
                 Core.KcStream sE = c2.kcOpen(fz_h, fz_l, fz_c, 20, 10, optInNbDev);
-                if (svBne(sD.value().realUpperBand(), sE.value().realUpperBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realMiddleBand(), sE.value().realMiddleBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().realLowerBand(), sE.value().realLowerBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.KcOut vD = new Core.KcOut(); sD.value(vD);
+                Core.KcOut vE = new Core.KcOut(); sE.value(vE);
+                if (svBne(vD.realUpperBand, vE.realUpperBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.realMiddleBand, vE.realMiddleBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.realLowerBand, vE.realLowerBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -212269,26 +212379,33 @@ public class TaCodegenServe {
                 try { st = c2.macdOpen(java.util.Arrays.copyOf(fz_c, p), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.MacdStream.Value v0 = st.value();
-                if (svXtierNe(v0.macd(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdSignal(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdHist(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.MacdOut v0 = new Core.MacdOut(); st.value(v0);
+                if (svXtierNe(v0.macd, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdHist, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.MacdOut pk = new Core.MacdOut();
+                Core.MacdOut up = new Core.MacdOut();
+                Core.MacdOut vc = new Core.MacdOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.MacdStream.Value pk = st.peek(fz_c[t]);
-                        Core.MacdStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.macd(), up.macd())) peekAll = false;
-                        if (svBne(pk.macdSignal(), up.macdSignal())) peekAll = false;
-                        if (svBne(pk.macdHist(), up.macdHist())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
-                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
-                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.macd, up.macd)) peekAll = false;
+                        if (svBne(pk.macdSignal, up.macdSignal)) peekAll = false;
+                        if (svBne(pk.macdHist, up.macdHist)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.macd, up.macd)) allOk = false;
+                        if (svBne(vc.macdSignal, up.macdSignal)) allOk = false;
+                        if (svBne(vc.macdHist, up.macdHist)) allOk = false;
+                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
+                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
+                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
                     } else {
-                        Core.MacdStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
-                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
-                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
+                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
+                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -212332,14 +212449,16 @@ public class TaCodegenServe {
                     try {
                         Core.MacdStream sA = c2.macdOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.MacdOut uA = new Core.MacdOut();
+                        Core.MacdOut uB = new Core.MacdOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MacdStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.MacdStream.Value uA = sA.update(fz_c[t]);
-                            Core.MacdStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.macd(), uB.macd()) || svXtierNe(uA.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal(), uB.macdSignal()) || svXtierNe(uA.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist(), uB.macdHist()) || svXtierNe(uA.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -212357,9 +212476,11 @@ public class TaCodegenServe {
             try {
                 Core.MacdStream sD = c2.macdOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
                 Core.MacdStream sE = c2.macdOpen(fz_c, 12, 26, 9);
-                if (svBne(sD.value().macd(), sE.value().macd())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.MacdOut vD = new Core.MacdOut(); sD.value(vD);
+                Core.MacdOut vE = new Core.MacdOut(); sE.value(vE);
+                if (svBne(vD.macd, vE.macd)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.macdSignal, vE.macdSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.macdHist, vE.macdHist)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -212494,26 +212615,33 @@ public class TaCodegenServe {
                 try { st = c2.macdextOpen(java.util.Arrays.copyOf(fz_c, p), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.MacdextStream.Value v0 = st.value();
-                if (svXtierNe(v0.macd(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdSignal(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdHist(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.MacdextOut v0 = new Core.MacdextOut(); st.value(v0);
+                if (svXtierNe(v0.macd, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdHist, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.MacdextOut pk = new Core.MacdextOut();
+                Core.MacdextOut up = new Core.MacdextOut();
+                Core.MacdextOut vc = new Core.MacdextOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.MacdextStream.Value pk = st.peek(fz_c[t]);
-                        Core.MacdextStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.macd(), up.macd())) peekAll = false;
-                        if (svBne(pk.macdSignal(), up.macdSignal())) peekAll = false;
-                        if (svBne(pk.macdHist(), up.macdHist())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
-                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
-                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.macd, up.macd)) peekAll = false;
+                        if (svBne(pk.macdSignal, up.macdSignal)) peekAll = false;
+                        if (svBne(pk.macdHist, up.macdHist)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.macd, up.macd)) allOk = false;
+                        if (svBne(vc.macdSignal, up.macdSignal)) allOk = false;
+                        if (svBne(vc.macdHist, up.macdHist)) allOk = false;
+                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
+                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
+                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
                     } else {
-                        Core.MacdextStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
-                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
-                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
+                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
+                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -212557,14 +212685,16 @@ public class TaCodegenServe {
                     try {
                         Core.MacdextStream sA = c2.macdextOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.MacdextOut uA = new Core.MacdextOut();
+                        Core.MacdextOut uB = new Core.MacdextOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MacdextStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.MacdextStream.Value uA = sA.update(fz_c[t]);
-                            Core.MacdextStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.macd(), uB.macd()) || svXtierNe(uA.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal(), uB.macdSignal()) || svXtierNe(uA.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist(), uB.macdHist()) || svXtierNe(uA.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -212582,9 +212712,11 @@ public class TaCodegenServe {
             try {
                 Core.MacdextStream sD = c2.macdextOpen(fz_c, Integer.MIN_VALUE, optInFastMAType, Integer.MIN_VALUE, optInSlowMAType, Integer.MIN_VALUE, optInSignalMAType);
                 Core.MacdextStream sE = c2.macdextOpen(fz_c, 12, optInFastMAType, 26, optInSlowMAType, 9, optInSignalMAType);
-                if (svBne(sD.value().macd(), sE.value().macd())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.MacdextOut vD = new Core.MacdextOut(); sD.value(vD);
+                Core.MacdextOut vE = new Core.MacdextOut(); sE.value(vE);
+                if (svBne(vD.macd, vE.macd)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.macdSignal, vE.macdSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.macdHist, vE.macdHist)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -212693,26 +212825,33 @@ public class TaCodegenServe {
                 try { st = c2.macdfixOpen(java.util.Arrays.copyOf(fz_c, p), optInSignalPeriod); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.MacdfixStream.Value v0 = st.value();
-                if (svXtierNe(v0.macd(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdSignal(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
-                if (svXtierNe(v0.macdHist(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.MacdfixOut v0 = new Core.MacdfixOut(); st.value(v0);
+                if (svXtierNe(v0.macd, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdHist, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.MacdfixOut pk = new Core.MacdfixOut();
+                Core.MacdfixOut up = new Core.MacdfixOut();
+                Core.MacdfixOut vc = new Core.MacdfixOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.MacdfixStream.Value pk = st.peek(fz_c[t]);
-                        Core.MacdfixStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.macd(), up.macd())) peekAll = false;
-                        if (svBne(pk.macdSignal(), up.macdSignal())) peekAll = false;
-                        if (svBne(pk.macdHist(), up.macdHist())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
-                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
-                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.macd, up.macd)) peekAll = false;
+                        if (svBne(pk.macdSignal, up.macdSignal)) peekAll = false;
+                        if (svBne(pk.macdHist, up.macdHist)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.macd, up.macd)) allOk = false;
+                        if (svBne(vc.macdSignal, up.macdSignal)) allOk = false;
+                        if (svBne(vc.macdHist, up.macdHist)) allOk = false;
+                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
+                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
+                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
                     } else {
-                        Core.MacdfixStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd())) + "\""; }
-                        if (svXtierNe(up.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal())) + "\""; }
-                        if (svXtierNe(up.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macd)) + "\""; }
+                        if (svXtierNe(up.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdSignal)) + "\""; }
+                        if (svXtierNe(up.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdHist)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -212756,14 +212895,16 @@ public class TaCodegenServe {
                     try {
                         Core.MacdfixStream sA = c2.macdfixOpen(java.util.Arrays.copyOf(fz_c, p0), optInSignalPeriod);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.MacdfixOut uA = new Core.MacdfixOut();
+                        Core.MacdfixOut uB = new Core.MacdfixOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MacdfixStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.MacdfixStream.Value uA = sA.update(fz_c[t]);
-                            Core.MacdfixStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.macd(), uB.macd()) || svXtierNe(uA.macd(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdSignal(), uB.macdSignal()) || svXtierNe(uA.macdSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.macdHist(), uB.macdHist()) || svXtierNe(uA.macdHist(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.macd, uB.macd) || svXtierNe(uA.macd, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdSignal, uB.macdSignal) || svXtierNe(uA.macdSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdHist, uB.macdHist) || svXtierNe(uA.macdHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -212781,9 +212922,11 @@ public class TaCodegenServe {
             try {
                 Core.MacdfixStream sD = c2.macdfixOpen(fz_c, Integer.MIN_VALUE);
                 Core.MacdfixStream sE = c2.macdfixOpen(fz_c, 9);
-                if (svBne(sD.value().macd(), sE.value().macd())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdSignal(), sE.value().macdSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().macdHist(), sE.value().macdHist())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.MacdfixOut vD = new Core.MacdfixOut(); sD.value(vD);
+                Core.MacdfixOut vE = new Core.MacdfixOut(); sE.value(vE);
+                if (svBne(vD.macd, vE.macd)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.macdSignal, vE.macdSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.macdHist, vE.macdHist)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -212888,22 +213031,28 @@ public class TaCodegenServe {
                 try { st = c2.mamaOpen(java.util.Arrays.copyOf(fz_c, p), optInFastLimit, optInSlowLimit); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.MamaStream.Value v0 = st.value();
-                if (svXtierNe(v0.mama(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.fama(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.MamaOut v0 = new Core.MamaOut(); st.value(v0);
+                if (svXtierNe(v0.mama, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.fama, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.MamaOut pk = new Core.MamaOut();
+                Core.MamaOut up = new Core.MamaOut();
+                Core.MamaOut vc = new Core.MamaOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.MamaStream.Value pk = st.peek(fz_c[t]);
-                        Core.MamaStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.mama(), up.mama())) peekAll = false;
-                        if (svBne(pk.fama(), up.fama())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.mama(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.mama())) + "\""; }
-                        if (svXtierNe(up.fama(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fama())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.mama, up.mama)) peekAll = false;
+                        if (svBne(pk.fama, up.fama)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.mama, up.mama)) allOk = false;
+                        if (svBne(vc.fama, up.fama)) allOk = false;
+                        if (svXtierNe(up.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.mama)) + "\""; }
+                        if (svXtierNe(up.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fama)) + "\""; }
                     } else {
-                        Core.MamaStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.mama(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.mama())) + "\""; }
-                        if (svXtierNe(up.fama(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fama())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.mama)) + "\""; }
+                        if (svXtierNe(up.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fama)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -212943,13 +213092,15 @@ public class TaCodegenServe {
                     try {
                         Core.MamaStream sA = c2.mamaOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastLimit, optInSlowLimit);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.MamaOut uA = new Core.MamaOut();
+                        Core.MamaOut uB = new Core.MamaOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MamaStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.MamaStream.Value uA = sA.update(fz_c[t]);
-                            Core.MamaStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.mama(), uB.mama()) || svXtierNe(uA.mama(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fama(), uB.fama()) || svXtierNe(uA.fama(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.mama, uB.mama) || svXtierNe(uA.mama, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fama, uB.fama) || svXtierNe(uA.fama, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -214730,22 +214881,28 @@ public class TaCodegenServe {
                 try { st = c2.minmaxOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.MinmaxStream.Value v0 = st.value();
-                if (svXtierNe(v0.min(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.max(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.MinmaxOut v0 = new Core.MinmaxOut(); st.value(v0);
+                if (svXtierNe(v0.min, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.max, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.MinmaxOut pk = new Core.MinmaxOut();
+                Core.MinmaxOut up = new Core.MinmaxOut();
+                Core.MinmaxOut vc = new Core.MinmaxOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.MinmaxStream.Value pk = st.peek(fz_c[t]);
-                        Core.MinmaxStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.min(), up.min())) peekAll = false;
-                        if (svBne(pk.max(), up.max())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.min(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.min())) + "\""; }
-                        if (svXtierNe(up.max(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.max())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.min, up.min)) peekAll = false;
+                        if (svBne(pk.max, up.max)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.min, up.min)) allOk = false;
+                        if (svBne(vc.max, up.max)) allOk = false;
+                        if (svXtierNe(up.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.min)) + "\""; }
+                        if (svXtierNe(up.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.max)) + "\""; }
                     } else {
-                        Core.MinmaxStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.min(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.min())) + "\""; }
-                        if (svXtierNe(up.max(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.max())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.min)) + "\""; }
+                        if (svXtierNe(up.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.max)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -214785,13 +214942,15 @@ public class TaCodegenServe {
                     try {
                         Core.MinmaxStream sA = c2.minmaxOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.MinmaxOut uA = new Core.MinmaxOut();
+                        Core.MinmaxOut uB = new Core.MinmaxOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MinmaxStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.MinmaxStream.Value uA = sA.update(fz_c[t]);
-                            Core.MinmaxStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.min(), uB.min()) || svXtierNe(uA.min(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.max(), uB.max()) || svXtierNe(uA.max(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.min, uB.min) || svXtierNe(uA.min, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.max, uB.max) || svXtierNe(uA.max, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -214809,8 +214968,10 @@ public class TaCodegenServe {
             try {
                 Core.MinmaxStream sD = c2.minmaxOpen(fz_c, Integer.MIN_VALUE);
                 Core.MinmaxStream sE = c2.minmaxOpen(fz_c, 30);
-                if (svBne(sD.value().min(), sE.value().min())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().max(), sE.value().max())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.MinmaxOut vD = new Core.MinmaxOut(); sD.value(vD);
+                Core.MinmaxOut vE = new Core.MinmaxOut(); sE.value(vE);
+                if (svBne(vD.min, vE.min)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.max, vE.max)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -214911,22 +215072,28 @@ public class TaCodegenServe {
                 try { st = c2.minmaxindexOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.MinmaxindexStream.Value v0 = st.value();
-                if (v0.minIdx() != b0[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (v0.maxIdx() != b1[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.MinmaxindexOut v0 = new Core.MinmaxindexOut(); st.value(v0);
+                if (v0.minIdx != b0[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (v0.maxIdx != b1[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.MinmaxindexOut pk = new Core.MinmaxindexOut();
+                Core.MinmaxindexOut up = new Core.MinmaxindexOut();
+                Core.MinmaxindexOut vc = new Core.MinmaxindexOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.MinmaxindexStream.Value pk = st.peek(fz_c[t]);
-                        Core.MinmaxindexStream.Value up = st.update(fz_c[t]);
-                        if (pk.minIdx() != up.minIdx()) peekAll = false;
-                        if (pk.maxIdx() != up.maxIdx()) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (up.minIdx() != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.minIdx() + "\""; }
-                        if (up.maxIdx() != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.maxIdx() + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (pk.minIdx != up.minIdx) peekAll = false;
+                        if (pk.maxIdx != up.maxIdx) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (vc.minIdx != up.minIdx) allOk = false;
+                        if (vc.maxIdx != up.maxIdx) allOk = false;
+                        if (up.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.minIdx + "\""; }
+                        if (up.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.maxIdx + "\""; }
                     } else {
-                        Core.MinmaxindexStream.Value up = st.update(fz_c[t]);
-                        if (up.minIdx() != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.minIdx() + "\""; }
-                        if (up.maxIdx() != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.maxIdx() + "\""; }
+                        st.update(fz_c[t], up);
+                        if (up.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.minIdx + "\""; }
+                        if (up.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.maxIdx + "\""; }
                     }
                 }
                 if (allOk) {
@@ -214965,13 +215132,15 @@ public class TaCodegenServe {
                     try {
                         Core.MinmaxindexStream sA = c2.minmaxindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.MinmaxindexOut uA = new Core.MinmaxindexOut();
+                        Core.MinmaxindexOut uB = new Core.MinmaxindexOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.MinmaxindexStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.MinmaxindexStream.Value uA = sA.update(fz_c[t]);
-                            Core.MinmaxindexStream.Value uB = sB.update(fz_c[t]);
-                            if (uA.minIdx() != uB.minIdx() || uA.minIdx() != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.maxIdx() != uB.maxIdx() || uA.maxIdx() != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (uA.minIdx != uB.minIdx || uA.minIdx != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.maxIdx != uB.maxIdx || uA.maxIdx != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -214989,8 +215158,10 @@ public class TaCodegenServe {
             try {
                 Core.MinmaxindexStream sD = c2.minmaxindexOpen(fz_c, Integer.MIN_VALUE);
                 Core.MinmaxindexStream sE = c2.minmaxindexOpen(fz_c, 30);
-                if (sD.value().minIdx() != sE.value().minIdx()) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (sD.value().maxIdx() != sE.value().maxIdx()) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.MinmaxindexOut vD = new Core.MinmaxindexOut(); sD.value(vD);
+                Core.MinmaxindexOut vE = new Core.MinmaxindexOut(); sE.value(vE);
+                if (vD.minIdx != vE.minIdx) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (vD.maxIdx != vE.maxIdx) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -218922,22 +219093,28 @@ public class TaCodegenServe {
                 try { st = c2.smiOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.SmiStream.Value v0 = st.value();
-                if (svXtierNe(v0.smi(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.smiSignal(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.SmiOut v0 = new Core.SmiOut(); st.value(v0);
+                if (svXtierNe(v0.smi, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.smiSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.SmiOut pk = new Core.SmiOut();
+                Core.SmiOut up = new Core.SmiOut();
+                Core.SmiOut vc = new Core.SmiOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.SmiStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.SmiStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svBne(pk.smi(), up.smi())) peekAll = false;
-                        if (svBne(pk.smiSignal(), up.smiSignal())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.smi(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smi())) + "\""; }
-                        if (svXtierNe(up.smiSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smiSignal())) + "\""; }
+                        st.peek(fz_h[t], fz_l[t], fz_c[t], pk);
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svBne(pk.smi, up.smi)) peekAll = false;
+                        if (svBne(pk.smiSignal, up.smiSignal)) peekAll = false;
+                        st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.smi, up.smi)) allOk = false;
+                        if (svBne(vc.smiSignal, up.smiSignal)) allOk = false;
+                        if (svXtierNe(up.smi, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smi)) + "\""; }
+                        if (svXtierNe(up.smiSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smiSignal)) + "\""; }
                     } else {
-                        Core.SmiStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svXtierNe(up.smi(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smi())) + "\""; }
-                        if (svXtierNe(up.smiSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smiSignal())) + "\""; }
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svXtierNe(up.smi, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smi)) + "\""; }
+                        if (svXtierNe(up.smiSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.smiSignal)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -218979,13 +219156,15 @@ public class TaCodegenServe {
                     try {
                         Core.SmiStream sA = c2.smiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.SmiOut uA = new Core.SmiOut();
+                        Core.SmiOut uB = new Core.SmiOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.SmiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.SmiStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.SmiStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA.smi(), uB.smi()) || svXtierNe(uA.smi(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.smiSignal(), uB.smiSignal()) || svXtierNe(uA.smiSignal(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.smi, uB.smi) || svXtierNe(uA.smi, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.smiSignal, uB.smiSignal) || svXtierNe(uA.smiSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -219003,8 +219182,10 @@ public class TaCodegenServe {
             try {
                 Core.SmiStream sD = c2.smiOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
                 Core.SmiStream sE = c2.smiOpen(fz_h, fz_l, fz_c, 13, 2, 25, 9);
-                if (svBne(sD.value().smi(), sE.value().smi())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().smiSignal(), sE.value().smiSignal())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.SmiOut vD = new Core.SmiOut(); sD.value(vD);
+                Core.SmiOut vE = new Core.SmiOut(); sE.value(vE);
+                if (svBne(vD.smi, vE.smi)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.smiSignal, vE.smiSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -219454,22 +219635,28 @@ public class TaCodegenServe {
                 try { st = c2.stochOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.StochStream.Value v0 = st.value();
-                if (svXtierNe(v0.slowK(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.slowD(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.StochOut v0 = new Core.StochOut(); st.value(v0);
+                if (svXtierNe(v0.slowK, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.slowD, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.StochOut pk = new Core.StochOut();
+                Core.StochOut up = new Core.StochOut();
+                Core.StochOut vc = new Core.StochOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.StochStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.StochStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svBne(pk.slowK(), up.slowK())) peekAll = false;
-                        if (svBne(pk.slowD(), up.slowD())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.slowK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowK())) + "\""; }
-                        if (svXtierNe(up.slowD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowD())) + "\""; }
+                        st.peek(fz_h[t], fz_l[t], fz_c[t], pk);
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svBne(pk.slowK, up.slowK)) peekAll = false;
+                        if (svBne(pk.slowD, up.slowD)) peekAll = false;
+                        st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.slowK, up.slowK)) allOk = false;
+                        if (svBne(vc.slowD, up.slowD)) allOk = false;
+                        if (svXtierNe(up.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowK)) + "\""; }
+                        if (svXtierNe(up.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowD)) + "\""; }
                     } else {
-                        Core.StochStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svXtierNe(up.slowK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowK())) + "\""; }
-                        if (svXtierNe(up.slowD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowD())) + "\""; }
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svXtierNe(up.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowK)) + "\""; }
+                        if (svXtierNe(up.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.slowD)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -219511,13 +219698,15 @@ public class TaCodegenServe {
                     try {
                         Core.StochStream sA = c2.stochOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.StochOut uA = new Core.StochOut();
+                        Core.StochOut uB = new Core.StochOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.StochStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.StochStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.StochStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA.slowK(), uB.slowK()) || svXtierNe(uA.slowK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.slowD(), uB.slowD()) || svXtierNe(uA.slowD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.slowK, uB.slowK) || svXtierNe(uA.slowK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.slowD, uB.slowD) || svXtierNe(uA.slowD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -219535,8 +219724,10 @@ public class TaCodegenServe {
             try {
                 Core.StochStream sD = c2.stochOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInSlowK_MAType, Integer.MIN_VALUE, optInSlowD_MAType);
                 Core.StochStream sE = c2.stochOpen(fz_h, fz_l, fz_c, 5, 3, optInSlowK_MAType, 3, optInSlowD_MAType);
-                if (svBne(sD.value().slowK(), sE.value().slowK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().slowD(), sE.value().slowD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.StochOut vD = new Core.StochOut(); sD.value(vD);
+                Core.StochOut vE = new Core.StochOut(); sE.value(vE);
+                if (svBne(vD.slowK, vE.slowK)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.slowD, vE.slowD)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -219651,22 +219842,28 @@ public class TaCodegenServe {
                 try { st = c2.stochfOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInFastK_Period, optInFastD_Period, optInFastD_MAType); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.StochfStream.Value v0 = st.value();
-                if (svXtierNe(v0.fastK(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.fastD(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.StochfOut v0 = new Core.StochfOut(); st.value(v0);
+                if (svXtierNe(v0.fastK, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.fastD, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.StochfOut pk = new Core.StochfOut();
+                Core.StochfOut up = new Core.StochfOut();
+                Core.StochfOut vc = new Core.StochfOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.StochfStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.StochfStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svBne(pk.fastK(), up.fastK())) peekAll = false;
-                        if (svBne(pk.fastD(), up.fastD())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK())) + "\""; }
-                        if (svXtierNe(up.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD())) + "\""; }
+                        st.peek(fz_h[t], fz_l[t], fz_c[t], pk);
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svBne(pk.fastK, up.fastK)) peekAll = false;
+                        if (svBne(pk.fastD, up.fastD)) peekAll = false;
+                        st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.fastK, up.fastK)) allOk = false;
+                        if (svBne(vc.fastD, up.fastD)) allOk = false;
+                        if (svXtierNe(up.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK)) + "\""; }
+                        if (svXtierNe(up.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD)) + "\""; }
                     } else {
-                        Core.StochfStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (svXtierNe(up.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK())) + "\""; }
-                        if (svXtierNe(up.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD())) + "\""; }
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svXtierNe(up.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK)) + "\""; }
+                        if (svXtierNe(up.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -219708,13 +219905,15 @@ public class TaCodegenServe {
                     try {
                         Core.StochfStream sA = c2.stochfOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInFastD_Period, optInFastD_MAType);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.StochfOut uA = new Core.StochfOut();
+                        Core.StochfOut uB = new Core.StochfOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
                         Core.StochfStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.StochfStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
-                            Core.StochfStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (svBne(uA.fastK(), uB.fastK()) || svXtierNe(uA.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fastD(), uB.fastD()) || svXtierNe(uA.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.fastK, uB.fastK) || svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastD, uB.fastD) || svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -219732,8 +219931,10 @@ public class TaCodegenServe {
             try {
                 Core.StochfStream sD = c2.stochfOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInFastD_MAType);
                 Core.StochfStream sE = c2.stochfOpen(fz_h, fz_l, fz_c, 5, 3, optInFastD_MAType);
-                if (svBne(sD.value().fastK(), sE.value().fastK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().fastD(), sE.value().fastD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.StochfOut vD = new Core.StochfOut(); sD.value(vD);
+                Core.StochfOut vE = new Core.StochfOut(); sE.value(vE);
+                if (svBne(vD.fastK, vE.fastK)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.fastD, vE.fastD)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;
@@ -219850,22 +220051,28 @@ public class TaCodegenServe {
                 try { st = c2.stochrsiOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); }
                 catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
-                Core.StochrsiStream.Value v0 = st.value();
-                if (svXtierNe(v0.fastK(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (svXtierNe(v0.fastD(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.StochrsiOut v0 = new Core.StochrsiOut(); st.value(v0);
+                if (svXtierNe(v0.fastK, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.fastD, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.StochrsiOut pk = new Core.StochrsiOut();
+                Core.StochrsiOut up = new Core.StochrsiOut();
+                Core.StochrsiOut vc = new Core.StochrsiOut();
                 for (int t = p; t < svN; t++) {
                     if (t % 7 == 0) {
-                        Core.StochrsiStream.Value pk = st.peek(fz_c[t]);
-                        Core.StochrsiStream.Value up = st.update(fz_c[t]);
-                        if (svBne(pk.fastK(), up.fastK())) peekAll = false;
-                        if (svBne(pk.fastD(), up.fastD())) peekAll = false;
-                        if (st.value() != up) allOk = false; /* cached Value identity */
-                        if (svXtierNe(up.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK())) + "\""; }
-                        if (svXtierNe(up.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD())) + "\""; }
+                        st.peek(fz_c[t], pk);
+                        st.update(fz_c[t], up);
+                        if (svBne(pk.fastK, up.fastK)) peekAll = false;
+                        if (svBne(pk.fastD, up.fastD)) peekAll = false;
+                        st.peek(fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.fastK, up.fastK)) allOk = false;
+                        if (svBne(vc.fastD, up.fastD)) allOk = false;
+                        if (svXtierNe(up.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK)) + "\""; }
+                        if (svXtierNe(up.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD)) + "\""; }
                     } else {
-                        Core.StochrsiStream.Value up = st.update(fz_c[t]);
-                        if (svXtierNe(up.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK())) + "\""; }
-                        if (svXtierNe(up.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD())) + "\""; }
+                        st.update(fz_c[t], up);
+                        if (svXtierNe(up.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastK)) + "\""; }
+                        if (svXtierNe(up.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.fastD)) + "\""; }
                     }
                 }
                 if (allOk) {
@@ -219905,13 +220112,15 @@ public class TaCodegenServe {
                     try {
                         Core.StochrsiStream sA = c2.stochrsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
                         int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.StochrsiOut uA = new Core.StochrsiOut();
+                        Core.StochrsiOut uB = new Core.StochrsiOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], uA);
                         Core.StochrsiStream sB = sA.clone();
                         for (int t = mid; t < svN; t++) {
-                            Core.StochrsiStream.Value uA = sA.update(fz_c[t]);
-                            Core.StochrsiStream.Value uB = sB.update(fz_c[t]);
-                            if (svBne(uA.fastK(), uB.fastK()) || svXtierNe(uA.fastK(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
-                            if (svBne(uA.fastD(), uB.fastD()) || svXtierNe(uA.fastD(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            sA.update(fz_c[t], uA);
+                            sB.update(fz_c[t], uB);
+                            if (svBne(uA.fastK, uB.fastK) || svXtierNe(uA.fastK, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.fastD, uB.fastD) || svXtierNe(uA.fastD, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 16;
@@ -219929,8 +220138,10 @@ public class TaCodegenServe {
             try {
                 Core.StochrsiStream sD = c2.stochrsiOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, optInFastD_MAType);
                 Core.StochrsiStream sE = c2.stochrsiOpen(fz_c, 14, 5, 3, optInFastD_MAType);
-                if (svBne(sD.value().fastK(), sE.value().fastK())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
-                if (svBne(sD.value().fastD(), sE.value().fastD())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                Core.StochrsiOut vD = new Core.StochrsiOut(); sD.value(vD);
+                Core.StochrsiOut vE = new Core.StochrsiOut(); sE.value(vE);
+                if (svBne(vD.fastK, vE.fastK)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.fastD, vE.fastD)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
             } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;

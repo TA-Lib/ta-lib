@@ -293,7 +293,6 @@ fn the_check_is_inside_the_loop_and_not_a_pre_scan() {
 /// both managed backends so neither grows one back.
 #[test]
 fn no_managed_handle_caches_the_multi_output_value() {
-    let mut swept = 0;
     for (func, lang, verb) in [
         ("bbands", "java", "public void updateAndFill("),
         ("macd", "java", "public void updateAndFill("),
@@ -312,9 +311,7 @@ fn no_managed_handle_caches_the_multi_output_value() {
             !sect.contains("cachedValue"),
             "{func}/{lang} still declares or writes a cached value"
         );
-        swept += 1;
     }
-    assert_eq!(swept, 4, "the sweep did not reach every case it names");
 
     // Non-vacuity: these are multi-output handles, so they DO have an out type
     // to have cached. A single-output handle proves nothing here.

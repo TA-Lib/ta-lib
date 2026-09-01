@@ -7346,14 +7346,15 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .iter()
         .map(|o| o.param_type == crate::ir::ParamType::Integer)
         .collect();
-    // The accessor CALL, not the name: `Value` is a record, so every read below
-    // is `up.macd()`. Rendered once here because all ten read sites interpolate
-    // this same list.
+    // A public FIELD read, not an accessor call: since #310 a multi-output
+    // stream writes a caller-owned `<N>Out` rather than answering a record.
+    // Rendered once here because all ten read sites interpolate this same list.
     let vfield: Vec<String> = func
         .outputs
         .iter()
-        .map(|o| format!("{}()", crate::backends::java_stream::value_field_name(&o.name)))
+        .map(|o| crate::backends::java_stream::value_field_name(&o.name))
         .collect();
+    let ocls = crate::backends::java_stream::out_class_name(func);
 
     let mut s = String::new();
     let _ = writeln!(s, "    static String sv_{}(String json) {{", func.name);
@@ -7647,7 +7648,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // Open-value compare through value() (load-bearing: Java open returns only
     // the handle, so the anchor compare IS the value() verification).
     if multi {
-        let _ = writeln!(s, "                Core.{class}.Value v0 = st.value();");
+        let _ = writeln!(s, "                Core.{ocls} v0 = new Core.{ocls}(); st.value(v0);");
         for (i, f) in vfield.iter().enumerate() {
             if out_is_int[i] {
                 let _ = writeln!(s, "                if (v0.{f} != b{i}[p - 1 - beg.value]) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":{i},\\\"where\\\":\\\"open\\\"\"; }}");
@@ -7660,18 +7661,31 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     } else {
         s.push_str("                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = \",\\\"badBar\\\":\" + (p - 1) + \",\\\"badOut\\\":0,\\\"where\\\":\\\"open\\\"\"; }\n");
     }
-    // Update loop with peek-every-7 + value()==update.
+    // Update loop with peek-every-7 + value()==update. The multi-output sinks are
+    // allocated ONCE and reused, which is the usage the `<N>Out` javadoc tells
+    // callers to write; `pk`, `up` and `vc` stay three DISTINCT objects, or the
+    // peek and value compares below would read one buffer against itself.
+    if multi {
+        let _ = writeln!(s, "                Core.{ocls} pk = new Core.{ocls}();");
+        let _ = writeln!(s, "                Core.{ocls} up = new Core.{ocls}();");
+        let _ = writeln!(s, "                Core.{ocls} vc = new Core.{ocls}();");
+    }
     s.push_str("                for (int t = p; t < svN; t++) {\n");
-    let (up_ty, up_decl) = if multi {
-        (format!("Core.{class}.Value"), "up")
+    let up_ty = if multi {
+        String::new()
     } else if out_is_int[0] {
-        ("int".to_string(), "up")
+        "int ".to_string()
     } else {
-        ("double".to_string(), "up")
+        "double ".to_string()
     };
     s.push_str("                    if (t % 7 == 0) {\n");
-    let _ = writeln!(s, "                        {up_ty} pk = st.peek({bars_t});");
-    let _ = writeln!(s, "                        {up_ty} {up_decl} = st.update({bars_t});");
+    if multi {
+        let _ = writeln!(s, "                        st.peek({bars_t}, pk);");
+        let _ = writeln!(s, "                        st.update({bars_t}, up);");
+    } else {
+        let _ = writeln!(s, "                        {up_ty}pk = st.peek({bars_t});");
+        let _ = writeln!(s, "                        {up_ty}up = st.update({bars_t});");
+    }
     if multi {
         for (i, f) in vfield.iter().enumerate() {
             if out_is_int[i] {
@@ -7680,7 +7694,24 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
                 let _ = writeln!(s, "                        if (svBne(pk.{f}, up.{f})) peekAll = false;");
             }
         }
-        s.push_str("                        if (st.value() != up) allOk = false; /* cached Value identity */\n");
+        // `value()` == what `update` just wrote, read AFTER an intervening
+        // `peek`. The peek is the whole leg: without it, `update`'s sink write
+        // and `value`'s are the SAME generated statements over the same
+        // `cur_*` fields with nothing in between, so the compare cannot fail.
+        // Peeking a DIFFERENT bar (t-1, always in range since t >= lb+1 >= 1)
+        // makes it the documented contract instead: `value` is a pure read that
+        // `peek` does not disturb, and a peek that commits moves the handle so
+        // `value` reports the peeked bar. Same shape as the C# leg, which found
+        // the tautology first. `pk` is reused here -- its own compare is done.
+        let _ = writeln!(s, "                        st.peek({}, pk);", bar_args("t - 1"));
+        s.push_str("                        st.value(vc);\n");
+        for (i, f) in vfield.iter().enumerate() {
+            if out_is_int[i] {
+                let _ = writeln!(s, "                        if (vc.{f} != up.{f}) allOk = false;");
+            } else {
+                let _ = writeln!(s, "                        if (svBne(vc.{f}, up.{f})) allOk = false;");
+            }
+        }
     } else if out_is_int[0] {
         s.push_str("                        if (pk != up) peekAll = false;\n");
         s.push_str("                        if (st.value() != up) allOk = false;\n");
@@ -7705,7 +7736,11 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     };
     emit_up_compares(&mut s, "                        ");
     s.push_str("                    } else {\n");
-    let _ = writeln!(s, "                        {up_ty} {up_decl} = st.update({bars_t});");
+    if multi {
+        let _ = writeln!(s, "                        st.update({bars_t}, up);");
+    } else {
+        let _ = writeln!(s, "                        {up_ty}up = st.update({bars_t});");
+    }
     emit_up_compares(&mut s, "                        ");
     s.push_str("                    }\n");
     s.push_str("                }\n");
@@ -7833,11 +7868,22 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         pfx_ins("p0")
     );
     s.push_str("                        int mid = (p0 + svN) / 2;\n");
-    let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t});");
+    if multi {
+        let _ = writeln!(s, "                        Core.{ocls} uA = new Core.{ocls}();");
+        let _ = writeln!(s, "                        Core.{ocls} uB = new Core.{ocls}();");
+        let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t}, uA);");
+    } else {
+        let _ = writeln!(s, "                        for (int t = p0; t < mid; t++) sA.update({bars_t});");
+    }
     let _ = writeln!(s, "                        Core.{class} sB = sA.clone();");
     s.push_str("                        for (int t = mid; t < svN; t++) {\n");
-    let _ = writeln!(s, "                            {up_ty} uA = sA.update({bars_t});");
-    let _ = writeln!(s, "                            {up_ty} uB = sB.update({bars_t});");
+    if multi {
+        let _ = writeln!(s, "                            sA.update({bars_t}, uA);");
+        let _ = writeln!(s, "                            sB.update({bars_t}, uB);");
+    } else {
+        let _ = writeln!(s, "                            {up_ty}uA = sA.update({bars_t});");
+        let _ = writeln!(s, "                            {up_ty}uB = sB.update({bars_t});");
+    }
     if multi {
         for (i, f) in vfield.iter().enumerate() {
             if out_is_int[i] {
@@ -7916,11 +7962,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
             expl_args.join(", ")
         );
         if multi {
+            let _ = writeln!(s, "                Core.{ocls} vD = new Core.{ocls}(); sD.value(vD);");
+            let _ = writeln!(s, "                Core.{ocls} vE = new Core.{ocls}(); sE.value(vE);");
             for (i, f) in vfield.iter().enumerate() {
                 if out_is_int[i] {
-                    let _ = writeln!(s, "                if (sD.value().{f} != sE.value().{f}) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"minValueDefault\\\":1\"; }}");
+                    let _ = writeln!(s, "                if (vD.{f} != vE.{f}) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"minValueDefault\\\":1\"; }}");
                 } else {
-                    let _ = writeln!(s, "                if (svBne(sD.value().{f}, sE.value().{f})) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"minValueDefault\\\":1\"; }}");
+                    let _ = writeln!(s, "                if (svBne(vD.{f}, vE.{f})) {{ allOk = false; if (diag.isEmpty()) diag = \",\\\"minValueDefault\\\":1\"; }}");
                 }
             }
         } else if out_is_int[0] {
@@ -9083,10 +9131,8 @@ fn emit_csharp_sv_func(
     // both render from the same generator expression over the same fields --
     // literally `new X_Value(cur_a, cur_b) != new X_Value(cur_a, cur_b)`. That
     // cannot fail, and it did not: it passed unchanged while the guard it was
-    // meant to protect was reverted. Java's twin asserts REFERENCE IDENTITY of
-    // its cached record, which pins an allocation property; deleting the cache
-    // for a returned record struct removed the only thing being checked, and
-    // keeping the comparison kept the shape without the substance.
+    // meant to protect was reverted. The Java leg carries the same intervening
+    // peek for the same reason.
     //
     // Peeking a DIFFERENT bar (t-1, always in range since t >= lb+1 >= 1) makes
     // it a real check of the documented contract: `Value` is a pure read that

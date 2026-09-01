@@ -33,12 +33,6 @@
 //!   `Core` instance method. Measured, `core.Step(sp, x)` versus
 //!   `this.Step(x)` is 3.44–3.54 against 3.39–3.47 ns/bar — indistinguishable.
 //!
-//! - **No `cachedValue` field.** Java caches the boxed multi-output `Value` so
-//!   that `value()` allocates nothing; a `readonly record struct` return is
-//!   0 B/update by construction (measured against 40 B/update for the
-//!   Java-shaped class). One fewer field, one fewer store per bar, and one
-//!   fewer thing the copy path can get wrong.
-//!
 //! - **The `NameMap` prefixes are Java's, verbatim** (`sp.x`, `sp.cur_y`,
 //!   `sp.ring_v_a`, ...). This is load-bearing, not cosmetic:
 //!   [`super::fma::stream_base`] strips exactly `sp->`, `sp.` and `cur_` to
@@ -283,10 +277,6 @@ fn field_type_and_default(ty: &VarType) -> (String, String) {
 
 /// The params + `cur_<out>` fields every tier's handle carries
 /// (dispatch/period-bank/loopless-composed build on exactly this base).
-///
-/// There is no `cachedValue`: the C# `Value` is a `readonly record struct`
-/// returned by value, so caching it would cost a field and a store per bar and
-/// buy nothing.
 fn base_fields(func: &FuncDef) -> Vec<Field> {
     let mut fields: Vec<Field> = Vec::new();
     for p in &func.optional_inputs {
@@ -974,11 +964,9 @@ fn emit_handle_class_with_members(
 /// `public readonly record struct` in batch output order, components named
 /// after the outputs (`outSlowK` → `SlowK`).
 ///
-/// A record struct, not Java's record class: the return is copied to the
-/// caller's frame, so `Update` allocates nothing at all (measured 0 B/update
-/// against 40 B/update for the Java-shaped cached class), which is also why
-/// there is no `cachedValue` field to keep it free. `Deconstruct` comes free —
-/// `var (up, mid, low) = s.Update(bar);`.
+/// A record struct: the return is copied to the caller's frame, so `Update`
+/// allocates nothing and needs no out-parameter to stay free. `Deconstruct`
+/// comes free — `var (up, mid, low) = s.Update(bar);`.
 fn emit_value_type(o: &mut String, func: &FuncDef) {
     if !has_value_type(func) {
         return;
