@@ -6,10 +6,12 @@
 # output is broken on arrival. Until now the only thing checking that was the
 # 5AM regen-check on dev — i.e. after merge, one branch too late (#211).
 #
-# Cargo + Python, about a minute: WRITING a .java or .cs source is text emission
-# from the IR, so this gate needs no JDK and no .NET SDK, and no contributor is
-# forced to install one to pass it. Compiling those servers and running the
-# cross-language suites needs both, and stays in the nightly.
+# Cargo + Python for the regen and Rust halves, plus a JDK for the Java compile
+# job. WRITING a .java is text emission from the IR — but the text has to
+# compile, and until #326 nothing on the PR path checked that; see the
+# java-compiles job for what that cost. RUNNING the cross-language suites, and
+# the whole .NET side, still need more toolchain than this gate carries and stay
+# in the nightly.
 #
 # `scripts/build.py regen-check` is the first half of the gate, so the same
 # command reproduces that failure locally, exactly.
@@ -75,6 +77,89 @@ jobs:
         run: |
           if ! cargo test --no-fail-fast --manifest-path ta_codegen/generator/Cargo.toml; then
             echo "::error::The generator's own test suite failed. Several suites pin exact-set inventories (FMA fusion, stability classification) that a new indicator must be added to."
+            exit 1
+          fi
+
+  # Compiling the generated Java is not the same question as generating it, and
+  # this gate used to answer only the second. PR #326 passed every check here
+  # while NONE of the generated Java compiled: a dispatch arm called a method
+  # signature the same PR had removed, `server_gen.rs` was never updated so the
+  # JSON-RPC server carried 96 references to a deleted type, and `{@link
+  # #value()}` stopped resolving. All four were found by hand after the gate
+  # went green.
+  #
+  # Compile only — no Maven, no tests, no servers started. That is the whole
+  # trade: ~20s of javac buys the entire class of "the emitter wrote Java that
+  # is not Java", and running anything needs the nightly's toolchain anyway.
+  #
+  # Three units, because they fail independently and a PR can break exactly one:
+  # the shipped library, the hand-written suites under it (NOT generated — the
+  # generator preserves them, so an API change has to be carried into them by
+  # hand, which is what #326 missed), and the server, whose Java comes from a
+  # different emitter (server_gen.rs) than the library's (java_stream.rs).
+  # Nothing else compares those two emitters' idea of the same API.
+  #
+  # `-Xdoclint:all,-missing` on the library is load-bearing and not tidiness:
+  # javac's doclint is OFF by default, so a plain compile is blind to it, while
+  # the pom turns it on for the DEFAULT build (maven-javadoc-plugin's jar goal
+  # binds to `package`). An unresolvable @link therefore fails `./mvnw package`
+  # — one of #326's four — and would still reach dev green without this flag.
+  # `-missing` matches the pom: streaming handles are deliberately undocumented.
+  #
+  # `--release 17` everywhere, the same JAVA_RELEASE the generator pins, so this
+  # job cannot accept a source the shipped build would reject. The JDK is 21 to
+  # match the nightly; any JDK >= 17 satisfies --release.
+  #
+  # C# has the identical hole and is NOT covered here. Adding it means a .NET
+  # SDK on every PR, which is a bigger bill than a JDK for a smaller surface —
+  # the C# stream emitter has no server-side twin to disagree with. Left for
+  # whoever wants to argue that cost.
+  java-compiles:
+    name: Generated Java compiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install JDK
+        uses: ./.github/actions/apt-install
+        with:
+          packages: openjdk-21-jdk
+
+      # The committed sources, not a fresh `generate`: regen-check already
+      # proves those are the same tree, and this job then needs no cargo at all.
+      - name: Compile the shipped library, with the pom's doclint
+        shell: bash
+        run: |
+          cd ta_codegen/output/java
+          if ! javac --release 17 -Xdoclint:all,-missing -d /tmp/ta-java-main \
+               $(find library/src/main -name '*.java'); then
+            echo "::error::The generated Java library does not compile. Fix the emitter (ta_codegen/generator/src/backends/java*.rs), never the generated file. 'error: reference not found' is doclint: an @link naming a signature that no longer exists — the pom runs this on the default build, so it fails ./mvnw package too."
+            exit 1
+          fi
+
+      # Hand-written, and the generator preserves them — so an API change lands
+      # here only if someone carries it. Nothing else on this gate reads them.
+      - name: Compile the hand-written Java suites against it
+        shell: bash
+        run: |
+          cd ta_codegen/output/java
+          if ! javac --release 17 -nowarn -cp /tmp/ta-java-main -d /tmp/ta-java-test \
+               $(find library/src/test -name '*.java'); then
+            echo "::error::The hand-written Java suites no longer compile against the generated library. These are NOT generated (ta_codegen/output/java/library/src/test/) — an API change has to be carried into them by hand."
+            exit 1
+          fi
+
+      # Same command `ta_codegen build --backend=java` runs, so a failure here
+      # reproduces with `scripts/build.py servers --language=java`.
+      - name: Compile the JSON-RPC server
+        shell: bash
+        run: |
+          cd ta_codegen/output/java
+          if ! javac --release 17 -nowarn --source-path library/src/main/java \
+               -d /tmp/ta-java-serve tools/TaCodegenServe.java; then
+            echo "::error::The generated Java server does not compile against the generated library. The two come from different emitters — server_gen.rs writes the server, java_stream.rs writes the library — so this is where they disagree about an API. Fix server_gen.rs; reproduce with scripts/build.py servers --language=java."
             exit 1
           fi
 
