@@ -102,16 +102,12 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
    int i;
    int lookbackTotal;
    int emaLookback;
-   int atrLookback;
-   int anchorIdx;
-   int emaOffset;
-   int atrOffset;
+   int tpStartIdx;
    int tempBegIdx;
    int tempNbElement;
    double tempReal;
    double middle;
    double *tempTP;
-   double *tempEMA;
    double *tempATR;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -149,7 +145,6 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
       return TA_BAD_PARAM;
 
    emaLookback = TA_EMA_Lookback(optInTimePeriod);
-   atrLookback = TA_ATR_Lookback(optInATRPeriod);
    lookbackTotal = TA_KC_Lookback(optInTimePeriod,optInATRPeriod,optInNbDev);
    /* Nothing to produce: the range is shorter than the lookback. Return before
     * touching anything, so that a caller-supplied input which stops short of
@@ -165,93 +160,69 @@ TA_LIB_API TA_RetCode TA_KC( int    startIdx,
    {
       startIdx = lookbackTotal;
    }
-   /* Both legs are recursive, and their lookbacks differ. Seeding each one at
-    * its OWN lookback would leave the shorter leg cold: it would restart from a
-    * fresh seed a few bars before startIdx while the longer leg had been
-    * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-    * would not shrink as the unstable period grows. Anchor both at
-    * startIdx-lookbackTotal instead -- data this function already requires the
-    * caller to hold -- and each leg is then warmed by the whole lookback budget,
-    * so a single unstable period bounds the residual of both. Without this the
-    * codegen range gate measures KC moving ~1.8% across startIdx at unstable
-    * period 140, where the convergence envelope allows 0.15%.
+   /* Each leg is entered at its OWN lookback, so each is the shipped function
+    * over this range and nothing here over-warms the shorter one: a caller who
+    * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+    * calling TA_ATR directly. The typical price is a derived input, so it is
+    * materialized only over the window the moving average reads.
     */
-   anchorIdx = startIdx - lookbackTotal;
-   emaOffset = lookbackTotal - emaLookback;
-   atrOffset = lookbackTotal - atrLookback;
-   tempTP = malloc((endIdx - anchorIdx + 1) * sizeof(double));
+   tpStartIdx = startIdx - emaLookback;
+   tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
    if( !tempTP )
    {
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
-   tempEMA = malloc((endIdx - anchorIdx - emaLookback + 1) * sizeof(double));
-   if( !tempEMA )
-   {
-      free(tempTP);
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
-   tempATR = malloc((endIdx - anchorIdx - atrLookback + 1) * sizeof(double));
+   tempATR = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempATR )
    {
       free(tempTP);
-      free(tempEMA);
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
-   retCode = TA_TYPPRICE(anchorIdx,endIdx,inHigh,inLow,inClose,&tempBegIdx,&tempNbElement,tempTP);
+   retCode = TA_TYPPRICE(tpStartIdx,endIdx,inHigh,inLow,inClose,&tempBegIdx,&tempNbElement,tempTP);
    if( retCode != TA_SUCCESS )
    {
       free(tempTP);
-      free(tempEMA);
       free(tempATR);
       *outBegIdx= 0;
       *outNBElement= 0;
       return retCode;
    }
-   /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
-    * lookback seeds it on the first typical price available.
+   /* The ATR consumes the price inputs before the moving average below writes
+    * the middle band, which may be aliased onto one of them.
     */
-   retCode = TA_EMA(emaLookback,endIdx - anchorIdx,tempTP,optInTimePeriod,&tempBegIdx,&tempNbElement,tempEMA);
+   retCode = TA_ATR(startIdx,endIdx,inHigh,inLow,inClose,optInATRPeriod,&tempBegIdx,&tempNbElement,tempATR);
    if( retCode != TA_SUCCESS )
    {
       free(tempTP);
-      free(tempEMA);
       free(tempATR);
       *outBegIdx= 0;
       *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_ATR(anchorIdx + atrLookback,endIdx,inHigh,inLow,inClose,optInATRPeriod,&tempBegIdx,&tempNbElement,tempATR);
-   if( retCode != TA_SUCCESS )
+   /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
+    * own lookback puts its first output on startIdx, where the ATR's already is.
+    */
+   retCode = TA_EMA(emaLookback,endIdx - tpStartIdx,tempTP,optInTimePeriod,outBegIdx,outNBElement,outRealMiddleBand);
+   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       free(tempTP);
-      free(tempEMA);
       free(tempATR);
-      *outBegIdx= 0;
       *outNBElement= 0;
       return retCode;
    }
    *outBegIdx= startIdx;
-   *outNBElement= endIdx - startIdx + 1;
-   /* Each leg begins at its own lookback past the common anchor, so drop the
-    * warm-up head of both and pair them index for index from startIdx.
-    */
-   memmove(outRealMiddleBand,&tempEMA[emaOffset],*outNBElement * sizeof(double));
-   memmove(outRealLowerBand,&tempATR[atrOffset],*outNBElement * sizeof(double));
    for( i = 0; i < (int)*outNBElement; i += 1 )
    {
       middle = outRealMiddleBand[i];
-      tempReal = outRealLowerBand[i] * optInNbDev;
+      tempReal = tempATR[i] * optInNbDev;
       outRealUpperBand[i] = middle + tempReal;
       outRealLowerBand[i] = middle - tempReal;
    }
    free(tempTP);
-   free(tempEMA);
    free(tempATR);
    return TA_SUCCESS;
 }
@@ -274,16 +245,12 @@ TA_RetCode TA_S_KC( int    startIdx,
    int i;
    int lookbackTotal;
    int emaLookback;
-   int atrLookback;
-   int anchorIdx;
-   int emaOffset;
-   int atrOffset;
+   int tpStartIdx;
    int tempBegIdx;
    int tempNbElement;
    double tempReal;
    double middle;
    double *tempTP;
-   double *tempEMA;
    double *tempATR;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -321,7 +288,6 @@ TA_RetCode TA_S_KC( int    startIdx,
       return TA_BAD_PARAM;
 
    emaLookback = TA_EMA_Lookback(optInTimePeriod);
-   atrLookback = TA_ATR_Lookback(optInATRPeriod);
    lookbackTotal = TA_KC_Lookback(optInTimePeriod,optInATRPeriod,optInNbDev);
    if( lookbackTotal > endIdx )
    {
@@ -333,76 +299,57 @@ TA_RetCode TA_S_KC( int    startIdx,
    {
       startIdx = lookbackTotal;
    }
-   anchorIdx = startIdx - lookbackTotal;
-   emaOffset = lookbackTotal - emaLookback;
-   atrOffset = lookbackTotal - atrLookback;
-   tempTP = malloc((endIdx - anchorIdx + 1) * sizeof(double));
+   tpStartIdx = startIdx - emaLookback;
+   tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
    if( !tempTP )
    {
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
-   tempEMA = malloc((endIdx - anchorIdx - emaLookback + 1) * sizeof(double));
-   if( !tempEMA )
-   {
-      free(tempTP);
-      *outBegIdx= 0;
-      *outNBElement= 0;
-      return TA_ALLOC_ERR;
-   }
-   tempATR = malloc((endIdx - anchorIdx - atrLookback + 1) * sizeof(double));
+   tempATR = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempATR )
    {
       free(tempTP);
-      free(tempEMA);
       *outBegIdx= 0;
       *outNBElement= 0;
       return TA_ALLOC_ERR;
    }
-   retCode = TA_S_TYPPRICE(anchorIdx,endIdx,inHigh,inLow,inClose,&tempBegIdx,&tempNbElement,tempTP);
+   retCode = TA_S_TYPPRICE(tpStartIdx,endIdx,inHigh,inLow,inClose,&tempBegIdx,&tempNbElement,tempTP);
    if( retCode != TA_SUCCESS )
    {
       free(tempTP);
-      free(tempEMA);
       free(tempATR);
       *outBegIdx= 0;
       *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_EMA(emaLookback,endIdx - anchorIdx,tempTP,optInTimePeriod,&tempBegIdx,&tempNbElement,tempEMA);
+   retCode = TA_S_ATR(startIdx,endIdx,inHigh,inLow,inClose,optInATRPeriod,&tempBegIdx,&tempNbElement,tempATR);
    if( retCode != TA_SUCCESS )
    {
       free(tempTP);
-      free(tempEMA);
       free(tempATR);
       *outBegIdx= 0;
       *outNBElement= 0;
       return retCode;
    }
-   retCode = TA_S_ATR(anchorIdx + atrLookback,endIdx,inHigh,inLow,inClose,optInATRPeriod,&tempBegIdx,&tempNbElement,tempATR);
-   if( retCode != TA_SUCCESS )
+   retCode = TA_EMA(emaLookback,endIdx - tpStartIdx,tempTP,optInTimePeriod,outBegIdx,outNBElement,outRealMiddleBand);
+   if( retCode != TA_SUCCESS || (int)*outNBElement == 0 )
    {
       free(tempTP);
-      free(tempEMA);
       free(tempATR);
-      *outBegIdx= 0;
       *outNBElement= 0;
       return retCode;
    }
    *outBegIdx= startIdx;
-   *outNBElement= endIdx - startIdx + 1;
-   memmove(outRealMiddleBand,&tempEMA[emaOffset],*outNBElement * sizeof(double));
-   memmove(outRealLowerBand,&tempATR[atrOffset],*outNBElement * sizeof(double));
    for( i = 0; i < (int)*outNBElement; i += 1 )
    {
       middle = outRealMiddleBand[i];
-      tempReal = outRealLowerBand[i] * optInNbDev;
+      tempReal = tempATR[i] * optInNbDev;
       outRealUpperBand[i] = middle + tempReal;
       outRealLowerBand[i] = middle - tempReal;
    }
    free(tempTP);
-   free(tempEMA);
    free(tempATR);
    return TA_SUCCESS;
 }
@@ -422,8 +369,8 @@ struct TA_KC_Stream {
    int optInATRPeriod;
    double optInNbDev;
    TA_TYPPRICE_Stream *sub0;
-   TA_EMA_Stream *sub1;
-   TA_ATR_Stream *sub2;
+   TA_ATR_Stream *sub1;
+   TA_EMA_Stream *sub2;
 };
 
 /* Private function, not in public API. */
@@ -432,8 +379,8 @@ static TA_RetCode TA_KC_StepImpl( struct TA_KC_Stream *sp, double inHigh, double
    double middle;
    double tempReal;
    double cur_tempTP = 0.0;
-   double cur_tempEMA = 0.0;
    double cur_tempATR = 0.0;
+   double cur_outRealMiddleBand = 0.0;
    double cur_outRealUpperBand = 0.0;
    double cur_outRealLowerBand = 0.0;
 
@@ -444,21 +391,21 @@ static TA_RetCode TA_KC_StepImpl( struct TA_KC_Stream *sp, double inHigh, double
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc = TA_EMA_Update( sp->sub1, cur_tempTP, &cur_tempEMA );
+      TA_RetCode subRc = TA_ATR_Update( sp->sub1, inHigh, inLow, inClose, &cur_tempATR );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc = TA_ATR_Update( sp->sub2, inHigh, inLow, inClose, &cur_tempATR );
+      TA_RetCode subRc = TA_EMA_Update( sp->sub2, cur_tempTP, &cur_outRealMiddleBand );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
-   middle = cur_tempEMA;
+   middle = cur_outRealMiddleBand;
    tempReal = cur_tempATR * sp->optInNbDev;
    cur_outRealUpperBand = middle + tempReal;
-   cur_tempATR = middle - tempReal;
+   cur_outRealLowerBand = middle - tempReal;
    *outRealUpperBand = cur_outRealUpperBand;
-   *outRealMiddleBand = cur_tempEMA;
-   *outRealLowerBand = cur_tempATR;
+   *outRealMiddleBand = cur_outRealMiddleBand;
+   *outRealLowerBand = cur_outRealLowerBand;
    return TA_SUCCESS;
 }
 
@@ -474,8 +421,8 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
    double *sc_outRealMiddleBand;
    double *sc_outRealLowerBand;
    TA_TYPPRICE_Stream *sub0;
-   TA_EMA_Stream *sub1;
-   TA_ATR_Stream *sub2;
+   TA_ATR_Stream *sub1;
+   TA_EMA_Stream *sub2;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -534,19 +481,14 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
       int i;
       int lookbackTotal;
       int emaLookback;
-      int atrLookback;
-      int anchorIdx;
-      int emaOffset;
-      int atrOffset;
+      int tpStartIdx;
       int tempBegIdx;
       int tempNbElement;
       double tempReal;
       double middle;
       double *tempTP;
-      double *tempEMA;
       double *tempATR;
       emaLookback = TA_EMA_Lookback(optInTimePeriod);
-      atrLookback = TA_ATR_Lookback(optInATRPeriod);
       lookbackTotal = TA_KC_Lookback(optInTimePeriod,optInATRPeriod,optInNbDev);
       /* Nothing to produce: the range is shorter than the lookback. Return before
        * touching anything, so that a caller-supplied input which stops short of
@@ -556,55 +498,41 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return TA_INSUFFICIENT_HISTORY;
       }
       if( startIdx < lookbackTotal )
       {
          startIdx = lookbackTotal;
       }
-      /* Both legs are recursive, and their lookbacks differ. Seeding each one at
-       * its OWN lookback would leave the shorter leg cold: it would restart from a
-       * fresh seed a few bars before startIdx while the longer leg had been
-       * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-       * would not shrink as the unstable period grows. Anchor both at
-       * startIdx-lookbackTotal instead -- data this function already requires the
-       * caller to hold -- and each leg is then warmed by the whole lookback budget,
-       * so a single unstable period bounds the residual of both. Without this the
-       * codegen range gate measures KC moving ~1.8% across startIdx at unstable
-       * period 140, where the convergence envelope allows 0.15%.
+      /* Each leg is entered at its OWN lookback, so each is the shipped function
+       * over this range and nothing here over-warms the shorter one: a caller who
+       * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+       * calling TA_ATR directly. The typical price is a derived input, so it is
+       * materialized only over the window the moving average reads.
        */
-      anchorIdx = startIdx - lookbackTotal;
-      emaOffset = lookbackTotal - emaLookback;
-      atrOffset = lookbackTotal - atrLookback;
-      tempTP = malloc((endIdx - anchorIdx + 1) * sizeof(double));
+      tpStartIdx = startIdx - emaLookback;
+      tempTP = malloc((endIdx - tpStartIdx + 1) * sizeof(double));
       if( !tempTP )
       {
-         TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return TA_ALLOC_ERR;
       }
-      tempEMA = malloc((endIdx - anchorIdx - emaLookback + 1) * sizeof(double));
-      if( !tempEMA )
-      {
-         free( tempTP ); TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
-         return TA_ALLOC_ERR;
-      }
-      tempATR = malloc((endIdx - anchorIdx - atrLookback + 1) * sizeof(double));
+      tempATR = malloc((endIdx - startIdx + 1) * sizeof(double));
       if( !tempATR )
       {
-         free( tempTP ); free( tempEMA ); TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         free( tempTP ); TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return TA_ALLOC_ERR;
       }
       /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_TYPPRICE_OpenAndFillInternal( &sub0, inHigh, inLow, inClose, (anchorIdx), (endIdx) + 1, &tempBegIdx, &tempNbElement, tempTP );
+         subRc = TA_TYPPRICE_OpenAndFillInternal( &sub0, inHigh, inLow, inClose, (tpStartIdx), (endIdx) + 1, &tempBegIdx, &tempNbElement, tempTP );
          if( subRc != TA_SUCCESS )
          {
             free(tempTP);
-            free(tempEMA);
             free(tempATR);
-            TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+            TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
             return subRc;
          }
       }
@@ -612,26 +540,24 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
       if( retCode != TA_SUCCESS )
       {
          free(tempTP);
-         free(tempEMA);
          free(tempATR);
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return retCode;
       }
-      /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
-       * lookback seeds it on the first typical price available.
+      /* The ATR consumes the price inputs before the moving average below writes
+       * the middle band, which may be aliased onto one of them.
        */
-      /* Sub-stream 1: ema over `tempTP`, warmed from bar 0 up to the
+      /* Sub-stream 1: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_EMA_OpenAndFillInternal( &sub1, tempTP, (emaLookback), (endIdx - anchorIdx) + 1, optInTimePeriod, &tempBegIdx, &tempNbElement, tempEMA );
+         subRc = TA_ATR_OpenAndFillInternal( &sub1, inHigh, inLow, inClose, (startIdx), (endIdx) + 1, optInATRPeriod, &tempBegIdx, &tempNbElement, tempATR );
          if( subRc != TA_SUCCESS )
          {
             free(tempTP);
-            free(tempEMA);
             free(tempATR);
-            TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+            TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
             return subRc;
          }
       }
@@ -639,59 +565,51 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
       if( retCode != TA_SUCCESS )
       {
          free(tempTP);
-         free(tempEMA);
          free(tempATR);
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return retCode;
       }
-      /* Sub-stream 2: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+      /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
+       * own lookback puts its first output on startIdx, where the ATR's already is.
+       */
+      /* Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_ATR_OpenAndFillInternal( &sub2, inHigh, inLow, inClose, (anchorIdx + atrLookback), (endIdx) + 1, optInATRPeriod, &tempBegIdx, &tempNbElement, tempATR );
+         subRc = TA_EMA_OpenAndFillInternal( &sub2, tempTP, (emaLookback), (endIdx - tpStartIdx) + 1, optInTimePeriod, &dummyBegIdx, &dummyNBElement, sc_outRealMiddleBand );
          if( subRc != TA_SUCCESS )
          {
             free(tempTP);
-            free(tempEMA);
             free(tempATR);
-            TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+            TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
             return subRc;
          }
       }
       retCode = subRc;
-      if( retCode != TA_SUCCESS )
+      if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
          free(tempTP);
-         free(tempEMA);
          free(tempATR);
-         dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return retCode;
       }
       dummyBegIdx = startIdx;
-      dummyNBElement = endIdx - startIdx + 1;
-      /* Each leg begins at its own lookback past the common anchor, so drop the
-       * warm-up head of both and pair them index for index from startIdx.
-       */
-      memmove(sc_outRealMiddleBand,&tempEMA[emaOffset],dummyNBElement * sizeof(double));
-      memmove(sc_outRealLowerBand,&tempATR[atrOffset],dummyNBElement * sizeof(double));
       for( i = 0; i < (int)dummyNBElement; i += 1 )
       {
          middle = sc_outRealMiddleBand[i];
-         tempReal = sc_outRealLowerBand[i] * optInNbDev;
+         tempReal = tempATR[i] * optInNbDev;
          sc_outRealUpperBand[i] = middle + tempReal;
          sc_outRealLowerBand[i] = middle - tempReal;
       }
       free(tempTP);
-      free(tempEMA);
       free(tempATR);
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_INSUFFICIENT_HISTORY; }
+      if( dummyNBElement < 1 ) { TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_KC_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { TA_TYPPRICE_Close( sub0 ); TA_EMA_Close( sub1 ); TA_ATR_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_ALLOC_ERR; }
+      if( !sp ) { TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInATRPeriod = optInATRPeriod;
@@ -789,8 +707,8 @@ TA_LIB_API TA_RetCode TA_KC_Peek( const TA_KC_Stream *stream, double inHigh, dou
    double middle;
    double tempReal;
    double cur_tempTP = 0.0;
-   double cur_tempEMA = 0.0;
    double cur_tempATR = 0.0;
+   double cur_outRealMiddleBand = 0.0;
    double cur_outRealUpperBand = 0.0;
    double cur_outRealLowerBand = 0.0;
 
@@ -804,21 +722,21 @@ TA_LIB_API TA_RetCode TA_KC_Peek( const TA_KC_Stream *stream, double inHigh, dou
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc = TA_EMA_Peek( (const TA_EMA_Stream *)sp->sub1, cur_tempTP, &cur_tempEMA );
+      TA_RetCode subRc = TA_ATR_Peek( (const TA_ATR_Stream *)sp->sub1, inHigh, inLow, inClose, &cur_tempATR );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    {
-      TA_RetCode subRc = TA_ATR_Peek( (const TA_ATR_Stream *)sp->sub2, inHigh, inLow, inClose, &cur_tempATR );
+      TA_RetCode subRc = TA_EMA_Peek( (const TA_EMA_Stream *)sp->sub2, cur_tempTP, &cur_outRealMiddleBand );
       if( subRc != TA_SUCCESS ) return subRc;
    }
    /* Combine map (batch tail, per bar). */
-   middle = cur_tempEMA;
+   middle = cur_outRealMiddleBand;
    tempReal = cur_tempATR * sp->optInNbDev;
    cur_outRealUpperBand = middle + tempReal;
-   cur_tempATR = middle - tempReal;
+   cur_outRealLowerBand = middle - tempReal;
    *outRealUpperBand = cur_outRealUpperBand;
-   *outRealMiddleBand = cur_tempEMA;
-   *outRealLowerBand = cur_tempATR;
+   *outRealMiddleBand = cur_outRealMiddleBand;
+   *outRealLowerBand = cur_outRealLowerBand;
    return TA_SUCCESS;
 }
 
@@ -851,8 +769,8 @@ TA_LIB_API TA_RetCode TA_KC_Close( TA_KC_Stream *stream )
 {
    if( !stream ) return TA_SUCCESS;
    TA_TYPPRICE_Close( stream->sub0 );
-   TA_EMA_Close( stream->sub1 );
-   TA_ATR_Close( stream->sub2 );
+   TA_ATR_Close( stream->sub1 );
+   TA_EMA_Close( stream->sub2 );
    TA_Free( stream );
    return TA_SUCCESS;
 }
@@ -883,10 +801,10 @@ TA_LIB_API TA_RetCode TA_KC_Clone( const TA_KC_Stream *stream, TA_KC_Stream **cl
    { TA_RetCode subRc = TA_TYPPRICE_Clone( stream->sub0, &sp->sub0 );
      if( subRc != TA_SUCCESS ) { TA_KC_Close( sp ); return subRc; } }
    if( stream->sub1 )
-   { TA_RetCode subRc = TA_EMA_Clone( stream->sub1, &sp->sub1 );
+   { TA_RetCode subRc = TA_ATR_Clone( stream->sub1, &sp->sub1 );
      if( subRc != TA_SUCCESS ) { TA_KC_Close( sp ); return subRc; } }
    if( stream->sub2 )
-   { TA_RetCode subRc = TA_ATR_Clone( stream->sub2, &sp->sub2 );
+   { TA_RetCode subRc = TA_EMA_Clone( stream->sub2, &sp->sub2 );
      if( subRc != TA_SUCCESS ) { TA_KC_Close( sp ); return subRc; } }
    *clone = sp;
    return TA_SUCCESS;

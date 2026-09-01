@@ -62,9 +62,8 @@
  *     2. EXTERNAL ORACLE on the 252-bar TA_SREF corpus, two fast parameter
  *        sets that converge inside 252 bars (see the seeding note below).
  *     3. DIFFERENTIAL, bitwise, over four shapes: the centre line is TA_EMA of
- *        TA_TYPPRICE and the bands are middle +/- nbDev * TA_ATR, each entered
- *        at KC's own lookback rather than its own. Pins both anchors and every
- *        bar between the oracle's spot values.
+ *        TA_TYPPRICE and the bands are middle +/- nbDev * TA_ATR over the same
+ *        range. Pins every bar between the oracle's spot values.
  *     4. DIFFERENTIAL, bitwise: nbDev == 0 collapses all three outputs onto the
  *        centre line.
  *
@@ -194,7 +193,7 @@ static ErrorNumber test_kc_oracle_corpus( const char *corpusName,
                                           const KcShape *shape, unsigned int nbShape,
                                           const KcGolden *gold, unsigned int nbGold,
                                           int *outNbCompared );
-static ErrorNumber test_kc_anchors( const TA_History *history );
+static ErrorNumber test_kc_composition( const TA_History *history );
 static ErrorNumber test_kc_zero_dev( const TA_History *history );
 
 /**** Global functions definitions. ****/
@@ -223,7 +222,7 @@ ErrorNumber test_func_kc( TA_History *history )
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
-   e = test_kc_anchors( history );
+   e = test_kc_composition( history );
    if( e != TA_TEST_PASS ) return e;
 
    e = test_kc_zero_dev( history );
@@ -340,86 +339,76 @@ static ErrorNumber test_kc_oracle_corpus( const char *corpusName,
 
 /* (3) DIFFERENTIAL, bitwise, on EVERY emitted bar and over four parameter shapes.
  *
- * KC seeds both legs at startIdx minus its OWN lookback rather than at each leg's,
- * so the centre line is TA_EMA of TA_TYPPRICE entered emaOffset bars early and the
- * band is nbDev * TA_ATR entered atrOffset bars early. Reproduce both anchors and
- * compare bitwise.
+ * Each leg is entered at its own lookback, so KC's centre line IS TA_EMA over the
+ * typical price on this range and its band IS nbDev * TA_ATR on this range --
+ * nothing over-warms the shorter leg, and the composition is checkable by calling
+ * the two shipped functions plainly. A spot table cannot see a band that drifts
+ * between the pinned bars, nor one built from the wrong ATR period.
  *
- * The shapes matter more than their number: an offset is zero whenever its own leg
- * is the longer one, and a shape whose offset is zero cannot see that leg's anchor
- * at all. (20,10) and (8,4) over-warm only the ATR; (4,10) and (4,4) over-warm only
- * the centre line. Covering one family would leave the other anchor free to be
- * deleted with every leg still green, so the sweep asserts it saw both.
+ * The shapes straddle both orderings of the two lookbacks (M > N-1 in (4,10) and
+ * (4,4), M < N-1 in (20,10) and (8,4)), since which leg is the longer one is what
+ * decides outBegIdx.
  */
-typedef struct { int emaPeriod; int atrPeriod; double nbDev; } KcAnchor;
+typedef struct { int emaPeriod; int atrPeriod; double nbDev; } KcShapeSweep;
 
-static const KcAnchor kcAnchor[] =
+static const KcShapeSweep kcSweep[] =
 {
    { 20, 10, 2.0 },
    {  8,  4, 1.5 },
    {  4, 10, 2.0 },
    {  4,  4, 3.0 },
 };
-#define NB_KC_ANCHOR (sizeof(kcAnchor)/sizeof(kcAnchor[0]))
+#define NB_KC_SWEEP (sizeof(kcSweep)/sizeof(kcSweep[0]))
 
-static ErrorNumber test_kc_anchors( const TA_History *history )
+static ErrorNumber test_kc_composition( const TA_History *history )
 {
    TA_RetCode retCode;
    TA_Integer begIdx, nbElement, tpBeg, tpNb, emaBeg, emaNb, atrBeg, atrNb;
    static TA_Real up[OUT_CAP], mid[OUT_CAP], lo[OUT_CAP];
    static TA_Real tp[OUT_CAP], ema[OUT_CAP], atr[OUT_CAP];
    int nbBars = (int)history->nbBars;
-   int i, sawEmaOffset = 0, sawAtrOffset = 0;
+   int i;
    unsigned int s;
 
    retCode = TA_TYPPRICE( 0, nbBars - 1, history->high, history->low, history->close,
                           &tpBeg, &tpNb, tp );
    if( retCode != TA_SUCCESS || tpBeg != 0 )
    {
-      printf( "KC anchor Fail: TYPPRICE rc=%d begIdx=%d\n", (int)retCode, tpBeg );
+      printf( "KC composition Fail: TYPPRICE rc=%d begIdx=%d\n", (int)retCode, tpBeg );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    }
 
-   for( s = 0; s < NB_KC_ANCHOR; s++ )
+   for( s = 0; s < NB_KC_SWEEP; s++ )
    {
-      int N = kcAnchor[s].emaPeriod;
-      int M = kcAnchor[s].atrPeriod;
-      double dev = kcAnchor[s].nbDev;
+      int N = kcSweep[s].emaPeriod;
+      int M = kcSweep[s].atrPeriod;
+      double dev = kcSweep[s].nbDev;
       int lookback = TA_KC_Lookback( N, M, dev );
-      int emaOffset = lookback - TA_EMA_Lookback( N );
-      int atrOffset = lookback - TA_ATR_Lookback( M );
-
-      if( emaOffset > 0 ) sawEmaOffset = 1;
-      if( atrOffset > 0 ) sawAtrOffset = 1;
 
       retCode = TA_KC( 0, nbBars - 1, history->high, history->low, history->close,
                        N, M, dev, &begIdx, &nbElement, up, mid, lo );
       if( retCode != TA_SUCCESS || begIdx != lookback )
       {
-         printf( "KC anchor Fail [%d %d %g]: rc=%d begIdx=%d expected %d\n",
+         printf( "KC composition Fail [%d %d %g]: rc=%d begIdx=%d expected %d\n",
                  N, M, dev, (int)retCode, begIdx, lookback );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
 
-      retCode = TA_EMA( begIdx - emaOffset, nbBars - 1, tp, N, &emaBeg, &emaNb, ema );
-      if( retCode != TA_SUCCESS || emaBeg != begIdx - emaOffset
-          || emaNb != nbElement + emaOffset )
+      retCode = TA_EMA( begIdx, nbBars - 1, tp, N, &emaBeg, &emaNb, ema );
+      if( retCode != TA_SUCCESS || emaBeg != begIdx || emaNb != nbElement )
       {
-         printf( "KC anchor Fail [%d %d %g]: EMA shape rc=%d (%d,%d) expected (%d,%d)\n",
-                 N, M, dev, (int)retCode, emaBeg, emaNb,
-                 begIdx - emaOffset, nbElement + emaOffset );
+         printf( "KC composition Fail [%d %d %g]: EMA shape rc=%d (%d,%d) expected (%d,%d)\n",
+                 N, M, dev, (int)retCode, emaBeg, emaNb, begIdx, nbElement );
          return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
 
-      retCode = TA_ATR( begIdx - atrOffset, nbBars - 1,
+      retCode = TA_ATR( begIdx, nbBars - 1,
                         history->high, history->low, history->close,
                         M, &atrBeg, &atrNb, atr );
-      if( retCode != TA_SUCCESS || atrBeg != begIdx - atrOffset
-          || atrNb != nbElement + atrOffset )
+      if( retCode != TA_SUCCESS || atrBeg != begIdx || atrNb != nbElement )
       {
-         printf( "KC anchor Fail [%d %d %g]: ATR shape rc=%d (%d,%d) expected (%d,%d)\n",
-                 N, M, dev, (int)retCode, atrBeg, atrNb,
-                 begIdx - atrOffset, nbElement + atrOffset );
+         printf( "KC composition Fail [%d %d %g]: ATR shape rc=%d (%d,%d) expected (%d,%d)\n",
+                 N, M, dev, (int)retCode, atrBeg, atrNb, begIdx, nbElement );
          return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
 
@@ -428,38 +417,27 @@ static ErrorNumber test_kc_anchors( const TA_History *history )
          /* Rebuild the bands the way the function does. Comparing up[i]-mid[i]
           * against the half-width instead would be wrong: mid + w re-rounds, so
           * (mid + w) - mid is not w. */
-         double w = atr[i + atrOffset] * dev;
+         double w = atr[i] * dev;
 
-         if( mid[i] != ema[i + emaOffset] )
+         if( mid[i] != ema[i] )
          {
-            printf( "KC anchor Fail [%d %d %g] bar %d: middle %.17g != EMA(TYPPRICE) %.17g "
-                    "(emaOffset %d)\n",
-                    N, M, dev, begIdx + i, mid[i], ema[i + emaOffset], emaOffset );
+            printf( "KC composition Fail [%d %d %g] bar %d: middle %.17g != EMA(TYPPRICE) %.17g\n",
+                    N, M, dev, begIdx + i, mid[i], ema[i] );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
          if( up[i] != mid[i] + w )
          {
-            printf( "KC anchor Fail [%d %d %g] bar %d: upper %.17g != middle + nbDev*ATR %.17g "
-                    "(atrOffset %d)\n",
-                    N, M, dev, begIdx + i, up[i], mid[i] + w, atrOffset );
+            printf( "KC composition Fail [%d %d %g] bar %d: upper %.17g != middle + nbDev*ATR %.17g\n",
+                    N, M, dev, begIdx + i, up[i], mid[i] + w );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
          if( lo[i] != mid[i] - w )
          {
-            printf( "KC anchor Fail [%d %d %g] bar %d: lower %.17g != middle - nbDev*ATR %.17g\n",
+            printf( "KC composition Fail [%d %d %g] bar %d: lower %.17g != middle - nbDev*ATR %.17g\n",
                     N, M, dev, begIdx + i, lo[i], mid[i] - w );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
       }
-   }
-
-   /* Each anchor is pinned only by the shapes where its own offset is non-zero. */
-   if( !sawEmaOffset || !sawAtrOffset )
-   {
-      printf( "KC anchor Fail: shape table exercises emaOffset=%d atrOffset=%d; "
-              "both must be non-zero somewhere or an anchor is untested\n",
-              sawEmaOffset, sawAtrOffset );
-      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
    return TA_TEST_PASS;

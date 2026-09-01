@@ -20,6 +20,7 @@ Lower = Middle - Deviations * Band
 - Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.
 - Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.
 - TTR ties the Average True Range period to the centre line's period. Here the two are independent, so the band width can be tuned separately.
+- The centre line and the band are separate recursions, each with its own warm-up. They are entered at their own lookbacks, so a caller who wants either one converged sets that function's unstable period — `TA_FUNC_UNST_EMA` for the centre line, `TA_FUNC_UNST_ATR` for the band.
 
 ## Inputs
 

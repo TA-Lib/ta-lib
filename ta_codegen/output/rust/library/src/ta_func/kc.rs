@@ -166,19 +166,14 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut emaLookback: usize = 0_usize;
-        let mut atrLookback: usize = 0_usize;
-        let mut anchorIdx: usize = 0_usize;
-        let mut emaOffset: usize = 0_usize;
-        let mut atrOffset: usize = 0_usize;
+        let mut tpStartIdx: usize = 0_usize;
         let mut tempBegIdx: usize = 0_usize;
         let mut tempNbElement: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
         let mut middle: f64 = 0.0_f64;
         let mut tempTP: Vec<f64> = Vec::new();
-        let mut tempEMA: Vec<f64> = Vec::new();
         let mut tempATR: Vec<f64> = Vec::new();
         emaLookback = self.EMA_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
-        atrLookback = self.ATR_Lookback(optInATRPeriod).unwrap_or(usize::MAX);
         lookbackTotal = self.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev).unwrap_or(usize::MAX);
         // Nothing to produce: the range is shorter than the lookback. Return before
         // touching anything, so that a caller-supplied input which stops short of
@@ -191,57 +186,40 @@ impl Core {
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
-        // Both legs are recursive, and their lookbacks differ. Seeding each one at
-        // its OWN lookback would leave the shorter leg cold: it would restart from a
-        // fresh seed a few bars before startIdx while the longer leg had been
-        // recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-        // would not shrink as the unstable period grows. Anchor both at
-        // startIdx-lookbackTotal instead -- data this function already requires the
-        // caller to hold -- and each leg is then warmed by the whole lookback budget,
-        // so a single unstable period bounds the residual of both. Without this the
-        // codegen range gate measures KC moving ~1.8% across startIdx at unstable
-        // period 140, where the convergence envelope allows 0.15%.
-        anchorIdx = startIdx - lookbackTotal;
-        emaOffset = lookbackTotal - emaLookback;
-        atrOffset = lookbackTotal - atrLookback;
-        tempTP = vec![0.0_f64; ((endIdx - anchorIdx + 1) * 1) as usize];
-        tempEMA = vec![0.0_f64; ((endIdx - anchorIdx - emaLookback + 1) * 1) as usize];
-        tempATR = vec![0.0_f64; ((endIdx - anchorIdx - atrLookback + 1) * 1) as usize];
-        let _xr0 = match self.TYPPRICE(anchorIdx, endIdx, inHigh, inLow, inClose, &mut tempTP[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        // Each leg is entered at its OWN lookback, so each is the shipped function
+        // over this range and nothing here over-warms the shorter one: a caller who
+        // wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+        // calling TA_ATR directly. The typical price is a derived input, so it is
+        // materialized only over the window the moving average reads.
+        tpStartIdx = startIdx - emaLookback;
+        tempTP = vec![0.0_f64; ((endIdx - tpStartIdx + 1) * 1) as usize];
+        tempATR = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
+        let _xr0 = match self.TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, &mut tempTP[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr0.beg_idx;
         tempNbElement = _xr0.count;
         retCode = RetCode::Success;
-        // tempTP is bar-anchorIdx relative, so entering the moving average at its own
-        // lookback seeds it on the first typical price available.
-        let _xr1 = match self.EMA(emaLookback, endIdx - anchorIdx, &tempTP, optInTimePeriod, &mut tempEMA[..]) { Ok(_r) => _r, Err(_e) => return _e };
+        // The ATR consumes the price inputs before the moving average below writes
+        // the middle band, which may be aliased onto one of them.
+        let _xr1 = match self.ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, &mut tempATR[..]) { Ok(_r) => _r, Err(_e) => return _e };
         tempBegIdx = _xr1.beg_idx;
         tempNbElement = _xr1.count;
         retCode = RetCode::Success;
-        let _xr2 = match self.ATR(anchorIdx + atrLookback, endIdx, inHigh, inLow, inClose, optInATRPeriod, &mut tempATR[..]) { Ok(_r) => _r, Err(_e) => return _e };
-        tempBegIdx = _xr2.beg_idx;
-        tempNbElement = _xr2.count;
+        // tempTP is bar-tpStartIdx relative, so entering the moving average at its
+        // own lookback puts its first output on startIdx, where the ATR's already is.
+        let _xr2 = match self.EMA(emaLookback, endIdx - tpStartIdx, &tempTP, optInTimePeriod, outRealMiddleBand) { Ok(_r) => _r, Err(_e) => return _e };
+        (*outBegIdx) = _xr2.beg_idx;
+        (*outNBElement) = _xr2.count;
         retCode = RetCode::Success;
+        if ((*outNBElement) as usize) == 0 {
+            (*outNBElement) = 0;
+            return retCode;
+        }
         (*outBegIdx) = startIdx;
-        (*outNBElement) = endIdx - startIdx + 1;
-        // Each leg begins at its own lookback past the common anchor, so drop the
-        // warm-up head of both and pair them index for index from startIdx.
-        {
-            let _n = ((*outNBElement) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (emaOffset) as usize;
-            outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempEMA[_si.._si + _n]);
-        };
-        {
-            let _n = ((*outNBElement) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (atrOffset) as usize;
-            outRealLowerBand[_di.._di + _n].copy_from_slice(&tempATR[_si.._si + _n]);
-        };
         // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
         while i < ((((*outNBElement) as usize)) as usize) {
             middle = outRealMiddleBand[i];
-            tempReal = outRealLowerBand[i] * optInNbDev;
+            tempReal = tempATR[i] * optInNbDev;
             outRealUpperBand[i] = middle + tempReal;
             outRealLowerBand[i] = middle - tempReal;
             i += 1;
@@ -417,8 +395,8 @@ struct KcStreamState {
     optInATRPeriod: i32,
     optInNbDev: f64,
     sub0: TyppriceStream,
-    sub1: EmaStream,
-    sub2: AtrStream,
+    sub1: AtrStream,
+    sub2: EmaStream,
     cur_outRealUpperBand: f64,
     cur_outRealMiddleBand: f64,
     cur_outRealLowerBand: f64,
@@ -434,23 +412,23 @@ impl Core {
         let mut middle: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_tempTP: f64 = 0.0_f64;
-        let mut cur_tempEMA: f64 = 0.0_f64;
         let mut cur_tempATR: f64 = 0.0_f64;
+        let mut cur_outRealMiddleBand: f64 = 0.0_f64;
         let mut cur_outRealUpperBand: f64 = 0.0_f64;
         let mut cur_outRealLowerBand: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
         cur_tempTP = sp.sub0.update(inHigh, inLow, inClose)?;
-        cur_tempEMA = sp.sub1.update(cur_tempTP)?;
-        cur_tempATR = sp.sub2.update(inHigh, inLow, inClose)?;
+        cur_tempATR = sp.sub1.update(inHigh, inLow, inClose)?;
+        cur_outRealMiddleBand = sp.sub2.update(cur_tempTP)?;
         // Combine map (batch tail, per bar).
-        middle = cur_tempEMA;
+        middle = cur_outRealMiddleBand;
         tempReal = cur_tempATR * sp.optInNbDev;
         cur_outRealUpperBand = middle + tempReal;
-        cur_tempATR = middle - tempReal;
+        cur_outRealLowerBand = middle - tempReal;
         (*outRealUpperBand) = cur_outRealUpperBand;
-        (*outRealMiddleBand) = cur_tempEMA;
-        (*outRealLowerBand) = cur_tempATR;
+        (*outRealMiddleBand) = cur_outRealMiddleBand;
+        (*outRealLowerBand) = cur_outRealLowerBand;
         Ok(())
     }
 
@@ -509,19 +487,14 @@ impl Core {
         let mut i: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         let mut emaLookback: usize = 0_usize;
-        let mut atrLookback: usize = 0_usize;
-        let mut anchorIdx: usize = 0_usize;
-        let mut emaOffset: usize = 0_usize;
-        let mut atrOffset: usize = 0_usize;
+        let mut tpStartIdx: usize = 0_usize;
         let mut tempBegIdx: usize = 0_usize;
         let mut tempNbElement: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
         let mut middle: f64 = 0.0_f64;
         let mut tempTP: Vec<f64> = Vec::new();
-        let mut tempEMA: Vec<f64> = Vec::new();
         let mut tempATR: Vec<f64> = Vec::new();
         emaLookback = self.EMA_Lookback(optInTimePeriod)?;
-        atrLookback = self.ATR_Lookback(optInATRPeriod)?;
         lookbackTotal = self.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev)?;
         // Nothing to produce: the range is shorter than the lookback. Return before
         // touching anything, so that a caller-supplied input which stops short of
@@ -534,57 +507,40 @@ impl Core {
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
-        // Both legs are recursive, and their lookbacks differ. Seeding each one at
-        // its OWN lookback would leave the shorter leg cold: it would restart from a
-        // fresh seed a few bars before startIdx while the longer leg had been
-        // recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-        // would not shrink as the unstable period grows. Anchor both at
-        // startIdx-lookbackTotal instead -- data this function already requires the
-        // caller to hold -- and each leg is then warmed by the whole lookback budget,
-        // so a single unstable period bounds the residual of both. Without this the
-        // codegen range gate measures KC moving ~1.8% across startIdx at unstable
-        // period 140, where the convergence envelope allows 0.15%.
-        anchorIdx = startIdx - lookbackTotal;
-        emaOffset = lookbackTotal - emaLookback;
-        atrOffset = lookbackTotal - atrLookback;
-        tempTP = vec![0.0_f64; ((endIdx - anchorIdx + 1) * 1) as usize];
-        tempEMA = vec![0.0_f64; ((endIdx - anchorIdx - emaLookback + 1) * 1) as usize];
-        tempATR = vec![0.0_f64; ((endIdx - anchorIdx - atrLookback + 1) * 1) as usize];
+        // Each leg is entered at its OWN lookback, so each is the shipped function
+        // over this range and nothing here over-warms the shorter one: a caller who
+        // wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+        // calling TA_ATR directly. The typical price is a derived input, so it is
+        // materialized only over the window the moving average reads.
+        tpStartIdx = startIdx - emaLookback;
+        tempTP = vec![0.0_f64; ((endIdx - tpStartIdx + 1) * 1) as usize];
+        tempATR = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub0 = self.typprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((anchorIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempTP[..])?;
+        let sub0 = self.typprice_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((tpStartIdx) as usize), &mut tempBegIdx, &mut tempNbElement, &mut tempTP[..])?;
         retCode = RetCode::Success;
-        // tempTP is bar-anchorIdx relative, so entering the moving average at its own
-        // lookback seeds it on the first typical price available.
-        // Sub-stream 1: ema over `tempTP`, warmed from bar 0 up to the
+        // The ATR consumes the price inputs before the moving average below writes
+        // the middle band, which may be aliased onto one of them.
+        // Sub-stream 1: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub1 = self.ema_open_and_fill_internal(&tempTP[..((endIdx - anchorIdx) as usize) + 1], ((emaLookback) as usize), optInTimePeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempEMA[..])?;
+        let sub1 = self.atr_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize), optInATRPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempATR[..])?;
         retCode = RetCode::Success;
-        // Sub-stream 2: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+        // tempTP is bar-tpStartIdx relative, so entering the moving average at its
+        // own lookback puts its first output on startIdx, where the ATR's already is.
+        // Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let sub2 = self.atr_open_and_fill_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((anchorIdx + atrLookback) as usize), optInATRPeriod, &mut tempBegIdx, &mut tempNbElement, &mut tempATR[..])?;
+        let sub2 = self.ema_open_and_fill_internal(&tempTP[..((endIdx - tpStartIdx) as usize) + 1], ((emaLookback) as usize), optInTimePeriod, outBegIdx, outNBElement, &mut sc_outRealMiddleBand[..])?;
         retCode = RetCode::Success;
+        if ((*outNBElement) as usize) == 0 {
+            (*outNBElement) = 0;
+            return Err(RetCode::InsufficientHistory);
+        }
         (*outBegIdx) = startIdx;
-        (*outNBElement) = endIdx - startIdx + 1;
-        // Each leg begins at its own lookback past the common anchor, so drop the
-        // warm-up head of both and pair them index for index from startIdx.
-        {
-            let _n = ((*outNBElement) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (emaOffset) as usize;
-            sc_outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempEMA[_si.._si + _n]);
-        };
-        {
-            let _n = ((*outNBElement) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (atrOffset) as usize;
-            sc_outRealLowerBand[_di.._di + _n].copy_from_slice(&tempATR[_si.._si + _n]);
-        };
         // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
         i = 0;
         while i < ((((*outNBElement) as usize)) as usize) {
             middle = sc_outRealMiddleBand[i];
-            tempReal = sc_outRealLowerBand[i] * optInNbDev;
+            tempReal = tempATR[i] * optInNbDev;
             sc_outRealUpperBand[i] = middle + tempReal;
             sc_outRealLowerBand[i] = middle - tempReal;
             i += 1;
@@ -874,23 +830,23 @@ impl KcStream {
             let mut middle: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut cur_tempTP: f64 = 0.0_f64;
-            let mut cur_tempEMA: f64 = 0.0_f64;
             let mut cur_tempATR: f64 = 0.0_f64;
+            let mut cur_outRealMiddleBand: f64 = 0.0_f64;
             let mut cur_outRealUpperBand: f64 = 0.0_f64;
             let mut cur_outRealLowerBand: f64 = 0.0_f64;
 
             // Pipeline the new bar through the sub-streams (batch tail order).
             cur_tempTP = sp.sub0.peek(inHigh, inLow, inClose)?;
-            cur_tempEMA = sp.sub1.peek(cur_tempTP)?;
-            cur_tempATR = sp.sub2.peek(inHigh, inLow, inClose)?;
+            cur_tempATR = sp.sub1.peek(inHigh, inLow, inClose)?;
+            cur_outRealMiddleBand = sp.sub2.peek(cur_tempTP)?;
             // Combine map (batch tail, per bar).
-            middle = cur_tempEMA;
+            middle = cur_outRealMiddleBand;
             tempReal = cur_tempATR * sp.optInNbDev;
             cur_outRealUpperBand = middle + tempReal;
-            cur_tempATR = middle - tempReal;
+            cur_outRealLowerBand = middle - tempReal;
             (*outRealUpperBand) = cur_outRealUpperBand;
-            (*outRealMiddleBand) = cur_tempEMA;
-            (*outRealLowerBand) = cur_tempATR;
+            (*outRealMiddleBand) = cur_outRealMiddleBand;
+            (*outRealLowerBand) = cur_outRealLowerBand;
         }
         Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
     }

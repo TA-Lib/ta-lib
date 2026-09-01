@@ -3950,9 +3950,9 @@ static int sv_steq_TA_KC( const struct TA_KC_Stream *a, const struct TA_KC_Strea
    if( (a->sub0 == NULL) != (b->sub0 == NULL) ) { *w = "sub0"; return 1; }
    if( a->sub0 && sv_steq_TA_TYPPRICE( a->sub0, b->sub0, w, z ) ) return 1;
    if( (a->sub1 == NULL) != (b->sub1 == NULL) ) { *w = "sub1"; return 1; }
-   if( a->sub1 && sv_steq_TA_EMA( a->sub1, b->sub1, w, z ) ) return 1;
+   if( a->sub1 && sv_steq_TA_ATR( a->sub1, b->sub1, w, z ) ) return 1;
    if( (a->sub2 == NULL) != (b->sub2 == NULL) ) { *w = "sub2"; return 1; }
-   if( a->sub2 && sv_steq_TA_ATR( a->sub2, b->sub2, w, z ) ) return 1;
+   if( a->sub2 && sv_steq_TA_EMA( a->sub2, b->sub2, w, z ) ) return 1;
    return 0;
 }
 

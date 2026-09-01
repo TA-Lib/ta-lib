@@ -122,16 +122,12 @@ public partial class Core
       int i = 0;
       int lookbackTotal = 0;
       int emaLookback = 0;
-      int atrLookback = 0;
-      int anchorIdx = 0;
-      int emaOffset = 0;
-      int atrOffset = 0;
+      int tpStartIdx = 0;
       int tempBegIdx = 0;
       int tempNbElement = 0;
       double tempReal = 0;
       double middle = 0;
       Span<double> tempTP;
-      Span<double> tempEMA;
       Span<double> tempATR;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -161,7 +157,6 @@ public partial class Core
          return RetCode.BadParam ;
       }
       emaLookback = EMA_Lookback(optInTimePeriod);
-      atrLookback = ATR_Lookback(optInATRPeriod);
       lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       /* Nothing to produce: the range is shorter than the lookback. Return before
        * touching anything, so that a caller-supplied input which stops short of
@@ -175,48 +170,41 @@ public partial class Core
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      /* Both legs are recursive, and their lookbacks differ. Seeding each one at
-       * its OWN lookback would leave the shorter leg cold: it would restart from a
-       * fresh seed a few bars before startIdx while the longer leg had been
-       * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-       * would not shrink as the unstable period grows. Anchor both at
-       * startIdx-lookbackTotal instead -- data this function already requires the
-       * caller to hold -- and each leg is then warmed by the whole lookback budget,
-       * so a single unstable period bounds the residual of both. Without this the
-       * codegen range gate measures KC moving ~1.8% across startIdx at unstable
-       * period 140, where the convergence envelope allows 0.15%.
+      /* Each leg is entered at its OWN lookback, so each is the shipped function
+       * over this range and nothing here over-warms the shorter one: a caller who
+       * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+       * calling TA_ATR directly. The typical price is a derived input, so it is
+       * materialized only over the window the moving average reads.
        */
-      anchorIdx = startIdx - lookbackTotal;
-      emaOffset = lookbackTotal - emaLookback;
-      atrOffset = lookbackTotal - atrLookback;
-      tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
-      tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
-      tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
-      OutRange _xr0 = TYPPRICE(anchorIdx, endIdx, inHigh, inLow, inClose, tempTP);
+      tpStartIdx = startIdx - emaLookback;
+      tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
+      tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
+      OutRange _xr0 = TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
       tempBegIdx = _xr0.BegIdx;
       tempNbElement = _xr0.Count;
       retCode = RetCode.Success;
-      /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
-       * lookback seeds it on the first typical price available.
+      /* The ATR consumes the price inputs before the moving average below writes
+       * the middle band, which may be aliased onto one of them.
        */
-      OutRange _xr1 = EMA(emaLookback, endIdx - anchorIdx, tempTP, optInTimePeriod, tempEMA);
+      OutRange _xr1 = ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
       tempBegIdx = _xr1.BegIdx;
       tempNbElement = _xr1.Count;
       retCode = RetCode.Success;
-      OutRange _xr2 = ATR(anchorIdx + atrLookback, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
-      tempBegIdx = _xr2.BegIdx;
-      tempNbElement = _xr2.Count;
-      retCode = RetCode.Success;
-      outBegIdx = startIdx;
-      outNBElement = endIdx - startIdx + 1;
-      /* Each leg begins at its own lookback past the common anchor, so drop the
-       * warm-up head of both and pair them index for index from startIdx.
+      /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
+       * own lookback puts its first output on startIdx, where the ATR's already is.
        */
-      tempEMA.Slice(emaOffset, outNBElement * 1).CopyTo(outRealMiddleBand.Slice(0));
-      tempATR.Slice(atrOffset, outNBElement * 1).CopyTo(outRealLowerBand.Slice(0));
+      OutRange _xr2 = EMA(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
+      outBegIdx = _xr2.BegIdx;
+      outNBElement = _xr2.Count;
+      retCode = RetCode.Success;
+      if( (int)outNBElement == 0 ) {
+         outNBElement = 0;
+         return retCode ;
+      }
+      outBegIdx = startIdx;
       for( i = 0; i < (int)outNBElement; i += 1 ) {
          middle = outRealMiddleBand[i];
-         tempReal = outRealLowerBand[i] * optInNbDev;
+         tempReal = tempATR[i] * optInNbDev;
          outRealUpperBand[i] = middle + tempReal;
          outRealLowerBand[i] = middle - tempReal;
       }
@@ -242,16 +230,12 @@ public partial class Core
       int i = 0;
       int lookbackTotal = 0;
       int emaLookback = 0;
-      int atrLookback = 0;
-      int anchorIdx = 0;
-      int emaOffset = 0;
-      int atrOffset = 0;
+      int tpStartIdx = 0;
       int tempBegIdx = 0;
       int tempNbElement = 0;
       double tempReal = 0;
       double middle = 0;
       Span<double> tempTP;
-      Span<double> tempEMA;
       Span<double> tempATR;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
@@ -278,7 +262,6 @@ public partial class Core
          return RetCode.BadParam ;
       }
       emaLookback = EMA_Lookback(optInTimePeriod);
-      atrLookback = ATR_Lookback(optInATRPeriod);
       lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       if( lookbackTotal > endIdx ) {
          outBegIdx = 0;
@@ -288,31 +271,29 @@ public partial class Core
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      anchorIdx = startIdx - lookbackTotal;
-      emaOffset = lookbackTotal - emaLookback;
-      atrOffset = lookbackTotal - atrLookback;
-      tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
-      tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
-      tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
-      OutRange _xr0 = TYPPRICE(anchorIdx, endIdx, inHigh, inLow, inClose, tempTP);
+      tpStartIdx = startIdx - emaLookback;
+      tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
+      tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
+      OutRange _xr0 = TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
       tempBegIdx = _xr0.BegIdx;
       tempNbElement = _xr0.Count;
       retCode = RetCode.Success;
-      OutRange _xr1 = EMA(emaLookback, endIdx - anchorIdx, tempTP, optInTimePeriod, tempEMA);
+      OutRange _xr1 = ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
       tempBegIdx = _xr1.BegIdx;
       tempNbElement = _xr1.Count;
       retCode = RetCode.Success;
-      OutRange _xr2 = ATR(anchorIdx + atrLookback, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
-      tempBegIdx = _xr2.BegIdx;
-      tempNbElement = _xr2.Count;
+      OutRange _xr2 = EMA(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
+      outBegIdx = _xr2.BegIdx;
+      outNBElement = _xr2.Count;
       retCode = RetCode.Success;
+      if( (int)outNBElement == 0 ) {
+         outNBElement = 0;
+         return retCode ;
+      }
       outBegIdx = startIdx;
-      outNBElement = endIdx - startIdx + 1;
-      tempEMA.Slice(emaOffset, outNBElement * 1).CopyTo(outRealMiddleBand.Slice(0));
-      tempATR.Slice(atrOffset, outNBElement * 1).CopyTo(outRealLowerBand.Slice(0));
       for( i = 0; i < (int)outNBElement; i += 1 ) {
          middle = outRealMiddleBand[i];
-         tempReal = outRealLowerBand[i] * optInNbDev;
+         tempReal = tempATR[i] * optInNbDev;
          outRealUpperBand[i] = middle + tempReal;
          outRealLowerBand[i] = middle - tempReal;
       }
@@ -338,6 +319,7 @@ public partial class Core
    /// <item><description>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</description></item>
    /// <item><description>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</description></item>
    /// <item><description>TTR ties the Average True Range period to the centre line's period. Here the two are independent, so the band width can be tuned separately.</description></item>
+   /// <item><description>The centre line and the band are separate recursions, each with its own warm-up. They are entered at their own lookbacks, so a caller who wants either one converged sets that function's unstable period — <c>TA_FUNC_UNST_EMA</c> for the centre line, <c>TA_FUNC_UNST_ATR</c> for the band.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -429,6 +411,7 @@ public partial class Core
    /// <item><description>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</description></item>
    /// <item><description>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</description></item>
    /// <item><description>TTR ties the Average True Range period to the centre line's period. Here the two are independent, so the band width can be tuned separately.</description></item>
+   /// <item><description>The centre line and the band are separate recursions, each with its own warm-up. They are entered at their own lookbacks, so a caller who wants either one converged sets that function's unstable period — <c>TA_FUNC_UNST_EMA</c> for the centre line, <c>TA_FUNC_UNST_ATR</c> for the band.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -548,8 +531,8 @@ public partial class Core
       internal double cur_outRealMiddleBand;
       internal double cur_outRealLowerBand;
       internal TyppriceStream sub0 = null!;
-      internal EmaStream sub1 = null!;
-      internal AtrStream sub2 = null!;
+      internal AtrStream sub1 = null!;
+      internal EmaStream sub2 = null!;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
@@ -577,8 +560,8 @@ public partial class Core
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
          this.sub0 = new TyppriceStream(other.sub0);
-         this.sub1 = new EmaStream(other.sub1);
-         this.sub2 = new AtrStream(other.sub2);
+         this.sub1 = new AtrStream(other.sub1);
+         this.sub2 = new EmaStream(other.sub2);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -634,22 +617,19 @@ public partial class Core
          double middle = 0.0;
          double tempReal = 0.0;
          double cur_tempTP = 0.0;
-         double cur_tempEMA = 0.0;
          double cur_tempATR = 0.0;
+         double cur_outRealMiddleBand = 0.0;
          double cur_outRealUpperBand = 0.0;
          double cur_outRealLowerBand = 0.0;
-         double cur_outRealMiddleBand = 0.0;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempTP = sp.sub0.Peek(inHigh, inLow, inClose);
-         cur_tempEMA = sp.sub1.Peek(cur_tempTP);
-         cur_tempATR = sp.sub2.Peek(inHigh, inLow, inClose);
+         cur_tempATR = sp.sub1.Peek(inHigh, inLow, inClose);
+         cur_outRealMiddleBand = sp.sub2.Peek(cur_tempTP);
          /* Combine map (batch tail, per bar). */
-         middle = cur_tempEMA;
+         middle = cur_outRealMiddleBand;
          tempReal = cur_tempATR * sp.optInNbDev;
          cur_outRealUpperBand = middle + tempReal;
-         cur_tempATR = middle - tempReal;
-         cur_outRealMiddleBand = cur_tempEMA;
-         cur_outRealLowerBand = cur_tempATR;
+         cur_outRealLowerBand = middle - tempReal;
          return new KcValue(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
 
@@ -713,22 +693,22 @@ public partial class Core
       double middle = 0.0;
       double tempReal = 0.0;
       double cur_tempTP = 0.0;
-      double cur_tempEMA = 0.0;
       double cur_tempATR = 0.0;
+      double cur_outRealMiddleBand = 0.0;
       double cur_outRealUpperBand = 0.0;
       double cur_outRealLowerBand = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempTP = sp.sub0.Update(inHigh, inLow, inClose);
-      cur_tempEMA = sp.sub1.Update(cur_tempTP);
-      cur_tempATR = sp.sub2.Update(inHigh, inLow, inClose);
+      cur_tempATR = sp.sub1.Update(inHigh, inLow, inClose);
+      cur_outRealMiddleBand = sp.sub2.Update(cur_tempTP);
       /* Combine map (batch tail, per bar). */
-      middle = cur_tempEMA;
+      middle = cur_outRealMiddleBand;
       tempReal = cur_tempATR * sp.optInNbDev;
       cur_outRealUpperBand = middle + tempReal;
-      cur_tempATR = middle - tempReal;
+      cur_outRealLowerBand = middle - tempReal;
       sp.cur_outRealUpperBand = cur_outRealUpperBand;
-      sp.cur_outRealMiddleBand = cur_tempEMA;
-      sp.cur_outRealLowerBand = cur_tempATR;
+      sp.cur_outRealMiddleBand = cur_outRealMiddleBand;
+      sp.cur_outRealLowerBand = cur_outRealLowerBand;
    }
 
    private RetCode KcOpenImpl( KcStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand, int outStride )
@@ -739,16 +719,12 @@ public partial class Core
       int i = 0;
       int lookbackTotal = 0;
       int emaLookback = 0;
-      int atrLookback = 0;
-      int anchorIdx = 0;
-      int emaOffset = 0;
-      int atrOffset = 0;
+      int tpStartIdx = 0;
       int tempBegIdx = 0;
       int tempNbElement = 0;
       double tempReal = 0;
       double middle = 0;
       Span<double> tempTP;
-      Span<double> tempEMA;
       Span<double> tempATR;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
@@ -788,7 +764,6 @@ public partial class Core
       Span<double> sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
       Span<double> sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
       emaLookback = EMA_Lookback(optInTimePeriod);
-      atrLookback = ATR_Lookback(optInATRPeriod);
       lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
       /* Nothing to produce: the range is shorter than the lookback. Return before
        * touching anything, so that a caller-supplied input which stops short of
@@ -802,51 +777,44 @@ public partial class Core
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
-      /* Both legs are recursive, and their lookbacks differ. Seeding each one at
-       * its OWN lookback would leave the shorter leg cold: it would restart from a
-       * fresh seed a few bars before startIdx while the longer leg had been
-       * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-       * would not shrink as the unstable period grows. Anchor both at
-       * startIdx-lookbackTotal instead -- data this function already requires the
-       * caller to hold -- and each leg is then warmed by the whole lookback budget,
-       * so a single unstable period bounds the residual of both. Without this the
-       * codegen range gate measures KC moving ~1.8% across startIdx at unstable
-       * period 140, where the convergence envelope allows 0.15%.
+      /* Each leg is entered at its OWN lookback, so each is the shipped function
+       * over this range and nothing here over-warms the shorter one: a caller who
+       * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+       * calling TA_ATR directly. The typical price is a derived input, so it is
+       * materialized only over the window the moving average reads.
        */
-      anchorIdx = startIdx - lookbackTotal;
-      emaOffset = lookbackTotal - emaLookback;
-      atrOffset = lookbackTotal - atrLookback;
-      tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
-      tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
-      tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
+      tpStartIdx = startIdx - emaLookback;
+      tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
+      tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      TyppriceStream sub0 = TyppriceOpenAndFillInternal(inHigh, inLow, inClose, anchorIdx, out tempBegIdx, out tempNbElement, tempTP);
+      TyppriceStream sub0 = TyppriceOpenAndFillInternal(inHigh, inLow, inClose, tpStartIdx, out tempBegIdx, out tempNbElement, tempTP);
       retCode = RetCode.Success;
-      /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
-       * lookback seeds it on the first typical price available.
+      /* The ATR consumes the price inputs before the moving average below writes
+       * the middle band, which may be aliased onto one of them.
        */
-      /* Sub-stream 1: ema over `tempTP`, warmed from bar 0 up to the
+      /* Sub-stream 1: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      int subLen1 = (endIdx - anchorIdx) + 1;
-      double[] subSrc1_0 = new double[subLen1];
-      tempTP.Slice(0, subLen1).CopyTo(subSrc1_0);
-      EmaStream sub1 = EmaOpenAndFillInternal(subSrc1_0, emaLookback, optInTimePeriod, out tempBegIdx, out tempNbElement, tempEMA);
+      AtrStream sub1 = AtrOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInATRPeriod, out tempBegIdx, out tempNbElement, tempATR);
       retCode = RetCode.Success;
-      /* Sub-stream 2: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+      /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
+       * own lookback puts its first output on startIdx, where the ATR's already is.
+       */
+      /* Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      AtrStream sub2 = AtrOpenAndFillInternal(inHigh, inLow, inClose, anchorIdx + atrLookback, optInATRPeriod, out tempBegIdx, out tempNbElement, tempATR);
+      int subLen2 = (endIdx - tpStartIdx) + 1;
+      double[] subSrc2_0 = new double[subLen2];
+      tempTP.Slice(0, subLen2).CopyTo(subSrc2_0);
+      EmaStream sub2 = EmaOpenAndFillInternal(subSrc2_0, emaLookback, optInTimePeriod, out outBegIdx, out outNBElement, sc_outRealMiddleBand);
       retCode = RetCode.Success;
+      if( (int)outNBElement == 0 ) {
+         outNBElement = 0;
+         return RetCode.InsufficientHistory ;
+      }
       outBegIdx = startIdx;
-      outNBElement = endIdx - startIdx + 1;
-      /* Each leg begins at its own lookback past the common anchor, so drop the
-       * warm-up head of both and pair them index for index from startIdx.
-       */
-      tempEMA.Slice(emaOffset, outNBElement * 1).CopyTo(sc_outRealMiddleBand.Slice(0));
-      tempATR.Slice(atrOffset, outNBElement * 1).CopyTo(sc_outRealLowerBand.Slice(0));
       for( i = 0; i < (int)outNBElement; i += 1 ) {
          middle = sc_outRealMiddleBand[i];
-         tempReal = sc_outRealLowerBand[i] * optInNbDev;
+         tempReal = tempATR[i] * optInNbDev;
          sc_outRealUpperBand[i] = middle + tempReal;
          sc_outRealLowerBand[i] = middle - tempReal;
       }

@@ -98917,16 +98917,12 @@ class Core {
           int i = 0;
           int lookbackTotal = 0;
           int emaLookback = 0;
-          int atrLookback = 0;
-          int anchorIdx = 0;
-          int emaOffset = 0;
-          int atrOffset = 0;
+          int tpStartIdx = 0;
           MInteger tempBegIdx = new MInteger();
           MInteger tempNbElement = new MInteger();
           double tempReal = 0;
           double middle = 0;
           double[] tempTP;
-          double[] tempEMA;
           double[] tempATR;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
              return RetCode.OutOfRangeStartIndex ;
@@ -98953,7 +98949,6 @@ class Core {
              return RetCode.BadParam ;
           }
           emaLookback = EMA_Lookback(optInTimePeriod);
-          atrLookback = ATR_Lookback(optInATRPeriod);
           lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
           /* Nothing to produce: the range is shorter than the lookback. Return before
            * touching anything, so that a caller-supplied input which stops short of
@@ -98967,48 +98962,41 @@ class Core {
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
-          /* Both legs are recursive, and their lookbacks differ. Seeding each one at
-           * its OWN lookback would leave the shorter leg cold: it would restart from a
-           * fresh seed a few bars before startIdx while the longer leg had been
-           * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-           * would not shrink as the unstable period grows. Anchor both at
-           * startIdx-lookbackTotal instead -- data this function already requires the
-           * caller to hold -- and each leg is then warmed by the whole lookback budget,
-           * so a single unstable period bounds the residual of both. Without this the
-           * codegen range gate measures KC moving ~1.8% across startIdx at unstable
-           * period 140, where the convergence envelope allows 0.15%.
+          /* Each leg is entered at its OWN lookback, so each is the shipped function
+           * over this range and nothing here over-warms the shorter one: a caller who
+           * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+           * calling TA_ATR directly. The typical price is a derived input, so it is
+           * materialized only over the window the moving average reads.
            */
-          anchorIdx = startIdx - lookbackTotal;
-          emaOffset = lookbackTotal - emaLookback;
-          atrOffset = lookbackTotal - atrLookback;
-          tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
-          tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
-          tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
-          OutRange _xr0 = TYPPRICE(anchorIdx, endIdx, inHigh, inLow, inClose, tempTP);
+          tpStartIdx = startIdx - emaLookback;
+          tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
+          tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
+          OutRange _xr0 = TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
           tempBegIdx.value = _xr0.begIdx();
           tempNbElement.value = _xr0.count();
           retCode = RetCode.Success;
-          /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
-           * lookback seeds it on the first typical price available.
+          /* The ATR consumes the price inputs before the moving average below writes
+           * the middle band, which may be aliased onto one of them.
            */
-          OutRange _xr1 = EMA(emaLookback, endIdx - anchorIdx, tempTP, optInTimePeriod, tempEMA);
+          OutRange _xr1 = ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
           tempBegIdx.value = _xr1.begIdx();
           tempNbElement.value = _xr1.count();
           retCode = RetCode.Success;
-          OutRange _xr2 = ATR(anchorIdx + atrLookback, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
-          tempBegIdx.value = _xr2.begIdx();
-          tempNbElement.value = _xr2.count();
-          retCode = RetCode.Success;
-          outBegIdx.value = startIdx;
-          outNBElement.value = endIdx - startIdx + 1;
-          /* Each leg begins at its own lookback past the common anchor, so drop the
-           * warm-up head of both and pair them index for index from startIdx.
+          /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
+           * own lookback puts its first output on startIdx, where the ATR's already is.
            */
-          System.arraycopy(tempEMA, emaOffset, outRealMiddleBand, 0, outNBElement.value * 1);
-          System.arraycopy(tempATR, atrOffset, outRealLowerBand, 0, outNBElement.value * 1);
+          OutRange _xr2 = EMA(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
+          outBegIdx.value = _xr2.begIdx();
+          outNBElement.value = _xr2.count();
+          retCode = RetCode.Success;
+          if( (int)outNBElement.value == 0 ) {
+             outNBElement.value = 0;
+             return retCode ;
+          }
+          outBegIdx.value = startIdx;
           for( i = 0; i < (int)outNBElement.value; i += 1 ) {
              middle = outRealMiddleBand[i];
-             tempReal = outRealLowerBand[i] * optInNbDev;
+             tempReal = tempATR[i] * optInNbDev;
              outRealUpperBand[i] = middle + tempReal;
              outRealLowerBand[i] = middle - tempReal;
           }
@@ -99032,16 +99020,12 @@ class Core {
           int i = 0;
           int lookbackTotal = 0;
           int emaLookback = 0;
-          int atrLookback = 0;
-          int anchorIdx = 0;
-          int emaOffset = 0;
-          int atrOffset = 0;
+          int tpStartIdx = 0;
           MInteger tempBegIdx = new MInteger();
           MInteger tempNbElement = new MInteger();
           double tempReal = 0;
           double middle = 0;
           double[] tempTP;
-          double[] tempEMA;
           double[] tempATR;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
              return RetCode.OutOfRangeStartIndex ;
@@ -99068,7 +99052,6 @@ class Core {
              return RetCode.BadParam ;
           }
           emaLookback = EMA_Lookback(optInTimePeriod);
-          atrLookback = ATR_Lookback(optInATRPeriod);
           lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
           if( lookbackTotal > endIdx ) {
              outBegIdx.value = 0;
@@ -99078,31 +99061,29 @@ class Core {
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
-          anchorIdx = startIdx - lookbackTotal;
-          emaOffset = lookbackTotal - emaLookback;
-          atrOffset = lookbackTotal - atrLookback;
-          tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
-          tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
-          tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
-          OutRange _xr0 = TYPPRICE(anchorIdx, endIdx, inHigh, inLow, inClose, tempTP);
+          tpStartIdx = startIdx - emaLookback;
+          tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
+          tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
+          OutRange _xr0 = TYPPRICE(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP);
           tempBegIdx.value = _xr0.begIdx();
           tempNbElement.value = _xr0.count();
           retCode = RetCode.Success;
-          OutRange _xr1 = EMA(emaLookback, endIdx - anchorIdx, tempTP, optInTimePeriod, tempEMA);
+          OutRange _xr1 = ATR(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
           tempBegIdx.value = _xr1.begIdx();
           tempNbElement.value = _xr1.count();
           retCode = RetCode.Success;
-          OutRange _xr2 = ATR(anchorIdx + atrLookback, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
-          tempBegIdx.value = _xr2.begIdx();
-          tempNbElement.value = _xr2.count();
+          OutRange _xr2 = EMA(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand);
+          outBegIdx.value = _xr2.begIdx();
+          outNBElement.value = _xr2.count();
           retCode = RetCode.Success;
+          if( (int)outNBElement.value == 0 ) {
+             outNBElement.value = 0;
+             return retCode ;
+          }
           outBegIdx.value = startIdx;
-          outNBElement.value = endIdx - startIdx + 1;
-          System.arraycopy(tempEMA, emaOffset, outRealMiddleBand, 0, outNBElement.value * 1);
-          System.arraycopy(tempATR, atrOffset, outRealLowerBand, 0, outNBElement.value * 1);
           for( i = 0; i < (int)outNBElement.value; i += 1 ) {
              middle = outRealMiddleBand[i];
-             tempReal = outRealLowerBand[i] * optInNbDev;
+             tempReal = tempATR[i] * optInNbDev;
              outRealUpperBand[i] = middle + tempReal;
              outRealLowerBand[i] = middle - tempReal;
           }
@@ -99127,6 +99108,7 @@ class Core {
         * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
         * <li>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</li>
         * <li>TTR ties the Average True Range period to the centre line's period. Here the two are independent, so the band width can be tuned separately.</li>
+        * <li>The centre line and the band are separate recursions, each with its own warm-up. They are entered at their own lookbacks, so a caller who wants either one converged sets that function's unstable period — {@code TA_FUNC_UNST_EMA} for the centre line, {@code TA_FUNC_UNST_ATR} for the band.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -99221,6 +99203,7 @@ class Core {
         * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
         * <li>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</li>
         * <li>TTR ties the Average True Range period to the centre line's period. Here the two are independent, so the band width can be tuned separately.</li>
+        * <li>The centre line and the band are separate recursions, each with its own warm-up. They are entered at their own lookbacks, so a caller who wants either one converged sets that function's unstable period — {@code TA_FUNC_UNST_EMA} for the centre line, {@code TA_FUNC_UNST_ATR} for the band.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -99325,8 +99308,8 @@ class Core {
           double cur_outRealLowerBand;
           Value cachedValue;
           TyppriceStream sub0;
-          EmaStream sub1;
-          AtrStream sub2;
+          AtrStream sub1;
+          EmaStream sub2;
           int outRangeBegIdx;
           int outRangeCount;
 
@@ -99355,8 +99338,8 @@ class Core {
              this.cur_outRealLowerBand = other.cur_outRealLowerBand;
              this.cachedValue = other.cachedValue;
              this.sub0 = new TyppriceStream(other.sub0);
-             this.sub1 = new EmaStream(other.sub1);
-             this.sub2 = new AtrStream(other.sub2);
+             this.sub1 = new AtrStream(other.sub1);
+             this.sub2 = new EmaStream(other.sub2);
              this.outRangeBegIdx = other.outRangeBegIdx;
              this.outRangeCount = other.outRangeCount;
           }
@@ -99461,22 +99444,19 @@ class Core {
              double middle = 0.0;
              double tempReal = 0.0;
              double cur_tempTP = 0.0;
-             double cur_tempEMA = 0.0;
              double cur_tempATR = 0.0;
+             double cur_outRealMiddleBand = 0.0;
              double cur_outRealUpperBand = 0.0;
              double cur_outRealLowerBand = 0.0;
-             double cur_outRealMiddleBand = 0.0;
              /* Pipeline the new bar through the sub-streams (batch tail order). */
              cur_tempTP = sp.sub0.peek(inHigh, inLow, inClose);
-             cur_tempEMA = sp.sub1.peek(cur_tempTP);
-             cur_tempATR = sp.sub2.peek(inHigh, inLow, inClose);
+             cur_tempATR = sp.sub1.peek(inHigh, inLow, inClose);
+             cur_outRealMiddleBand = sp.sub2.peek(cur_tempTP);
              /* Combine map (batch tail, per bar). */
-             middle = cur_tempEMA;
+             middle = cur_outRealMiddleBand;
              tempReal = cur_tempATR * sp.optInNbDev;
              cur_outRealUpperBand = middle + tempReal;
-             cur_tempATR = middle - tempReal;
-             cur_outRealMiddleBand = cur_tempEMA;
-             cur_outRealLowerBand = cur_tempATR;
+             cur_outRealLowerBand = middle - tempReal;
              return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
           }
 
@@ -99511,22 +99491,22 @@ class Core {
           double middle = 0.0;
           double tempReal = 0.0;
           double cur_tempTP = 0.0;
-          double cur_tempEMA = 0.0;
           double cur_tempATR = 0.0;
+          double cur_outRealMiddleBand = 0.0;
           double cur_outRealUpperBand = 0.0;
           double cur_outRealLowerBand = 0.0;
           /* Pipeline the new bar through the sub-streams (batch tail order). */
           cur_tempTP = sp.sub0.update(inHigh, inLow, inClose);
-          cur_tempEMA = sp.sub1.update(cur_tempTP);
-          cur_tempATR = sp.sub2.update(inHigh, inLow, inClose);
+          cur_tempATR = sp.sub1.update(inHigh, inLow, inClose);
+          cur_outRealMiddleBand = sp.sub2.update(cur_tempTP);
           /* Combine map (batch tail, per bar). */
-          middle = cur_tempEMA;
+          middle = cur_outRealMiddleBand;
           tempReal = cur_tempATR * sp.optInNbDev;
           cur_outRealUpperBand = middle + tempReal;
-          cur_tempATR = middle - tempReal;
+          cur_outRealLowerBand = middle - tempReal;
           sp.cur_outRealUpperBand = cur_outRealUpperBand;
-          sp.cur_outRealMiddleBand = cur_tempEMA;
-          sp.cur_outRealLowerBand = cur_tempATR;
+          sp.cur_outRealMiddleBand = cur_outRealMiddleBand;
+          sp.cur_outRealLowerBand = cur_outRealLowerBand;
        }
        private RetCode kcOpenImpl( KcStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
        {
@@ -99534,16 +99514,12 @@ class Core {
           int i = 0;
           int lookbackTotal = 0;
           int emaLookback = 0;
-          int atrLookback = 0;
-          int anchorIdx = 0;
-          int emaOffset = 0;
-          int atrOffset = 0;
+          int tpStartIdx = 0;
           MInteger tempBegIdx = new MInteger();
           MInteger tempNbElement = new MInteger();
           double tempReal = 0;
           double middle = 0;
           double[] tempTP;
-          double[] tempEMA;
           double[] tempATR;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
@@ -99583,7 +99559,6 @@ class Core {
           double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
           double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
           emaLookback = EMA_Lookback(optInTimePeriod);
-          atrLookback = ATR_Lookback(optInATRPeriod);
           lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
           /* Nothing to produce: the range is shorter than the lookback. Return before
            * touching anything, so that a caller-supplied input which stops short of
@@ -99597,48 +99572,41 @@ class Core {
           if( startIdx < lookbackTotal ) {
              startIdx = lookbackTotal;
           }
-          /* Both legs are recursive, and their lookbacks differ. Seeding each one at
-           * its OWN lookback would leave the shorter leg cold: it would restart from a
-           * fresh seed a few bars before startIdx while the longer leg had been
-           * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-           * would not shrink as the unstable period grows. Anchor both at
-           * startIdx-lookbackTotal instead -- data this function already requires the
-           * caller to hold -- and each leg is then warmed by the whole lookback budget,
-           * so a single unstable period bounds the residual of both. Without this the
-           * codegen range gate measures KC moving ~1.8% across startIdx at unstable
-           * period 140, where the convergence envelope allows 0.15%.
+          /* Each leg is entered at its OWN lookback, so each is the shipped function
+           * over this range and nothing here over-warms the shorter one: a caller who
+           * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+           * calling TA_ATR directly. The typical price is a derived input, so it is
+           * materialized only over the window the moving average reads.
            */
-          anchorIdx = startIdx - lookbackTotal;
-          emaOffset = lookbackTotal - emaLookback;
-          atrOffset = lookbackTotal - atrLookback;
-          tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
-          tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
-          tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
+          tpStartIdx = startIdx - emaLookback;
+          tempTP = new double[(int)((endIdx - tpStartIdx + 1) * 1)];
+          tempATR = new double[(int)((endIdx - startIdx + 1) * 1)];
           /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          TyppriceStream sub0 = typpriceOpenAndFillInternal(inHigh, inLow, inClose, anchorIdx, tempBegIdx, tempNbElement, tempTP);
+          TyppriceStream sub0 = typpriceOpenAndFillInternal(inHigh, inLow, inClose, tpStartIdx, tempBegIdx, tempNbElement, tempTP);
           retCode = RetCode.Success;
-          /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
-           * lookback seeds it on the first typical price available.
+          /* The ATR consumes the price inputs before the moving average below writes
+           * the middle band, which may be aliased onto one of them.
            */
-          /* Sub-stream 1: ema over `tempTP`, warmed from bar 0 up to the
+          /* Sub-stream 1: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          EmaStream sub1 = emaOpenAndFillInternal(java.util.Arrays.copyOfRange(tempTP, 0, (endIdx - anchorIdx) + 1), emaLookback, optInTimePeriod, tempBegIdx, tempNbElement, tempEMA);
+          AtrStream sub1 = atrOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInATRPeriod, tempBegIdx, tempNbElement, tempATR);
           retCode = RetCode.Success;
-          /* Sub-stream 2: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+          /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
+           * own lookback puts its first output on startIdx, where the ATR's already is.
+           */
+          /* Sub-stream 2: ema over `tempTP`, warmed from bar 0 up to the
            * sub-call's own startIdx (the seeding point). */
-          AtrStream sub2 = atrOpenAndFillInternal(inHigh, inLow, inClose, anchorIdx + atrLookback, optInATRPeriod, tempBegIdx, tempNbElement, tempATR);
+          EmaStream sub2 = emaOpenAndFillInternal(java.util.Arrays.copyOfRange(tempTP, 0, (endIdx - tpStartIdx) + 1), emaLookback, optInTimePeriod, outBegIdx, outNBElement, sc_outRealMiddleBand);
           retCode = RetCode.Success;
+          if( (int)outNBElement.value == 0 ) {
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
           outBegIdx.value = startIdx;
-          outNBElement.value = endIdx - startIdx + 1;
-          /* Each leg begins at its own lookback past the common anchor, so drop the
-           * warm-up head of both and pair them index for index from startIdx.
-           */
-          System.arraycopy(tempEMA, emaOffset, sc_outRealMiddleBand, 0, outNBElement.value * 1);
-          System.arraycopy(tempATR, atrOffset, sc_outRealLowerBand, 0, outNBElement.value * 1);
           for( i = 0; i < (int)outNBElement.value; i += 1 ) {
              middle = sc_outRealMiddleBand[i];
-             tempReal = sc_outRealLowerBand[i] * optInNbDev;
+             tempReal = tempATR[i] * optInNbDev;
              sc_outRealUpperBand[i] = middle + tempReal;
              sc_outRealLowerBand[i] = middle - tempReal;
           }

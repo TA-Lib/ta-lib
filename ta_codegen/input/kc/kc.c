@@ -46,16 +46,14 @@ TA_RetCode kc(int startIdx, int endIdx,
    TA_RetCode retCode;
    int i;
    int lookbackTotal;
-   int emaLookback, atrLookback;
-   int anchorIdx, emaOffset, atrOffset;
+   int emaLookback;
+   int tpStartIdx;
    int tempBegIdx, tempNbElement;
    double tempReal, middle;
    double *tempTP;
-   double *tempEMA;
    double *tempATR;
 
    emaLookback = ema_lookback( optInTimePeriod );
-   atrLookback = atr_lookback( optInATRPeriod );
    lookbackTotal = kc_lookback( optInTimePeriod, optInATRPeriod, optInNbDev );
 
    /* Nothing to produce: the range is shorter than the lookback. Return before
@@ -72,109 +70,84 @@ TA_RetCode kc(int startIdx, int endIdx,
    if( startIdx < lookbackTotal )
       startIdx = lookbackTotal;
 
-   /* Both legs are recursive, and their lookbacks differ. Seeding each one at
-    * its OWN lookback would leave the shorter leg cold: it would restart from a
-    * fresh seed a few bars before startIdx while the longer leg had been
-    * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
-    * would not shrink as the unstable period grows. Anchor both at
-    * startIdx-lookbackTotal instead -- data this function already requires the
-    * caller to hold -- and each leg is then warmed by the whole lookback budget,
-    * so a single unstable period bounds the residual of both. Without this the
-    * codegen range gate measures KC moving ~1.8% across startIdx at unstable
-    * period 140, where the convergence envelope allows 0.15%.
+   /* Each leg is entered at its OWN lookback, so each is the shipped function
+    * over this range and nothing here over-warms the shorter one: a caller who
+    * wants the band converged sets TA_FUNC_UNST_ATR, exactly as they would when
+    * calling TA_ATR directly. The typical price is a derived input, so it is
+    * materialized only over the window the moving average reads.
     */
-   anchorIdx = startIdx - lookbackTotal;
-   emaOffset = lookbackTotal - emaLookback;
-   atrOffset = lookbackTotal - atrLookback;
+   tpStartIdx = startIdx - emaLookback;
 
-   tempTP = malloc((endIdx-anchorIdx+1) * sizeof(double));
+   tempTP = malloc((endIdx-tpStartIdx+1) * sizeof(double));
    if( !tempTP )
    {
       *outBegIdx = 0;
       *outNBElement = 0;
       return TA_ALLOC_ERR;
    }
-   tempEMA = malloc((endIdx-anchorIdx-emaLookback+1) * sizeof(double));
-   if( !tempEMA )
-   {
-      free( tempTP );
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_ALLOC_ERR;
-   }
-   tempATR = malloc((endIdx-anchorIdx-atrLookback+1) * sizeof(double));
+   tempATR = malloc((endIdx-startIdx+1) * sizeof(double));
    if( !tempATR )
    {
       free( tempTP );
-      free( tempEMA );
       *outBegIdx = 0;
       *outNBElement = 0;
       return TA_ALLOC_ERR;
    }
 
-   retCode = typprice( anchorIdx, endIdx, inHigh, inLow, inClose,
+   retCode = typprice( tpStartIdx, endIdx, inHigh, inLow, inClose,
       &tempBegIdx, &tempNbElement, tempTP );
 
    if( retCode != TA_SUCCESS )
    {
       free( tempTP );
-      free( tempEMA );
       free( tempATR );
       *outBegIdx = 0;
       *outNBElement = 0;
       return retCode;
    }
 
-   /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
-    * lookback seeds it on the first typical price available.
+   /* The ATR consumes the price inputs before the moving average below writes
+    * the middle band, which may be aliased onto one of them.
     */
-   retCode = ema( emaLookback, endIdx-anchorIdx, tempTP,
-      optInTimePeriod,
-      &tempBegIdx, &tempNbElement, tempEMA );
-
-   if( retCode != TA_SUCCESS )
-   {
-      free( tempTP );
-      free( tempEMA );
-      free( tempATR );
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return retCode;
-   }
-
-   retCode = atr( anchorIdx+atrLookback, endIdx, inHigh, inLow, inClose,
+   retCode = atr( startIdx, endIdx, inHigh, inLow, inClose,
       optInATRPeriod,
       &tempBegIdx, &tempNbElement, tempATR );
 
    if( retCode != TA_SUCCESS )
    {
       free( tempTP );
-      free( tempEMA );
       free( tempATR );
       *outBegIdx = 0;
       *outNBElement = 0;
       return retCode;
    }
 
-   *outBegIdx = startIdx;
-   *outNBElement = endIdx-startIdx+1;
-
-   /* Each leg begins at its own lookback past the common anchor, so drop the
-    * warm-up head of both and pair them index for index from startIdx.
+   /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
+    * own lookback puts its first output on startIdx, where the ATR's already is.
     */
-   memmove( outRealMiddleBand, &tempEMA[emaOffset], (*outNBElement) * sizeof(double) );
-   memmove( outRealLowerBand, &tempATR[atrOffset], (*outNBElement) * sizeof(double) );
+   retCode = ema( emaLookback, endIdx-tpStartIdx, tempTP,
+      optInTimePeriod,
+      outBegIdx, outNBElement, outRealMiddleBand );
+
+   if( (retCode != TA_SUCCESS) || ((int)*outNBElement == 0) )
+   {
+      free( tempTP );
+      free( tempATR );
+      *outNBElement = 0;
+      return retCode;
+   }
+
+   *outBegIdx = startIdx;
 
    for( i=0; i < (int)*outNBElement; i++ )
    {
       middle = outRealMiddleBand[i];
-      tempReal = outRealLowerBand[i] * optInNbDev;
+      tempReal = tempATR[i] * optInNbDev;
       outRealUpperBand[i] = middle + tempReal;
       outRealLowerBand[i] = middle - tempReal;
    }
 
    free( tempTP );
-   free( tempEMA );
    free( tempATR );
 
    return TA_SUCCESS;
