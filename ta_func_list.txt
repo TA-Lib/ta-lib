@@ -103,6 +103,7 @@ HT_TRENDLINE        Hilbert Transform - Instantaneous Trendline
 HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
 IMI                 Intraday Momentum Index
 KAMA                Kaufman Adaptive Moving Average
+KC                  Keltner Channels
 LINEARREG           Linear Regression
 LINEARREG_ANGLE     Linear Regression Angle
 LINEARREG_INTERCEPT Linear Regression Intercept

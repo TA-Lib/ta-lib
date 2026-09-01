@@ -63,6 +63,96 @@ DEF_FUNCTION( KAMA,
              );
 /* KAMA END */
 
+/* KC BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KC_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   20,
+   "Time period for the typical price moving average",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KC_ATRPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInATRPeriod",
+   0,
+
+   "ATR Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   10,
+   "Time period for the Average True Range",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_KC_NbDev =
+{
+   TA_REAL_MIN,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   3.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KC_NbDev =
+{
+   TA_OptInput_RealRange,
+   "optInNbDev",
+   0,
+
+   "Deviations",
+   (const void *)&TA_DEF_KC_NbDev,
+   2.0,
+   "Multiplier applied to the Average True Range",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KC_UpperBand =
+                               { TA_Output_Real, "outRealUpperBand", TA_OUT_UPPER_LIMIT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KC_MiddleBand =
+                               { TA_Output_Real, "outRealMiddleBand", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KC_LowerBand =
+                               { TA_Output_Real, "outRealLowerBand", TA_OUT_LOWER_LIMIT };
+
+static const TA_InputParameterInfo    *TA_KC_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_KC_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_KC_UpperBand,
+  &TA_DEF_UI_Output_Real_KC_MiddleBand,
+  &TA_DEF_UI_Output_Real_KC_LowerBand,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_KC_OptInputs[] =
+{ &TA_DEF_UI_D_KC_TimePeriod,
+  &TA_DEF_UI_D_KC_ATRPeriod,
+  &TA_DEF_UI_D_KC_NbDev,
+  NULL
+};
+
+DEF_FUNCTION( KC,
+              TA_GroupId_OverlapStudies,
+              "Keltner Channels",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+             );
+/* KC END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -70,6 +160,7 @@ DEF_FUNCTION( KAMA,
 const TA_FuncDef *TA_DEF_TableK[] =
 {
    ADD_TO_TABLE(KAMA),
+   ADD_TO_TABLE(KC),
    NULL
 };
 

@@ -10095,6 +10095,109 @@ fn legs_KAMA(r: &mut Report) {
     r.legs_done("KAMA", 1);
 }
 
+const V_KC: &[(&str, i32, i32, f64)] = &[
+    ("defaults", i32::MIN, i32::MIN, Core::REAL_DEFAULT),
+    ("minimums", 2i32, 1i32, -3e37f64),
+];
+
+fn sub_KC(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInATRPeriod, optInNbDev) in V_KC {
+        let Ok(lb) = core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev) else { continue; };
+        r.control("KC", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealUpperBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealMiddleBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealLowerBand: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KC_Impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, optInATRPeriod, optInNbDev, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("KC", label); continue; }
+        r.quiet("KC", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealUpperBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealMiddleBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealLowerBand: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KC_Impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, optInATRPeriod, optInNbDev, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_KC(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInATRPeriod = i32::MIN;
+    let optInNbDev = Core::REAL_DEFAULT;
+    let Ok(lb) = core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev) else { r.no_legs("KC"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("KC", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KC_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInATRPeriod, optInNbDev, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KC", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KC_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInATRPeriod, optInNbDev, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KC", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KC_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInATRPeriod, optInNbDev, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KC", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KC_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInATRPeriod, optInNbDev, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("KC", 3);
+}
+
 const V_LINEARREG: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -15303,6 +15406,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("HT_TRENDMODE", sub_HT_TRENDMODE, legs_HT_TRENDMODE),
     ("IMI", sub_IMI, legs_IMI),
     ("KAMA", sub_KAMA, legs_KAMA),
+    ("KC", sub_KC, legs_KC),
     ("LINEARREG", sub_LINEARREG, legs_LINEARREG),
     ("LINEARREG_ANGLE", sub_LINEARREG_ANGLE, legs_LINEARREG_ANGLE),
     ("LINEARREG_INTERCEPT", sub_LINEARREG_INTERCEPT, legs_LINEARREG_INTERCEPT),
@@ -15412,7 +15516,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 176, "probe count");
+    assert_eq!(PROBES.len(), 177, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

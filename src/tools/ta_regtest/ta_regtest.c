@@ -808,6 +808,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_composite2, "SMI" );
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_cmf,       "CMF" );
+   DO_TEST( test_func_kc,        "KC" );
    DO_TEST( test_func_mfi,       "MFI" );
    DO_TEST( test_func_vwap,      "VWAP" );
    DO_TEST( test_func_cmou,      "CMOU" );

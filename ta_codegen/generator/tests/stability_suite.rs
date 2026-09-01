@@ -44,10 +44,13 @@ fn load() -> Vec<FuncDef> {
 
 /// Functions that inherit an unstable period through a hard-coded inner call, and the
 /// function each one inherits from. Measured: every one of these moves at default params.
+/// KC is the only one with TWO sources (EMA for its centre line, ATR for its band); ATR is
+/// named because nothing else here does, so the pair still fails if KC loses that leg.
 const INHERITED: &[(&str, &str)] = &[
     ("ADOSC", "EMA"),
     ("ADXR", "ADX"),
     ("DEMA", "EMA"),
+    ("KC", "ATR"),
     ("MACD", "EMA"),
     ("MACDFIX", "EMA"),
     ("SMI", "EMA"),

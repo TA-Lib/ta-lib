@@ -98842,6 +98842,920 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  083126 MF,CC  First version (issue #273).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#KC} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Smoothing period of the typical price moving
+        *        average (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInATRPeriod Smoothing period of the Average True Range (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInNbDev Multiplier applied to the Average True Range (default 2;
+        *        {@code -4e37} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int KC_Lookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInATRPeriod == Integer.MIN_VALUE ) {
+             optInATRPeriod = 10;
+          } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInNbDev == REAL_DEFAULT ) {
+             optInNbDev = 2e0;
+          } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
+             return -1;
+          }
+          int emaLookback;
+          int atrLookback;
+          /* A band value needs BOTH the centre line and the ATR at the same bar, so the
+           * first valid output is the later of the two lookbacks. Each term is exactly
+           * the lookback of the function it comes from and is never restated here, which
+           * is what makes KC inherit TA_FUNC_UNST_EMA and TA_FUNC_UNST_ATR from its two
+           * callees. Reporting the honest max keeps outBegIdx == lookback (issue #99),
+           * which streaming's Open depends on.
+           */
+          emaLookback = EMA_Lookback(optInTimePeriod);
+          atrLookback = ATR_Lookback(optInATRPeriod);
+          return (emaLookback > atrLookback) ? emaLookback : atrLookback ;
+
+       }
+       RetCode KC_Impl( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        int optInATRPeriod,
+                        double optInNbDev,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outRealUpperBand[],
+                        double outRealMiddleBand[],
+                        double outRealLowerBand[] )
+       {
+          RetCode retCode;
+          int i = 0;
+          int lookbackTotal = 0;
+          int emaLookback = 0;
+          int atrLookback = 0;
+          int anchorIdx = 0;
+          int emaOffset = 0;
+          int atrOffset = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger tempNbElement = new MInteger();
+          double tempReal = 0;
+          double middle = 0;
+          double[] tempTP;
+          double[] tempEMA;
+          double[] tempATR;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInATRPeriod == Integer.MIN_VALUE ) {
+             optInATRPeriod = 10;
+          } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInNbDev == REAL_DEFAULT ) {
+             optInNbDev = 2e0;
+          } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
+             return RetCode.BadParam;
+          }
+          if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+             return RetCode.BadParam ;
+          }
+          emaLookback = EMA_Lookback(optInTimePeriod);
+          atrLookback = ATR_Lookback(optInATRPeriod);
+          lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+          /* Nothing to produce: the range is shorter than the lookback. Return before
+           * touching anything, so that a caller-supplied input which stops short of
+           * endIdx is never read past its end.
+           */
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Both legs are recursive, and their lookbacks differ. Seeding each one at
+           * its OWN lookback would leave the shorter leg cold: it would restart from a
+           * fresh seed a few bars before startIdx while the longer leg had been
+           * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
+           * would not shrink as the unstable period grows. Anchor both at
+           * startIdx-lookbackTotal instead -- data this function already requires the
+           * caller to hold -- and each leg is then warmed by the whole lookback budget,
+           * so a single unstable period bounds the residual of both. Without this the
+           * codegen range gate measures KC moving ~1.8% across startIdx at unstable
+           * period 140, where the convergence envelope allows 0.15%.
+           */
+          anchorIdx = startIdx - lookbackTotal;
+          emaOffset = lookbackTotal - emaLookback;
+          atrOffset = lookbackTotal - atrLookback;
+          tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
+          tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
+          tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
+          OutRange _xr0 = TYPPRICE(anchorIdx, endIdx, inHigh, inLow, inClose, tempTP);
+          tempBegIdx.value = _xr0.begIdx();
+          tempNbElement.value = _xr0.count();
+          retCode = RetCode.Success;
+          /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
+           * lookback seeds it on the first typical price available.
+           */
+          OutRange _xr1 = EMA(emaLookback, endIdx - anchorIdx, tempTP, optInTimePeriod, tempEMA);
+          tempBegIdx.value = _xr1.begIdx();
+          tempNbElement.value = _xr1.count();
+          retCode = RetCode.Success;
+          OutRange _xr2 = ATR(anchorIdx + atrLookback, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
+          tempBegIdx.value = _xr2.begIdx();
+          tempNbElement.value = _xr2.count();
+          retCode = RetCode.Success;
+          outBegIdx.value = startIdx;
+          outNBElement.value = endIdx - startIdx + 1;
+          /* Each leg begins at its own lookback past the common anchor, so drop the
+           * warm-up head of both and pair them index for index from startIdx.
+           */
+          System.arraycopy(tempEMA, emaOffset, outRealMiddleBand, 0, outNBElement.value * 1);
+          System.arraycopy(tempATR, atrOffset, outRealLowerBand, 0, outNBElement.value * 1);
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             middle = outRealMiddleBand[i];
+             tempReal = outRealLowerBand[i] * optInNbDev;
+             outRealUpperBand[i] = middle + tempReal;
+             outRealLowerBand[i] = middle - tempReal;
+          }
+          return RetCode.Success ;
+       }
+       RetCode KC_Impl( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        int optInATRPeriod,
+                        double optInNbDev,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outRealUpperBand[],
+                        double outRealMiddleBand[],
+                        double outRealLowerBand[] )
+       {
+          RetCode retCode;
+          int i = 0;
+          int lookbackTotal = 0;
+          int emaLookback = 0;
+          int atrLookback = 0;
+          int anchorIdx = 0;
+          int emaOffset = 0;
+          int atrOffset = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger tempNbElement = new MInteger();
+          double tempReal = 0;
+          double middle = 0;
+          double[] tempTP;
+          double[] tempEMA;
+          double[] tempATR;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInATRPeriod == Integer.MIN_VALUE ) {
+             optInATRPeriod = 10;
+          } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInNbDev == REAL_DEFAULT ) {
+             optInNbDev = 2e0;
+          } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
+             return RetCode.BadParam;
+          }
+          if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+             return RetCode.BadParam ;
+          }
+          emaLookback = EMA_Lookback(optInTimePeriod);
+          atrLookback = ATR_Lookback(optInATRPeriod);
+          lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          anchorIdx = startIdx - lookbackTotal;
+          emaOffset = lookbackTotal - emaLookback;
+          atrOffset = lookbackTotal - atrLookback;
+          tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
+          tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
+          tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
+          OutRange _xr0 = TYPPRICE(anchorIdx, endIdx, inHigh, inLow, inClose, tempTP);
+          tempBegIdx.value = _xr0.begIdx();
+          tempNbElement.value = _xr0.count();
+          retCode = RetCode.Success;
+          OutRange _xr1 = EMA(emaLookback, endIdx - anchorIdx, tempTP, optInTimePeriod, tempEMA);
+          tempBegIdx.value = _xr1.begIdx();
+          tempNbElement.value = _xr1.count();
+          retCode = RetCode.Success;
+          OutRange _xr2 = ATR(anchorIdx + atrLookback, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR);
+          tempBegIdx.value = _xr2.begIdx();
+          tempNbElement.value = _xr2.count();
+          retCode = RetCode.Success;
+          outBegIdx.value = startIdx;
+          outNBElement.value = endIdx - startIdx + 1;
+          System.arraycopy(tempEMA, emaOffset, outRealMiddleBand, 0, outNBElement.value * 1);
+          System.arraycopy(tempATR, atrOffset, outRealLowerBand, 0, outNBElement.value * 1);
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             middle = outRealMiddleBand[i];
+             tempReal = outRealLowerBand[i] * optInNbDev;
+             outRealUpperBand[i] = middle + tempReal;
+             outRealLowerBand[i] = middle - tempReal;
+          }
+          return RetCode.Success ;
+       }
+       /**
+        * Keltner Channels: three overlap lines around price. The centre line is an
+        * exponential moving average of the typical price; the outer bands sit a
+        * multiple of the Average True Range above and below it. The band width
+        * tracks volatility, so the channel widens in fast markets and narrows in
+        * quiet ones.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * TP = (High + Low + Close) / 3
+        * Middle = EMA(TP, N)
+        * Band = ATR(M)
+        * Upper = Middle + Deviations * Band
+        * Lower = Middle - Deviations * Band
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
+        * <li>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</li>
+        * <li>TTR ties the Average True Range period to the centre line's period. Here the two are independent, so the band width can be tuned separately.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#KC_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Smoothing period of the typical price moving
+        *        average (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInATRPeriod Smoothing period of the Average True Range (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInNbDev Multiplier applied to the Average True Range (default 2;
+        *        {@code -4e37} selects the default).
+        * @param outRealUpperBand Centre line plus the scaled Average True Range.
+        *        Must hold at least {@code endIdx - startIdx + 1} values.
+        * @param outRealMiddleBand Exponential moving average of the typical price.
+        *        Must hold at least {@code endIdx - startIdx + 1} values.
+        * @param outRealLowerBand Centre line minus the scaled Average True Range.
+        *        Must hold at least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#EMA
+        * @see Core#ATR
+        * @see Core#TYPPRICE
+        * @see Core#BBANDS
+        * @see Core#ACCBANDS
+        */
+       public OutRange KC( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod,
+                           int optInATRPeriod,
+                           double optInNbDev,
+                           double outRealUpperBand[],
+                           double outRealMiddleBand[],
+                           double outRealLowerBand[] )
+       {
+          requireIndexRange("KC", startIdx, endIdx);
+          int guardStart = clampedStart("KC", startIdx, KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("KC", "inHigh", inHigh, guardInLen);
+          requireLength("KC", "inLow", inLow, guardInLen);
+          requireLength("KC", "inClose", inClose, guardInLen);
+          requireLength("KC", "outRealUpperBand", outRealUpperBand, guardOutLen);
+          requireLength("KC", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+          requireLength("KC", "outRealLowerBand", outRealLowerBand, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = KC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+          if( retCode != RetCode.Success ) {
+             throw failure("KC", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Keltner Channels: three overlap lines around price. The centre line is an
+        * exponential moving average of the typical price; the outer bands sit a
+        * multiple of the Average True Range above and below it. The band width
+        * tracks volatility, so the channel widens in fast markets and narrows in
+        * quiet ones.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * TP = (High + Low + Close) / 3
+        * Middle = EMA(TP, N)
+        * Band = ATR(M)
+        * Upper = Middle + Deviations * Band
+        * Lower = Middle - Deviations * Band
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
+        * <li>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</li>
+        * <li>TTR ties the Average True Range period to the centre line's period. Here the two are independent, so the band width can be tuned separately.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#KC_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Smoothing period of the typical price moving
+        *        average (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInATRPeriod Smoothing period of the Average True Range (default
+        *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInNbDev Multiplier applied to the Average True Range (default 2;
+        *        {@code -4e37} selects the default).
+        * @param outRealUpperBand Centre line plus the scaled Average True Range.
+        *        Must hold at least {@code endIdx - startIdx + 1} values.
+        * @param outRealMiddleBand Exponential moving average of the typical price.
+        *        Must hold at least {@code endIdx - startIdx + 1} values.
+        * @param outRealLowerBand Centre line minus the scaled Average True Range.
+        *        Must hold at least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#EMA
+        * @see Core#ATR
+        * @see Core#TYPPRICE
+        * @see Core#BBANDS
+        * @see Core#ACCBANDS
+        */
+       public OutRange KC( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod,
+                           int optInATRPeriod,
+                           double optInNbDev,
+                           double outRealUpperBand[],
+                           double outRealMiddleBand[],
+                           double outRealLowerBand[] )
+       {
+          requireIndexRange("KC", startIdx, endIdx);
+          int guardStart = clampedStart("KC", startIdx, KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("KC", "inHigh", inHigh, guardInLen);
+          requireLength("KC", "inLow", inLow, guardInLen);
+          requireLength("KC", "inClose", inClose, guardInLen);
+          requireLength("KC", "outRealUpperBand", outRealUpperBand, guardOutLen);
+          requireLength("KC", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+          requireLength("KC", "outRealLowerBand", outRealLowerBand, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = KC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+          if( retCode != RetCode.Success ) {
+             throw failure("KC", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live KC stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#KC} over the same series.
+        * Open with {@link Core#kcOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class KcStream {
+          Core core;
+          int optInTimePeriod;
+          int optInATRPeriod;
+          double optInNbDev;
+          double cur_outRealUpperBand;
+          double cur_outRealMiddleBand;
+          double cur_outRealLowerBand;
+          Value cachedValue;
+          TyppriceStream sub0;
+          EmaStream sub1;
+          AtrStream sub2;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          KcStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#KC} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          KcStream( KcStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInATRPeriod = other.optInATRPeriod;
+             this.optInNbDev = other.optInNbDev;
+             this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+             this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+             this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+             this.cachedValue = other.cachedValue;
+             this.sub0 = new TyppriceStream(other.sub0);
+             this.sub1 = new EmaStream(other.sub1);
+             this.sub2 = new AtrStream(other.sub2);
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * One output set, in batch output order. Immutable.
+           *
+           * <p>{@code equals} compares every component bitwise, so {@code NaN}
+           * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
+           * {@code hashCode} is consistent with it but its exact value is
+           * unspecified — do not persist it or compare it across JVM versions.
+           *
+           * @param realUpperBand Centre line plus the scaled Average True Range.
+           * @param realMiddleBand Exponential moving average of the typical price.
+           * @param realLowerBand Centre line minus the scaled Average True Range.
+           */
+          public record Value(double realUpperBand, double realMiddleBand, double realLowerBand) { }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value()} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public Value update( double inHigh, double inLow, double inClose ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("KC update: BadParam", RetCode.BadParam);
+             }
+             core.kcStepImpl(this, inHigh, inLow, inClose);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+             return this.cachedValue;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inHigh.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
+             requireArgument("KC updateAndFill", "inHigh", inHigh);
+             requireArgument("KC updateAndFill", "inLow", inLow);
+             requireArgument("KC updateAndFill", "inClose", inClose);
+             requireArgument("KC updateAndFill", "outRealUpperBand", outRealUpperBand);
+             requireArgument("KC updateAndFill", "outRealMiddleBand", outRealMiddleBand);
+             requireArgument("KC updateAndFill", "outRealLowerBand", outRealLowerBand);
+             final int barCount = inHigh.length;
+             if( inLow.length != barCount || inClose.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
+                throw new TaLibArgumentException("KC updateAndFill: BadParam", RetCode.BadParam);
+             int done = 0;
+             try {
+                for( int i = 0; i < barCount; i++ ) {
+                   if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
+                      if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                      throw new TaLibArgumentException("KC updateAndFill: BadParam", RetCode.BadParam);
+                   }
+                   core.kcStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+                   outRealUpperBand[i] = this.cur_outRealUpperBand;
+                   outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+                   outRealLowerBand[i] = this.cur_outRealLowerBand;
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   done = i + 1;
+                }
+             } finally {
+                if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
+           */
+          public Value peek( double inHigh, double inLow, double inClose ) {
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw new TaLibArgumentException("KC peek: BadParam", RetCode.BadParam);
+             KcStream sp = this;
+             double middle = 0.0;
+             double tempReal = 0.0;
+             double cur_tempTP = 0.0;
+             double cur_tempEMA = 0.0;
+             double cur_tempATR = 0.0;
+             double cur_outRealUpperBand = 0.0;
+             double cur_outRealLowerBand = 0.0;
+             double cur_outRealMiddleBand = 0.0;
+             /* Pipeline the new bar through the sub-streams (batch tail order). */
+             cur_tempTP = sp.sub0.peek(inHigh, inLow, inClose);
+             cur_tempEMA = sp.sub1.peek(cur_tempTP);
+             cur_tempATR = sp.sub2.peek(inHigh, inLow, inClose);
+             /* Combine map (batch tail, per bar). */
+             middle = cur_tempEMA;
+             tempReal = cur_tempATR * sp.optInNbDev;
+             cur_outRealUpperBand = middle + tempReal;
+             cur_tempATR = middle - tempReal;
+             cur_outRealMiddleBand = cur_tempEMA;
+             cur_outRealLowerBand = cur_tempATR;
+             return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public Value value() {
+             return this.cachedValue;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public KcStream clone() {
+             return new KcStream(this);
+          }
+       }
+       void kcStepImpl( KcStream sp, double inHigh, double inLow, double inClose )
+       {
+          double middle = 0.0;
+          double tempReal = 0.0;
+          double cur_tempTP = 0.0;
+          double cur_tempEMA = 0.0;
+          double cur_tempATR = 0.0;
+          double cur_outRealUpperBand = 0.0;
+          double cur_outRealLowerBand = 0.0;
+          /* Pipeline the new bar through the sub-streams (batch tail order). */
+          cur_tempTP = sp.sub0.update(inHigh, inLow, inClose);
+          cur_tempEMA = sp.sub1.update(cur_tempTP);
+          cur_tempATR = sp.sub2.update(inHigh, inLow, inClose);
+          /* Combine map (batch tail, per bar). */
+          middle = cur_tempEMA;
+          tempReal = cur_tempATR * sp.optInNbDev;
+          cur_outRealUpperBand = middle + tempReal;
+          cur_tempATR = middle - tempReal;
+          sp.cur_outRealUpperBand = cur_outRealUpperBand;
+          sp.cur_outRealMiddleBand = cur_tempEMA;
+          sp.cur_outRealLowerBand = cur_tempATR;
+       }
+       private RetCode kcOpenImpl( KcStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
+       {
+          RetCode retCode;
+          int i = 0;
+          int lookbackTotal = 0;
+          int emaLookback = 0;
+          int atrLookback = 0;
+          int anchorIdx = 0;
+          int emaOffset = 0;
+          int atrOffset = 0;
+          MInteger tempBegIdx = new MInteger();
+          MInteger tempNbElement = new MInteger();
+          double tempReal = 0;
+          double middle = 0;
+          double[] tempTP;
+          double[] tempEMA;
+          double[] tempATR;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInATRPeriod == Integer.MIN_VALUE ) {
+             optInATRPeriod = 10;
+          } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInNbDev == REAL_DEFAULT ) {
+             optInNbDev = 2e0;
+          } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
+             return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          if( historyLen < KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev) + 1 ) {
+             return RetCode.InsufficientHistory;
+          }
+          double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
+          double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
+          double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
+          emaLookback = EMA_Lookback(optInTimePeriod);
+          atrLookback = ATR_Lookback(optInATRPeriod);
+          lookbackTotal = KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+          /* Nothing to produce: the range is shorter than the lookback. Return before
+           * touching anything, so that a caller-supplied input which stops short of
+           * endIdx is never read past its end.
+           */
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Both legs are recursive, and their lookbacks differ. Seeding each one at
+           * its OWN lookback would leave the shorter leg cold: it would restart from a
+           * fresh seed a few bars before startIdx while the longer leg had been
+           * recursing since startIdx-lookbackTotal, so the shorter leg's warm-up error
+           * would not shrink as the unstable period grows. Anchor both at
+           * startIdx-lookbackTotal instead -- data this function already requires the
+           * caller to hold -- and each leg is then warmed by the whole lookback budget,
+           * so a single unstable period bounds the residual of both. Without this the
+           * codegen range gate measures KC moving ~1.8% across startIdx at unstable
+           * period 140, where the convergence envelope allows 0.15%.
+           */
+          anchorIdx = startIdx - lookbackTotal;
+          emaOffset = lookbackTotal - emaLookback;
+          atrOffset = lookbackTotal - atrLookback;
+          tempTP = new double[(int)((endIdx - anchorIdx + 1) * 1)];
+          tempEMA = new double[(int)((endIdx - anchorIdx - emaLookback + 1) * 1)];
+          tempATR = new double[(int)((endIdx - anchorIdx - atrLookback + 1) * 1)];
+          /* Sub-stream 0: typprice over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          TyppriceStream sub0 = typpriceOpenAndFillInternal(inHigh, inLow, inClose, anchorIdx, tempBegIdx, tempNbElement, tempTP);
+          retCode = RetCode.Success;
+          /* tempTP is bar-anchorIdx relative, so entering the moving average at its own
+           * lookback seeds it on the first typical price available.
+           */
+          /* Sub-stream 1: ema over `tempTP`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          EmaStream sub1 = emaOpenAndFillInternal(java.util.Arrays.copyOfRange(tempTP, 0, (endIdx - anchorIdx) + 1), emaLookback, optInTimePeriod, tempBegIdx, tempNbElement, tempEMA);
+          retCode = RetCode.Success;
+          /* Sub-stream 2: atr over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          AtrStream sub2 = atrOpenAndFillInternal(inHigh, inLow, inClose, anchorIdx + atrLookback, optInATRPeriod, tempBegIdx, tempNbElement, tempATR);
+          retCode = RetCode.Success;
+          outBegIdx.value = startIdx;
+          outNBElement.value = endIdx - startIdx + 1;
+          /* Each leg begins at its own lookback past the common anchor, so drop the
+           * warm-up head of both and pair them index for index from startIdx.
+           */
+          System.arraycopy(tempEMA, emaOffset, sc_outRealMiddleBand, 0, outNBElement.value * 1);
+          System.arraycopy(tempATR, atrOffset, sc_outRealLowerBand, 0, outNBElement.value * 1);
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             middle = sc_outRealMiddleBand[i];
+             tempReal = sc_outRealLowerBand[i] * optInNbDev;
+             sc_outRealUpperBand[i] = middle + tempReal;
+             sc_outRealLowerBand[i] = middle - tempReal;
+          }
+          /* Capture the live producer state + sub handles. */
+          if( outNBElement.value < 1 ) {
+             return RetCode.InsufficientHistory;
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInATRPeriod = optInATRPeriod;
+          sp.optInNbDev = optInNbDev;
+          sp.sub0 = sub0;
+          sp.sub1 = sub1;
+          sp.sub2 = sub2;
+          sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
+          sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
+          sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
+          sp.cachedValue = new KcStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
+          return RetCode.Success;
+       }
+       /* kcOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       KcStream kcOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+       {
+          KcStream sp = new KcStream(this);
+          RetCode retCode = kcOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("KC openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("KC openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("KC openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind kcOpen (composition seam). */
+       KcStream kcOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, int optInATRPeriod, double optInNbDev )
+       {
+          KcStream sp = new KcStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outRealUpperBand = new double[1];
+          double[] sink_outRealMiddleBand = new double[1];
+          double[] sink_outRealLowerBand = new double[1];
+          RetCode retCode = kcOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("KC open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("KC open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("KC open: " + retCode, retCode);
+       }
+       /**
+        * Open a live KC stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#KC} at that bar.
+        * <p>The history must hold at least {@code KC_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public KcStream kcOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInATRPeriod, double optInNbDev )
+       {
+          requireArgument("KC open", "inHigh", inHigh);
+          requireHistory("KC open", inHigh.length);
+          requireArgument("KC open", "inLow", inLow);
+          requireArgument("KC open", "inClose", inClose);
+          requireHistoryLength("KC open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("KC open", "inClose", inClose.length, inHigh.length);
+          return kcOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInATRPeriod, optInNbDev);
+       }
+       /**
+        * {@link Core#kcOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#KC} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link KcStream#outRange()}.
+        */
+       public KcStream kcOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInATRPeriod, double optInNbDev, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+       {
+          requireArgument("KC openAndFill", "inHigh", inHigh);
+          requireHistory("KC openAndFill", inHigh.length);
+          requireArgument("KC openAndFill", "inLow", inLow);
+          requireArgument("KC openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("KC openAndFill", inHigh.length, KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev));
+          requireHistoryLength("KC openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("KC openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("KC openAndFill", "outRealUpperBand", outRealUpperBand, guardOutLen);
+          requireLength("KC openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+          requireLength("KC openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
+          if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
+             throw new TaLibArgumentException("KC openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return kcOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  JP       John Price <jp_talib@gcfl.net>
      *  CC       Claude Code (AI assistant)
      *
@@ -164161,6 +165075,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("KC", new AbsFunc("KC", "Overlap Studies", "Keltner Channels", 50331648,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period for the typical price moving average",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInATRPeriod",0,"ATR Period","Time period for the Average True Range",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Multiplier applied to the Average True Range",2.0, -3e37,3e37,2,1.0,3.0,0.5, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("LINEARREG", new AbsFunc("LINEARREG", "Statistic Functions", "Linear Regression", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
@@ -164676,6 +165594,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_HT_TRENDMODE\"")) return handle_HT_TRENDMODE(json);
         else if (json.contains("\"TA_IMI\"")) return handle_IMI(json);
         else if (json.contains("\"TA_KAMA\"")) return handle_KAMA(json);
+        else if (json.contains("\"TA_KC\"")) return handle_KC(json);
         else if (json.contains("\"TA_LINEARREG\"")) return handle_LINEARREG(json);
         else if (json.contains("\"TA_LINEARREG_ANGLE\"")) return handle_LINEARREG_ANGLE(json);
         else if (json.contains("\"TA_LINEARREG_INTERCEPT\"")) return handle_LINEARREG_INTERCEPT(json);
@@ -164958,6 +165877,8 @@ public class TaCodegenServe {
             sb.append("\"TA_IMI\"");
             sb.append(",");
             sb.append("\"TA_KAMA\"");
+            sb.append(",");
+            sb.append("\"TA_KC\"");
             sb.append(",");
             sb.append("\"TA_LINEARREG\"");
             sb.append(",");
@@ -181607,6 +182528,170 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_KC(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        int optInATRPeriod = jsonInt(json, "optInATRPeriod");
+        double optInNbDev = jsonDouble(json, "optInNbDev");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        double[] outArr2 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.KC_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.KC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outArr0, outArr1, outArr2);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.kcOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInATRPeriod, optInNbDev);
+            } else {
+                Core.KcStream _wh = core.kcOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.KC(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, optInATRPeriod, optInNbDev, outArr0, outArr1, outArr2);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
@@ -209716,6 +210801,210 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_KC(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        int optInATRPeriod = json.contains("\"optInATRPeriod\"") ? jsonInt(json, "optInATRPeriod") : 10;
+        double optInNbDev = json.contains("\"optInNbDev\"") ? jsonDouble(json, "optInNbDev") : 2e0;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        double[] b2 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[2] = svK;
+            c2.unstablePeriod[5] = svK;
+            RetCode rc;
+            try { rc = c2.KC_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.KC_Lookback(optInTimePeriod, optInATRPeriod, optInNbDev);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.kcOpen(fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                Core.KcStream _fh = c2.kcOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, f0, f1, f2);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.kcOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.kcOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.KcStream st;
+                try { st = c2.kcOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInATRPeriod, optInNbDev); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.KcStream.Value v0 = st.value();
+                if (svXtierNe(v0.realUpperBand(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.realMiddleBand(), b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.realLowerBand(), b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    if (t % 7 == 0) {
+                        Core.KcStream.Value pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.KcStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                        if (svBne(pk.realUpperBand(), up.realUpperBand())) peekAll = false;
+                        if (svBne(pk.realMiddleBand(), up.realMiddleBand())) peekAll = false;
+                        if (svBne(pk.realLowerBand(), up.realLowerBand())) peekAll = false;
+                        if (st.value() != up) allOk = false; /* cached Value identity */
+                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
+                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
+                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
+                    } else {
+                        Core.KcStream.Value up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                        if (svXtierNe(up.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand())) + "\""; }
+                        if (svXtierNe(up.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand())) + "\""; }
+                        if (svXtierNe(up.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand())) + "\""; }
+                    }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.KcStream stu = c2.kcOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInATRPeriod, optInNbDev);
+                        OutRange ur0 = stu.outRange();
+                        double[] u0 = new double[svN];
+                        java.util.Arrays.fill(u0, (double)-1.2345678901234e300);
+                        double[] u1 = new double[svN];
+                        java.util.Arrays.fill(u1, (double)-1.2345678901234e300);
+                        double[] u2 = new double[svN];
+                        java.util.Arrays.fill(u2, (double)-1.2345678901234e300);
+                        double[] tail_fz_h = java.util.Arrays.copyOfRange(fz_h, p, svN);
+                        double[] tail_fz_l = java.util.Arrays.copyOfRange(fz_l, p, svN);
+                        double[] tail_fz_c = java.util.Arrays.copyOfRange(fz_c, p, svN);
+                        stu.updateAndFill(new double[0], new double[0], new double[0], u0, u1, u2);
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, new double[0], u1, u2); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, tail_fz_h, u1, u2); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, u0, u1, u2);
+                        for (int t = p; t < svN; t++) if (svXtierNe(u0[t - p], b0[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u1[t - p], b1[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u2[t - p], b2[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u1[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u2[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.KcStream sA = c2.kcOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInATRPeriod, optInNbDev);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                        Core.KcStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            Core.KcStream.Value uA = sA.update(fz_h[t], fz_l[t], fz_c[t]);
+                            Core.KcStream.Value uB = sB.update(fz_h[t], fz_l[t], fz_c[t]);
+                            if (svBne(uA.realUpperBand(), uB.realUpperBand()) || svXtierNe(uA.realUpperBand(), b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand(), uB.realMiddleBand()) || svXtierNe(uA.realMiddleBand(), b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand(), uB.realLowerBand()) || svXtierNe(uA.realLowerBand(), b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.kcOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInATRPeriod, optInNbDev); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.KcStream sD = c2.kcOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInNbDev);
+                Core.KcStream sE = c2.kcOpen(fz_h, fz_l, fz_c, 20, 10, optInNbDev);
+                if (svBne(sD.value().realUpperBand(), sE.value().realUpperBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().realMiddleBand(), sE.value().realMiddleBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(sD.value().realLowerBand(), sE.value().realLowerBand())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.KC_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.KcStream stA = c2.kcOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInATRPeriod, optInNbDev);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_LINEARREG(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -221907,6 +223196,7 @@ public class TaCodegenServe {
         case "TA_HT_TRENDMODE": return sv_HT_TRENDMODE(json);
         case "TA_IMI": return sv_IMI(json);
         case "TA_KAMA": return sv_KAMA(json);
+        case "TA_KC": return sv_KC(json);
         case "TA_LINEARREG": return sv_LINEARREG(json);
         case "TA_LINEARREG_ANGLE": return sv_LINEARREG_ANGLE(json);
         case "TA_LINEARREG_INTERCEPT": return sv_LINEARREG_INTERCEPT(json);

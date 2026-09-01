@@ -252,6 +252,8 @@ pub enum FuncId {
     IMI,
     /// Kaufman Adaptive Moving Average — [`Core::KAMA`](crate::Core::KAMA).
     KAMA,
+    /// Keltner Channels — [`Core::KC`](crate::Core::KC).
+    KC,
     /// Linear Regression — [`Core::LINEARREG`](crate::Core::LINEARREG).
     LINEARREG,
     /// Linear Regression Angle — [`Core::LINEARREG_ANGLE`](crate::Core::LINEARREG_ANGLE).
@@ -398,7 +400,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 176;
+    pub const COUNT: usize = 177;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -723,7 +725,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 176] = [
+static FUNC_TABLE: [FuncInfo; 177] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1880,6 +1882,17 @@ static FUNC_TABLE: [FuncInfo; 176] = [
         unst_id: Some(FuncUnstId::KAMA),
     },
     FuncInfo {
+        id: FuncId::KC,
+        name: "KC",
+        group: Group::OverlapStudies,
+        hint: "Keltner Channels",
+        flags: FuncFlags(0x03000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period for the typical price moving average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInATRPeriod", display_name: "ATR Period", hint: "Time period for the Average True Range", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInNbDev", display_name: "Deviations", hint: "Multiplier applied to the Average True Range", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (1.0, 3.0, 0.5) } }, ],
+        outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::LINEARREG,
         name: "LINEARREG",
         group: Group::StatisticFunctions,
@@ -2783,6 +2796,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "HT_TRENDMODE" => FuncId::HT_TRENDMODE,
         "IMI" => FuncId::IMI,
         "KAMA" => FuncId::KAMA,
+        "KC" => FuncId::KC,
         "LINEARREG" => FuncId::LINEARREG,
         "LINEARREG_ANGLE" => FuncId::LINEARREG_ANGLE,
         "LINEARREG_INTERCEPT" => FuncId::LINEARREG_INTERCEPT,
@@ -3216,6 +3230,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::HT_TRENDMODE => self.core.HT_TRENDMODE_Lookback(),
             FuncId::IMI => self.core.IMI_Lookback(self.int_opt[0]),
             FuncId::KAMA => self.core.KAMA_Lookback(self.int_opt[0]),
+            FuncId::KC => self.core.KC_Lookback(self.int_opt[0], self.int_opt[1], self.real_opt[2]),
             FuncId::LINEARREG => self.core.LINEARREG_Lookback(self.int_opt[0]),
             FuncId::LINEARREG_ANGLE => self.core.LINEARREG_ANGLE_Lookback(self.int_opt[0]),
             FuncId::LINEARREG_INTERCEPT => self.core.LINEARREG_INTERCEPT_Lookback(self.int_opt[0]),
@@ -4608,6 +4623,23 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.KAMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::KC => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.KC(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.real_opt[2], &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

@@ -752,6 +752,16 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"PVO",          TA_FUNC_UNST_EMA},
     /* EFI smooths its force series with the same EMA. */
     {"EFI",          TA_FUNC_UNST_EMA},
+    /* KC is recursive through BOTH of its callees -- EMA of the typical price
+     * and the Wilder ATR -- so it is converging, not finite-window. It is the
+     * first function here whose two legs carry DIFFERENT unstable-period ids,
+     * and only the one named below is swept; UNST_EMA is named because the
+     * centre line is where the sweep has to bite (the ATR leg's residual decays
+     * geometrically at (1-1/M) per bar, far inside the 0.5/outputPosition
+     * envelope, so leaving it unswept does not relax anything). Without an entry
+     * KC classified EPSILON and the range gate measured it moving 0.25% across
+     * startIdx, where a genuine EPSILON function moves by ~1e-13. */
+    {"KC",           TA_FUNC_UNST_EMA},
     /* SMI's three EMA stages are seeded and advanced exactly as ema.c does,
      * and its lookback is the sum of three ema_lookback() terms, so the whole
      * pipeline shifts with UNST_EMA. Measured: outBegIdx 45 -> 54 at the

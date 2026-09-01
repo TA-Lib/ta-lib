@@ -145,6 +145,7 @@ extern const TA_FuncDef TA_DEF_HT_TRENDLINE;
 extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
 extern const TA_FuncDef TA_DEF_IMI;
 extern const TA_FuncDef TA_DEF_KAMA;
+extern const TA_FuncDef TA_DEF_KC;
 extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
 extern const TA_FuncDef TA_DEF_LINEARREG_INTERCEPT;
@@ -259,6 +260,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_HMA,
 &TA_DEF_HT_TRENDLINE,
 &TA_DEF_KAMA,
+&TA_DEF_KC,
 &TA_DEF_MA,
 &TA_DEF_MAMA,
 &TA_DEF_MAVP,

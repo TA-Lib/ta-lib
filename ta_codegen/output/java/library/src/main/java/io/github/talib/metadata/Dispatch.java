@@ -371,6 +371,9 @@ final class Dispatch {
          case "KAMA":
             return core.KAMA(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "KC":
+            return core.KC(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.realOpt(2), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "LINEARREG":
             return core.LINEARREG(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -805,6 +808,8 @@ final class Dispatch {
             return core.IMI_Lookback(h.intOpt(0));
          case "KAMA":
             return core.KAMA_Lookback(h.intOpt(0));
+         case "KC":
+            return core.KC_Lookback(h.intOpt(0), h.intOpt(1), h.realOpt(2));
          case "LINEARREG":
             return core.LINEARREG_Lookback(h.intOpt(0));
          case "LINEARREG_ANGLE":

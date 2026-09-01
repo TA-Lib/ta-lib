@@ -733,6 +733,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["KC"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.KC_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.RealOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
+            return new CallOutcome(rc, b, n);
+        },
         ["LINEARREG"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.LINEARREG_Impl(

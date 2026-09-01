@@ -94,6 +94,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [HMA](/functions/hma.md) — Hull Moving Average
 - [HT_TRENDLINE](/functions/ht_trendline.md) — Hilbert Transform - Instantaneous Trendline
 - [KAMA](/functions/kama.md) — Kaufman Adaptive Moving Average
+- [KC](/functions/kc.md) — Keltner Channels
 - [MA](/functions/ma.md) — Moving average
 - [MAMA](/functions/mama.md) — MESA Adaptive Moving Average
 - [MAVP](/functions/mavp.md) — Moving average with variable period

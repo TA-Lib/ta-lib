@@ -225,6 +225,7 @@ public final class Functions {
       put(m, f_HT_TRENDMODE());
       put(m, f_IMI());
       put(m, f_KAMA());
+      put(m, f_KC());
       put(m, f_LINEARREG());
       put(m, f_LINEARREG_ANGLE());
       put(m, f_LINEARREG_INTERCEPT());
@@ -1808,6 +1809,36 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_KC() {
+      return new FunctionInfo(
+         "KC", "Overlap Studies", "Keltner Channels", 0x03000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period for the typical price moving average", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInATRPeriod", 0x00000000,
+               "ATR Period", "Time period for the Average True Range", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInNbDev", 0x00000000,
+               "Deviations", "Multiplier applied to the Average True Range", 2.0,
+               -3e37, 3e37, 2, 1.0, 3.0, 0.5,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
+            new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
          ));
    }
 

@@ -401,8 +401,8 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_java_step() {
     // The property is only load-bearing where a sub exists to throw, so the
     // sweep has to have found some.
     assert!(
-        with_subs == 5,
-        "{with_subs} multi-output handles drive a sub-stream, expected 5 \
-         (BBANDS, MACD, MACDEXT, STOCH, STOCHF/STOCHRSI) — the pin has moved or gone vacuous"
+        with_subs == 6,
+        "{with_subs} multi-output handles drive a sub-stream, expected 6 \
+         (BBANDS, KC, MACDEXT, STOCH, STOCHF, STOCHRSI) — the pin has moved or gone vacuous"
     );
 }

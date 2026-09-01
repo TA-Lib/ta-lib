@@ -19,6 +19,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
   - EFI: Elder's Force Index (#206)
   - HMA: Hull Moving Average (#139)
+  - KC: Keltner Channels (#273)
   - MARKETFI: Market Facilitation Index (#230)
   - NVI: Negative Volume Index (#126)
   - PVI: Positive Volume Index (#126)

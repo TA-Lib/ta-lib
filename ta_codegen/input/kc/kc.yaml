@@ -1,0 +1,41 @@
+name: KC
+group: Overlap Studies
+hint: Keltner Channels
+flags: [overlap, stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Time period for the typical price moving average
+    range: [2, 100000]
+    default: 20
+    suggested: [4, 200, 1]
+  - name: optInATRPeriod
+    type: integer
+    display_name: ATR Period
+    hint: Time period for the Average True Range
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInNbDev
+    type: real
+    display_name: Deviations
+    hint: Multiplier applied to the Average True Range
+    range: [TA_REAL_MIN, TA_REAL_MAX]
+    default: 2
+    precision: 2
+    suggested: [1, 3, 0.5]
+outputs:
+  - name: outRealUpperBand
+    type: real
+    flags: [upper_limit]
+  - name: outRealMiddleBand
+    type: real
+    flags: [line]
+  - name: outRealLowerBand
+    type: real
+    flags: [lower_limit]
