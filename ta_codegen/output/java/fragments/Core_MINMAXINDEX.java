@@ -404,7 +404,6 @@
       double[] x_inReal;
       int cur_outMinIdx;
       int cur_outMaxIdx;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -437,23 +436,9 @@
          this.x_inReal = other.x_inReal.clone();
          this.cur_outMinIdx = other.cur_outMinIdx;
          this.cur_outMaxIdx = other.cur_outMaxIdx;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param minIdx Absolute index (into inReal) of the window minimum.
-       * @param maxIdx Absolute index (into inReal) of the window maximum.
-       */
-      public record Value(int minIdx, int maxIdx) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -471,15 +456,15 @@
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, MinmaxindexOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
          }
          core.minmaxindexStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
-         return this.cachedValue;
+         out.minIdx = this.cur_outMinIdx;
+         out.maxIdx = this.cur_outMaxIdx;
       }
 
       /**
@@ -502,21 +487,15 @@
          final int barCount = inReal.length;
          if( outMinIdx.length < barCount || outMaxIdx.length < barCount || (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx )
             throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.minmaxindexStepImpl(this, inReal[i]);
-               outMinIdx[i] = this.cur_outMinIdx;
-               outMaxIdx[i] = this.cur_outMaxIdx;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
+            core.minmaxindexStepImpl(this, inReal[i]);
+            outMinIdx[i] = this.cur_outMinIdx;
+            outMaxIdx[i] = this.cur_outMaxIdx;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -530,7 +509,7 @@
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, MinmaxindexOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
          MinmaxindexStream sp = this;
@@ -593,7 +572,8 @@
          cur_outMinIdx = lowestIdx;
          trailingIdx += 1;
          today += 1;
-         return new Value(cur_outMinIdx, cur_outMaxIdx);
+         out.minIdx = cur_outMinIdx;
+         out.maxIdx = cur_outMaxIdx;
       }
 
       /**
@@ -602,8 +582,9 @@
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( MinmaxindexOut out ) {
+         out.minIdx = this.cur_outMinIdx;
+         out.maxIdx = this.cur_outMaxIdx;
       }
 
       /**
@@ -621,6 +602,27 @@
       public MinmaxindexStream clone() {
          return new MinmaxindexStream(this);
       }
+   }
+
+   /**
+    * The outputs of one MINMAXINDEX bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class MinmaxindexOut {
+      /** Absolute index (into inReal) of the window minimum. */
+      public int minIdx;
+      /** Absolute index (into inReal) of the window maximum. */
+      public int maxIdx;
    }
    void minmaxindexStepImpl( MinmaxindexStream sp, double inReal )
    {
@@ -800,7 +802,6 @@
       sp.x_inReal = capX_inReal;
       sp.cur_outMinIdx = outMinIdx[(outNBElement.value - 1) * outStride];
       sp.cur_outMaxIdx = outMaxIdx[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MinmaxindexStream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
       return RetCode.Success;
    }
    /* minmaxindexOpenAndFill anchored at startIdx — the composed-open fusion seam. */

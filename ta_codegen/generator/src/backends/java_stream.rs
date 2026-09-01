@@ -105,6 +105,14 @@ pub fn stream_class_name(func: &FuncDef) -> String {
     format!("{}Stream", common::pascal_words(&func.name))
 }
 
+/// The caller-owned output object a multi-output stream writes through.
+/// A sibling of the stream class at `Core` level, where C# already puts its
+/// equivalent -- it is the type the CALLER allocates, so it should not need the
+/// stream class to name it (#310).
+pub fn out_class_name(func: &FuncDef) -> String {
+    format!("{}Out", common::pascal_words(&func.name))
+}
+
 fn out_is_int(func: &FuncDef, name: &str) -> bool {
     func.outputs
         .iter()
@@ -247,7 +255,7 @@ fn field_type_and_default(ty: &VarType) -> (String, String) {
     }
 }
 
-/// The params + `cur_<out>` (+ cachedValue) fields every tier's handle carries
+/// The params + `cur_<out>` fields every tier's handle carries
 /// (dispatch/period-bank/loopless-composed build on exactly this base).
 fn base_fields(func: &FuncDef) -> Vec<Field> {
     let mut fields: Vec<Field> = Vec::new();
@@ -259,9 +267,6 @@ fn base_fields(func: &FuncDef) -> Vec<Field> {
     }
     for out in &func.outputs {
         fields.push((format!("cur_{}", out.name), out_java_type(func, &out.name).to_string(), "0".into()));
-    }
-    if has_value_class(func) {
-        fields.push(("cachedValue".into(), "Value".into(), "null".into()));
     }
     fields
 }
@@ -385,9 +390,6 @@ fn state_fields_from(
     for out in &func.outputs {
         let t = out_java_type(func, &out.name);
         fields.push((format!("cur_{}", out.name), t.to_string(), "0".to_string()));
-    }
-    if has_value_class(func) {
-        fields.push(("cachedValue".into(), "Value".into(), "null".into()));
     }
     fields
 }
@@ -730,10 +732,13 @@ fn emit_handle_class_with_members(
     let _ = writeln!(o, "         this.outRangeCount = other.outRangeCount;");
     let _ = writeln!(o, "      }}");
 
-    emit_value_class(o, func);
     emit_update_peek_value_copy(o, func, frame);
 
     let _ = writeln!(o, "   }}");
+
+    // At Core level, a sibling of the stream class: it is the type the CALLER
+    // allocates, so it should not need the stream class to name it (#310).
+    emit_out_class(o, func);
 }
 
 /// The immutable multi-output value record (batch output order, components
@@ -751,37 +756,62 @@ fn emit_handle_class_with_members(
 /// protect (any tuple of outputs is a legitimate reading), and in exchange the
 /// type destructures in record patterns and binds in JSON mappers with no
 /// configuration.
-fn emit_value_class(o: &mut String, func: &FuncDef) {
+fn emit_out_class(o: &mut String, func: &FuncDef) {
     if !has_value_class(func) {
         return;
     }
-    let components: Vec<String> = func
-        .outputs
-        .iter()
-        .map(|out| format!("{} {}", out_java_type(func, &out.name), value_field_name(&out.name)))
-        .collect();
-    let _ = writeln!(o, "\n      /**");
-    let _ = writeln!(o, "       * One output set, in batch output order. Immutable.");
-    let _ = writeln!(o, "       *");
+    let cls = out_class_name(func);
+    let _ = writeln!(o, "\n   /**");
     let _ = writeln!(
         o,
-        "       * <p>{{@code equals}} compares every component bitwise, so {{@code NaN}}\n\
-         \x20      * equals {{@code NaN}} and {{@code 0.0}} does not equal {{@code -0.0}}.\n\
-         \x20      * {{@code hashCode}} is consistent with it but its exact value is\n\
-         \x20      * unspecified — do not persist it or compare it across JVM versions.\n\
-         \x20      *"
+        "    * The outputs of one {} bar, written by the stream into an object the\n\
+         \x20   * CALLER owns. Allocate one and reuse it: {{@code update}}, {{@code peek}}\n\
+         \x20   * and {{@code value}} overwrite its fields and allocate nothing.\n\
+         \x20   *\n\
+         \x20   * <p><b>Its contents are only valid until the next call that writes it.</b>\n\
+         \x20   * It is a mutable buffer, not a reading: a reference kept past that call,\n\
+         \x20   * or one put in a collection, sees the value change underneath it. Copy the\n\
+         \x20   * fields out if the reading has to outlive the call.\n\
+         \x20   *\n\
+         \x20   * <p>Deliberately no {{@code equals}} or {{@code hashCode}}: a mutable type\n\
+         \x20   * with value equality breaks the {{@code HashMap}}/{{@code HashSet}}\n\
+         \x20   * invariant the moment a reused instance becomes a key. Compare the fields.\n\
+         \x20   */",
+        func.name
     );
+    let _ = writeln!(o, "   public static final class {cls} {{");
     for out in &func.outputs {
-        // Same prose the batch method's `@param out…` carries, so an output
-        // reads identically in both tiers.
         let desc = func
             .doc
             .as_ref()
             .map_or_else(|| "Output values.".to_string(), |d| super::java_doc::output_desc(out, d));
-        let _ = writeln!(o, "       * @param {} {desc}", value_field_name(&out.name));
+        let _ = writeln!(o, "      /** {desc} */");
+        let _ = writeln!(
+            o,
+            "      public {} {};",
+            out_java_type(func, &out.name),
+            value_field_name(&out.name)
+        );
     }
-    let _ = writeln!(o, "       */");
-    let _ = writeln!(o, "      public record Value({}) {{ }}", components.join(", "));
+    let _ = writeln!(o, "   }}");
+}
+
+
+
+/// Statements writing the current outputs into a caller-owned sink. `src` names
+/// where the values are read from -- `this` for a committed handle, `""` for a
+/// peek frame whose outputs are locals.
+fn write_out_stmts(func: &FuncDef, sink: &str, src: &str, indent: &str) -> String {
+    let mut o = String::new();
+    for out in &func.outputs {
+        let rhs = if src.is_empty() {
+            format!("cur_{}", out.name)
+        } else {
+            format!("{src}.cur_{}", out.name)
+        };
+        let _ = writeln!(o, "{indent}{sink}.{} = {rhs};", value_field_name(&out.name));
+    }
+    o
 }
 
 /// The value expression reading the current outputs off a handle variable.
@@ -869,10 +899,16 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, frame: Option<&st
 
 // --- update --------------------------------------------------------------------
 fn emit_update_method(o: &mut String, func: &FuncDef) {
-    let vt = if has_value_class(func) {
-        "Value".to_string()
+    let multi = has_value_class(func);
+    let vt = if multi {
+        "void".to_string()
     } else {
         out_java_type(func, &func.outputs[0].name).to_string()
+    };
+    let sink = if multi {
+        format!(", {} out", out_class_name(func))
+    } else {
+        String::new()
     };
     let base = method_base(func);
     let (sig_bars, fwd_bars) = bar_params(func);
@@ -896,16 +932,15 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
          \x20      * later value it produces.\n\
          \x20      */"
     );
-    let _ = writeln!(o, "      public {vt} update( {sig_bars} ) {{");
+    let _ = writeln!(o, "      public {vt} update( {sig_bars}{sink} ) {{");
     o.push_str(&finite_bar_check(func, "         ", "update", true));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
     // After the step, so a bar the step throws out of is not counted. The
     // finite-bar reject above counts its own bar and is the only rejection that
     // does; `peek` runs a frame that commits nothing and reaches neither.
     let _ = writeln!(o, "         {}", advance_out_range());
-    if has_value_class(func) {
-        let _ = writeln!(o, "         this.cachedValue = {};", fresh_value_expr(func, "this"));
-        let _ = writeln!(o, "         return this.cachedValue;");
+    if multi {
+        o.push_str(&write_out_stmts(func, "out", "this", "         "));
     } else {
         let _ = writeln!(o, "         return {};", fresh_value_expr(func, "this"));
     }
@@ -1034,12 +1069,11 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
     // Java's cache stale would make the two backends disagree on an observable
     // the streaming design says they agree on. Single-output handles read
     // `cur_<out>` directly and have no cache at all.
-    let cached = has_value_class(func);
-    if cached {
-        let _ = writeln!(o, "         int done = 0;");
-        let _ = writeln!(o, "         try {{");
-    }
-    let pad = if cached { "            " } else { "         " };
+    // No cache to refresh: `updateAndFill` writes each bar straight into the
+    // caller's arrays, and a multi-output `value` now writes a caller-owned
+    // sink rather than replaying a stored instance (#310). So no `done`, no
+    // `try`/`finally`, and the loop body needs no extra indent.
+    let pad = "         ";
     let _ = writeln!(o, "{pad}for( int i = 0; i < barCount; i++ ) {{");
     let idx_bars: Vec<String> = inputs.iter().map(|a| format!("{a}[i]")).collect();
     if !inputs.is_empty() {
@@ -1048,9 +1082,7 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
             .map(|b| format!("!Double.isFinite({b}[i])"))
             .collect();
         // Rule U3 per bar: the rejected bar is counted, so `outRange()` ends on
-        // the offending bar. Output slot `i` is deliberately left unwritten, and
-        // `done` is not moved — the `finally` below must publish bar `i-1`, the
-        // last one the step actually committed.
+        // the offending bar. Output slot `i` is deliberately left unwritten.
         let _ = writeln!(o, "{pad}   if( {} ) {{", conds.join(" || "));
         let _ = writeln!(o, "{pad}      {}", advance_out_range());
         let _ = writeln!(o, "{pad}      {reject}");
@@ -1063,29 +1095,23 @@ fn emit_update_and_fill_method(o: &mut String, func: &FuncDef) {
         let _ = writeln!(o, "{pad}   {guard}{name}[i] = this.cur_{name};");
     }
     let _ = writeln!(o, "{pad}   {}", advance_out_range());
-    if cached {
-        let _ = writeln!(o, "{pad}   done = i + 1;");
-    }
     let _ = writeln!(o, "{pad}}}");
-    if cached {
-        let _ = writeln!(o, "         }} finally {{");
-        let _ = writeln!(
-            o,
-            "            if( done > 0 ) this.cachedValue = {};",
-            fresh_value_expr(func, "this")
-        );
-        let _ = writeln!(o, "         }}");
-    }
     let _ = writeln!(o, "      }}");
 }
 
 // --- peek ------------------------------------------------------------------------
 fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     let class = stream_class_name(func);
-    let vt = if has_value_class(func) {
-        "Value".to_string()
+    let multi = has_value_class(func);
+    let vt = if multi {
+        "void".to_string()
     } else {
         out_java_type(func, &func.outputs[0].name).to_string()
+    };
+    let sink = if multi {
+        format!(", {} out", out_class_name(func))
+    } else {
+        String::new()
     };
     let (sig_bars, _) = bar_params(func);
 
@@ -1115,24 +1141,30 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          \x20      * run concurrently with each other. {cost}\n\
          \x20      */"
     );
-    let _ = writeln!(o, "      public {vt} peek( {sig_bars} ) {{");
+    let _ = writeln!(o, "      public {vt} peek( {sig_bars}{sink} ) {{");
     // Ahead of the frame, not left to the transition: a rejected bar must not
     // run any of it.
     o.push_str(&finite_bar_check(func, "         ", "peek", false));
     let body = frame.expect("every tier emits a peek frame");
     let _ = writeln!(o, "         {class} sp = this;");
     o.push_str(body);
-    let _ = writeln!(o, "         return {};", fresh_value_expr_local(func));
+    if multi {
+        o.push_str(&write_out_stmts(func, "out", "", "         "));
+    } else {
+        let _ = writeln!(o, "         return {};", fresh_value_expr_local(func));
+    }
     let _ = writeln!(o, "      }}");
 }
 
 // --- value -----------------------------------------------------------------------
 fn emit_value_method(o: &mut String, func: &FuncDef) {
-    let vt = if has_value_class(func) {
-        "Value".to_string()
+    let multi = has_value_class(func);
+    let vt = if multi {
+        "void".to_string()
     } else {
         out_java_type(func, &func.outputs[0].name).to_string()
     };
+    let sink = if multi { format!(" {} out ", out_class_name(func)) } else { String::new() };
 
     let _ = writeln!(
         o,
@@ -1143,9 +1175,9 @@ fn emit_value_method(o: &mut String, func: &FuncDef) {
          \x20      * A pure field read; {{@code peek}} does not change it.\n\
          \x20      */"
     );
-    let _ = writeln!(o, "      public {vt} value() {{");
-    if has_value_class(func) {
-        let _ = writeln!(o, "         return this.cachedValue;");
+    let _ = writeln!(o, "      public {vt} value({sink}) {{");
+    if multi {
+        o.push_str(&write_out_stmts(func, "out", "this", "         "));
     } else {
         let _ = writeln!(o, "         return {};", fresh_value_expr(func, "this"));
     }
@@ -1363,6 +1395,7 @@ fn build_dispatch_peek_frame(
     for arm in dp.arms.iter().filter(|a| a.supported) {
         let label = super::java::render_java_switch_label(&arm.label, enums);
         let cls = callee_stream_class(registry, &arm.callee);
+        let ocls = callee_out_class(registry, &arm.callee);
         let _ = writeln!(f, "         case {label}: {{");
         if arm.out_map.len() == 1 {
             let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
@@ -1376,13 +1409,14 @@ fn build_dispatch_peek_frame(
         } else {
             let _ = writeln!(
                 f,
-                "            {cls}.Value subValue = (({cls}) sp.sub).peek({bar_args});"
+                "            {ocls} subValue = new {ocls}();\n\
+                 \x20           (({cls}) sp.sub).peek({bar_args}, subValue);"
             );
             for (i, slot) in arm.out_map.iter().enumerate() {
                 if let streaming::OutSlot::Forward(k) = slot {
                     let _ = writeln!(
                         f,
-                        "            cur_{} = subValue.{}();",
+                        "            cur_{} = subValue.{};",
                         outputs[*k],
                         callee_value_field(registry, &arm.callee, i)
                     );
@@ -2078,7 +2112,7 @@ fn emit_identity_fast_path(
     // Identity state: params captured, everything else deterministic defaults
     // (1-slot buffers keep the transition's cap-0 guard well-defined).
     for (name, _, default) in fields {
-        if name == "cachedValue" || name.starts_with("cur_") {
+        if name.starts_with("cur_") {
             continue;
         }
         if model.parity.as_ref().is_some_and(|p| &p.field == name) {
@@ -2107,24 +2141,10 @@ fn emit_identity_fast_path(
     for (out, _inp) in &idp.pairs {
         let _ = writeln!(o, "         sp.cur_{out} = {out}[(outNBElement.value - 1) * outStride];");
     }
-    if has_value_class(func) {
-        let _ = writeln!(o, "         sp.cachedValue = {};", capture_value_expr(func));
-    }
     let _ = writeln!(o, "         return RetCode.Success;");
     let _ = writeln!(o, "      }}");
 }
 
-/// `new Value(sp.cur_a, ...)` for the capture sites (Value resolves inside the
-/// nested handle class; from Core scope it needs the class qualifier).
-fn capture_value_expr(func: &FuncDef) -> String {
-    let class = stream_class_name(func);
-    let args: Vec<String> = func
-        .outputs
-        .iter()
-        .map(|out| format!("sp.cur_{}", out.name))
-        .collect();
-    format!("new {class}.Value({})", args.join(", "))
-}
 
 // ---------------------------------------------------------------------------
 // State capture
@@ -2365,7 +2385,7 @@ enum CurSource {
     Scratch,
 }
 
-/// Seed `sp.cur_*` (+ the cached Value) at the end of an open body.
+/// Seed `sp.cur_*` at the end of an open body.
 fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: CurSource) {
     let nullable = super::common::nullable_output_names(func);
     assert!(
@@ -2384,9 +2404,6 @@ fn emit_cur_capture(o: &mut String, func: &FuncDef, outputs: &[String], source: 
             }
         };
         let _ = writeln!(o, "      sp.cur_{out} = {expr};");
-    }
-    if has_value_class(func) {
-        let _ = writeln!(o, "      sp.cachedValue = {};", capture_value_expr(func));
     }
 }
 
@@ -2968,6 +2985,10 @@ fn callee_stream_class(registry: &Registry, callee: &str) -> String {
     format!("{}Stream", common::pascal_words(&registry.name_of(callee)))
 }
 
+fn callee_out_class(registry: &Registry, callee: &str) -> String {
+    format!("{}Out", common::pascal_words(&registry.name_of(callee)))
+}
+
 /// `sp.cur_<out>` / `Value` member routing for one forwarded callee slot.
 fn callee_value_field(registry: &Registry, callee: &str, slot: usize) -> String {
     value_field_name(&registry.callee_outputs(callee)[slot])
@@ -3090,17 +3111,17 @@ fn emit_dispatch(
                 outputs[k]
             );
         } else {
-            let _ = writeln!(
-                o,
-                "         {cls}.Value subValue = (({cls}) sp.sub).update({bar_args});"
-            );
+            // `update` commits, so the sub-handle's own `cur_*` fields hold the
+            // bar it just wrote -- no sink and no allocation here at all. Only
+            // `peek` needs one, because it commits nothing (#310).
+            let _ = writeln!(o, "         (({cls}) sp.sub).update({bar_args});");
             for (i, slot) in arm.out_map.iter().enumerate() {
                 if let streaming::OutSlot::Forward(k) = slot {
                     let _ = writeln!(
                         o,
-                        "         sp.cur_{} = subValue.{}();",
+                        "         sp.cur_{} = (({cls}) sp.sub).cur_{};",
                         outputs[*k],
-                        callee_value_field(registry, &arm.callee, i)
+                        registry.callee_outputs(&arm.callee)[i]
                     );
                 }
             }
@@ -3181,9 +3202,6 @@ fn emit_dispatch(
                         let _ = writeln!(o, "         sp.cur_{out} = {out}[outNBElement.value - 1];");
                     }
                 }
-            }
-            if has_value_class(func) {
-                let _ = writeln!(o, "         sp.cachedValue = {};", capture_value_expr(func));
             }
             let _ = writeln!(o, "         return RetCode.Success;");
             let _ = writeln!(o, "      }}");
@@ -3279,9 +3297,6 @@ fn emit_dispatch(
         let _ = writeln!(o, "      }}");
         for p in &func.optional_inputs {
             let _ = writeln!(o, "      sp.{0} = {0};", p.name);
-        }
-        if has_value_class(func) {
-            let _ = writeln!(o, "      sp.cachedValue = {};", capture_value_expr(func));
         }
         let _ = writeln!(o, "      return RetCode.Success;");
         let _ = writeln!(o, "   }}");
@@ -3808,13 +3823,22 @@ fn emit_composed_step(
                     let d = &sub.dsts[0];
                     let _ = writeln!(o, "{pad}cur_{d} = sp.sub{sub_idx}.{verb}({arg_str});");
                 } else {
-                    let cls = callee_stream_class(registry, &callee_key);
+                    // A multi-output sub-handle writes a caller-owned sink. `update`
+                    // commits, so its outputs could be read off the sub's own
+                    // `cur_*` fields -- but `peek` does not commit, and both verbs
+                    // share this emitter, so one shape serves both. The local is
+                    // the per-call allocation #310 settled on and #325 records:
+                    // this callee is far over the inline budget, so escape
+                    // analysis never fired here even when the sink was the
+                    // returned Value.
+                    let ocls = callee_out_class(registry, &callee_key);
                     let _ = writeln!(o, "{pad}{{");
-                    let _ = writeln!(o, "{pad}   {cls}.Value subOut{sub_idx} = sp.sub{sub_idx}.{verb}({arg_str});");
+                    let _ = writeln!(o, "{pad}   {ocls} subOut{sub_idx} = new {ocls}();");
+                    let _ = writeln!(o, "{pad}   sp.sub{sub_idx}.{verb}({arg_str}, subOut{sub_idx});");
                     for (k, d) in sub.dsts.iter().enumerate() {
                         let _ = writeln!(
                             o,
-                            "{pad}   cur_{d} = subOut{sub_idx}.{}();",
+                            "{pad}   cur_{d} = subOut{sub_idx}.{};",
                             callee_value_field(registry, &callee_key, k)
                         );
                     }

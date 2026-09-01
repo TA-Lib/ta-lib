@@ -690,8 +690,9 @@
             break;
          }
          case MAMA: {
-            MamaStream.Value subValue = ((MamaStream) sp.sub).peek(inReal);
-            cur_outReal = subValue.mama();
+            MamaOut subValue = new MamaOut();
+            ((MamaStream) sp.sub).peek(inReal, subValue);
+            cur_outReal = subValue.mama;
             break;
          }
          case T3: {
@@ -771,8 +772,8 @@
          break;
       }
       case MAMA: {
-         MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);
-         sp.cur_outReal = subValue.mama();
+         ((MamaStream) sp.sub).update(inReal);
+         sp.cur_outReal = ((MamaStream) sp.sub).cur_outMAMA;
          break;
       }
       case T3: {

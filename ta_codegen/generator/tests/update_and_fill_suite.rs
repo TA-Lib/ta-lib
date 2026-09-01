@@ -286,39 +286,44 @@ fn the_check_is_inside_the_loop_and_not_a_pre_scan() {
 /// `value()` names a bar before the ones the call committed, and disagrees with
 /// `outRange()` by exactly the committed bars.
 ///
-/// It is refreshed in a `finally`, which covers every exit including the two
-/// throwing ones (a non-finite bar, and a sub-stream rejecting a computed
-/// intermediate mid-step). That is sound only because a step writes its `cur_*`
-/// fields last — pinned separately by
-/// `no_throwing_sub_call_follows_the_cur_capture_in_a_java_step`.
-///
-/// C# has no cache (a record struct built fresh from the fields), so it must NOT
-/// grow one here — and is already correct at every exit for the same reason.
+/// The cache is gone (#310): a multi-output `update`/`peek`/`value` writes a
+/// caller-owned `<N>Out`, so there is no stored instance to keep fresh and
+/// nothing for the `finally` to publish. This replaces the refresh test rather
+/// than deleting it — the property worth pinning is now the ABSENCE, swept over
+/// both managed backends so neither grows one back.
 #[test]
-fn the_java_value_cache_is_refreshed_on_every_exit() {
-    let multi = body_of(&section("bbands", "java"), "public void updateAndFill(");
-    assert!(
-        multi.contains("} finally {"),
-        "a multi-output updateAndFill refreshes the cache in a finally:\n{multi}"
-    );
-    assert_eq!(
-        multi.matches("if( done > 0 ) this.cachedValue =").count(),
-        1,
-        "one refresh, in the finally — not repeated per exit:\n{multi}"
-    );
-    let fin = multi.find("} finally {").expect("the finally");
-    let refresh = multi.find("if( done > 0 ) this.cachedValue =").expect("the refresh");
-    assert!(refresh > fin, "the refresh belongs inside the finally:\n{multi}");
-    let single = body_of(&section("sma", "java"), "public void updateAndFill(");
-    assert!(
-        !single.contains("cachedValue") && !single.contains("finally"),
-        "a single-output handle has no cache to refresh:\n{single}"
-    );
-    let cs = body_of(&section("bbands", "csharp"), "public void UpdateAndFill(");
-    assert!(
-        !cs.contains("cachedValue") && !cs.contains("finally"),
-        "C#'s Value is a fresh record struct and needs no refresh:\n{cs}"
-    );
+fn no_managed_handle_caches_the_multi_output_value() {
+    let mut swept = 0;
+    for (func, lang, verb) in [
+        ("bbands", "java", "public void updateAndFill("),
+        ("macd", "java", "public void updateAndFill("),
+        ("stoch", "java", "public void updateAndFill("),
+        ("bbands", "csharp", "public void UpdateAndFill("),
+    ] {
+        let sect = section(func, lang);
+        let fill = body_of(&sect, verb);
+        assert!(
+            !fill.contains("cachedValue") && !fill.contains("finally"),
+            "{func}/{lang} updateAndFill still keeps a cache fresh:\n{fill}"
+        );
+        // The whole handle, not just the filler: a cache re-grown anywhere else
+        // would leave this passing while the allocation is back.
+        assert!(
+            !sect.contains("cachedValue"),
+            "{func}/{lang} still declares or writes a cached value"
+        );
+        swept += 1;
+    }
+    assert_eq!(swept, 4, "the sweep did not reach every case it names");
+
+    // Non-vacuity: these are multi-output handles, so they DO have an out type
+    // to have cached. A single-output handle proves nothing here.
+    for (func, lang, ty) in [("bbands", "java", "BbandsOut"), ("bbands", "csharp", "BbandsValue")] {
+        assert!(
+            section(func, lang).contains(ty),
+            "{func}/{lang} has no {ty}, so its lack of a cache is not evidence"
+        );
+    }
 }
 
 /// C is the only backend with a bar count and the only one that has to reject

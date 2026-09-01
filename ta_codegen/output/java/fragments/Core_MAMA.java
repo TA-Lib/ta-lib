@@ -1012,7 +1012,6 @@
       double[] ring_trailingWMAIdx_inReal;
       double cur_outMAMA;
       double cur_outFAMA;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -1084,23 +1083,9 @@
          this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
          this.cur_outMAMA = other.cur_outMAMA;
          this.cur_outFAMA = other.cur_outFAMA;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param mama Adaptive moving average (fast line)
-       * @param fama Following adaptive moving average, using half the alpha (slow line)
-       */
-      public record Value(double mama, double fama) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -1118,15 +1103,15 @@
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, MamaOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
          }
          core.mamaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
-         return this.cachedValue;
+         out.mama = this.cur_outMAMA;
+         out.fama = this.cur_outFAMA;
       }
 
       /**
@@ -1151,21 +1136,15 @@
          final int barCount = inReal.length;
          if( outMAMA.length < barCount || (outFAMA != null && outFAMA.length < barCount) || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
             throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.mamaStepImpl(this, inReal[i]);
-               outMAMA[i] = this.cur_outMAMA;
-               if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
+            core.mamaStepImpl(this, inReal[i]);
+            outMAMA[i] = this.cur_outMAMA;
+            if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -1179,7 +1158,7 @@
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, MamaOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
          MamaStream sp = this;
@@ -1402,7 +1381,8 @@
             ringPos_trailingWMAIdx = 0;
          }
          streamParity = 1 - streamParity;
-         return new Value(cur_outMAMA, cur_outFAMA);
+         out.mama = cur_outMAMA;
+         out.fama = cur_outFAMA;
       }
 
       /**
@@ -1411,8 +1391,9 @@
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( MamaOut out ) {
+         out.mama = this.cur_outMAMA;
+         out.fama = this.cur_outFAMA;
       }
 
       /**
@@ -1430,6 +1411,27 @@
       public MamaStream clone() {
          return new MamaStream(this);
       }
+   }
+
+   /**
+    * The outputs of one MAMA bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class MamaOut {
+      /** Adaptive moving average (fast line) */
+      public double mama;
+      /** Following adaptive moving average, using half the alpha (slow line) */
+      public double fama;
    }
    void mamaStepImpl( MamaStream sp, double inReal )
    {
@@ -2074,7 +2076,6 @@
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
       sp.cur_outFAMA = lastCur_outFAMA;
-      sp.cachedValue = new MamaStream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
       return RetCode.Success;
    }
    /* mamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */

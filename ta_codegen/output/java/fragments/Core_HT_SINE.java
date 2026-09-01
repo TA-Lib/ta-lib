@@ -995,7 +995,6 @@
       double[] cb_smoothPrice;
       double cur_outSine;
       double cur_outLeadSine;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -1070,23 +1069,9 @@
          this.cb_smoothPrice = other.cb_smoothPrice.clone();
          this.cur_outSine = other.cur_outSine;
          this.cur_outLeadSine = other.cur_outLeadSine;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param sine Sine of the dominant-cycle phase.
-       * @param leadSine Sine of the phase advanced 45 degrees (lead)
-       */
-      public record Value(double sine, double leadSine) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -1104,15 +1089,15 @@
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, HtSineOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
          }
          core.htSineStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
-         return this.cachedValue;
+         out.sine = this.cur_outSine;
+         out.leadSine = this.cur_outLeadSine;
       }
 
       /**
@@ -1135,21 +1120,15 @@
          final int barCount = inReal.length;
          if( outSine.length < barCount || outLeadSine.length < barCount || (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine )
             throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.htSineStepImpl(this, inReal[i]);
-               outSine[i] = this.cur_outSine;
-               outLeadSine[i] = this.cur_outLeadSine;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
+            core.htSineStepImpl(this, inReal[i]);
+            outSine[i] = this.cur_outSine;
+            outLeadSine[i] = this.cur_outLeadSine;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -1163,7 +1142,7 @@
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, HtSineOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
          HtSineStream sp = this;
@@ -1409,7 +1388,8 @@
             ringPos_trailingWMAIdx = 0;
          }
          streamParity = 1 - streamParity;
-         return new Value(cur_outSine, cur_outLeadSine);
+         out.sine = cur_outSine;
+         out.leadSine = cur_outLeadSine;
       }
 
       /**
@@ -1418,8 +1398,9 @@
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( HtSineOut out ) {
+         out.sine = this.cur_outSine;
+         out.leadSine = this.cur_outLeadSine;
       }
 
       /**
@@ -1437,6 +1418,27 @@
       public HtSineStream clone() {
          return new HtSineStream(this);
       }
+   }
+
+   /**
+    * The outputs of one HT_SINE bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class HtSineOut {
+      /** Sine of the dominant-cycle phase. */
+      public double sine;
+      /** Sine of the phase advanced 45 degrees (lead) */
+      public double leadSine;
    }
    void htSineStepImpl( HtSineStream sp, double inReal )
    {
@@ -2127,7 +2129,6 @@
       sp.cb_smoothPrice = smoothPrice;
       sp.cur_outSine = outSine[(outNBElement.value - 1) * outStride];
       sp.cur_outLeadSine = outLeadSine[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new HtSineStream.Value(sp.cur_outSine, sp.cur_outLeadSine);
       return RetCode.Success;
    }
    /* htSineOpenAndFill anchored at startIdx — the composed-open fusion seam. */

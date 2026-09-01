@@ -420,7 +420,6 @@
       double[] x_inLow;
       double cur_outAroonDown;
       double cur_outAroonUp;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -455,23 +454,9 @@
          this.x_inLow = other.x_inLow.clone();
          this.cur_outAroonDown = other.cur_outAroonDown;
          this.cur_outAroonUp = other.cur_outAroonUp;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param aroonDown Recency of the lowest low (100 = it is the current bar, decaying as it ages)
-       * @param aroonUp Recency of the highest high (100 = it is the current bar, decaying as it ages)
-       */
-      public record Value(double aroonDown, double aroonUp) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -489,15 +474,15 @@
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inHigh, double inLow ) {
+      public void update( double inHigh, double inLow, AroonOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
          }
          core.aroonStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
-         return this.cachedValue;
+         out.aroonDown = this.cur_outAroonDown;
+         out.aroonUp = this.cur_outAroonUp;
       }
 
       /**
@@ -521,21 +506,15 @@
          final int barCount = inHigh.length;
          if( inLow.length != barCount || outAroonDown.length < barCount || outAroonUp.length < barCount || (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp )
             throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.aroonStepImpl(this, inHigh[i], inLow[i]);
-               outAroonDown[i] = this.cur_outAroonDown;
-               outAroonUp[i] = this.cur_outAroonUp;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
+            core.aroonStepImpl(this, inHigh[i], inLow[i]);
+            outAroonDown[i] = this.cur_outAroonDown;
+            outAroonUp[i] = this.cur_outAroonUp;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -549,7 +528,7 @@
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inHigh, double inLow ) {
+      public void peek( double inHigh, double inLow, AroonOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
          AroonStream sp = this;
@@ -620,7 +599,8 @@
          cur_outAroonDown = sp.factor * (sp.optInTimePeriod - (today - lowestIdx));
          trailingIdx += 1;
          today += 1;
-         return new Value(cur_outAroonDown, cur_outAroonUp);
+         out.aroonDown = cur_outAroonDown;
+         out.aroonUp = cur_outAroonUp;
       }
 
       /**
@@ -629,8 +609,9 @@
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( AroonOut out ) {
+         out.aroonDown = this.cur_outAroonDown;
+         out.aroonUp = this.cur_outAroonUp;
       }
 
       /**
@@ -648,6 +629,27 @@
       public AroonStream clone() {
          return new AroonStream(this);
       }
+   }
+
+   /**
+    * The outputs of one AROON bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class AroonOut {
+      /** Recency of the lowest low (100 = it is the current bar, decaying as it ages) */
+      public double aroonDown;
+      /** Recency of the highest high (100 = it is the current bar, decaying as it ages) */
+      public double aroonUp;
    }
    void aroonStepImpl( AroonStream sp, double inHigh, double inLow )
    {
@@ -845,7 +847,6 @@
       sp.x_inLow = capX_inLow;
       sp.cur_outAroonDown = outAroonDown[(outNBElement.value - 1) * outStride];
       sp.cur_outAroonUp = outAroonUp[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new AroonStream.Value(sp.cur_outAroonDown, sp.cur_outAroonUp);
       return RetCode.Success;
    }
    /* aroonOpenAndFill anchored at startIdx — the composed-open fusion seam. */

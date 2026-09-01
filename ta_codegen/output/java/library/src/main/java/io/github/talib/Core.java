@@ -2100,7 +2100,6 @@ public final class Core {
       double cur_outRealUpperBand;
       double cur_outRealMiddleBand;
       double cur_outRealLowerBand;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -2133,24 +2132,9 @@ public final class Core {
          this.cur_outRealUpperBand = other.cur_outRealUpperBand;
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param realUpperBand SMA of the range-scaled high band.
-       * @param realMiddleBand SMA of the close.
-       * @param realLowerBand SMA of the range-scaled low band.
-       */
-      public record Value(double realUpperBand, double realMiddleBand, double realLowerBand) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -2168,15 +2152,16 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inHigh, double inLow, double inClose ) {
+      public void update( double inHigh, double inLow, double inClose, AccbandsOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
          }
          core.accbandsStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
-         return this.cachedValue;
+         out.realUpperBand = this.cur_outRealUpperBand;
+         out.realMiddleBand = this.cur_outRealMiddleBand;
+         out.realLowerBand = this.cur_outRealLowerBand;
       }
 
       /**
@@ -2202,22 +2187,16 @@ public final class Core {
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
             throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.accbandsStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outRealUpperBand[i] = this.cur_outRealUpperBand;
-               outRealMiddleBand[i] = this.cur_outRealMiddleBand;
-               outRealLowerBand[i] = this.cur_outRealLowerBand;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("ACCBANDS updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+            core.accbandsStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outRealUpperBand[i] = this.cur_outRealUpperBand;
+            outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+            outRealLowerBand[i] = this.cur_outRealLowerBand;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -2231,7 +2210,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inHigh, double inLow, double inClose ) {
+      public void peek( double inHigh, double inLow, double inClose, AccbandsOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("ACCBANDS peek: BadParam", RetCode.BadParam);
          AccbandsStream sp = this;
@@ -2294,7 +2273,9 @@ public final class Core {
          if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
             ringPos_trailingIdx = 0;
          }
-         return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
+         out.realUpperBand = cur_outRealUpperBand;
+         out.realMiddleBand = cur_outRealMiddleBand;
+         out.realLowerBand = cur_outRealLowerBand;
       }
 
       /**
@@ -2303,8 +2284,10 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( AccbandsOut out ) {
+         out.realUpperBand = this.cur_outRealUpperBand;
+         out.realMiddleBand = this.cur_outRealMiddleBand;
+         out.realLowerBand = this.cur_outRealLowerBand;
       }
 
       /**
@@ -2322,6 +2305,29 @@ public final class Core {
       public AccbandsStream clone() {
          return new AccbandsStream(this);
       }
+   }
+
+   /**
+    * The outputs of one ACCBANDS bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class AccbandsOut {
+      /** SMA of the range-scaled high band. */
+      public double realUpperBand;
+      /** SMA of the close. */
+      public double realMiddleBand;
+      /** SMA of the range-scaled low band. */
+      public double realLowerBand;
    }
    void accbandsStepImpl( AccbandsStream sp, double inHigh, double inLow, double inClose )
    {
@@ -2530,7 +2536,6 @@ public final class Core {
       sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement.value - 1) * outStride];
       sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new AccbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
    /* accbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -9282,7 +9287,6 @@ public final class Core {
       double[] x_inLow;
       double cur_outAroonDown;
       double cur_outAroonUp;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -9317,23 +9321,9 @@ public final class Core {
          this.x_inLow = other.x_inLow.clone();
          this.cur_outAroonDown = other.cur_outAroonDown;
          this.cur_outAroonUp = other.cur_outAroonUp;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param aroonDown Recency of the lowest low (100 = it is the current bar, decaying as it ages)
-       * @param aroonUp Recency of the highest high (100 = it is the current bar, decaying as it ages)
-       */
-      public record Value(double aroonDown, double aroonUp) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -9351,15 +9341,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inHigh, double inLow ) {
+      public void update( double inHigh, double inLow, AroonOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
          }
          core.aroonStepImpl(this, inHigh, inLow);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
-         return this.cachedValue;
+         out.aroonDown = this.cur_outAroonDown;
+         out.aroonUp = this.cur_outAroonUp;
       }
 
       /**
@@ -9383,21 +9373,15 @@ public final class Core {
          final int barCount = inHigh.length;
          if( inLow.length != barCount || outAroonDown.length < barCount || outAroonUp.length < barCount || (Object)outAroonDown == (Object)inHigh || (Object)outAroonDown == (Object)inLow || (Object)outAroonUp == (Object)inHigh || (Object)outAroonUp == (Object)inLow || (Object)outAroonDown == (Object)outAroonUp )
             throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.aroonStepImpl(this, inHigh[i], inLow[i]);
-               outAroonDown[i] = this.cur_outAroonDown;
-               outAroonUp[i] = this.cur_outAroonUp;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("AROON updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
+            core.aroonStepImpl(this, inHigh[i], inLow[i]);
+            outAroonDown[i] = this.cur_outAroonDown;
+            outAroonUp[i] = this.cur_outAroonUp;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -9411,7 +9395,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inHigh, double inLow ) {
+      public void peek( double inHigh, double inLow, AroonOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
          AroonStream sp = this;
@@ -9482,7 +9466,8 @@ public final class Core {
          cur_outAroonDown = sp.factor * (sp.optInTimePeriod - (today - lowestIdx));
          trailingIdx += 1;
          today += 1;
-         return new Value(cur_outAroonDown, cur_outAroonUp);
+         out.aroonDown = cur_outAroonDown;
+         out.aroonUp = cur_outAroonUp;
       }
 
       /**
@@ -9491,8 +9476,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( AroonOut out ) {
+         out.aroonDown = this.cur_outAroonDown;
+         out.aroonUp = this.cur_outAroonUp;
       }
 
       /**
@@ -9510,6 +9496,27 @@ public final class Core {
       public AroonStream clone() {
          return new AroonStream(this);
       }
+   }
+
+   /**
+    * The outputs of one AROON bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class AroonOut {
+      /** Recency of the lowest low (100 = it is the current bar, decaying as it ages) */
+      public double aroonDown;
+      /** Recency of the highest high (100 = it is the current bar, decaying as it ages) */
+      public double aroonUp;
    }
    void aroonStepImpl( AroonStream sp, double inHigh, double inLow )
    {
@@ -9707,7 +9714,6 @@ public final class Core {
       sp.x_inLow = capX_inLow;
       sp.cur_outAroonDown = outAroonDown[(outNBElement.value - 1) * outStride];
       sp.cur_outAroonUp = outAroonUp[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new AroonStream.Value(sp.cur_outAroonDown, sp.cur_outAroonUp);
       return RetCode.Success;
    }
    /* aroonOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -14471,7 +14477,6 @@ public final class Core {
       double cur_outRealUpperBand;
       double cur_outRealMiddleBand;
       double cur_outRealLowerBand;
-      Value cachedValue;
       MaStream sub0;
       StddevStream sub1;
       int outRangeBegIdx;
@@ -14501,26 +14506,11 @@ public final class Core {
          this.cur_outRealUpperBand = other.cur_outRealUpperBand;
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new MaStream(other.sub0);
          this.sub1 = new StddevStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param realUpperBand Middle band plus nbDevUp standard deviations.
-       * @param realMiddleBand The moving average.
-       * @param realLowerBand Middle band minus nbDevDn standard deviations.
-       */
-      public record Value(double realUpperBand, double realMiddleBand, double realLowerBand) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -14538,15 +14528,16 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, BbandsOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
          }
          core.bbandsStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
-         return this.cachedValue;
+         out.realUpperBand = this.cur_outRealUpperBand;
+         out.realMiddleBand = this.cur_outRealMiddleBand;
+         out.realLowerBand = this.cur_outRealLowerBand;
       }
 
       /**
@@ -14570,22 +14561,16 @@ public final class Core {
          final int barCount = inReal.length;
          if( outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
             throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.bbandsStepImpl(this, inReal[i]);
-               outRealUpperBand[i] = this.cur_outRealUpperBand;
-               outRealMiddleBand[i] = this.cur_outRealMiddleBand;
-               outRealLowerBand[i] = this.cur_outRealLowerBand;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("BBANDS updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+            core.bbandsStepImpl(this, inReal[i]);
+            outRealUpperBand[i] = this.cur_outRealUpperBand;
+            outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+            outRealLowerBand[i] = this.cur_outRealLowerBand;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -14599,7 +14584,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, BbandsOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("BBANDS peek: BadParam", RetCode.BadParam);
          BbandsStream sp = this;
@@ -14625,7 +14610,9 @@ public final class Core {
             cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
          }
          cur_outRealMiddleBand = cur_tempBuffer1;
-         return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
+         out.realUpperBand = cur_outRealUpperBand;
+         out.realMiddleBand = cur_outRealMiddleBand;
+         out.realLowerBand = cur_outRealLowerBand;
       }
 
       /**
@@ -14634,8 +14621,10 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( BbandsOut out ) {
+         out.realUpperBand = this.cur_outRealUpperBand;
+         out.realMiddleBand = this.cur_outRealMiddleBand;
+         out.realLowerBand = this.cur_outRealLowerBand;
       }
 
       /**
@@ -14653,6 +14642,29 @@ public final class Core {
       public BbandsStream clone() {
          return new BbandsStream(this);
       }
+   }
+
+   /**
+    * The outputs of one BBANDS bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class BbandsOut {
+      /** Middle band plus nbDevUp standard deviations. */
+      public double realUpperBand;
+      /** The moving average. */
+      public double realMiddleBand;
+      /** Middle band minus nbDevDn standard deviations. */
+      public double realLowerBand;
    }
    void bbandsStepImpl( BbandsStream sp, double inReal )
    {
@@ -14813,7 +14825,6 @@ public final class Core {
       sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
       sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
-      sp.cachedValue = new BbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
    /* bbandsOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -89456,7 +89467,6 @@ public final class Core {
       double[] ring_trailingWMAIdx_inReal;
       double cur_outInPhase;
       double cur_outQuadrature;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -89523,23 +89533,9 @@ public final class Core {
          this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
          this.cur_outInPhase = other.cur_outInPhase;
          this.cur_outQuadrature = other.cur_outQuadrature;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param inPhase In-phase component (detrender delayed 3 bars)
-       * @param quadrature Quadrature component (Q1 of the Hilbert Transform)
-       */
-      public record Value(double inPhase, double quadrature) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -89557,15 +89553,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, HtPhasorOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
          }
          core.htPhasorStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
-         return this.cachedValue;
+         out.inPhase = this.cur_outInPhase;
+         out.quadrature = this.cur_outQuadrature;
       }
 
       /**
@@ -89588,21 +89584,15 @@ public final class Core {
          final int barCount = inReal.length;
          if( outInPhase.length < barCount || outQuadrature.length < barCount || (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature )
             throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.htPhasorStepImpl(this, inReal[i]);
-               outInPhase[i] = this.cur_outInPhase;
-               outQuadrature[i] = this.cur_outQuadrature;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("HT_PHASOR updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
+            core.htPhasorStepImpl(this, inReal[i]);
+            outInPhase[i] = this.cur_outInPhase;
+            outQuadrature[i] = this.cur_outQuadrature;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -89616,7 +89606,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, HtPhasorOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
          HtPhasorStream sp = this;
@@ -89804,7 +89794,8 @@ public final class Core {
             ringPos_trailingWMAIdx = 0;
          }
          streamParity = 1 - streamParity;
-         return new Value(cur_outInPhase, cur_outQuadrature);
+         out.inPhase = cur_outInPhase;
+         out.quadrature = cur_outQuadrature;
       }
 
       /**
@@ -89813,8 +89804,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( HtPhasorOut out ) {
+         out.inPhase = this.cur_outInPhase;
+         out.quadrature = this.cur_outQuadrature;
       }
 
       /**
@@ -89832,6 +89824,27 @@ public final class Core {
       public HtPhasorStream clone() {
          return new HtPhasorStream(this);
       }
+   }
+
+   /**
+    * The outputs of one HT_PHASOR bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class HtPhasorOut {
+      /** In-phase component (detrender delayed 3 bars) */
+      public double inPhase;
+      /** Quadrature component (Q1 of the Hilbert Transform) */
+      public double quadrature;
    }
    void htPhasorStepImpl( HtPhasorStream sp, double inReal )
    {
@@ -90390,7 +90403,6 @@ public final class Core {
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outInPhase = outInPhase[(outNBElement.value - 1) * outStride];
       sp.cur_outQuadrature = outQuadrature[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new HtPhasorStream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
    /* htPhasorOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -91474,7 +91486,6 @@ public final class Core {
       double[] cb_smoothPrice;
       double cur_outSine;
       double cur_outLeadSine;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -91549,23 +91560,9 @@ public final class Core {
          this.cb_smoothPrice = other.cb_smoothPrice.clone();
          this.cur_outSine = other.cur_outSine;
          this.cur_outLeadSine = other.cur_outLeadSine;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param sine Sine of the dominant-cycle phase.
-       * @param leadSine Sine of the phase advanced 45 degrees (lead)
-       */
-      public record Value(double sine, double leadSine) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -91583,15 +91580,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, HtSineOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
          }
          core.htSineStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
-         return this.cachedValue;
+         out.sine = this.cur_outSine;
+         out.leadSine = this.cur_outLeadSine;
       }
 
       /**
@@ -91614,21 +91611,15 @@ public final class Core {
          final int barCount = inReal.length;
          if( outSine.length < barCount || outLeadSine.length < barCount || (Object)outSine == (Object)inReal || (Object)outLeadSine == (Object)inReal || (Object)outSine == (Object)outLeadSine )
             throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.htSineStepImpl(this, inReal[i]);
-               outSine[i] = this.cur_outSine;
-               outLeadSine[i] = this.cur_outLeadSine;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("HT_SINE updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
+            core.htSineStepImpl(this, inReal[i]);
+            outSine[i] = this.cur_outSine;
+            outLeadSine[i] = this.cur_outLeadSine;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -91642,7 +91633,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, HtSineOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
          HtSineStream sp = this;
@@ -91888,7 +91879,8 @@ public final class Core {
             ringPos_trailingWMAIdx = 0;
          }
          streamParity = 1 - streamParity;
-         return new Value(cur_outSine, cur_outLeadSine);
+         out.sine = cur_outSine;
+         out.leadSine = cur_outLeadSine;
       }
 
       /**
@@ -91897,8 +91889,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( HtSineOut out ) {
+         out.sine = this.cur_outSine;
+         out.leadSine = this.cur_outLeadSine;
       }
 
       /**
@@ -91916,6 +91909,27 @@ public final class Core {
       public HtSineStream clone() {
          return new HtSineStream(this);
       }
+   }
+
+   /**
+    * The outputs of one HT_SINE bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class HtSineOut {
+      /** Sine of the dominant-cycle phase. */
+      public double sine;
+      /** Sine of the phase advanced 45 degrees (lead) */
+      public double leadSine;
    }
    void htSineStepImpl( HtSineStream sp, double inReal )
    {
@@ -92606,7 +92620,6 @@ public final class Core {
       sp.cb_smoothPrice = smoothPrice;
       sp.cur_outSine = outSine[(outNBElement.value - 1) * outStride];
       sp.cur_outLeadSine = outLeadSine[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new HtSineStream.Value(sp.cur_outSine, sp.cur_outLeadSine);
       return RetCode.Success;
    }
    /* htSineOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -99636,7 +99649,6 @@ public final class Core {
       double cur_outRealUpperBand;
       double cur_outRealMiddleBand;
       double cur_outRealLowerBand;
-      Value cachedValue;
       TyppriceStream sub0;
       AtrStream sub1;
       EmaStream sub2;
@@ -99666,27 +99678,12 @@ public final class Core {
          this.cur_outRealUpperBand = other.cur_outRealUpperBand;
          this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
          this.cur_outRealLowerBand = other.cur_outRealLowerBand;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new TyppriceStream(other.sub0);
          this.sub1 = new AtrStream(other.sub1);
          this.sub2 = new EmaStream(other.sub2);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param realUpperBand Centre line plus the scaled Average True Range.
-       * @param realMiddleBand Exponential moving average of the typical price.
-       * @param realLowerBand Centre line minus the scaled Average True Range.
-       */
-      public record Value(double realUpperBand, double realMiddleBand, double realLowerBand) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -99704,15 +99701,16 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inHigh, double inLow, double inClose ) {
+      public void update( double inHigh, double inLow, double inClose, KcOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("KC update: BadParam", RetCode.BadParam);
          }
          core.kcStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
-         return this.cachedValue;
+         out.realUpperBand = this.cur_outRealUpperBand;
+         out.realMiddleBand = this.cur_outRealMiddleBand;
+         out.realLowerBand = this.cur_outRealLowerBand;
       }
 
       /**
@@ -99738,22 +99736,16 @@ public final class Core {
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
             throw new TaLibArgumentException("KC updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("KC updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.kcStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outRealUpperBand[i] = this.cur_outRealUpperBand;
-               outRealMiddleBand[i] = this.cur_outRealMiddleBand;
-               outRealLowerBand[i] = this.cur_outRealLowerBand;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("KC updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
+            core.kcStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outRealUpperBand[i] = this.cur_outRealUpperBand;
+            outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+            outRealLowerBand[i] = this.cur_outRealLowerBand;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -99767,7 +99759,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inHigh, double inLow, double inClose ) {
+      public void peek( double inHigh, double inLow, double inClose, KcOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("KC peek: BadParam", RetCode.BadParam);
          KcStream sp = this;
@@ -99787,7 +99779,9 @@ public final class Core {
          tempReal = cur_tempATR * sp.optInNbDev;
          cur_outRealUpperBand = middle + tempReal;
          cur_outRealLowerBand = middle - tempReal;
-         return new Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
+         out.realUpperBand = cur_outRealUpperBand;
+         out.realMiddleBand = cur_outRealMiddleBand;
+         out.realLowerBand = cur_outRealLowerBand;
       }
 
       /**
@@ -99796,8 +99790,10 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( KcOut out ) {
+         out.realUpperBand = this.cur_outRealUpperBand;
+         out.realMiddleBand = this.cur_outRealMiddleBand;
+         out.realLowerBand = this.cur_outRealLowerBand;
       }
 
       /**
@@ -99815,6 +99811,29 @@ public final class Core {
       public KcStream clone() {
          return new KcStream(this);
       }
+   }
+
+   /**
+    * The outputs of one KC bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class KcOut {
+      /** Centre line plus the scaled Average True Range. */
+      public double realUpperBand;
+      /** Exponential moving average of the typical price. */
+      public double realMiddleBand;
+      /** Centre line minus the scaled Average True Range. */
+      public double realLowerBand;
    }
    void kcStepImpl( KcStream sp, double inHigh, double inLow, double inClose )
    {
@@ -99953,7 +99972,6 @@ public final class Core {
       sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
       sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
-      sp.cachedValue = new KcStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
    /* kcOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -106171,8 +106189,9 @@ public final class Core {
             break;
          }
          case MAMA: {
-            MamaStream.Value subValue = ((MamaStream) sp.sub).peek(inReal);
-            cur_outReal = subValue.mama();
+            MamaOut subValue = new MamaOut();
+            ((MamaStream) sp.sub).peek(inReal, subValue);
+            cur_outReal = subValue.mama;
             break;
          }
          case T3: {
@@ -106252,8 +106271,8 @@ public final class Core {
          break;
       }
       case MAMA: {
-         MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);
-         sp.cur_outReal = subValue.mama();
+         ((MamaStream) sp.sub).update(inReal);
+         sp.cur_outReal = ((MamaStream) sp.sub).cur_outMAMA;
          break;
       }
       case T3: {
@@ -107334,7 +107353,6 @@ public final class Core {
       double cur_outMACD;
       double cur_outMACDSignal;
       double cur_outMACDHist;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -107367,24 +107385,9 @@ public final class Core {
          this.cur_outMACD = other.cur_outMACD;
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param macd Fast EMA minus slow EMA.
-       * @param macdSignal EMA of the MACD line.
-       * @param macdHist MACD minus signal line.
-       */
-      public record Value(double macd, double macdSignal, double macdHist) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -107402,15 +107405,16 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, MacdOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MACD update: BadParam", RetCode.BadParam);
          }
          core.macdStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
-         return this.cachedValue;
+         out.macd = this.cur_outMACD;
+         out.macdSignal = this.cur_outMACDSignal;
+         out.macdHist = this.cur_outMACDHist;
       }
 
       /**
@@ -107434,22 +107438,16 @@ public final class Core {
          final int barCount = inReal.length;
          if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
             throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.macdStepImpl(this, inReal[i]);
-               outMACD[i] = this.cur_outMACD;
-               outMACDSignal[i] = this.cur_outMACDSignal;
-               outMACDHist[i] = this.cur_outMACDHist;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MACD updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+            core.macdStepImpl(this, inReal[i]);
+            outMACD[i] = this.cur_outMACD;
+            outMACDSignal[i] = this.cur_outMACDSignal;
+            outMACDHist[i] = this.cur_outMACDHist;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -107463,7 +107461,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, MacdOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACD peek: BadParam", RetCode.BadParam);
          MacdStream sp = this;
@@ -107487,7 +107485,9 @@ public final class Core {
          cur_outMACD = macdValue;
          cur_outMACDSignal = prevSignal;
          cur_outMACDHist = macdValue - prevSignal;
-         return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+         out.macd = cur_outMACD;
+         out.macdSignal = cur_outMACDSignal;
+         out.macdHist = cur_outMACDHist;
       }
 
       /**
@@ -107496,8 +107496,10 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( MacdOut out ) {
+         out.macd = this.cur_outMACD;
+         out.macdSignal = this.cur_outMACDSignal;
+         out.macdHist = this.cur_outMACDHist;
       }
 
       /**
@@ -107515,6 +107517,29 @@ public final class Core {
       public MacdStream clone() {
          return new MacdStream(this);
       }
+   }
+
+   /**
+    * The outputs of one MACD bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class MacdOut {
+      /** Fast EMA minus slow EMA. */
+      public double macd;
+      /** EMA of the MACD line. */
+      public double macdSignal;
+      /** MACD minus signal line. */
+      public double macdHist;
    }
    void macdStepImpl( MacdStream sp, double inReal )
    {
@@ -107744,7 +107769,6 @@ public final class Core {
       sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MacdStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
    /* macdOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -108432,7 +108456,6 @@ public final class Core {
       double cur_outMACD;
       double cur_outMACDSignal;
       double cur_outMACDHist;
-      Value cachedValue;
       MaStream sub0;
       MaStream sub1;
       MaStream sub2;
@@ -108465,27 +108488,12 @@ public final class Core {
          this.cur_outMACD = other.cur_outMACD;
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new MaStream(other.sub0);
          this.sub1 = new MaStream(other.sub1);
          this.sub2 = new MaStream(other.sub2);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param macd MACD line: fast MA minus slow MA.
-       * @param macdSignal Signal line: MA of the MACD line.
-       * @param macdHist Histogram: MACD minus signal.
-       */
-      public record Value(double macd, double macdSignal, double macdHist) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -108503,15 +108511,16 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, MacdextOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
          }
          core.macdextStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
-         return this.cachedValue;
+         out.macd = this.cur_outMACD;
+         out.macdSignal = this.cur_outMACDSignal;
+         out.macdHist = this.cur_outMACDHist;
       }
 
       /**
@@ -108535,22 +108544,16 @@ public final class Core {
          final int barCount = inReal.length;
          if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
             throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.macdextStepImpl(this, inReal[i]);
-               outMACD[i] = this.cur_outMACD;
-               outMACDSignal[i] = this.cur_outMACDSignal;
-               outMACDHist[i] = this.cur_outMACDHist;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MACDEXT updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+            core.macdextStepImpl(this, inReal[i]);
+            outMACD[i] = this.cur_outMACD;
+            outMACDSignal[i] = this.cur_outMACDSignal;
+            outMACDHist[i] = this.cur_outMACDHist;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -108564,7 +108567,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, MacdextOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
          MacdextStream sp = this;
@@ -108582,7 +108585,9 @@ public final class Core {
          /* Combine map (batch tail, per bar). */
          cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
          cur_outMACD = cur_fastMABuffer;
-         return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+         out.macd = cur_outMACD;
+         out.macdSignal = cur_outMACDSignal;
+         out.macdHist = cur_outMACDHist;
       }
 
       /**
@@ -108591,8 +108596,10 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( MacdextOut out ) {
+         out.macd = this.cur_outMACD;
+         out.macdSignal = this.cur_outMACDSignal;
+         out.macdHist = this.cur_outMACDHist;
       }
 
       /**
@@ -108610,6 +108617,29 @@ public final class Core {
       public MacdextStream clone() {
          return new MacdextStream(this);
       }
+   }
+
+   /**
+    * The outputs of one MACDEXT bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class MacdextOut {
+      /** MACD line: fast MA minus slow MA. */
+      public double macd;
+      /** Signal line: MA of the MACD line. */
+      public double macdSignal;
+      /** Histogram: MACD minus signal. */
+      public double macdHist;
    }
    void macdextStepImpl( MacdextStream sp, double inReal )
    {
@@ -108785,7 +108815,6 @@ public final class Core {
       sp.cur_outMACD = sc_outMACD[outNBElement.value - 1];
       sp.cur_outMACDSignal = sc_outMACDSignal[outNBElement.value - 1];
       sp.cur_outMACDHist = sc_outMACDHist[outNBElement.value - 1];
-      sp.cachedValue = new MacdextStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
    /* macdextOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -109404,7 +109433,6 @@ public final class Core {
       double cur_outMACD;
       double cur_outMACDSignal;
       double cur_outMACDHist;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -109435,24 +109463,9 @@ public final class Core {
          this.cur_outMACD = other.cur_outMACD;
          this.cur_outMACDSignal = other.cur_outMACDSignal;
          this.cur_outMACDHist = other.cur_outMACDHist;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param macd Fixed EMA12 minus EMA26.
-       * @param macdSignal EMA of the MACD line.
-       * @param macdHist MACD minus signal.
-       */
-      public record Value(double macd, double macdSignal, double macdHist) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -109470,15 +109483,16 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, MacdfixOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
          }
          core.macdfixStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
-         return this.cachedValue;
+         out.macd = this.cur_outMACD;
+         out.macdSignal = this.cur_outMACDSignal;
+         out.macdHist = this.cur_outMACDHist;
       }
 
       /**
@@ -109502,22 +109516,16 @@ public final class Core {
          final int barCount = inReal.length;
          if( outMACD.length < barCount || outMACDSignal.length < barCount || outMACDHist.length < barCount || (Object)outMACD == (Object)inReal || (Object)outMACDSignal == (Object)inReal || (Object)outMACDHist == (Object)inReal || (Object)outMACD == (Object)outMACDSignal || (Object)outMACD == (Object)outMACDHist || (Object)outMACDSignal == (Object)outMACDHist )
             throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.macdfixStepImpl(this, inReal[i]);
-               outMACD[i] = this.cur_outMACD;
-               outMACDSignal[i] = this.cur_outMACDSignal;
-               outMACDHist[i] = this.cur_outMACDHist;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MACDFIX updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
+            core.macdfixStepImpl(this, inReal[i]);
+            outMACD[i] = this.cur_outMACD;
+            outMACDSignal[i] = this.cur_outMACDSignal;
+            outMACDHist[i] = this.cur_outMACDHist;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -109531,7 +109539,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, MacdfixOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
          MacdfixStream sp = this;
@@ -109555,7 +109563,9 @@ public final class Core {
          cur_outMACD = macdValue;
          cur_outMACDSignal = prevSignal;
          cur_outMACDHist = macdValue - prevSignal;
-         return new Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+         out.macd = cur_outMACD;
+         out.macdSignal = cur_outMACDSignal;
+         out.macdHist = cur_outMACDHist;
       }
 
       /**
@@ -109564,8 +109574,10 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( MacdfixOut out ) {
+         out.macd = this.cur_outMACD;
+         out.macdSignal = this.cur_outMACDSignal;
+         out.macdHist = this.cur_outMACDHist;
       }
 
       /**
@@ -109583,6 +109595,29 @@ public final class Core {
       public MacdfixStream clone() {
          return new MacdfixStream(this);
       }
+   }
+
+   /**
+    * The outputs of one MACDFIX bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class MacdfixOut {
+      /** Fixed EMA12 minus EMA26. */
+      public double macd;
+      /** EMA of the MACD line. */
+      public double macdSignal;
+      /** MACD minus signal. */
+      public double macdHist;
    }
    void macdfixStepImpl( MacdfixStream sp, double inReal )
    {
@@ -109787,7 +109822,6 @@ public final class Core {
       sp.cur_outMACD = outMACD[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDSignal = outMACDSignal[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDHist = outMACDHist[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MacdfixStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
    /* macdfixOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -110890,7 +110924,6 @@ public final class Core {
       double[] ring_trailingWMAIdx_inReal;
       double cur_outMAMA;
       double cur_outFAMA;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -110962,23 +110995,9 @@ public final class Core {
          this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
          this.cur_outMAMA = other.cur_outMAMA;
          this.cur_outFAMA = other.cur_outFAMA;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param mama Adaptive moving average (fast line)
-       * @param fama Following adaptive moving average, using half the alpha (slow line)
-       */
-      public record Value(double mama, double fama) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -110996,15 +111015,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, MamaOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
          }
          core.mamaStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
-         return this.cachedValue;
+         out.mama = this.cur_outMAMA;
+         out.fama = this.cur_outFAMA;
       }
 
       /**
@@ -111029,21 +111048,15 @@ public final class Core {
          final int barCount = inReal.length;
          if( outMAMA.length < barCount || (outFAMA != null && outFAMA.length < barCount) || (Object)outMAMA == (Object)inReal || (outFAMA != null && (Object)outFAMA == (Object)inReal) || (outFAMA != null && (Object)outMAMA == (Object)outFAMA) )
             throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.mamaStepImpl(this, inReal[i]);
-               outMAMA[i] = this.cur_outMAMA;
-               if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MAMA updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
+            core.mamaStepImpl(this, inReal[i]);
+            outMAMA[i] = this.cur_outMAMA;
+            if( outFAMA != null ) outFAMA[i] = this.cur_outFAMA;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -111057,7 +111070,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, MamaOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
          MamaStream sp = this;
@@ -111280,7 +111293,8 @@ public final class Core {
             ringPos_trailingWMAIdx = 0;
          }
          streamParity = 1 - streamParity;
-         return new Value(cur_outMAMA, cur_outFAMA);
+         out.mama = cur_outMAMA;
+         out.fama = cur_outFAMA;
       }
 
       /**
@@ -111289,8 +111303,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( MamaOut out ) {
+         out.mama = this.cur_outMAMA;
+         out.fama = this.cur_outFAMA;
       }
 
       /**
@@ -111308,6 +111323,27 @@ public final class Core {
       public MamaStream clone() {
          return new MamaStream(this);
       }
+   }
+
+   /**
+    * The outputs of one MAMA bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class MamaOut {
+      /** Adaptive moving average (fast line) */
+      public double mama;
+      /** Following adaptive moving average, using half the alpha (slow line) */
+      public double fama;
    }
    void mamaStepImpl( MamaStream sp, double inReal )
    {
@@ -111952,7 +111988,6 @@ public final class Core {
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outMAMA = outMAMA[(outNBElement.value - 1) * outStride];
       sp.cur_outFAMA = lastCur_outFAMA;
-      sp.cachedValue = new MamaStream.Value(sp.cur_outMAMA, sp.cur_outFAMA);
       return RetCode.Success;
    }
    /* mamaOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -120892,7 +120927,6 @@ public final class Core {
       double[] x_inReal;
       double cur_outMin;
       double cur_outMax;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -120925,23 +120959,9 @@ public final class Core {
          this.x_inReal = other.x_inReal.clone();
          this.cur_outMin = other.cur_outMin;
          this.cur_outMax = other.cur_outMax;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param min Lowest value in each rolling window.
-       * @param max Highest value in each rolling window.
-       */
-      public record Value(double min, double max) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -120959,15 +120979,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, MinmaxOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MINMAX update: BadParam", RetCode.BadParam);
          }
          core.minmaxStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
-         return this.cachedValue;
+         out.min = this.cur_outMin;
+         out.max = this.cur_outMax;
       }
 
       /**
@@ -120990,21 +121010,15 @@ public final class Core {
          final int barCount = inReal.length;
          if( outMin.length < barCount || outMax.length < barCount || (Object)outMin == (Object)inReal || (Object)outMax == (Object)inReal || (Object)outMin == (Object)outMax )
             throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.minmaxStepImpl(this, inReal[i]);
-               outMin[i] = this.cur_outMin;
-               outMax[i] = this.cur_outMax;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MINMAX updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
+            core.minmaxStepImpl(this, inReal[i]);
+            outMin[i] = this.cur_outMin;
+            outMax[i] = this.cur_outMax;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -121018,7 +121032,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, MinmaxOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAX peek: BadParam", RetCode.BadParam);
          MinmaxStream sp = this;
@@ -121081,7 +121095,8 @@ public final class Core {
          cur_outMin = lowest;
          trailingIdx += 1;
          today += 1;
-         return new Value(cur_outMin, cur_outMax);
+         out.min = cur_outMin;
+         out.max = cur_outMax;
       }
 
       /**
@@ -121090,8 +121105,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( MinmaxOut out ) {
+         out.min = this.cur_outMin;
+         out.max = this.cur_outMax;
       }
 
       /**
@@ -121109,6 +121125,27 @@ public final class Core {
       public MinmaxStream clone() {
          return new MinmaxStream(this);
       }
+   }
+
+   /**
+    * The outputs of one MINMAX bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class MinmaxOut {
+      /** Lowest value in each rolling window. */
+      public double min;
+      /** Highest value in each rolling window. */
+      public double max;
    }
    void minmaxStepImpl( MinmaxStream sp, double inReal )
    {
@@ -121305,7 +121342,6 @@ public final class Core {
       sp.x_inReal = capX_inReal;
       sp.cur_outMin = outMin[(outNBElement.value - 1) * outStride];
       sp.cur_outMax = outMax[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MinmaxStream.Value(sp.cur_outMin, sp.cur_outMax);
       return RetCode.Success;
    }
    /* minmaxOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -121798,7 +121834,6 @@ public final class Core {
       double[] x_inReal;
       int cur_outMinIdx;
       int cur_outMaxIdx;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -121831,23 +121866,9 @@ public final class Core {
          this.x_inReal = other.x_inReal.clone();
          this.cur_outMinIdx = other.cur_outMinIdx;
          this.cur_outMaxIdx = other.cur_outMaxIdx;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param minIdx Absolute index (into inReal) of the window minimum.
-       * @param maxIdx Absolute index (into inReal) of the window maximum.
-       */
-      public record Value(int minIdx, int maxIdx) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -121865,15 +121886,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, MinmaxindexOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
          }
          core.minmaxindexStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
-         return this.cachedValue;
+         out.minIdx = this.cur_outMinIdx;
+         out.maxIdx = this.cur_outMaxIdx;
       }
 
       /**
@@ -121896,21 +121917,15 @@ public final class Core {
          final int barCount = inReal.length;
          if( outMinIdx.length < barCount || outMaxIdx.length < barCount || (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx )
             throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.minmaxindexStepImpl(this, inReal[i]);
-               outMinIdx[i] = this.cur_outMinIdx;
-               outMaxIdx[i] = this.cur_outMaxIdx;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("MINMAXINDEX updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outMinIdx, this.cur_outMaxIdx);
+            core.minmaxindexStepImpl(this, inReal[i]);
+            outMinIdx[i] = this.cur_outMinIdx;
+            outMaxIdx[i] = this.cur_outMaxIdx;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -121924,7 +121939,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, MinmaxindexOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MINMAXINDEX peek: BadParam", RetCode.BadParam);
          MinmaxindexStream sp = this;
@@ -121987,7 +122002,8 @@ public final class Core {
          cur_outMinIdx = lowestIdx;
          trailingIdx += 1;
          today += 1;
-         return new Value(cur_outMinIdx, cur_outMaxIdx);
+         out.minIdx = cur_outMinIdx;
+         out.maxIdx = cur_outMaxIdx;
       }
 
       /**
@@ -121996,8 +122012,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( MinmaxindexOut out ) {
+         out.minIdx = this.cur_outMinIdx;
+         out.maxIdx = this.cur_outMaxIdx;
       }
 
       /**
@@ -122015,6 +122032,27 @@ public final class Core {
       public MinmaxindexStream clone() {
          return new MinmaxindexStream(this);
       }
+   }
+
+   /**
+    * The outputs of one MINMAXINDEX bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class MinmaxindexOut {
+      /** Absolute index (into inReal) of the window minimum. */
+      public int minIdx;
+      /** Absolute index (into inReal) of the window maximum. */
+      public int maxIdx;
    }
    void minmaxindexStepImpl( MinmaxindexStream sp, double inReal )
    {
@@ -122194,7 +122232,6 @@ public final class Core {
       sp.x_inReal = capX_inReal;
       sp.cur_outMinIdx = outMinIdx[(outNBElement.value - 1) * outStride];
       sp.cur_outMaxIdx = outMaxIdx[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new MinmaxindexStream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
       return RetCode.Success;
    }
    /* minmaxindexOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -143038,7 +143075,6 @@ public final class Core {
       double[] x_inClose;
       double cur_outSMI;
       double cur_outSMISignal;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -143084,23 +143120,9 @@ public final class Core {
          this.x_inClose = other.x_inClose.clone();
          this.cur_outSMI = other.cur_outSMI;
          this.cur_outSMISignal = other.cur_outSMISignal;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param smi Stochastic Momentum Index, -100 to +100.
-       * @param smiSignal Exponential average of the SMI line.
-       */
-      public record Value(double smi, double smiSignal) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -143118,15 +143140,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inHigh, double inLow, double inClose ) {
+      public void update( double inHigh, double inLow, double inClose, SmiOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
          }
          core.smiStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
-         return this.cachedValue;
+         out.smi = this.cur_outSMI;
+         out.smiSignal = this.cur_outSMISignal;
       }
 
       /**
@@ -143151,21 +143173,15 @@ public final class Core {
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outSMI.length < barCount || outSMISignal.length < barCount || (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal )
             throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outSMI[i] = this.cur_outSMI;
-               outSMISignal[i] = this.cur_outSMISignal;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
+            core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outSMI[i] = this.cur_outSMI;
+            outSMISignal[i] = this.cur_outSMISignal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -143179,7 +143195,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inHigh, double inLow, double inClose ) {
+      public void peek( double inHigh, double inLow, double inClose, SmiOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
          SmiStream sp = this;
@@ -143284,7 +143300,8 @@ public final class Core {
          cur_outSMISignal = prevSignal;
          trailingIdx = trailingIdx + 1;
          today = today + 1;
-         return new Value(cur_outSMI, cur_outSMISignal);
+         out.smi = cur_outSMI;
+         out.smiSignal = cur_outSMISignal;
       }
 
       /**
@@ -143293,8 +143310,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( SmiOut out ) {
+         out.smi = this.cur_outSMI;
+         out.smiSignal = this.cur_outSMISignal;
       }
 
       /**
@@ -143312,6 +143330,27 @@ public final class Core {
       public SmiStream clone() {
          return new SmiStream(this);
       }
+   }
+
+   /**
+    * The outputs of one SMI bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class SmiOut {
+      /** Stochastic Momentum Index, -100 to +100. */
+      public double smi;
+      /** Exponential average of the SMI line. */
+      public double smiSignal;
    }
    void smiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
    {
@@ -143730,7 +143769,6 @@ public final class Core {
       sp.x_inClose = capX_inClose;
       sp.cur_outSMI = outSMI[(outNBElement.value - 1) * outStride];
       sp.cur_outSMISignal = outSMISignal[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new SmiStream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
       return RetCode.Success;
    }
    /* smiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -145611,7 +145649,6 @@ public final class Core {
       double[] x_inClose;
       double cur_outSlowK;
       double cur_outSlowD;
-      Value cachedValue;
       MaStream sub0;
       MaStream sub1;
       int outRangeBegIdx;
@@ -145653,25 +145690,11 @@ public final class Core {
          this.x_inClose = other.x_inClose.clone();
          this.cur_outSlowK = other.cur_outSlowK;
          this.cur_outSlowD = other.cur_outSlowD;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new MaStream(other.sub0);
          this.sub1 = new MaStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param slowK Raw FastK smoothed by SlowK_Period MA.
-       * @param slowD Signal line: SlowK smoothed by SlowD_Period MA.
-       */
-      public record Value(double slowK, double slowD) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -145689,15 +145712,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inHigh, double inLow, double inClose ) {
+      public void update( double inHigh, double inLow, double inClose, StochOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("STOCH update: BadParam", RetCode.BadParam);
          }
          core.stochStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
-         return this.cachedValue;
+         out.slowK = this.cur_outSlowK;
+         out.slowD = this.cur_outSlowD;
       }
 
       /**
@@ -145722,21 +145745,15 @@ public final class Core {
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outSlowK.length < barCount || outSlowD.length < barCount || (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD )
             throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.stochStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outSlowK[i] = this.cur_outSlowK;
-               outSlowD[i] = this.cur_outSlowD;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("STOCH updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outSlowK, this.cur_outSlowD);
+            core.stochStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outSlowK[i] = this.cur_outSlowK;
+            outSlowD[i] = this.cur_outSlowD;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -145750,7 +145767,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inHigh, double inLow, double inClose ) {
+      public void peek( double inHigh, double inLow, double inClose, StochOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCH peek: BadParam", RetCode.BadParam);
          StochStream sp = this;
@@ -145843,7 +145860,8 @@ public final class Core {
          cur_tempBuffer = sp.sub0.peek(cur_tempBuffer);
          cur_outSlowD = sp.sub1.peek(cur_tempBuffer);
          cur_outSlowK = cur_tempBuffer;
-         return new Value(cur_outSlowK, cur_outSlowD);
+         out.slowK = cur_outSlowK;
+         out.slowD = cur_outSlowD;
       }
 
       /**
@@ -145852,8 +145870,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( StochOut out ) {
+         out.slowK = this.cur_outSlowK;
+         out.slowD = this.cur_outSlowD;
       }
 
       /**
@@ -145871,6 +145890,27 @@ public final class Core {
       public StochStream clone() {
          return new StochStream(this);
       }
+   }
+
+   /**
+    * The outputs of one STOCH bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class StochOut {
+      /** Raw FastK smoothed by SlowK_Period MA. */
+      public double slowK;
+      /** Signal line: SlowK smoothed by SlowD_Period MA. */
+      public double slowD;
    }
    void stochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
    {
@@ -146233,7 +146273,6 @@ public final class Core {
       sp.sub1 = sub1;
       sp.cur_outSlowK = sc_outSlowK[outNBElement.value - 1];
       sp.cur_outSlowD = sc_outSlowD[outNBElement.value - 1];
-      sp.cachedValue = new StochStream.Value(sp.cur_outSlowK, sp.cur_outSlowD);
       return RetCode.Success;
    }
    /* stochOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -146966,7 +147005,6 @@ public final class Core {
       double[] x_inClose;
       double cur_outFastK;
       double cur_outFastD;
-      Value cachedValue;
       MaStream sub0;
       int outRangeBegIdx;
       int outRangeCount;
@@ -147005,24 +147043,10 @@ public final class Core {
          this.x_inClose = other.x_inClose.clone();
          this.cur_outFastK = other.cur_outFastK;
          this.cur_outFastD = other.cur_outFastD;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new MaStream(other.sub0);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param fastK Raw %K stochastic line.
-       * @param fastD MA-smoothed %K (signal line)
-       */
-      public record Value(double fastK, double fastD) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -147040,15 +147064,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inHigh, double inLow, double inClose ) {
+      public void update( double inHigh, double inLow, double inClose, StochfOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
          }
          core.stochfStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
-         return this.cachedValue;
+         out.fastK = this.cur_outFastK;
+         out.fastD = this.cur_outFastD;
       }
 
       /**
@@ -147073,21 +147097,15 @@ public final class Core {
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD )
             throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.stochfStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outFastK[i] = this.cur_outFastK;
-               outFastD[i] = this.cur_outFastD;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("STOCHF updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+            core.stochfStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outFastK[i] = this.cur_outFastK;
+            outFastD[i] = this.cur_outFastD;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -147101,7 +147119,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inHigh, double inLow, double inClose ) {
+      public void peek( double inHigh, double inLow, double inClose, StochfOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("STOCHF peek: BadParam", RetCode.BadParam);
          StochfStream sp = this;
@@ -147193,7 +147211,8 @@ public final class Core {
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_outFastD = sp.sub0.peek(cur_tempBuffer);
          cur_outFastK = cur_tempBuffer;
-         return new Value(cur_outFastK, cur_outFastD);
+         out.fastK = cur_outFastK;
+         out.fastD = cur_outFastD;
       }
 
       /**
@@ -147202,8 +147221,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( StochfOut out ) {
+         out.fastK = this.cur_outFastK;
+         out.fastD = this.cur_outFastD;
       }
 
       /**
@@ -147221,6 +147241,27 @@ public final class Core {
       public StochfStream clone() {
          return new StochfStream(this);
       }
+   }
+
+   /**
+    * The outputs of one STOCHF bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class StochfOut {
+      /** Raw %K stochastic line. */
+      public double fastK;
+      /** MA-smoothed %K (signal line) */
+      public double fastD;
    }
    void stochfStepImpl( StochfStream sp, double inHigh, double inLow, double inClose )
    {
@@ -147557,7 +147598,6 @@ public final class Core {
       sp.sub0 = sub0;
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-      sp.cachedValue = new StochfStream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
    /* stochfOpenAndFill anchored at startIdx — the composed-open fusion seam. */
@@ -148104,7 +148144,6 @@ public final class Core {
       MAType optInFastD_MAType;
       double cur_outFastK;
       double cur_outFastD;
-      Value cachedValue;
       RsiStream sub0;
       StochfStream sub1;
       int outRangeBegIdx;
@@ -148133,25 +148172,11 @@ public final class Core {
          this.optInFastD_MAType = other.optInFastD_MAType;
          this.cur_outFastK = other.cur_outFastK;
          this.cur_outFastD = other.cur_outFastD;
-         this.cachedValue = other.cachedValue;
          this.sub0 = new RsiStream(other.sub0);
          this.sub1 = new StochfStream(other.sub1);
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param fastK Unsmoothed stochastic of the RSI (raw %K)
-       * @param fastD %K smoothed over FastD_Period (signal line)
-       */
-      public record Value(double fastK, double fastD) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -148169,15 +148194,15 @@ public final class Core {
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inReal ) {
+      public void update( double inReal, StochrsiOut out ) {
          if( !Double.isFinite(inReal) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
          }
          core.stochrsiStepImpl(this, inReal);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
-         return this.cachedValue;
+         out.fastK = this.cur_outFastK;
+         out.fastD = this.cur_outFastD;
       }
 
       /**
@@ -148200,21 +148225,15 @@ public final class Core {
          final int barCount = inReal.length;
          if( outFastK.length < barCount || outFastD.length < barCount || (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD )
             throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inReal[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.stochrsiStepImpl(this, inReal[i]);
-               outFastK[i] = this.cur_outFastK;
-               outFastD[i] = this.cur_outFastD;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("STOCHRSI updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
+            core.stochrsiStepImpl(this, inReal[i]);
+            outFastK[i] = this.cur_outFastK;
+            outFastD[i] = this.cur_outFastD;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -148228,7 +148247,7 @@ public final class Core {
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inReal ) {
+      public void peek( double inReal, StochrsiOut out ) {
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("STOCHRSI peek: BadParam", RetCode.BadParam);
          StochrsiStream sp = this;
@@ -148238,11 +148257,13 @@ public final class Core {
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_tempRSIBuffer = sp.sub0.peek(inReal);
          {
-            StochfStream.Value subOut1 = sp.sub1.peek(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
-            cur_outFastK = subOut1.fastK();
-            cur_outFastD = subOut1.fastD();
+            StochfOut subOut1 = new StochfOut();
+            sp.sub1.peek(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer, subOut1);
+            cur_outFastK = subOut1.fastK;
+            cur_outFastD = subOut1.fastD;
          }
-         return new Value(cur_outFastK, cur_outFastD);
+         out.fastK = cur_outFastK;
+         out.fastD = cur_outFastD;
       }
 
       /**
@@ -148251,8 +148272,9 @@ public final class Core {
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( StochrsiOut out ) {
+         out.fastK = this.cur_outFastK;
+         out.fastD = this.cur_outFastD;
       }
 
       /**
@@ -148271,6 +148293,27 @@ public final class Core {
          return new StochrsiStream(this);
       }
    }
+
+   /**
+    * The outputs of one STOCHRSI bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class StochrsiOut {
+      /** Unsmoothed stochastic of the RSI (raw %K) */
+      public double fastK;
+      /** %K smoothed over FastD_Period (signal line) */
+      public double fastD;
+   }
    void stochrsiStepImpl( StochrsiStream sp, double inReal )
    {
       double cur_tempRSIBuffer = 0.0;
@@ -148279,9 +148322,10 @@ public final class Core {
       /* Pipeline the new bar through the sub-streams (batch tail order). */
       cur_tempRSIBuffer = sp.sub0.update(inReal);
       {
-         StochfStream.Value subOut1 = sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
-         cur_outFastK = subOut1.fastK();
-         cur_outFastD = subOut1.fastD();
+         StochfOut subOut1 = new StochfOut();
+         sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer, subOut1);
+         cur_outFastK = subOut1.fastK;
+         cur_outFastD = subOut1.fastD;
       }
       sp.cur_outFastK = cur_outFastK;
       sp.cur_outFastD = cur_outFastD;
@@ -148403,7 +148447,6 @@ public final class Core {
       sp.sub1 = sub1;
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-      sp.cachedValue = new StochrsiStream.Value(sp.cur_outFastK, sp.cur_outFastD);
       return RetCode.Success;
    }
    /* stochrsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */

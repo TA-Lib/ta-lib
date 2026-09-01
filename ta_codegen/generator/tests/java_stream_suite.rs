@@ -171,22 +171,46 @@ fn test_java_ema_derived_state_and_compat() {
 #[test]
 fn test_java_mama_value_class_protocol() {
     let s = java_stream_section("mama");
-    // Multi-output => nested immutable Value record, components named after the
-    // outputs and in batch output order.
-    assert!(s.contains("public record Value(double mama, double fama) { }"));
+    // Multi-output => a caller-owned OUT class at Core level, fields named after
+    // the outputs and in batch output order, mutable and with no value equality
+    // (#310). Deliberately not a record: a reused instance as a map key would
+    // break the hash invariant the moment its fields moved.
+    assert!(s.contains("public static final class MamaOut {"));
+    assert!(s.contains("public double mama;"));
+    assert!(s.contains("public double fama;"));
+    assert!(!s.contains("public record Value("), "the record is gone, not renamed");
+    assert!(
+        !s.contains("equals(") && !s.contains("hashCode("),
+        "an Out carries no value equality"
+    );
     // The object protocol is the record's, so what used to be three generated
     // methods is now the absence of them — assert they are gone rather than
     // leaving the check vacuous.
     assert!(!s.contains("@Override public String toString() {"));
     assert!(!s.contains("Double.doubleToLongBits(this.mama)"));
     assert!(!s.contains("@Override public int hashCode() {"));
-    // Components carry the batch method's own prose (java_doc::output_desc), so
-    // one output reads the same in both tiers.
-    assert!(s.contains("@param mama "));
-    assert!(s.contains("@param fama "));
-    // update caches the instance so value() is a pure field read.
-    assert!(s.contains("this.cachedValue ="));
-    assert!(s.contains("return this.cachedValue;"));
+    // Fields carry the batch method's own prose (java_doc::output_desc), so one
+    // output reads the same in both tiers. A record documented its components
+    // with @param; a class documents each field where the field is.
+    for field in ["mama", "fama"] {
+        let decl = s
+            .find(&format!("public double {field};"))
+            .unwrap_or_else(|| panic!("{field} is not a field of the Out class"));
+        // The line immediately above carries the batch method's own prose, so a
+        // silently undocumented field fails rather than passing on a doc comment
+        // that happens to exist elsewhere in the section.
+        let above = s[..decl].rfind('\n').and_then(|e| s[..e].rfind('\n').map(|b| &s[b + 1..e]));
+        let above = above.unwrap_or("").trim();
+        assert!(
+            above.starts_with("/** ") && above.len() > 12,
+            "{field} has no prose on the line above it, found: {above:?}"
+        );
+    }
+    // No cache: update/peek/value write the caller's sink and store nothing.
+    assert!(!s.contains("cachedValue"), "the cached instance is gone (#310)");
+    assert!(s.contains("public void value( MamaOut out ) {"));
+    assert!(s.contains("public void update( double inReal, MamaOut out ) {"));
+    assert!(s.contains("public void peek( double inReal, MamaOut out ) {"));
 }
 
 #[test]
@@ -260,10 +284,16 @@ fn test_java_ma_dispatch() {
             "arm {label} must appear in both the copy constructor and dispatch switches"
         );
     }
-    // MAMA arm routes OutSlot Forward(0) through the Value field and discards
-    // FAMA; the fill tail materializes a throwaway buffer for the Discard.
-    assert!(s.contains("MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);"));
-    assert!(s.contains("sp.cur_outReal = subValue.mama();"));
+    // MAMA arm routes OutSlot Forward(0) and discards FAMA. `update` commits, so
+    // the forwarded value is read off the sub-handle's own committed field — no
+    // sink and no allocation on this path at all (#310); only a composed PEEK
+    // needs one, because it commits nothing.
+    assert!(s.contains("((MamaStream) sp.sub).update(inReal);"));
+    assert!(s.contains("sp.cur_outReal = ((MamaStream) sp.sub).cur_outMAMA;"));
+    assert!(
+        !s.contains("MamaStream.Value"),
+        "the dispatch update path allocates nothing"
+    );
     // …and the Discard slot DECLINES the callee's nullable output rather than
     // materializing a throwaway buffer for it (rule B6a at the opener).
     assert!(s.contains("mamaOpenAndFill(inReal, 0.5, 0.05, outReal, null)"));
@@ -313,8 +343,10 @@ fn test_java_stoch_composed() {
         !s.contains("System.arraycopy(sc_outSlowK, 0, outSlowK, 0, outNBElement.value);"),
         "the stride-1 copy-back is elided: the scratch already IS outSlowK"
     );
-    // Multi-output Value with the stripped component names.
-    assert!(s.contains("public record Value(double slowK, double slowD) { }"));
+    // Multi-output OUT class with the stripped field names (#310).
+    assert!(s.contains("public static final class StochOut {"));
+    assert!(s.contains("public double slowK;"));
+    assert!(s.contains("public double slowD;"));
 }
 
 /// The sub-open range materialization (issue #203). Java has no slice type, so
@@ -792,6 +824,7 @@ fn no_java_peek_copies_the_handle() {
     let mut swept = 0usize;
     let mut frames = 0usize;
     let mut writes = 0usize;
+    let mut sink_sites: BTreeSet<String> = BTreeSet::new();
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
@@ -831,12 +864,21 @@ fn no_java_peek_copies_the_handle() {
                 }
             }
             // Comments carry the word too, and `throw new
-            // TaLibArgumentException` is the bar rejection while `new Value(`
-            // packs the answer — none of the three copies a handle.
+            // TaLibArgumentException` is the bar rejection — neither copies a
+            // handle. `new <N>Out()` is the sink a COMPOSED frame allocates for
+            // a multi-output sub-handle (#310); it is counted separately and
+            // pinned to an exact set below rather than blanket-exempted, so a
+            // third site fails and so does losing one of the two.
+            let composed_sink = !code
+                && l.contains(" = new ")
+                && l.contains("Out();");
+            if composed_sink {
+                sink_sites.insert(name.clone());
+            }
             let allocates_handle = !code
                 && l.contains("new ")
                 && !l.starts_with("throw new")
-                && !l.contains("new Value(");
+                && !composed_sink;
             // `.clone()` is the OTHER way to allocate here, and matching only
             // `new ` missed it: a frame clones a written array field because a
             // Java array is a reference. No frame may.
@@ -867,6 +909,19 @@ fn no_java_peek_copies_the_handle() {
         fully_shadowed.len()
     );
     assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));
+
+    // EXACTLY these two, not "at most". Both are composed peeks whose callee is
+    // far over C2's inline budget, so the sink is allocated whatever shape it
+    // takes — it allocated as a returned `Value` before #310 too. #325 records
+    // the analysis and the only fix (inlining the sub-frame). A third site
+    // means a new composed multi-output peek nobody costed; losing one means
+    // #325 landed and this bound should tighten with it.
+    let expected: BTreeSet<String> =
+        ["ma", "stochrsi"].iter().map(|s| (*s).to_string()).collect();
+    assert_eq!(
+        sink_sites, expected,
+        "the set of composed peeks allocating a sub-handle sink moved"
+    );
 }
 
 #[test]

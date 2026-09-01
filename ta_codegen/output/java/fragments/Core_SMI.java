@@ -853,7 +853,6 @@
       double[] x_inClose;
       double cur_outSMI;
       double cur_outSMISignal;
-      Value cachedValue;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -899,23 +898,9 @@
          this.x_inClose = other.x_inClose.clone();
          this.cur_outSMI = other.cur_outSMI;
          this.cur_outSMISignal = other.cur_outSMISignal;
-         this.cachedValue = other.cachedValue;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
-
-      /**
-       * One output set, in batch output order. Immutable.
-       *
-       * <p>{@code equals} compares every component bitwise, so {@code NaN}
-       * equals {@code NaN} and {@code 0.0} does not equal {@code -0.0}.
-       * {@code hashCode} is consistent with it but its exact value is
-       * unspecified — do not persist it or compare it across JVM versions.
-       *
-       * @param smi Stochastic Momentum Index, -100 to +100.
-       * @param smiSignal Exponential average of the SMI line.
-       */
-      public record Value(double smi, double smiSignal) { }
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -933,15 +918,15 @@
        * retains its state, so a single non-finite bar would poison every
        * later value it produces.
        */
-      public Value update( double inHigh, double inLow, double inClose ) {
+      public void update( double inHigh, double inLow, double inClose, SmiOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
             throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
          }
          core.smiStepImpl(this, inHigh, inLow, inClose);
          if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-         this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
-         return this.cachedValue;
+         out.smi = this.cur_outSMI;
+         out.smiSignal = this.cur_outSMISignal;
       }
 
       /**
@@ -966,21 +951,15 @@
          final int barCount = inHigh.length;
          if( inLow.length != barCount || inClose.length != barCount || outSMI.length < barCount || outSMISignal.length < barCount || (Object)outSMI == (Object)inHigh || (Object)outSMI == (Object)inLow || (Object)outSMI == (Object)inClose || (Object)outSMISignal == (Object)inHigh || (Object)outSMISignal == (Object)inLow || (Object)outSMISignal == (Object)inClose || (Object)outSMI == (Object)outSMISignal )
             throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-         int done = 0;
-         try {
-            for( int i = 0; i < barCount; i++ ) {
-               if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
-                  if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-                  throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
-               }
-               core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
-               outSMI[i] = this.cur_outSMI;
-               outSMISignal[i] = this.cur_outSMISignal;
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
-               done = i + 1;
+               throw new TaLibArgumentException("SMI updateAndFill: BadParam", RetCode.BadParam);
             }
-         } finally {
-            if( done > 0 ) this.cachedValue = new Value(this.cur_outSMI, this.cur_outSMISignal);
+            core.smiStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outSMI[i] = this.cur_outSMI;
+            outSMISignal[i] = this.cur_outSMISignal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
          }
       }
 
@@ -994,7 +973,7 @@
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
        */
-      public Value peek( double inHigh, double inLow, double inClose ) {
+      public void peek( double inHigh, double inLow, double inClose, SmiOut out ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("SMI peek: BadParam", RetCode.BadParam);
          SmiStream sp = this;
@@ -1099,7 +1078,8 @@
          cur_outSMISignal = prevSignal;
          trailingIdx = trailingIdx + 1;
          today = today + 1;
-         return new Value(cur_outSMI, cur_outSMISignal);
+         out.smi = cur_outSMI;
+         out.smiSignal = cur_outSMISignal;
       }
 
       /**
@@ -1108,8 +1088,9 @@
        * then whatever the latest accepted {@code update} returned.
        * A pure field read; {@code peek} does not change it.
        */
-      public Value value() {
-         return this.cachedValue;
+      public void value( SmiOut out ) {
+         out.smi = this.cur_outSMI;
+         out.smiSignal = this.cur_outSMISignal;
       }
 
       /**
@@ -1127,6 +1108,27 @@
       public SmiStream clone() {
          return new SmiStream(this);
       }
+   }
+
+   /**
+    * The outputs of one SMI bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields and allocate nothing.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class SmiOut {
+      /** Stochastic Momentum Index, -100 to +100. */
+      public double smi;
+      /** Exponential average of the SMI line. */
+      public double smiSignal;
    }
    void smiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
    {
@@ -1545,7 +1547,6 @@
       sp.x_inClose = capX_inClose;
       sp.cur_outSMI = outSMI[(outNBElement.value - 1) * outStride];
       sp.cur_outSMISignal = outSMISignal[(outNBElement.value - 1) * outStride];
-      sp.cachedValue = new SmiStream.Value(sp.cur_outSMI, sp.cur_outSMISignal);
       return RetCode.Success;
    }
    /* smiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
