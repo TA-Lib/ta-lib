@@ -239,7 +239,7 @@ the period bank, and a composed multi-output, whose sub-calls fill scratch of
 their own rather than the caller's arrays), and asserts that a rejected fill left
 the buffer untouched.
 Corpus-wide, the width is pinned by the three `*_public_*fill*` /
-`*_public_openers_*` gates in `backend_suite.rs`, which require it to be read
+`*_public_openers_*` gates in `open_validation_suite.rs`, which require it to be read
 from the function's own lookback rather than from the history's length, that the
 bound REJECT rather than merely exist, and that a `nullable` output be bounded
 conditionally while every other output is not.

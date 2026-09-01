@@ -423,7 +423,7 @@ jobs:
   #
   # This job also RUNS the generator's own unit tests (`cargo test`). Clippy with
   # --all-targets only *compiles* the test target; it never executes it, so
-  # runtime assertions in tests/backend_suite.rs (e.g. the STOCH temp-buffer copy
+  # runtime assertions in the generator's tests/*_suite.rs (e.g. the STOCH temp-buffer copy
   # shape) went unchecked and a stale one drifted onto dev unnoticed. Running them
   # here closes that gap at nightly cadence (not per-commit).
   clippy:

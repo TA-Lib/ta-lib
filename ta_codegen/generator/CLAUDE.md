@@ -127,7 +127,7 @@ cd ta_codegen/generator && cargo test            # Run all 445+ tests
 cd ta_codegen/generator && cargo clippy          # Strict pedantic lints enabled
 ```
 
-Tests are in `tests/backend_suite.rs` and `tests/integration_test.rs` — they verify IR-to-backend rendering, expression types, function signatures, and function variants across all backends.
+Tests are in `tests/*_suite.rs` (topic-scoped, e.g. `rust_render_statement_suite.rs`, `streaming_dispatch_suite.rs`, `circbuf_suite.rs` — shared harness in `tests/common/mod.rs`) and `tests/integration_test.rs` — they verify IR-to-backend rendering, expression types, function signatures, and function variants across all backends.
 
 Value gates that need the *generated* library live in the crate itself, as
 `#[cfg(test)]` modules — four copied from `templates/rust/` (see
@@ -363,7 +363,7 @@ paths keep their real `vec![0.0; ...]` allocations, and the pass backs off entir
 if the local is assigned again while still in scope.
 
 `BBANDS` is currently the only function in `input/` written in this shape.
-`rust_scratch_election_declines_arms_that_allocate` in `tests/backend_suite.rs`
+`rust_scratch_election_declines_arms_that_allocate` in `tests/streaming_dispatch_suite.rs`
 pins that by sweeping every indicator and asserting the pass fires for `bbands`
 alone.
 
