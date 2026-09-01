@@ -169,6 +169,7 @@ public partial class Core
       if( (outFastK.Overlaps(inHigh) && outFastK != inHigh) || (outFastK.Overlaps(inLow) && outFastK != inLow) || (outFastK.Overlaps(inClose) && outFastK != inClose) || (outFastD.Overlaps(inHigh) && outFastD != inHigh) || (outFastD.Overlaps(inLow) && outFastD != inLow) || (outFastD.Overlaps(inClose) && outFastD != inClose) ) {
          return RetCode.BadParam ;
       }
+      i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -396,6 +397,7 @@ public partial class Core
       if( outFastK.Overlaps(outFastD) ) {
          return RetCode.BadParam ;
       }
+      i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = MA_Lookback(optInFastD_Period, optInFastD_MAType);
       lookbackTotal = lookbackK + lookbackFastD;
@@ -1068,6 +1070,7 @@ public partial class Core
       }
       Span<double> sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
       Span<double> sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
+      i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *

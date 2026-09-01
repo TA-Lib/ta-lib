@@ -150,7 +150,6 @@ static int sfUfGuards;      /* (d) an argument the call refuses outright */
 static double sfOpen[SF_BARS], sfHigh[SF_BARS], sfLow[SF_BARS], sfClose[SF_BARS];
 
 static const double sfBad[SF_NBAD] = { (double)NAN, (double)INFINITY, -(double)INFINITY };
-static const char  *sfBadName[SF_NBAD] = { "NaN", "+Inf", "-Inf" };
 
 /* A gently drifting OHLC series. Values are irrelevant to what is asserted --
  * only that every function here produces output on it. */

@@ -112,6 +112,8 @@ impl Core {
         let mut cd: usize = 0_usize;
         let mut savedHigh: f64 = 0.0_f64;
         let mut savedLow: f64 = 0.0_f64;
+        savedHigh = 0.0;
+        savedLow = 0.0;
         // Confirmation-window countdown + cached 2nd-candle high/low: the pattern
         // state carried without an absolute bar index.
         // Identify the minimum number of price bar needed
@@ -414,6 +416,8 @@ impl Core {
         let mut cd: usize = 0_usize;
         let mut savedHigh: f64 = 0.0_f64;
         let mut savedLow: f64 = 0.0_f64;
+        savedHigh = 0.0;
+        savedLow = 0.0;
         // Confirmation-window countdown + cached 2nd-candle high/low: the pattern
         // state carried without an absolute bar index.
         // Identify the minimum number of price bar needed

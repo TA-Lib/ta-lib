@@ -711,6 +711,39 @@ fn gen_func(
     gen_func_inner(func, single_precision, None, enums, registry, helpers)
 }
 
+/// Drop `<Setting>_<prop>` declarations the rendered function never reads.
+///
+/// The IR names all three properties of a setting the body touches, but the
+/// emitted C reaches most of them through `TA_CANDLERANGE` / `TA_CANDLEAVERAGE`,
+/// which take the setting as a token and read `TA_Globals` themselves — so the
+/// local is declared and never read (`-Wunused-variable`, 62 candlestick files).
+/// Only the rendered text can see that, which is the same rule
+/// `c_stream.rs::emit_used_candle_unpacking` applies to the streaming tiers.
+fn drop_unread_candle_decls(out: &mut String) {
+    let is_decl = |line: &str| -> Option<String> {
+        let t = line.trim_start();
+        let rest = t.strip_prefix("int ").or_else(|| t.strip_prefix("double "))?;
+        let name = rest.split(' ').next()?;
+        if line.contains("= TA_Globals->candleSettings[TA_") && name.contains('_') {
+            Some(name.to_string())
+        } else {
+            None
+        }
+    };
+    if !out.contains("TA_Globals->candleSettings[TA_") {
+        return;
+    }
+    let mut kept = String::with_capacity(out.len());
+    for line in out.lines() {
+        let drop = is_decl(line).is_some_and(|n| out.matches(n.as_str()).count() <= 1);
+        if !drop {
+            kept.push_str(line);
+            kept.push('\n');
+        }
+    }
+    *out = kept;
+}
+
 // Integer/enum optIn defaults and ranges come from f64 metadata but are whole
 // numbers; the `as i32` casts in the validation emitter are intentional.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity, clippy::cast_possible_truncation)]
@@ -1084,6 +1117,8 @@ fn gen_func_inner(
     }
 
     out.push_str("}\n\n");
+
+    drop_unread_candle_decls(&mut out);
 
     // FMA runtime CPU dispatch (PR #96): mark any function emitting an explicit
     // fma() with TA_FMA_MULTIVERSION (see ta_utility.h). Detect by the `fma(` call
@@ -1999,8 +2034,19 @@ impl ExprEmitter for CExpr<'_> {
         // this one (or ties on the right, since every binary operator here is
         // left-associative) — the minimal parens that preserve the IR grouping.
         let pp = binop_prec(op);
-        let l = wrap_child(self.walk(left), left, pp, false);
-        let r = wrap_child(self.walk(right), right, pp, true);
+        let mut l = wrap_child(self.walk(left), left, pp, false);
+        let mut r = wrap_child(self.walk(right), right, pp, true);
+        // `&&` binds tighter than `||`, so precedence alone needs no parens
+        // here -- but GCC's -Wparentheses asks for them, and stating the
+        // grouping is what makes a long candlestick predicate readable.
+        if matches!(op, BinOp::Or) {
+            if matches!(left, Expr::BinOp(_, BinOp::And, _)) {
+                l = format!("({l})");
+            }
+            if matches!(right, Expr::BinOp(_, BinOp::And, _)) {
+                r = format!("({r})");
+            }
+        }
         format!("{l} {op_str} {r}")
     }
 
@@ -2546,6 +2592,8 @@ fn render_lookback_code(
             stmt, 3, ctx, enums, registry, helpers,
         ));
     }
+
+    drop_unread_candle_decls(&mut out);
 
     out
 }

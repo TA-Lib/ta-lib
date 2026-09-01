@@ -58,12 +58,8 @@
 
 TA_LIB_API int TA_CDLIDENTICAL3CROWS_Lookback( void )
 {
-   int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
-   double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
    return max(ShadowVeryShort_avgPeriod,Equal_avgPeriod) + 2;
 }
 
@@ -85,12 +81,8 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS( int    startIdx,
    int ShadowVeryShortTrailingIdx;
    int EqualTrailingIdx;
    int lookbackTotal;
-   int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
-   double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -225,12 +217,8 @@ TA_RetCode TA_S_CDLIDENTICAL3CROWS( int    startIdx,
    int ShadowVeryShortTrailingIdx;
    int EqualTrailingIdx;
    int lookbackTotal;
-   int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
-   double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;

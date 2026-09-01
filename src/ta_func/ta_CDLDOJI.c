@@ -58,9 +58,7 @@
 
 TA_LIB_API int TA_CDLDOJI_Lookback( void )
 {
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
    return BodyDoji_avgPeriod;
 }
 
@@ -79,9 +77,7 @@ TA_LIB_API TA_RetCode TA_CDLDOJI( int    startIdx,
    int outIdx;
    int BodyDojiTrailingIdx;
    int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -175,9 +171,7 @@ TA_RetCode TA_S_CDLDOJI( int    startIdx,
    int outIdx;
    int BodyDojiTrailingIdx;
    int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;

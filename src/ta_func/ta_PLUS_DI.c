@@ -100,7 +100,6 @@ TA_LIB_API TA_RetCode TA_PLUS_DI( int    startIdx,
    double prevPlusDM;
    double prevTR;
    double tempReal;
-   double tempReal2;
    double diffP;
    double diffM;
    int i;
@@ -473,7 +472,6 @@ TA_RetCode TA_S_PLUS_DI( int    startIdx,
    double prevPlusDM;
    double prevTR;
    double tempReal;
-   double tempReal2;
    double diffP;
    double diffM;
    int i;

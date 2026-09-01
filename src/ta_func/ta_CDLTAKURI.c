@@ -58,15 +58,9 @@
 
 TA_LIB_API int TA_CDLTAKURI_Lookback( void )
 {
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowVeryLong_rangeType = TA_Globals->candleSettings[TA_ShadowVeryLong].rangeType;
    int ShadowVeryLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryLong].avgPeriod;
-   double ShadowVeryLong_factor = TA_Globals->candleSettings[TA_ShadowVeryLong].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
    return max(max(BodyDoji_avgPeriod,ShadowVeryShort_avgPeriod),ShadowVeryLong_avgPeriod);
 }
 
@@ -89,15 +83,9 @@ TA_LIB_API TA_RetCode TA_CDLTAKURI( int    startIdx,
    int ShadowVeryShortTrailingIdx;
    int ShadowVeryLongTrailingIdx;
    int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowVeryLong_rangeType = TA_Globals->candleSettings[TA_ShadowVeryLong].rangeType;
    int ShadowVeryLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryLong].avgPeriod;
-   double ShadowVeryLong_factor = TA_Globals->candleSettings[TA_ShadowVeryLong].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -217,15 +205,9 @@ TA_RetCode TA_S_CDLTAKURI( int    startIdx,
    int ShadowVeryShortTrailingIdx;
    int ShadowVeryLongTrailingIdx;
    int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowVeryLong_rangeType = TA_Globals->candleSettings[TA_ShadowVeryLong].rangeType;
    int ShadowVeryLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryLong].avgPeriod;
-   double ShadowVeryLong_factor = TA_Globals->candleSettings[TA_ShadowVeryLong].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;

@@ -117,6 +117,7 @@
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
       }
+      i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -340,6 +341,7 @@
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
       }
+      i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = MA_Lookback(optInFastD_Period, optInFastD_MAType);
       lookbackTotal = lookbackK + lookbackFastD;
@@ -1014,6 +1016,7 @@
       }
       double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
       double[] sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
+      i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *

@@ -5163,11 +5163,11 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( !showLang[li] ) continue;
         double avg = langMeasured[li] > 0 ? langSum[li] / langMeasured[li] : 0;
-        char avgStr[32], vsStr[32];
+        char avgStr[40], vsStr[32];
         if( langMeasured[li] < total / 2 ) {
-            fmt_ns(avgStr, sizeof(avgStr), avg);
-            char tmp[40]; snprintf(tmp, sizeof(tmp), "~%s*", avgStr);
-            avgStr[0] = '\0'; strncat(avgStr, tmp, sizeof(avgStr) - 1);
+            char raw[32];
+            fmt_ns(raw, sizeof(raw), avg);
+            snprintf(avgStr, sizeof(avgStr), "~%s*", raw);
             snprintf(vsStr, sizeof(vsStr), "*%d/%d measured", langMeasured[li], total);
         } else {
             fmt_ns(avgStr, sizeof(avgStr), avg);
@@ -9725,14 +9725,12 @@ ErrorNumber test_codegen(const TA_History *history,
         {
             static const int FLOORED[] = { 0, 2, 12, 13 };   /* Success, BadParam, both index codes */
             unsigned int li, b, fi;
-            int anyLang = 0;
             for( li = 0; li < NUM_LANGUAGES; li++ )
             {
                 long total = 0;
                 for( b = 0; b < RC_BUCKETS; b++ ) total += g_retCodeSeen[li][b];
                 if( total == 0 )
                     continue;               /* language not run */
-                anyLang = 1;
                 if( g_retCodeSeen[li][RC_BUCKETS - 1] > 0 )
                 {
                     printf("\nCODEGEN FAILED: %s answered %ld call(s) with a code outside "
@@ -9967,11 +9965,11 @@ ErrorNumber test_codegen(const TA_History *history,
             if( !language_matches_filter(languageFilter, ALL_LANGUAGES[li].name) )
                 continue;
             double avg = langMeasured[li] > 0 ? langSum[li] / langMeasured[li] : 0;
-            char avgStr[32], vsStr[32];
+            char avgStr[40], vsStr[32];
             if( langMeasured[li] < total / 2 ) {
-                fmt_ns(avgStr, sizeof(avgStr), avg);
-                char tmp[40]; snprintf(tmp, sizeof(tmp), "~%s*", avgStr);
-                avgStr[0] = '\0'; strncat(avgStr, tmp, sizeof(avgStr) - 1);
+                char raw[32];
+                fmt_ns(raw, sizeof(raw), avg);
+                snprintf(avgStr, sizeof(avgStr), "~%s*", raw);
                 snprintf(vsStr, sizeof(vsStr), "*%d/%d measured", langMeasured[li], total);
             } else {
                 fmt_ns(avgStr, sizeof(avgStr), avg);

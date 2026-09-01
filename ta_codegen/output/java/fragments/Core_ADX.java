@@ -67,7 +67,6 @@
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;
@@ -444,7 +443,6 @@
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;
@@ -1077,7 +1075,6 @@
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;

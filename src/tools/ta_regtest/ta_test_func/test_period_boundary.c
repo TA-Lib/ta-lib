@@ -1139,9 +1139,9 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
       {
          /* The flag promises the copy at a period of 1, so a function carrying
           * it and having no period to set is a mis-declaration, not a skip. */
-         printf( "\nFail: period-1 MA identity: '%s' carries "
+         printf( "\nFail: period-1 MA identity (%s): '%s' carries "
                  "TA_FUNC_FLG_PERIOD1_IDENTITY but has no period to set to 1\n",
-                 flagged.names[i] );
+                 what, flagged.names[i] );
          return TA_REGTEST_OPTIMIZATION_REF_ERROR;
       }
       extra++;
@@ -1151,9 +1151,9 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
     * and the checked set must be non-empty. */
    if( checked - extra + exempt != (int)maTypeList->nbElement || checked <= extra )
    {
-      printf( "\nFail: period-1 MA identity: %d checked (%d outside the enum), "
+      printf( "\nFail: period-1 MA identity (%s): %d checked (%d outside the enum), "
               "%d exempt, %u MAType value(s) — the accounting does not add up\n",
-              checked, extra, exempt, maTypeList->nbElement );
+              what, checked, extra, exempt, maTypeList->nbElement );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
    /* ...and the flag walk must still find what it found when it was written. A
@@ -1164,10 +1164,10 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
     * forbidding a period of 1) -- it just has to be a deliberate edit here. */
    if( flagged.nb < PB_MIN_FLAGGED )
    {
-      printf( "\nFail: period-1 MA identity: %d function(s) carry "
+      printf( "\nFail: period-1 MA identity (%s): %d function(s) carry "
               "TA_FUNC_FLG_PERIOD1_IDENTITY, expected at least %d — the flagged "
               "set has shrunk, so this sweep now covers less than it did\n",
-              flagged.nb, PB_MIN_FLAGGED );
+              what, flagged.nb, PB_MIN_FLAGGED );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
    return TA_TEST_PASS;

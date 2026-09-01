@@ -58,7 +58,7 @@ TA_RetCode stoch(int startIdx, int endIdx,
    double *tempBuffer;
    int outIdx, lowestIdx, highestIdx;
    int lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
-   int trailingIdx, today, i;
+   int trailingIdx, today, i = 0;
    int bufferIsAllocated;
 
    /* With stochastic, there is a total of 4 different lines that

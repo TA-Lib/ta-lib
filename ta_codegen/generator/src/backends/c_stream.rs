@@ -5013,7 +5013,9 @@ fn emit_anchor_guard(o: &mut String) {
 fn free_batch_storages(model: &StreamModel) -> String {
     let mut s = String::new();
     for (storage, _) in model.circs().iter().flat_map(circ_storages) {
-        let _ = write!(s, "if( {storage} != &local_{storage}[0] ) TA_Free( {storage} ); ");
+        // Braced: these are emitted several to a line, and an unbraced body
+        // makes the next `if` read as guarded (-Wmisleading-indentation).
+        let _ = write!(s, "if( {storage} != &local_{storage}[0] ) {{ TA_Free( {storage} ); }} ");
     }
     s
 }

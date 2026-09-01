@@ -58,8 +58,11 @@ static int fuzz_cdl_bar(double *o,double *h,double *l,double *c,double *v,double
                         int p,int n,double O,double H,double L,double Cl)
 {
     double hi=H, lo=L;
-    if(hi<O)hi=O; if(hi<Cl)hi=Cl;   /* clamp to a valid candle */
-    if(lo>O)lo=O; if(lo>Cl)lo=Cl;
+    /* clamp to a valid candle */
+    if(hi<O)hi=O;
+    if(hi<Cl)hi=Cl;
+    if(lo>O)lo=O;
+    if(lo>Cl)lo=Cl;
     if(p<n){ o[p]=O; h[p]=hi; l[p]=lo; c[p]=Cl; v[p]=1000.0; oi[p]=100.0; p++; }
     return p;
 }
@@ -632,11 +635,11 @@ static void fuzz_gen(int shape, int seed, int n,
 }
 
 /* ---- 64-bit output hash (FNV-1a over raw bytes + murmur finalizer). ---- */
-static unsigned long long fuzz_hash_init(void)
+static inline unsigned long long fuzz_hash_init(void)
 {
     return 1469598103934665603ULL; /* FNV-1a 64-bit offset basis */
 }
-static unsigned long long fuzz_hash_bytes(unsigned long long hsh,
+static inline unsigned long long fuzz_hash_bytes(unsigned long long hsh,
                                           const void *p, unsigned long len)
 {
     const unsigned char *b = (const unsigned char *)p;
@@ -648,7 +651,7 @@ static unsigned long long fuzz_hash_bytes(unsigned long long hsh,
     }
     return hsh;
 }
-static unsigned long long fuzz_hash_fin(unsigned long long hsh)
+static inline unsigned long long fuzz_hash_fin(unsigned long long hsh)
 {
     hsh ^= hsh >> 33;
     hsh *= 0xFF51AFD7ED558CCDULL;

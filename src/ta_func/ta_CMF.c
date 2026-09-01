@@ -644,7 +644,7 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_CMF_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); return TA_ALLOC_ERR; }
+      if( !sp ) { if( mfv_flow != &local_mfv_flow[0] ) { TA_Free( mfv_flow ); } if( mfv_volume != &local_mfv_volume[0] ) { TA_Free( mfv_volume ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->sumMFV = sumMFV;
@@ -652,14 +652,14 @@ static TA_RetCode TA_CMF_OpenImpl( struct TA_CMF_Stream **stream, const double i
       sp->mfv_Idx = mfv_Idx;
       sp->maxIdx_mfv = maxIdx_mfv;
       sp->cbSize_mfv = maxIdx_mfv + 1;
-      if( sp->cbSize_mfv < 1 || sp->cbSize_mfv > historyLen + 1 ) { if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); TA_CMF_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(315); }
+      if( sp->cbSize_mfv < 1 || sp->cbSize_mfv > historyLen + 1 ) { if( mfv_flow != &local_mfv_flow[0] ) { TA_Free( mfv_flow ); } if( mfv_volume != &local_mfv_volume[0] ) { TA_Free( mfv_volume ); } TA_CMF_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(315); }
       sp->cb_mfv_flow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mfv );
-      if( !sp->cb_mfv_flow ) { if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); TA_CMF_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_mfv_flow ) { if( mfv_flow != &local_mfv_flow[0] ) { TA_Free( mfv_flow ); } if( mfv_volume != &local_mfv_volume[0] ) { TA_Free( mfv_volume ); } TA_CMF_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_mfv_flow, mfv_flow, sizeof(double) * (size_t)sp->cbSize_mfv );
       sp->cb_mfv_volume = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mfv );
-      if( !sp->cb_mfv_volume ) { if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); TA_CMF_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_mfv_volume ) { if( mfv_flow != &local_mfv_flow[0] ) { TA_Free( mfv_flow ); } if( mfv_volume != &local_mfv_volume[0] ) { TA_Free( mfv_volume ); } TA_CMF_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_mfv_volume, mfv_volume, sizeof(double) * (size_t)sp->cbSize_mfv );
-      if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow ); if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume ); 
+      if( mfv_flow != &local_mfv_flow[0] ) { TA_Free( mfv_flow ); } if( mfv_volume != &local_mfv_volume[0] ) { TA_Free( mfv_volume ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];

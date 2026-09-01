@@ -574,7 +574,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,
       /* Compute the trend Mode , and assume trend by default */
       trend = 1;
       /* Measure days in trend from last crossing of the SineWave Indicator lines */
-      if( sine > leadSine && prevSine <= prevLeadSine || sine < leadSine && prevSine >= prevLeadSine )
+      if( (sine > leadSine && prevSine <= prevLeadSine) || (sine < leadSine && prevSine >= prevLeadSine) )
       {
          daysInTrend = 0;
          trend = 0;
@@ -1020,7 +1020,7 @@ TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
       iTrend2 = iTrend1;
       iTrend1 = tempReal;
       trend = 1;
-      if( sine > leadSine && prevSine <= prevLeadSine || sine < leadSine && prevSine >= prevLeadSine )
+      if( (sine > leadSine && prevSine <= prevLeadSine) || (sine < leadSine && prevSine >= prevLeadSine) )
       {
          daysInTrend = 0;
          trend = 0;
@@ -1399,7 +1399,7 @@ static void TA_HT_TRENDMODE_StepImpl( struct TA_HT_TRENDMODE_Stream *sp, double 
    /* Compute the trend Mode , and assume trend by default */
    trend = 1;
    /* Measure days in trend from last crossing of the SineWave Indicator lines */
-   if( sp->sine > sp->leadSine && prevSine <= prevLeadSine || sp->sine < sp->leadSine && prevSine >= prevLeadSine )
+   if( (sp->sine > sp->leadSine && prevSine <= prevLeadSine) || (sp->sine < sp->leadSine && prevSine >= prevLeadSine) )
    {
       sp->daysInTrend = 0;
       trend = 0;
@@ -1939,7 +1939,7 @@ static TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TRENDMODE_Stream **stre
          /* Compute the trend Mode , and assume trend by default */
          trend = 1;
          /* Measure days in trend from last crossing of the SineWave Indicator lines */
-         if( sine > leadSine && prevSine <= prevLeadSine || sine < leadSine && prevSine >= prevLeadSine )
+         if( (sine > leadSine && prevSine <= prevLeadSine) || (sine < leadSine && prevSine >= prevLeadSine) )
          {
             daysInTrend = 0;
             trend = 0;
@@ -1972,7 +1972,7 @@ static TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TRENDMODE_Stream **stre
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_HT_TRENDMODE_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); return TA_ALLOC_ERR; }
+      if( !sp ) { if( smoothPrice != &local_smoothPrice[0] ) { TA_Free( smoothPrice ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->period = period;
       sp->periodWMASum = periodWMASum;
@@ -2042,11 +2042,11 @@ static TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TRENDMODE_Stream **stre
       memcpy( sp->win_j_inReal, inReal + (historyLen - sp->winCap_j), sizeof(double) * (size_t)sp->winCap_j );
       sp->winPos_j = 0;
       sp->cbSize_smoothPrice = maxIdx_smoothPrice + 1;
-      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(336); }
+      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) { TA_Free( smoothPrice ); } TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(336); }
       sp->cb_smoothPrice = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) { TA_Free( smoothPrice ); } TA_HT_TRENDMODE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_smoothPrice, smoothPrice, sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); 
+      if( smoothPrice != &local_smoothPrice[0] ) { TA_Free( smoothPrice ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
@@ -2380,7 +2380,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Peek( const TA_HT_TRENDMODE_Stream *stream
    /* Compute the trend Mode , and assume trend by default */
    trend = 1;
    /* Measure days in trend from last crossing of the SineWave Indicator lines */
-   if( sp->sine > sp->leadSine && prevSine <= prevLeadSine || sp->sine < sp->leadSine && prevSine >= prevLeadSine )
+   if( (sp->sine > sp->leadSine && prevSine <= prevLeadSine) || (sp->sine < sp->leadSine && prevSine >= prevLeadSine) )
    {
       sp->daysInTrend = 0;
       trend = 0;

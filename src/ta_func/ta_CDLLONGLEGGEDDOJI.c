@@ -58,12 +58,8 @@
 
 TA_LIB_API int TA_CDLLONGLEGGEDDOJI_Lookback( void )
 {
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
-   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
    return max(BodyDoji_avgPeriod,ShadowLong_avgPeriod);
 }
 
@@ -84,12 +80,8 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
    int BodyDojiTrailingIdx;
    int ShadowLongTrailingIdx;
    int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
-   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -195,12 +187,8 @@ TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
    int BodyDojiTrailingIdx;
    int ShadowLongTrailingIdx;
    int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
-   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
