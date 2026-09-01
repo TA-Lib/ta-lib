@@ -84,6 +84,8 @@
 #include "ta_utility.h"
 #include "server_verify.h"
 
+#define CMOU_FLOOR_CHECKS 18096
+
 /**** Local declarations. ****/
 #define OUT_CAP 300   /* > MAX_NB_TEST_ELEMENT and > nbBars */
 
@@ -481,11 +483,12 @@ static ErrorNumber test_cmou_empty_window( void )
          }
       }
 
-   if( checks == 0 )
+   /* Literal floor, frozen at today's count -- see the note in test_mfi.c. */
+   if( checks < CMOU_FLOOR_CHECKS )
    {
-      printf( "\nFail: CMOU empty-window gate checked no bar -- no window in the "
-              "spike corpus went entirely flat, so the residue it exists to catch "
-              "was never reachable.\n" );
+      printf( "\nFail: CMOU empty-window gate checked %d bar(s) of the spike "
+              "corpus, written with %d -- the flat windows whose residue "
+              "it exists to catch are going unreached.\n", checks, CMOU_FLOOR_CHECKS );
       return TA_CMOU_VACUOUS;
    }
    return TA_TEST_PASS;

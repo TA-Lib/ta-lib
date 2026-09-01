@@ -1040,6 +1040,14 @@ C == expected ⇒ server == expected".
   Java/C# gained this hasher; the C per-function handler is `#ifndef
   TA_REF_SERVE`-guarded (its `fuzz_hash_*` live in `fuzz_data.h`, absent from the
   frozen `ta_ref_serve`, which `server_verify` never drives).
+- **Metastock legs are C-only, permanently.** A hand-written test running under
+  non-default compatibility is skipped for Rust, Java and C#, silently and by
+  design: `TA_SetCompatibility` is deprecated in C and the three ported backends
+  deliberately expose no equivalent (see the note in any generated
+  `Core_*` body), so there is no second implementation to compare against.
+  `codegen_lang_has_compatibility_api` is the single place that says so. This is
+  not a deferred gap — closing it would mean implementing a deprecated feature
+  in three backends so that a test could verify it.
 - **Tolerance rule.** Zero tolerance (bitwise) for **C ⇄ Rust** (Rust reaches
   the same system libm as the golden). **Java and C#** are bitwise for
   pure-arith + IEEE ops
