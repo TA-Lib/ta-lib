@@ -1208,7 +1208,7 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_ULTOSC_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); return TA_ALLOC_ERR; }
+      if( !sp ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) { TA_Free( term_closeMinusTrueLow ); } if( term_trueRange != &local_term_trueRange[0] ) { TA_Free( term_trueRange ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod1 = optInTimePeriod1;
       sp->optInTimePeriod2 = optInTimePeriod2;
@@ -1226,14 +1226,14 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
       sp->maxIdx_term = maxIdx_term;
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->cbSize_term = maxIdx_term + 1;
-      if( sp->cbSize_term < 1 || sp->cbSize_term > historyLen + 1 ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(393); }
+      if( sp->cbSize_term < 1 || sp->cbSize_term > historyLen + 1 ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) { TA_Free( term_closeMinusTrueLow ); } if( term_trueRange != &local_term_trueRange[0] ) { TA_Free( term_trueRange ); } TA_ULTOSC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(393); }
       sp->cb_term_closeMinusTrueLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
-      if( !sp->cb_term_closeMinusTrueLow ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_term_closeMinusTrueLow ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) { TA_Free( term_closeMinusTrueLow ); } if( term_trueRange != &local_term_trueRange[0] ) { TA_Free( term_trueRange ); } TA_ULTOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_term_closeMinusTrueLow, term_closeMinusTrueLow, sizeof(double) * (size_t)sp->cbSize_term );
       sp->cb_term_trueRange = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_term );
-      if( !sp->cb_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); TA_ULTOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_term_trueRange ) { if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) { TA_Free( term_closeMinusTrueLow ); } if( term_trueRange != &local_term_trueRange[0] ) { TA_Free( term_trueRange ); } TA_ULTOSC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_term_trueRange, term_trueRange, sizeof(double) * (size_t)sp->cbSize_term );
-      if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow ); if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange ); 
+      if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) { TA_Free( term_closeMinusTrueLow ); } if( term_trueRange != &local_term_trueRange[0] ) { TA_Free( term_trueRange ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];

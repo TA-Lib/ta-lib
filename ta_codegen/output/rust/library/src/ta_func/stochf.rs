@@ -180,6 +180,7 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut bufferIsAllocated: usize = 0_usize;
+        i = 0;
         // With stochastic, there is a total of 4 different lines that
         // are defined: FASTK, FASTD, SLOWK and SLOWD.
         //
@@ -661,6 +662,7 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut bufferIsAllocated: usize = 0_usize;
+        i = 0;
         // With stochastic, there is a total of 4 different lines that
         // are defined: FASTK, FASTD, SLOWK and SLOWD.
         //

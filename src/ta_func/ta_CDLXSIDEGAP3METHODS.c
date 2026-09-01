@@ -133,7 +133,7 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS( int    startIdx,
           inOpen[i] > min(inClose[i - 1],inOpen[i - 1]) &&
           inClose[i] < max(inClose[i - 2],inOpen[i - 2]) && /* 3rd closes within 1st rb */
           inClose[i] > min(inClose[i - 2],inOpen[i - 2]) &&
-          (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) ) /* when 1st is white upside gap when 1st is black downside gap */
+          ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) || (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0))) ) /* when 1st is white upside gap when 1st is black downside gap */
       {
          outInteger[outIdx++] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
       } else 
@@ -198,7 +198,7 @@ TA_RetCode TA_S_CDLXSIDEGAP3METHODS( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && (double)inOpen[i] < max((double)inClose[i - 1],(double)inOpen[i - 1]) && (double)inOpen[i] > min((double)inClose[i - 1],(double)inOpen[i - 1]) && (double)inClose[i] < max((double)inClose[i - 2],(double)inOpen[i - 2]) && (double)inClose[i] > min((double)inClose[i - 2],(double)inOpen[i - 2]) && ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((min((double)inOpen[i - 1],(double)inClose[i - 1]) > max((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) || (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((max((double)inOpen[i - 1],(double)inClose[i - 1]) < min((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0)) )
+      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : 0 - 1) == 0 - (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) && (double)inOpen[i] < max((double)inClose[i - 1],(double)inOpen[i - 1]) && (double)inOpen[i] > min((double)inClose[i - 1],(double)inOpen[i - 1]) && (double)inClose[i] < max((double)inClose[i - 2],(double)inOpen[i - 2]) && (double)inClose[i] > min((double)inClose[i - 2],(double)inOpen[i - 2]) && (((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((min((double)inOpen[i - 1],(double)inClose[i - 1]) > max((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0)) || ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((max((double)inOpen[i - 1],(double)inClose[i - 1]) < min((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0))) )
       {
          outInteger[outIdx++] = (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : 0 - 1) * 100;
       } else 
@@ -236,7 +236,7 @@ static void TA_CDLXSIDEGAP3METHODS_StepImpl( struct TA_CDLXSIDEGAP3METHODS_Strea
        inOpen > min(sp->lag1_inClose,sp->lag1_inOpen) &&
        inClose < max(sp->lag2_inClose,sp->lag2_inOpen) && /* 3rd closes within 1st rb */
        inClose > min(sp->lag2_inClose,sp->lag2_inOpen) &&
-       (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && ((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) || ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) ) /* when 1st is white upside gap when 1st is black downside gap */
+       ((((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && ((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) || (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0))) ) /* when 1st is white upside gap when 1st is black downside gap */
    {
       *outInteger= ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) * 100;
    } else 
@@ -321,7 +321,7 @@ static TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenImpl( struct TA_CDLXSIDEGAP3METHODS
              inOpen[i] > min(inClose[i - 1],inOpen[i - 1]) &&
              inClose[i] < max(inClose[i - 2],inOpen[i - 2]) && /* 3rd closes within 1st rb */
              inClose[i] > min(inClose[i - 2],inOpen[i - 2]) &&
-             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) ) /* when 1st is white upside gap when 1st is black downside gap */
+             ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) || (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0))) ) /* when 1st is white upside gap when 1st is black downside gap */
          {
             outInteger[outIdx++ * outStride] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
          } else 
@@ -422,7 +422,7 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Peek( const TA_CDLXSIDEGAP3METHODS_
        inOpen > min(sp->lag1_inClose,sp->lag1_inOpen) &&
        inClose < max(sp->lag2_inClose,sp->lag2_inOpen) && /* 3rd closes within 1st rb */
        inClose > min(sp->lag2_inClose,sp->lag2_inOpen) &&
-       (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && ((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) || ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) ) /* when 1st is white upside gap when 1st is black downside gap */
+       ((((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && ((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) || (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0))) ) /* when 1st is white upside gap when 1st is black downside gap */
    {
       *outInteger= ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) * 100;
    } else 

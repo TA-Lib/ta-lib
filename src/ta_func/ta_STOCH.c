@@ -172,6 +172,7 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    if( outSlowK == outSlowD )
       return TA_BAD_PARAM;
 
+   i = 0;
    /* With stochastic, there is a total of 4 different lines that
     * are defined: FASTK, FASTD, SLOWK and SLOWD.
     *
@@ -463,6 +464,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
    if( outSlowK == outSlowD )
       return TA_BAD_PARAM;
 
+   i = 0;
    lookbackK = optInFastK_Period - 1;
    lookbackKSlow = TA_MA_Lookback(optInSlowK_Period,optInSlowK_MAType);
    lookbackDSlow = TA_MA_Lookback(optInSlowD_Period,optInSlowD_MAType);
@@ -809,7 +811,7 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       int lookbackDSlow;
       int trailingIdx;
       int today;
-      int i;
+      int i = 0;
       int bufferIsAllocated;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.

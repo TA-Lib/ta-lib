@@ -747,7 +747,7 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_AC_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( oscBuffer != &local_oscBuffer[0] ) TA_Free( oscBuffer ); return TA_ALLOC_ERR; }
+      if( !sp ) { if( oscBuffer != &local_oscBuffer[0] ) { TA_Free( oscBuffer ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInFastPeriod = optInFastPeriod;
       sp->optInSlowPeriod = optInSlowPeriod;
@@ -780,11 +780,11 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       }
       sp->ringPos_trailingSlowIdx = 0;
       sp->cbSize_oscBuffer = maxIdx_oscBuffer + 1;
-      if( sp->cbSize_oscBuffer < 1 || sp->cbSize_oscBuffer > historyLen + 1 ) { if( oscBuffer != &local_oscBuffer[0] ) TA_Free( oscBuffer ); TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(184); }
+      if( sp->cbSize_oscBuffer < 1 || sp->cbSize_oscBuffer > historyLen + 1 ) { if( oscBuffer != &local_oscBuffer[0] ) { TA_Free( oscBuffer ); } TA_AC_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(184); }
       sp->cb_oscBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_oscBuffer );
-      if( !sp->cb_oscBuffer ) { if( oscBuffer != &local_oscBuffer[0] ) TA_Free( oscBuffer ); TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_oscBuffer ) { if( oscBuffer != &local_oscBuffer[0] ) { TA_Free( oscBuffer ); } TA_AC_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_oscBuffer, oscBuffer, sizeof(double) * (size_t)sp->cbSize_oscBuffer );
-      if( oscBuffer != &local_oscBuffer[0] ) TA_Free( oscBuffer ); 
+      if( oscBuffer != &local_oscBuffer[0] ) { TA_Free( oscBuffer ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];

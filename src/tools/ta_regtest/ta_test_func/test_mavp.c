@@ -99,6 +99,8 @@
 #include "ta_test_func.h"
 #include "server_verify.h"
 
+#define MV_FLOOR_MATYPES 12
+
 /**** External functions declarations. ****/
 /* None */
 
@@ -344,10 +346,13 @@ ErrorNumber test_func_mavp( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
-   if( mvNbTypes == 0 )
+   /* A floor, not an equality: the MAType list legitimately GROWS (HMA #139,
+    * DISABLED #93, DEFAULT #182 were all added), so pinning it exactly would
+    * break on every future member. Shrinking it is the deliberate edit. */
+   if( mvNbTypes < MV_FLOOR_MATYPES )
    {
-      printf( "\nFail: MAVP grouping swept no MAType -- the generated ta_abstract "
-              "list came back empty, so every shape above compared nothing.\n" );
+      printf( "\nFail: MAVP grouping swept %d MAType(s) from the generated "
+              "ta_abstract list, written with %d.\n", mvNbTypes, MV_FLOOR_MATYPES );
       return TA_MAVP_VACUOUS;
    }
 

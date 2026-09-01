@@ -141,7 +141,6 @@ impl Core {
         let mut prevPlusDM: f64 = 0.0_f64;
         let mut prevTR: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
-        let tempReal2: f64 = 0.0_f64;
         let mut diffP: f64 = 0.0_f64;
         let mut diffM: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -717,7 +716,6 @@ impl Core {
             let mut prevPlusDM: f64 = 0.0_f64;
             let mut prevTR: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut tempReal2: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
@@ -897,7 +895,6 @@ impl Core {
             let mut prevPlusDM: f64 = 0.0_f64;
             let mut prevTR: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut tempReal2: f64 = 0.0_f64;
             let mut diffP: f64 = 0.0_f64;
             let mut diffM: f64 = 0.0_f64;
             let mut i: usize = 0_usize;

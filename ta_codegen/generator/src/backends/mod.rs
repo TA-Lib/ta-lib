@@ -352,6 +352,17 @@ impl LanguageBackend for JavaBackend {
         std::fs::create_dir_all(&tools_dir).unwrap();
         let template = server_gen::generate_java_server(funcs, enums);
         let output = server_gen::inline_java_core_methods(&template, &frag_dir, funcs);
+        // Stamp the server with the digest of the fragments it was just spliced
+        // from. `Core.java` carries the digest of the section IT was rendered
+        // with, so the pair is equal only while the two are the same generation;
+        // `ta_regtest` compares them over the wire, where a stale class
+        // directory is still visible and a source-text check no longer is (#322).
+        let digest = java_shipped::gencode_digest(&java_shipped::fragments_text(&frag_dir, funcs));
+        // Fail here too, not only at test time: `generate-servers` re-splices the
+        // server without rewriting Core.java, so this is the moment the pair can
+        // part and the cheapest place to say so.
+        java_shipped::assert_stamp_matches(out_base, &digest);
+        let output = output.replace("@@GENCODE_DIGEST@@", &digest);
         let path = tools_dir.join("TaCodegenServe.java");
         crate::emit::write_if_changed(&path, &output).unwrap();
         println!("  Java server -> {}", path.display());

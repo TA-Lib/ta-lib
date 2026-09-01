@@ -5098,7 +5098,6 @@ public final class Core {
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;
@@ -5475,7 +5474,6 @@ public final class Core {
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;
@@ -6108,7 +6106,6 @@ public final class Core {
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;
@@ -43100,6 +43097,8 @@ public final class Core {
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      savedHigh = 0.0;
+      savedLow = 0.0;
       /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
        * state carried without an absolute bar index.
        */
@@ -43208,6 +43207,8 @@ public final class Core {
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      savedHigh = 0.0;
+      savedLow = 0.0;
       lookbackTotal = CDLHIKKAKE_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -43641,6 +43642,8 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.InsufficientHistory;
       }
+      savedHigh = 0.0;
+      savedLow = 0.0;
       /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
        * state carried without an absolute bar index.
        */
@@ -78725,7 +78728,6 @@ public final class Core {
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;
@@ -79041,7 +79043,6 @@ public final class Core {
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;
@@ -79642,7 +79643,6 @@ public final class Core {
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       double minusDI = 0;
@@ -122389,7 +122389,6 @@ public final class Core {
       double prevMinusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       int i = 0;
@@ -122721,7 +122720,6 @@ public final class Core {
       double prevMinusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       int i = 0;
@@ -123395,7 +123393,6 @@ public final class Core {
          double prevMinusDM = 0;
          double prevTR = 0;
          double tempReal = 0;
-         double tempReal2 = 0;
          double diffP = 0;
          double diffM = 0;
          int i = 0;
@@ -123576,7 +123573,6 @@ public final class Core {
          double prevMinusDM = 0;
          double prevTR = 0;
          double tempReal = 0;
-         double tempReal2 = 0;
          double diffP = 0;
          double diffM = 0;
          int i = 0;
@@ -128490,7 +128486,6 @@ public final class Core {
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       int i = 0;
@@ -128822,7 +128817,6 @@ public final class Core {
       double prevPlusDM = 0;
       double prevTR = 0;
       double tempReal = 0;
-      double tempReal2 = 0;
       double diffP = 0;
       double diffM = 0;
       int i = 0;
@@ -129504,7 +129498,6 @@ public final class Core {
          double prevPlusDM = 0;
          double prevTR = 0;
          double tempReal = 0;
-         double tempReal2 = 0;
          double diffP = 0;
          double diffM = 0;
          int i = 0;
@@ -129685,7 +129678,6 @@ public final class Core {
          double prevPlusDM = 0;
          double prevTR = 0;
          double tempReal = 0;
-         double tempReal2 = 0;
          double diffP = 0;
          double diffM = 0;
          int i = 0;
@@ -145082,6 +145074,7 @@ public final class Core {
       if( outSlowK == outSlowD ) {
          return RetCode.BadParam ;
       }
+      i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -145326,6 +145319,7 @@ public final class Core {
       if( outSlowK == outSlowD ) {
          return RetCode.BadParam ;
       }
+      i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackKSlow = MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
       lookbackDSlow = MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
@@ -146048,6 +146042,7 @@ public final class Core {
       }
       double[] sc_outSlowK = outStride == 1 ? outSlowK : new double[historyLen];
       double[] sc_outSlowD = outStride == 1 ? outSlowD : new double[historyLen];
+      i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -146490,6 +146485,7 @@ public final class Core {
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
       }
+      i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -146713,6 +146709,7 @@ public final class Core {
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
       }
+      i = 0;
       lookbackK = optInFastK_Period - 1;
       lookbackFastD = MA_Lookback(optInFastD_Period, optInFastD_MAType);
       lookbackTotal = lookbackK + lookbackFastD;
@@ -147389,6 +147386,7 @@ public final class Core {
       }
       double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
       double[] sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
+      i = 0;
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *

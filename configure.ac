@@ -36,6 +36,18 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
 
+# Warnings — mirrors CMakeLists.txt, including why -Wunused-parameter and
+# -Wunknown-pragmas are off (uniform OHLCV signature; the deliberate
+# FP_CONTRACT pragma GCC ignores). Probed, so a compiler that rejects them
+# still configures. Not -Werror: the dist build runs on whatever the packager
+# has.
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas"
+AC_MSG_CHECKING([whether $CC accepts -Wall -Wextra])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
+
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
 AC_CHECK_INCLUDES_DEFAULT

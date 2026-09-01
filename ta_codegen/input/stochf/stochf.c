@@ -55,7 +55,7 @@ TA_RetCode stochf(int startIdx, int endIdx,
    double *tempBuffer;
    int outIdx, lowestIdx, highestIdx;
    int lookbackTotal, lookbackK, lookbackFastD;
-   int trailingIdx, today, i;
+   int trailingIdx, today, i = 0;
 
    int bufferIsAllocated;
 

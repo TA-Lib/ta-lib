@@ -58,12 +58,8 @@
 
 TA_LIB_API int TA_CDLHIGHWAVE_Lookback( void )
 {
-   int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
    int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
-   double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
-   int ShadowVeryLong_rangeType = TA_Globals->candleSettings[TA_ShadowVeryLong].rangeType;
    int ShadowVeryLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryLong].avgPeriod;
-   double ShadowVeryLong_factor = TA_Globals->candleSettings[TA_ShadowVeryLong].factor;
    return max(BodyShort_avgPeriod,ShadowVeryLong_avgPeriod);
 }
 
@@ -84,12 +80,8 @@ TA_LIB_API TA_RetCode TA_CDLHIGHWAVE( int    startIdx,
    int BodyTrailingIdx;
    int ShadowTrailingIdx;
    int lookbackTotal;
-   int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
    int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
-   double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
-   int ShadowVeryLong_rangeType = TA_Globals->candleSettings[TA_ShadowVeryLong].rangeType;
    int ShadowVeryLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryLong].avgPeriod;
-   double ShadowVeryLong_factor = TA_Globals->candleSettings[TA_ShadowVeryLong].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -195,12 +187,8 @@ TA_RetCode TA_S_CDLHIGHWAVE( int    startIdx,
    int BodyTrailingIdx;
    int ShadowTrailingIdx;
    int lookbackTotal;
-   int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
    int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
-   double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
-   int ShadowVeryLong_rangeType = TA_Globals->candleSettings[TA_ShadowVeryLong].rangeType;
    int ShadowVeryLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryLong].avgPeriod;
-   double ShadowVeryLong_factor = TA_Globals->candleSettings[TA_ShadowVeryLong].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;

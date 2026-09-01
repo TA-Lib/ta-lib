@@ -1596,7 +1596,7 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_HMA_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); return TA_ALLOC_ERR; }
+      if( !sp ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->halfPeriod = halfPeriod;
@@ -1650,11 +1650,11 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       memcpy( sp->win_jHalf_inReal, inReal + (historyLen - sp->winCap_jHalf), sizeof(double) * (size_t)sp->winCap_jHalf );
       sp->winPos_jHalf = 0;
       sp->cbSize_dRing = maxIdx_dRing + 1;
-      if( sp->cbSize_dRing < 1 || sp->cbSize_dRing > historyLen + 1 ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(324); }
+      if( sp->cbSize_dRing < 1 || sp->cbSize_dRing > historyLen + 1 ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(324); }
       sp->cb_dRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_dRing );
-      if( !sp->cb_dRing ) { if( dRing != &local_dRing[0] ) TA_Free( dRing ); TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_dRing ) { if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } TA_HMA_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_dRing, dRing, sizeof(double) * (size_t)sp->cbSize_dRing );
-      if( dRing != &local_dRing[0] ) TA_Free( dRing ); 
+      if( dRing != &local_dRing[0] ) { TA_Free( dRing ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];

@@ -58,12 +58,8 @@
 
 TA_LIB_API int TA_CDLCLOSINGMARUBOZU_Lookback( void )
 {
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
    int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
    return max(BodyLong_avgPeriod,ShadowVeryShort_avgPeriod);
 }
 
@@ -84,12 +80,8 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU( int    startIdx,
    int BodyLongTrailingIdx;
    int ShadowVeryShortTrailingIdx;
    int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
    int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -156,7 +148,7 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU( int    startIdx,
    do
    {
       if( fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && /* long body */
-          (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) ) /* white body and very short upper shadow black body and very short lower shadow */
+          ((((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) || (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i))) ) /* white body and very short upper shadow black body and very short lower shadow */
       {
          outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
@@ -195,12 +187,8 @@ TA_RetCode TA_S_CDLCLOSINGMARUBOZU( int    startIdx,
    int BodyLongTrailingIdx;
    int ShadowVeryShortTrailingIdx;
    int lookbackTotal;
-   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
    int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -250,7 +238,7 @@ TA_RetCode TA_S_CDLCLOSINGMARUBOZU( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) || (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 1 && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) || ((((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i))) )
       {
          outInteger[outIdx++] = (((double)inClose[i] >= (double)inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
@@ -308,7 +296,7 @@ static void TA_CDLCLOSINGMARUBOZU_StepImpl( struct TA_CDLCLOSINGMARUBOZU_Stream 
       sp->ring_ShadowVeryShortTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
    }
    if( fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long body */
-       (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ) /* white body and very short upper shadow black body and very short lower shadow */
+       ((((inClose >= inOpen) ? 1 : 0 - 1) == 1 && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) || (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) ) /* white body and very short upper shadow black body and very short lower shadow */
    {
       *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
    } else 
@@ -416,7 +404,7 @@ static TA_RetCode TA_CDLCLOSINGMARUBOZU_OpenImpl( struct TA_CDLCLOSINGMARUBOZU_S
       do
       {
          if( fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i) && /* long body */
-             (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) ) /* white body and very short upper shadow black body and very short lower shadow */
+             ((((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i)) || (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i))) ) /* white body and very short upper shadow black body and very short lower shadow */
          {
             outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
          } else 
@@ -550,7 +538,7 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Peek( const TA_CDLCLOSINGMARUBOZU_St
       pkVal1 = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
    }
    if( fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long body */
-       (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ) /* white body and very short upper shadow black body and very short lower shadow */
+       ((((inClose >= inOpen) ? 1 : 0 - 1) == 1 && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) || (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) ) /* white body and very short upper shadow black body and very short lower shadow */
    {
       *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
    } else 

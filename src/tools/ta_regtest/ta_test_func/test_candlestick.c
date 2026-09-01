@@ -786,8 +786,10 @@ static ErrorNumber pb_check( const char *name, PbCdlFn fn )
 static int pb_bar( double o, double h, double l, double c )
 {
    double hi=h, lo=l;
-   if(hi<o)hi=o; if(hi<c)hi=c;
-   if(lo>o)lo=o; if(lo>c)lo=c;
+   if(hi<o)hi=o;
+   if(hi<c)hi=c;
+   if(lo>o)lo=o;
+   if(lo>c)lo=c;
    return pb_bar4(o,hi,lo,c);
 }
 /* k alternating small-body bars (real body ~bd, half-range ~hr) around base:

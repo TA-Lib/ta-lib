@@ -80,12 +80,6 @@
 /* None */
 
 /**** Global variables definitions.    ****/
-int nbProfiledCall;
-double timeInProfiledCall;
-double worstProfiledCall;
-int insufficientClockPrecision;
-int doExtensiveProfiling;
-
 /* CSV list of function names to test (NULL = test all) */
 static const char *functionFilter = NULL;
 static int doCodegenTest = 0;
@@ -148,18 +142,7 @@ static const char *displayTag( const char *tag, const char *label )
 /**** Global functions definitions.   ****/
 int main( int argc, char **argv )
 {
-#ifdef WIN32
-	LARGE_INTEGER QPFrequency;
-#endif
-   double freq;
-
    ErrorNumber retValue;
-
-   insufficientClockPrecision = 0;
-   timeInProfiledCall = 0.0;
-   worstProfiledCall = 0.0;
-   nbProfiledCall = 0;
-   doExtensiveProfiling = 0;
 
    printf( "\n" );
    printf( "ta_regtest V%s - Regression Tests of TA-Lib code\n", TA_GetVersionString() );
@@ -169,11 +152,7 @@ int main( int argc, char **argv )
       int i;
       for( i = 1; i < argc; i++ )
       {
-         if( (argv[i][0] == '-') && (argv[i][1] == 'p') && (argv[i][2] == '\0') )
-         {
-            doExtensiveProfiling = 1;
-         }
-         else if( strncmp(argv[i], "--function=", 11) == 0 )
+         if( strncmp(argv[i], "--function=", 11) == 0 )
          {
             functionFilter = argv[i] + 11;
          }
@@ -500,117 +479,89 @@ int main( int argc, char **argv )
    printf( "done.\n" );
    fflush(stdout);
 
-   /* Perform all regresstions tests (except when ta_regtest is executed for profiling only). */
-   if( !doExtensiveProfiling )
    {
-      {
-         /* When codegen mode is active, also verify hand-written tests
-          * against every available language server (C, Rust, Java, C#),
-          * honoring --language=CSV. The Java/C# launch commands are
-          * relative to the bin directory (same as test_codegen.c).
-          */
-         CodegenPipe svPipes[SV_MAX_PIPES];
-         const char *svPipeLang[SV_MAX_PIPES] = {0};
-         int nbSvPipes = 0;
-         if( doCodegenTest )
-         {
-            char svPathC[1024];
-            char svPathRust[1024];
-            const char *self = argv[0];
-            const char *lastSlash = strrchr(self, '/');
-            if( lastSlash ) {
-               int dirLen = (int)(lastSlash - self + 1);
-               snprintf(svPathC, sizeof(svPathC), "%.*sta_codegen_serve_c",
-                        dirLen, self);
-               snprintf(svPathRust, sizeof(svPathRust), "%.*sta_codegen_serve_rust",
-                        dirLen, self);
-            } else {
-               snprintf(svPathC, sizeof(svPathC), "./ta_codegen_serve_c");
-               snprintf(svPathRust, sizeof(svPathRust), "./ta_codegen_serve_rust");
-            }
-            const char *const svArgvC[]      = {svPathC, NULL};
-            const char *const svArgvRust[]   = {svPathRust, NULL};
-            const char *const svArgvJava[]   = {"java", "-cp", "ta_codegen_java",
-                                                "TaCodegenServe", NULL};
-            const char *const svArgvCsharp[] = {"dotnet",
-                                                "ta_codegen_csharp/TaCodegenServe.dll", NULL};
-            const struct { const char *lang; const char *const *argvSv; } svServers[] = {
-               { "c",      svArgvC },
-               { "rust",   svArgvRust },
-               { "java",   svArgvJava },
-               { "csharp", svArgvCsharp },
-            };
-            unsigned int svIdx;
-            for( svIdx = 0; svIdx < sizeof(svServers)/sizeof(svServers[0]); svIdx++ )
-            {
-               if( !svLanguageEnabled(codegenLanguageFilter, svServers[svIdx].lang) )
-                  continue;
-               if( codegen_pipe_open(&svPipes[nbSvPipes], svServers[svIdx].argvSv) == TA_TEST_PASS )
-               {
-                  svPipeLang[nbSvPipes] = svServers[svIdx].lang;
-                  nbSvPipes++;
-               }
-               else
-                  printf( "  (%s server not available for hand-written test verification)\n",
-                          svServers[svIdx].lang );
-            }
-            if( nbSvPipes > 0 )
-            {
-               CodegenPipe *pipes[SV_MAX_PIPES];
-               int p;
-               for( p = 0; p < nbSvPipes; p++ )
-                  pipes[p] = &svPipes[p];
-               server_verify_init(pipes, svPipeLang, nbSvPipes);
-            }
-         }
-
-         retValue = test_with_simulator();
-
-         if( nbSvPipes > 0 )
-         {
-            int p;
-            server_verify_shutdown();
-            for( p = 0; p < nbSvPipes; p++ )
-               codegen_pipe_close(&svPipes[p]);
-         }
-
-         if( retValue != TA_TEST_PASS )
-            return retValue;
-      }
-
+      /* When codegen mode is active, also verify hand-written tests
+       * against every available language server (C, Rust, Java, C#),
+       * honoring --language=CSV. The Java/C# launch commands are
+       * relative to the bin directory (same as test_codegen.c).
+       */
+      CodegenPipe svPipes[SV_MAX_PIPES];
+      const char *svPipeLang[SV_MAX_PIPES] = {0};
+      int nbSvPipes = 0;
       if( doCodegenTest )
       {
-         retValue = test_codegen_with_simulator();
-         if( retValue != TA_TEST_PASS )
-            return retValue;
+         char svPathC[1024];
+         char svPathRust[1024];
+         const char *self = argv[0];
+         const char *lastSlash = strrchr(self, '/');
+         if( lastSlash ) {
+            int dirLen = (int)(lastSlash - self + 1);
+            snprintf(svPathC, sizeof(svPathC), "%.*sta_codegen_serve_c",
+                     dirLen, self);
+            snprintf(svPathRust, sizeof(svPathRust), "%.*sta_codegen_serve_rust",
+                     dirLen, self);
+         } else {
+            snprintf(svPathC, sizeof(svPathC), "./ta_codegen_serve_c");
+            snprintf(svPathRust, sizeof(svPathRust), "./ta_codegen_serve_rust");
+         }
+         const char *const svArgvC[]      = {svPathC, NULL};
+         const char *const svArgvRust[]   = {svPathRust, NULL};
+         const char *const svArgvJava[]   = {"java", "-cp", "ta_codegen_java",
+                                             "TaCodegenServe", NULL};
+         const char *const svArgvCsharp[] = {"dotnet",
+                                             "ta_codegen_csharp/TaCodegenServe.dll", NULL};
+         const struct { const char *lang; const char *const *argvSv; } svServers[] = {
+            { "c",      svArgvC },
+            { "rust",   svArgvRust },
+            { "java",   svArgvJava },
+            { "csharp", svArgvCsharp },
+         };
+         unsigned int svIdx;
+         for( svIdx = 0; svIdx < sizeof(svServers)/sizeof(svServers[0]); svIdx++ )
+         {
+            if( !svLanguageEnabled(codegenLanguageFilter, svServers[svIdx].lang) )
+               continue;
+            if( codegen_pipe_open(&svPipes[nbSvPipes], svServers[svIdx].argvSv) == TA_TEST_PASS )
+            {
+               svPipeLang[nbSvPipes] = svServers[svIdx].lang;
+               nbSvPipes++;
+            }
+            else
+               printf( "  (%s server not available for hand-written test verification)\n",
+                       svServers[svIdx].lang );
+         }
+         if( nbSvPipes > 0 )
+         {
+            CodegenPipe *pipes[SV_MAX_PIPES];
+            int p;
+            for( p = 0; p < nbSvPipes; p++ )
+               pipes[p] = &svPipes[p];
+            server_verify_init(pipes, svPipeLang, nbSvPipes);
+         }
       }
 
-      /* Only when -p asked for a profile. The per-call timing accumulates on
-       * every run, so ungated this reports a profile nobody requested -- or, on
-       * a platform whose clock cannot resolve one call, warns about it. */
-      if( doExtensiveProfiling && insufficientClockPrecision != 0 )
-      {
-   	   printf( "\nWarning: Code profiling not supported for this platform.\n" );
-      }
-      else if( doExtensiveProfiling && nbProfiledCall > 0 )
-      {
-         printf( "\nNumber profiled function call       = %d function calls", nbProfiledCall );
+      retValue = test_with_simulator();
 
-#ifdef WIN32
-         QueryPerformanceFrequency(&QPFrequency);
-         freq = (double)QPFrequency.QuadPart;
-         printf( "\nTotal execution time                = %g milliseconds", (timeInProfiledCall/freq)*1000.0 );
-         printf( "\nWorst single function call          = %g milliseconds", (worstProfiledCall/freq)*1000.0 );
-         printf( "\nAverage execution time per function = %g microseconds\n", ((timeInProfiledCall/freq)*1000000.0)/((double)nbProfiledCall) );
-#else
-         freq = (double)CLOCKS_PER_SEC;
-         printf( "\nTotal execution time                = %g milliseconds", timeInProfiledCall/freq/1000.0 );
-         printf( "\nWorst single function call          = %g milliseconds", worstProfiledCall/freq/1000.0 );
-         printf( "\nAverage execution time per function = %g microseconds\n", (timeInProfiledCall/freq/1000000.0)/((double)nbProfiledCall) );
-#endif
+      if( nbSvPipes > 0 )
+      {
+         int p;
+         server_verify_shutdown();
+         for( p = 0; p < nbSvPipes; p++ )
+            codegen_pipe_close(&svPipes[p]);
       }
-      printf( "\n* All tests succeeded. Enjoy the library. *\n" );
+
+      if( retValue != TA_TEST_PASS )
+         return retValue;
    }
+
+   if( doCodegenTest )
+   {
+      retValue = test_codegen_with_simulator();
+      if( retValue != TA_TEST_PASS )
+         return retValue;
+   }
+
+   printf( "\n* All tests succeeded. Enjoy the library. *\n" );
 
 
    return TA_TEST_PASS; /* Everything succeed !!! */
@@ -891,7 +842,7 @@ static ErrorNumber testTAFunction_ALL( void )
 
 static void printUsage(void)
 {
-      printf( "Usage: ta_regtest [-p] [--function=NAME[,NAME,...]]\n" );
+      printf( "Usage: ta_regtest [--function=NAME[,NAME,...]]\n" );
       printf( "\n" );
       printf( "   No parameter needed for regression testing.\n" );
       printf( "\n" );
@@ -902,10 +853,6 @@ static void printUsage(void)
       printf( "   ** Must be run from the 'bin' directory.\n" );
       printf( "\n" );
       printf( "   OPTIONS:\n" );
-      printf( "    -p Only generate profiling data on stdout. This is\n" );
-      printf( "       intended only for the TA-Lib developers. It is\n" );
-      printf( "       not further documented for general use.\n" );
-      printf( "\n" );
       printf( "    --function=NAME[,NAME,...]\n" );
       printf( "       Only run test groups whose tags contain at least\n" );
       printf( "       one of the given names (substring match).\n" );

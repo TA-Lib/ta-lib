@@ -43,5 +43,5 @@ Everything else CI gates on lives in `ta_regtest` (C) or is a step inside
 |---|---|
 | `utilities/` | Versions, package digests, file/archive comparison, Windows `vcvarsall` — imported across the release scripts |
 | `install_tests/` | MSI and Python-wheel install verification — imported by `test-dist.py` |
-| `serve_version.py` | Builds a "serve of another version" oracle from a pinned worktree — imported by `regtest.py` |
+| `serve_version.py` | Builds a "serve of another version" oracle from a pinned worktree — imported by `utilities/ref_serve.py` |
 | `build_064_serve.py` | Builds `bin/ta_064_serve` (the frozen v0.6.4 oracle for `ta_regtest --fuzz-064`) — called by `build.py` |

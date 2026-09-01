@@ -70,10 +70,6 @@
 /* None */
 
 /**** External variables declarations. ****/
-extern int nbProfiledCall;
-extern double timeInProfiledCall;
-extern double worstProfiledCall;
-extern int insufficientClockPrecision;
 
 /**** Global variables definitions.    ****/
 
@@ -139,17 +135,6 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
 static TA_RangeStability classify_range_stability( TA_FuncUnstId unstId,
                                                    unsigned int integerTolerance );
 
-static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
-                                    TA_Integer    startIdx,
-                                    TA_Integer    endIdx,
-                                    TA_Real      *outputBuffer,
-                                    TA_Integer   *outputBufferInt,
-                                    TA_Integer   *outBegIdx,
-                                    TA_Integer   *outNbElement,
-                                    TA_Integer   *lookback,
-                                    void         *opaqueData,
-                                    unsigned int  outputNb,
-                                    unsigned int *isOutputInteger );
 
 /**** Local variables definitions.     ****/
 
@@ -734,7 +719,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
    }
 
    outputIsInteger = 0;
-   retCode = CallTestFunction( testFunction, 0, MAX_RANGE_END, refBuffer, refBufferInt,
+   retCode = testFunction( 0, MAX_RANGE_END, refBuffer, refBufferInt,
                            &refOutBeg, &refOutNbElement, &refLookback,
                            opaqueData, outputNb, &outputIsInteger );
 
@@ -900,7 +885,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
    {
       /* Call the TA function. */
       endIdx = startIdx+fixSize-1;
-      retCode = CallTestFunction( testFunction, startIdx, endIdx,
+      retCode = testFunction( startIdx, endIdx,
                               &outputBuffer[1], &outputBufferInt[1],
                               &outputBegIdx, &outputNbElement, &lookback,
                               opaqueData, outputNb, &outputIsInteger );
@@ -1410,75 +1395,6 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
    }
 
    return 1; /* Value equal within tolerance. */
-}
-
-static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
-                                    TA_Integer    startIdx,
-                                    TA_Integer    endIdx,
-                                    TA_Real      *outputBuffer,
-                                    TA_Integer   *outputBufferInt,
-                                    TA_Integer   *outBegIdx,
-                                    TA_Integer   *outNbElement,
-                                    TA_Integer   *lookback,
-                                    void         *opaqueData,
-                                    unsigned int  outputNb,
-                                    unsigned int *isOutputInteger )
-{
-   /* Call the function and do profiling. */
-   TA_RetCode retCode;
-   double clockDelta;
-
-#ifdef WIN32
-   LARGE_INTEGER startClock;
-   LARGE_INTEGER endClock;
-#else
-   clock_t startClock;
-   clock_t endClock;
-#endif
-
-#ifdef WIN32
-   QueryPerformanceCounter(&startClock);
-#else
-   startClock = clock();
-#endif
-	retCode = testFunction( startIdx,
-                  endIdx,
-                  outputBuffer,
-                  outputBufferInt,
-                  outBegIdx,
-                  outNbElement,
-                  lookback,
-                  opaqueData,
-                  outputNb,
-                  isOutputInteger );
-
-	/* Profile only functions producing at least 20 values. */
-	if( *outNbElement < 20 )
-	{
-		return retCode;
-	}
-
-#ifdef WIN32
-   QueryPerformanceCounter(&endClock);
-   clockDelta = (double)((__int64)endClock.QuadPart - (__int64) startClock.QuadPart);
-#else
-   endClock = clock();
-   clockDelta = (double)(endClock - startClock);
-#endif
-
-   if( clockDelta <= 0 )
-   {
-	   insufficientClockPrecision = 1;
-   }
-   else
-   {
-      if( clockDelta > worstProfiledCall )
-         worstProfiledCall = clockDelta;
-      timeInProfiledCall += clockDelta;
-      nbProfiledCall++;
-   }
-
-   return retCode;
 }
 
 /* See ta_test_priv.h for the rationale (why relative-only is wrong for any

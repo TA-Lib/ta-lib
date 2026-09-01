@@ -795,7 +795,7 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_MFI_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); return TA_ALLOC_ERR; }
+      if( !sp ) { if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); } if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->posSumMF = posSumMF;
@@ -805,14 +805,14 @@ static TA_RetCode TA_MFI_OpenImpl( struct TA_MFI_Stream **stream, const double i
       sp->mflow_Idx = mflow_Idx;
       sp->maxIdx_mflow = maxIdx_mflow;
       sp->cbSize_mflow = maxIdx_mflow + 1;
-      if( sp->cbSize_mflow < 1 || sp->cbSize_mflow > historyLen + 1 ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(352); }
+      if( sp->cbSize_mflow < 1 || sp->cbSize_mflow > historyLen + 1 ) { if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); } if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); } TA_MFI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(352); }
       sp->cb_mflow_positive = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
-      if( !sp->cb_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_mflow_positive ) { if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); } if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); } TA_MFI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_mflow_positive, mflow_positive, sizeof(double) * (size_t)sp->cbSize_mflow );
       sp->cb_mflow_negative = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_mflow );
-      if( !sp->cb_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); TA_MFI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_mflow_negative ) { if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); } if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); } TA_MFI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_mflow_negative, mflow_negative, sizeof(double) * (size_t)sp->cbSize_mflow );
-      if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive ); if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative ); 
+      if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); } if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];

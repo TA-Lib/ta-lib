@@ -4458,6 +4458,84 @@ static int stream_fuzz_port_selfcheck(CodegenPipe *cp, char *requestBuf, char *r
     return fuzzFails;
 }
 
+/* Java is the one backend whose server carries its OWN copy of the shipped
+ * Core -- spliced from the fragments -- so it is the only one that can measure a
+ * different text than the library ships (#322). Both artifacts are stamped with
+ * a digest of the generated method text at generate time; equal means the pair
+ * came from a single generate. Asked over the WIRE rather than compared on disk,
+ * because that is what a stale class directory is still visible through.
+ *
+ * Counted, not merely compared: a server that answered nothing would otherwise
+ * read exactly like a server that agreed. */
+static long g_gencodeDigestChecked = 0;
+/* Set from the language loop, NOT from the check: a gutted check then leaves the
+   floor below unsatisfied instead of quietly satisfying it. */
+static int g_gencodeDigestEligible = 0;
+
+static int codegen_json_get_string( const char *json, const char *field,
+                                    char *out, int outSize )
+{
+   char key[64];
+   const char *p, *q;
+   int n;
+
+   (void)snprintf( key, sizeof(key), "\"%s\"", field );
+   p = strstr( json, key );
+   if( !p ) return 0;
+   p = strchr( p + strlen(key), ':' );
+   if( !p ) return 0;
+   p = strchr( p, '"' );
+   if( !p ) return 0;
+   p++;
+   q = strchr( p, '"' );
+   if( !q ) return 0;
+   n = (int)(q - p);
+   if( n >= outSize ) n = outSize - 1;
+   memcpy( out, p, (size_t)n );
+   out[n] = '\0';
+   return 1;
+}
+
+static ErrorNumber codegen_check_gencode_digest( CodegenPipe *cp, const CodegenLanguage *lang )
+{
+   char req[64], resp[1024];
+   char spliced[64], shipped[64];
+
+   /* Every other server compiles or links the shipped artifact, so it has no
+      second text that could drift and no stamp to answer with. */
+   if( strcmp( lang->name, "java" ) != 0 ) return TA_TEST_PASS;
+
+   (void)snprintf( req, sizeof(req), "{\"method\":\"gencode_digest\"}" );
+   if( codegen_pipe_call( cp, req, resp, (int)sizeof(resp) ) != TA_TEST_PASS
+       || !codegen_json_get_string( resp, "spliced", spliced, (int)sizeof(spliced) )
+       || !codegen_json_get_string( resp, "shipped", shipped, (int)sizeof(shipped) ) )
+   {
+      printf( "\nCODEGEN FAILED: the %s server did not answer gencode_digest — it\n"
+              "  predates the build-stamp gate, so nothing here can tell whether it is\n"
+              "  running the shipped library or an older copy of it (#322).\n"
+              "  Recover with:  scripts/build.py servers\n",
+              lang->display );
+      return TA_CODEGEN_GENCODE_DIGEST_SKEW;
+   }
+
+   if( strcmp( spliced, shipped ) != 0 )
+   {
+      printf( "\nCODEGEN FAILED: the %s server is NOT running the shipped library.\n"
+              "  spliced into the server: %s\n"
+              "  shipped in Core.java:    %s\n"
+              "  The two came from different generate runs, so every value this\n"
+              "  language reports would describe code that is not what ships (#322).\n"
+              "  Recover with:  scripts/build.py generate && scripts/build.py servers\n"
+              "  (a `generate --func=<NAME>` run deliberately skips the shipped\n"
+              "   Core.java, which is how the two part.)\n",
+              lang->display, spliced, shipped );
+      return TA_CODEGEN_GENCODE_DIGEST_SKEW;
+   }
+
+   g_gencodeDigestChecked++;
+   return TA_TEST_PASS;
+}
+
 static ErrorNumber test_codegen_for_language(
     const CodegenLanguage *lang,
     int langIndex,
@@ -4472,6 +4550,8 @@ static ErrorNumber test_codegen_for_language(
     printf("Codegen verification: %s\n", lang->display);
     printf("---------------------------------------------\n");
 
+    if( strcmp(lang->name, "java") == 0 ) g_gencodeDigestEligible = 1;
+
     errNb = codegen_pipe_open(&cp, lang->argv);
     if( errNb != TA_TEST_PASS )
     {
@@ -4481,6 +4561,14 @@ static ErrorNumber test_codegen_for_language(
         else
             printf(" (run: ta_codegen build --lang=%s)", lang->name);
         printf("\n");
+        return errNb;
+    }
+
+    /* Before anything is measured: prove this server IS the shipped library. */
+    errNb = codegen_check_gencode_digest(&cp, lang);
+    if( errNb != TA_TEST_PASS )
+    {
+        codegen_pipe_close(&cp);
         return errNb;
     }
 
@@ -5163,11 +5251,11 @@ static void write_markdown_report(const char *filepath, const char *languageFilt
     for( unsigned int li = 0; li < NUM_LANGUAGES; li++ ) {
         if( !showLang[li] ) continue;
         double avg = langMeasured[li] > 0 ? langSum[li] / langMeasured[li] : 0;
-        char avgStr[32], vsStr[32];
+        char avgStr[40], vsStr[32];
         if( langMeasured[li] < total / 2 ) {
-            fmt_ns(avgStr, sizeof(avgStr), avg);
-            char tmp[40]; snprintf(tmp, sizeof(tmp), "~%s*", avgStr);
-            avgStr[0] = '\0'; strncat(avgStr, tmp, sizeof(avgStr) - 1);
+            char raw[32];
+            fmt_ns(raw, sizeof(raw), avg);
+            snprintf(avgStr, sizeof(avgStr), "~%s*", raw);
             snprintf(vsStr, sizeof(vsStr), "*%d/%d measured", langMeasured[li], total);
         } else {
             fmt_ns(avgStr, sizeof(avgStr), avg);
@@ -9617,6 +9705,16 @@ ErrorNumber test_codegen(const TA_History *history,
 
     print_timing_table(languageFilter);
 
+    /* Non-vacuity for the build-stamp gate. Java reaching the sweep with no
+     * digest comparison means the check stopped running, which reads exactly
+     * like the two artifacts agreeing (#322). */
+    if( g_gencodeDigestEligible && g_gencodeDigestChecked == 0 )
+    {
+        printf("\nCODEGEN FAILED: the Java build-stamp gate compared nothing — the\n"
+               "  server was never asked whether it is running the shipped library\n");
+        return TA_CODEGEN_GENCODE_DIGEST_VACUOUS;
+    }
+
     /* Non-vacuity for the float leg: it compares a language's single-precision
      * entry point against its own double one, and a server that silently ignored
      * "use_float" would compare the double result with itself and pass. The
@@ -9725,14 +9823,12 @@ ErrorNumber test_codegen(const TA_History *history,
         {
             static const int FLOORED[] = { 0, 2, 12, 13 };   /* Success, BadParam, both index codes */
             unsigned int li, b, fi;
-            int anyLang = 0;
             for( li = 0; li < NUM_LANGUAGES; li++ )
             {
                 long total = 0;
                 for( b = 0; b < RC_BUCKETS; b++ ) total += g_retCodeSeen[li][b];
                 if( total == 0 )
                     continue;               /* language not run */
-                anyLang = 1;
                 if( g_retCodeSeen[li][RC_BUCKETS - 1] > 0 )
                 {
                     printf("\nCODEGEN FAILED: %s answered %ld call(s) with a code outside "
@@ -9967,11 +10063,11 @@ ErrorNumber test_codegen(const TA_History *history,
             if( !language_matches_filter(languageFilter, ALL_LANGUAGES[li].name) )
                 continue;
             double avg = langMeasured[li] > 0 ? langSum[li] / langMeasured[li] : 0;
-            char avgStr[32], vsStr[32];
+            char avgStr[40], vsStr[32];
             if( langMeasured[li] < total / 2 ) {
-                fmt_ns(avgStr, sizeof(avgStr), avg);
-                char tmp[40]; snprintf(tmp, sizeof(tmp), "~%s*", avgStr);
-                avgStr[0] = '\0'; strncat(avgStr, tmp, sizeof(avgStr) - 1);
+                char raw[32];
+                fmt_ns(raw, sizeof(raw), avg);
+                snprintf(avgStr, sizeof(avgStr), "~%s*", raw);
                 snprintf(vsStr, sizeof(vsStr), "*%d/%d measured", langMeasured[li], total);
             } else {
                 fmt_ns(avgStr, sizeof(avgStr), avg);

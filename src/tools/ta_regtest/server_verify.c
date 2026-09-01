@@ -670,18 +670,11 @@ ErrorNumber server_verify(
         if( TA_GetCompatibility() != TA_COMPATIBILITY_DEFAULT &&
             !codegen_lang_has_compatibility_api(lang) )
         {
-            /* A Metastock leg of a hand-written test, and this language has no
-             * compatibility API (its mode is pinned to Default) — there is
-             * nothing to verify. Reported once per language so the gap shows up
-             * in the log instead of passing vacuously. */
-            static int noted[SV_MAX_PIPES];
-            if( !noted[p] )
-            {
-                noted[p] = 1;
-                printf("  SV NOTE [%s]: non-default compatibility legs skipped "
-                       "- no compatibility API in this language\n",
-                       lang ? lang : "?");
-            }
+            /* A Metastock leg, against a backend that deliberately has no
+             * compatibility API. Not a coverage gap deferred: TA_SetCompatibility
+             * is deprecated in C and unreachable from Rust/Java/C# by design, so
+             * there is no second implementation to compare against — permanently,
+             * for all three. Silent because it is an invariant, not news. */
             continue;
         }
         err = sync_compatibility(p);

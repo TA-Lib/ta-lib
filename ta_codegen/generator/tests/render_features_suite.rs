@@ -1639,18 +1639,22 @@ fn c_backend_emits_candle_settings_unpacking() {
     let helpers = make_helpers();
     let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
 
-    // Assert C output contains unpacking lines for BodyLong
-    assert!(
-        c_out.contains("BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType"),
-        "C output should unpack BodyLong_rangeType: {c_out}"
-    );
+    // Only the properties the rendered C actually reads. CDL2CROWS reaches
+    // BodyLong through TA_CANDLERANGE / TA_CANDLEAVERAGE, which take the setting
+    // as a token and read TA_Globals themselves, so `_avgPeriod` is the only
+    // local it needs -- declaring the other two is the -Wunused-variable this
+    // emitter used to produce on 62 candlestick files.
     assert!(
         c_out.contains("BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod"),
-        "C output should unpack BodyLong_avgPeriod"
+        "C output should unpack BodyLong_avgPeriod: {c_out}"
     );
     assert!(
-        c_out.contains("BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor"),
-        "C output should unpack BodyLong_factor"
+        !c_out.contains("BodyLong_rangeType"),
+        "C output should not declare BodyLong_rangeType, which nothing reads"
+    );
+    assert!(
+        !c_out.contains("BodyLong_factor"),
+        "C output should not declare BodyLong_factor, which nothing reads"
     );
 
     // Should NOT contain settings that aren't referenced

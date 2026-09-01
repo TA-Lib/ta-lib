@@ -582,17 +582,17 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_CCI_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); return TA_ALLOC_ERR; }
+      if( !sp ) { if( circBuffer != &local_circBuffer[0] ) { TA_Free( circBuffer ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->circBuffer_Idx = circBuffer_Idx;
       sp->maxIdx_circBuffer = maxIdx_circBuffer;
       sp->cbSize_circBuffer = maxIdx_circBuffer + 1;
-      if( sp->cbSize_circBuffer < 1 || sp->cbSize_circBuffer > historyLen + 1 ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(193); }
+      if( sp->cbSize_circBuffer < 1 || sp->cbSize_circBuffer > historyLen + 1 ) { if( circBuffer != &local_circBuffer[0] ) { TA_Free( circBuffer ); } TA_CCI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(193); }
       sp->cb_circBuffer = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_circBuffer );
-      if( !sp->cb_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); TA_CCI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_circBuffer ) { if( circBuffer != &local_circBuffer[0] ) { TA_Free( circBuffer ); } TA_CCI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_circBuffer, circBuffer, sizeof(double) * (size_t)sp->cbSize_circBuffer );
-      if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer ); 
+      if( circBuffer != &local_circBuffer[0] ) { TA_Free( circBuffer ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];

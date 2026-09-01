@@ -58,12 +58,8 @@
 
 TA_LIB_API int TA_CDLDRAGONFLYDOJI_Lookback( void )
 {
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
    return max(BodyDoji_avgPeriod,ShadowVeryShort_avgPeriod);
 }
 
@@ -84,12 +80,8 @@ TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI( int    startIdx,
    int BodyDojiTrailingIdx;
    int ShadowVeryShortTrailingIdx;
    int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -197,12 +189,8 @@ TA_RetCode TA_S_CDLDRAGONFLYDOJI( int    startIdx,
    int BodyDojiTrailingIdx;
    int ShadowVeryShortTrailingIdx;
    int lookbackTotal;
-   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;

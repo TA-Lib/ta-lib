@@ -95,7 +95,6 @@ TA_LIB_API TA_RetCode TA_ADX( int    startIdx,
    double prevPlusDM;
    double prevTR;
    double tempReal;
-   double tempReal2;
    double diffP;
    double diffM;
    double minusDI;
@@ -511,7 +510,6 @@ TA_RetCode TA_S_ADX( int    startIdx,
    double prevPlusDM;
    double prevTR;
    double tempReal;
-   double tempReal2;
    double diffP;
    double diffM;
    double minusDI;
@@ -865,7 +863,6 @@ static TA_RetCode TA_ADX_OpenImpl( struct TA_ADX_Stream **stream, const double i
       double prevPlusDM = 0.0;
       double prevTR = 0.0;
       double tempReal;
-      double tempReal2;
       double diffP;
       double diffM;
       double minusDI;

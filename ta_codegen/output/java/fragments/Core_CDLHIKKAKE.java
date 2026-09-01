@@ -55,6 +55,8 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      savedHigh = 0.0;
+      savedLow = 0.0;
       /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
        * state carried without an absolute bar index.
        */
@@ -163,6 +165,8 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      savedHigh = 0.0;
+      savedLow = 0.0;
       lookbackTotal = CDLHIKKAKE_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -596,6 +600,8 @@
          outNBElement.value = 0;
          return RetCode.InsufficientHistory;
       }
+      savedHigh = 0.0;
+      savedLow = 0.0;
       /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
        * state carried without an absolute bar index.
        */

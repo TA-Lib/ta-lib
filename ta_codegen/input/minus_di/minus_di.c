@@ -41,7 +41,7 @@ TA_RetCode minus_di(int startIdx, int endIdx,
    int today, lookbackTotal, outIdx;
    double prevHigh, prevLow, prevClose;
    double prevMinusDM, prevTR;
-   double tempReal, tempReal2, diffP, diffM;
+   double tempReal, diffP, diffM;
 
    int i;
 

@@ -99,6 +99,9 @@ def show_help():
   Building (C, via CMake):
     (default)           Build library + all C tools
     ta_regtest          Build the regression test runner
+    ta_ref_serve        Build the frozen pre-cutover reference oracle from the
+                        pinned-tag worktree. `regtest` and `ta_regtest --codegen`
+                        need it present; neither builds it.
 
   Building (Rust ta_codegen, via cargo — CMake never invokes cargo):
     ta_codegen          Build the Rust codegen tool
@@ -579,6 +582,7 @@ TARGET_PREREQS = {
     # Cargo only, deliberately: the point of this gate is that anyone can run
     # it. It builds nothing C, so cmake is not a prerequisite either.
     'regen-check':  [PREREQS_CARGO],
+    'ta_ref_serve': [PREREQS_CMAKE, PREREQS_GCC, PREREQS_CARGO],
     'format':       PREREQS_BUILD_CODEGEN,
     'format-check': PREREQS_BUILD_CODEGEN,
     'clippy':       PREREQS_BUILD_CODEGEN,
@@ -645,6 +649,14 @@ def main():
                 pass
         if not removed:
             print("Nothing to clean.")
+        return
+
+    # The frozen pre-cutover oracle. Lives here because this is the tool named
+    # build: ta_regtest and regtest.py CONSUME the oracle, they do not make it.
+    if args.target == 'ta_ref_serve':
+        check_prerequisites([PREREQS_CMAKE, PREREQS_GCC, PREREQS_CARGO])
+        from utilities import ref_serve
+        ref_serve.ensure_reference_serve(root_dir, os.path.join(root_dir, 'bin'))
         return
 
     # Pure text check — no build prerequisites.

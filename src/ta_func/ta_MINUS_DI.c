@@ -100,7 +100,6 @@ TA_LIB_API TA_RetCode TA_MINUS_DI( int    startIdx,
    double prevMinusDM;
    double prevTR;
    double tempReal;
-   double tempReal2;
    double diffP;
    double diffM;
    int i;
@@ -473,7 +472,6 @@ TA_RetCode TA_S_MINUS_DI( int    startIdx,
    double prevMinusDM;
    double prevTR;
    double tempReal;
-   double tempReal2;
    double diffP;
    double diffM;
    int i;

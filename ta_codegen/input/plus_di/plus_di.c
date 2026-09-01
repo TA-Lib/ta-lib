@@ -41,7 +41,7 @@ TA_RetCode plus_di(int startIdx, int endIdx,
    int today, lookbackTotal, outIdx;
    double prevHigh, prevLow, prevClose;
    double prevPlusDM, prevTR;
-   double tempReal, tempReal2, diffP, diffM;
+   double tempReal, diffP, diffM;
 
    int i;
 

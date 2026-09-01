@@ -1667,7 +1667,7 @@ static TA_RetCode TA_HT_SINE_OpenImpl( struct TA_HT_SINE_Stream **stream, const 
 
       /* Capture the live batch state into the handle. */
       sp = (struct TA_HT_SINE_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); return TA_ALLOC_ERR; }
+      if( !sp ) { if( smoothPrice != &local_smoothPrice[0] ) { TA_Free( smoothPrice ); } return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->period = period;
       sp->periodWMASum = periodWMASum;
@@ -1725,11 +1725,11 @@ static TA_RetCode TA_HT_SINE_OpenImpl( struct TA_HT_SINE_Stream **stream, const 
       }
       sp->ringPos_trailingWMAIdx = 0;
       sp->cbSize_smoothPrice = maxIdx_smoothPrice + 1;
-      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_SINE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(331); }
+      if( sp->cbSize_smoothPrice < 1 || sp->cbSize_smoothPrice > historyLen + 1 ) { if( smoothPrice != &local_smoothPrice[0] ) { TA_Free( smoothPrice ); } TA_HT_SINE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(331); }
       sp->cb_smoothPrice = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); TA_HT_SINE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      if( !sp->cb_smoothPrice ) { if( smoothPrice != &local_smoothPrice[0] ) { TA_Free( smoothPrice ); } TA_HT_SINE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_smoothPrice, smoothPrice, sizeof(double) * (size_t)sp->cbSize_smoothPrice );
-      if( smoothPrice != &local_smoothPrice[0] ) TA_Free( smoothPrice ); 
+      if( smoothPrice != &local_smoothPrice[0] ) { TA_Free( smoothPrice ); } 
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
       sp->cur_outSine = outSine[(*outNBElement - 1) * outStride];

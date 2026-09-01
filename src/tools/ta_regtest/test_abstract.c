@@ -53,9 +53,6 @@
 /* Description:
  *         Regression testing of the functionality provided
  *         by the ta_abstract module.
- *
- *         Also perform call to all functions for the purpose
- *         of profiling (doExtensiveProfiling option).
  */
 
 /**** Headers ****/
@@ -76,7 +73,6 @@
 /* None */
 
 /**** External variables declarations. ****/
-extern int doExtensiveProfiling;
 
 /* Optional codegen server pipe — when set, each C TA_CallFunc is
  * replicated via the server's abstract_call endpoint and compared. */
@@ -94,6 +90,8 @@ static long long g_d2Vectors = 0;
 static long long g_d2NonDefault = 0;
 static long long g_d2Sentinel = 0;
 static long long g_d2Reject = 0;
+/* Pairs of integer slots driven at both orderings; see d2_param_vectors step 1b. */
+static long long g_d2Ordering = 0;
 /* Non-finite parameter probes; see d2_nonfinite_params. */
 static long long g_d2NonFinite = 0;
 static long long g_d2NonFiniteFuncs = 0;
@@ -112,26 +110,10 @@ extern double gDataHigh[];
 extern double gDataLow[];
 extern double gDataClose[];
 
-extern int nbProfiledCall;
-extern double timeInProfiledCall;
-extern double worstProfiledCall;
-extern int insufficientClockPrecision;
-
 /**** Global variables definitions.    ****/
 /* None */
 
 /**** Local declarations.              ****/
-typedef enum
-{
-	PROFILING_10000,
-	PROFILING_8000,
-	PROFILING_5000,
-    PROFILING_2000,
-	PROFILING_1000,
-	PROFILING_500,
-	PROFILING_100
-} ProfilingType;
-
 /**** Local functions declarations.    ****/
 static ErrorNumber testLookback(TA_ParamHolder *paramHolder );
 static ErrorNumber test_default_calls(void);
@@ -139,7 +121,6 @@ static ErrorNumber callWithDefaults( const char *funcName,
 									 const double *input,
 									 const int *input_int, int size,
 									 const char *datasetName );
-static ErrorNumber callAndProfile( const char *funcName, ProfilingType type );
 
 /**** Local variables definitions.     ****/
 static double inputNegData[100];
@@ -167,6 +148,7 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    /* Per-server, so the summary line reports the server it names rather than a
       running total across every server tested so far. */
    g_d2Vectors = g_d2NonDefault = g_d2Sentinel = g_d2Reject = 0;
+   g_d2Ordering = 0;
    g_d2NonFinite = g_d2NonFiniteFuncs = 0;
    g_d2OorNotRejected = g_d2SentNotDefault = 0;
    if( cp )
@@ -1462,6 +1444,7 @@ static void d2_set_opts( TA_ParamHolder *paramHolder, const TA_FuncHandle *handl
 #define D2_CLASS_NON_DEFAULT 0
 #define D2_CLASS_SENTINEL     1
 #define D2_CLASS_REJECT       2
+#define D2_CLASS_ORDERING     3
 
 /* The all-defaults C result, captured before the sweep so the sentinel class can
  * assert what it exists to assert. */
@@ -1485,6 +1468,27 @@ static unsigned long long d2_digest( const TA_FuncInfo *funcInfo, const TA_FuncH
         }
     }
     return h;
+}
+
+/* A low and a high in-range value for one integer slot, far enough apart that a
+ * PAIR of them expresses an ordering in both directions. Small on purpose: what
+ * this class tests is the relation between two slots, and a large period only
+ * buys runtime -- but not `min` itself, so a degenerate period is not the only
+ * thing the class ever sees. Returns 0 when the domain has no room for two
+ * distinct values, which is not a failure: the slot simply cannot be ordered. */
+static int d2_lo_hi( const TA_OptInputParameterInfo *oi, double *lo, double *hi )
+{
+    const TA_IntegerRange *r = (const TA_IntegerRange *)oi->dataSet;
+    if( !r || r->max <= r->min ) return 0;
+    int a = r->min + 2;
+    int b = r->min + 9;
+    if( a > r->max ) a = r->max;
+    if( b > r->max ) b = r->max;
+    if( a >= b ) { a = r->min; b = r->max; }
+    if( a >= b ) return 0;
+    *lo = (double)a;
+    *hi = (double)b;
+    return 1;
 }
 
 static ErrorNumber d2_drive( const char *funcName, const TA_FuncHandle *handle,
@@ -1680,6 +1684,48 @@ static ErrorNumber d2_param_vectors( const char *funcName, const TA_FuncHandle *
     ErrorNumber e = d2_drive(funcName, handle, funcInfo, paramHolder, input, size,
                              vec, "non-default", relaxValues, D2_CLASS_NON_DEFAULT, NULL);
     if( e != TA_TEST_PASS ) return e;
+
+    /* 1b. Parameter INTERACTION. Steps 1-3 each move ONE slot away from the
+     *     default, or move every slot by a fixed per-slot offset -- neither can
+     *     express a RELATION between two of them. A function whose behaviour
+     *     turns on one is then value-checked only near the defaults on the
+     *     tier that reaches the shipped binder (#322).
+     *
+     *     Driven off the declared domains, so a new function or a new pair of
+     *     integer parameters is covered the day it lands, with no list here.
+     *     BOTH orderings per pair: which side of a relation is the interesting
+     *     one is a property of the function, which this sweep does not know. */
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        const TA_OptInputParameterInfo *oiK;
+        double loK, hiK;
+        TA_GetOptInputParameterInfo(handle, k, &oiK);
+        if( oiK->type != TA_OptInput_IntegerRange ) continue;
+        if( !d2_lo_hi(oiK, &loK, &hiK) ) continue;
+
+        for( j = k + 1; j < funcInfo->nbOptInput; j++ )
+        {
+            const TA_OptInputParameterInfo *oiJ;
+            double loJ, hiJ;
+            unsigned int m;
+            int ord;
+
+            TA_GetOptInputParameterInfo(handle, j, &oiJ);
+            if( oiJ->type != TA_OptInput_IntegerRange ) continue;
+            if( !d2_lo_hi(oiJ, &loJ, &hiJ) ) continue;
+
+            for( ord = 0; ord < 2; ord++ )
+            {
+                for( m = 0; m < funcInfo->nbOptInput; m++ ) vec[m] = base[m];
+                vec[k] = ord ? hiK : loK;
+                vec[j] = ord ? loJ : hiJ;
+                g_d2Ordering++;
+                e = d2_drive(funcName, handle, funcInfo, paramHolder, input, size,
+                             vec, "ordering", relaxValues, D2_CLASS_ORDERING, NULL);
+                if( e != TA_TEST_PASS ) return e;
+            }
+        }
+    }
 
     /* 2. and 3., one parameter at a time so a failure names the slot. */
     for( k = 0; k < funcInfo->nbOptInput; k++ )
@@ -2059,12 +2105,18 @@ ErrorNumber test_abstract( void )
          return TA_ABSTRACT_CALL_MISMATCH;
       }
 
-      if( g_d2Vectors == 0 || g_d2NonDefault == 0 || g_d2Sentinel == 0 || g_d2Reject == 0 )
+      /* Ordering carries a LITERAL floor, not merely non-zero, for the reason
+       * the non-finite sweep above states: a derived count moves with the
+       * corpus and lets the class go quiet unnoticed. 64 pairs today; it rose
+       * from 62 when KC landed, which is the class doing its job. Raise it when
+       * a function gains an integer parameter -- that is the point. */
+      if( g_d2Vectors == 0 || g_d2NonDefault == 0 || g_d2Sentinel == 0 || g_d2Reject == 0
+          || g_d2Ordering < 64 )
       {
          printf( "  ABSTRACT ERROR: the binder parameter-contract sweep produced no "
-                 "vectors of some class (%lld/%lld/%lld/%lld) — the binders are back "
+                 "vectors of some class (%lld/%lld/%lld/%lld/%lld) — the binders are back "
                  "to being tested only at their declared defaults\n",
-                 g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject );
+                 g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject, g_d2Ordering );
          return TA_ABSTRACT_CALL_MISMATCH;
       }
    }
@@ -2232,7 +2284,6 @@ static int isCandlePattern( const TA_FuncInfo *funcInfo )
 
 static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
 {
-	static int nbFunctionDone = 0;
    ErrorNumber *errorNumber;
    errorNumber = (ErrorNumber *)opaqueData;
    if( *errorNumber != TA_TEST_PASS )
@@ -2273,26 +2324,6 @@ static void testDefault( const TA_FuncInfo *funcInfo, void *opaqueData )
 
 #undef CALL
 
-#define CALL(x) { \
-	*errorNumber = callAndProfile( funcInfo->name, x ); \
-	if( *errorNumber != TA_TEST_PASS ) { \
-	   printf( "Failed for [%s][%s]\n", funcInfo->name, #x ); \
-       return; \
-	} \
-}
-   if( doExtensiveProfiling /*&& (nbFunctionDone<5)*/ )
-   {
-	   nbFunctionDone++;
-	   printf( "%s ", funcInfo->name );
-       CALL( PROFILING_100 );
-       CALL( PROFILING_500 );
-	   CALL( PROFILING_1000 );
-       CALL( PROFILING_2000 );
-       CALL( PROFILING_5000 );
-       CALL( PROFILING_8000 );
-	   CALL( PROFILING_10000 );
-	   printf( "\n" );
-   }
 }
 
 static ErrorNumber callWithDefaults( const char *funcName, const double *input, const int *input_int, int size, const char *datasetName )
@@ -3635,17 +3666,7 @@ static ErrorNumber test_default_calls(void)
        inputRandDblEpsilon_int[i] = sign?1:-1;
    }
 
-   if( doExtensiveProfiling )
-   {
-		   printf( "\n[PROFILING START]\n" );
-   }
-
    TA_ForEachFunc( testDefault, &errNumber );
-
-   if( doExtensiveProfiling )
-   {
-		   printf( "[PROFILING END]\n" );
-   }
 
    /* Every multi-output function must reject output-buffer aliasing (issue #108). */
    if( errNumber == TA_TEST_PASS )
@@ -3724,207 +3745,4 @@ static ErrorNumber test_default_calls(void)
       errNumber = testHolderStaysReusable();
 
    return errNumber;
-}
-
-static ErrorNumber callAndProfile( const char *funcName, ProfilingType type )
-{
-   TA_ParamHolder *paramHolder;
-   const TA_FuncHandle *handle;
-   const TA_FuncInfo *funcInfo;
-   const TA_InputParameterInfo *inputInfo;
-   const TA_OutputParameterInfo *outputInfo;
-
-   TA_RetCode retCode;
-   int h, i, j, k;
-   int outBegIdx, outNbElement;
-
-   /* Variables to control iteration and corresponding input size */
-   int nbInnerLoop, nbOuterLoop;
-   int stepSize;
-   int inputSize;
-
-   /* Variables measuring the execution time */
-#ifdef WIN32
-   LARGE_INTEGER startClock;
-   LARGE_INTEGER endClock;
-#else
-   clock_t startClock;
-   clock_t endClock;
-#endif
-   double clockDelta;
-   int nbProfiledCallLocal;
-   double timeInProfiledCallLocal;
-   double worstProfiledCallLocal;
-
-   nbProfiledCallLocal = 0;
-   timeInProfiledCallLocal = 0.0;
-   worstProfiledCallLocal = 0.0;
-   nbInnerLoop = nbOuterLoop = stepSize = inputSize = 0;
-
-   switch( type )
-   {
-   case PROFILING_10000:
-	   nbInnerLoop = 1;
-	   nbOuterLoop = 100;
-	   stepSize = 10000;
-	   inputSize = 10000;
-	   break;
-   case PROFILING_8000:
-	   nbInnerLoop = 2;
-	   nbOuterLoop = 50;
-	   stepSize = 2000;
-	   inputSize = 8000;
-       break;
-   case PROFILING_5000:
-	   nbInnerLoop = 2;
-	   nbOuterLoop = 50;
-	   stepSize = 5000;
-	   inputSize = 5000;
-	   break;
-   case PROFILING_2000:
-	   nbInnerLoop = 5;
-	   nbOuterLoop = 20;
-	   stepSize = 2000;
-	   inputSize = 2000;
-	   break;
-   case PROFILING_1000:
-	   nbInnerLoop = 10;
-	   nbOuterLoop = 10;
-	   stepSize = 1000;
-	   inputSize = 1000;
-	   break;
-   case PROFILING_500:
-	   nbInnerLoop = 20;
-	   nbOuterLoop = 5;
-	   stepSize = 500;
-	   inputSize = 500;
-	   break;
-   case PROFILING_100:
-	   nbInnerLoop = 100;
-	   nbOuterLoop = 1;
-	   stepSize = 100;
-	   inputSize = 100;
-	   break;
-   }
-
-   retCode = TA_GetFuncHandle( funcName, &handle );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "Can't get the function handle [%d]\n", retCode );
-      return TA_ABS_TST_FAIL_GETFUNCHANDLE;
-   }
-
-   retCode = TA_ParamHolderAlloc( handle, &paramHolder );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "Can't allocate the param holder [%d]\n", retCode );
-      return TA_ABS_TST_FAIL_PARAMHOLDERALLOC;
-   }
-
-   TA_GetFuncInfo( handle, &funcInfo );
-
-   for( i=0; i < (int)funcInfo->nbOutput; i++ )
-   {
-      TA_GetOutputParameterInfo( handle, i, &outputInfo );
-	  switch(outputInfo->type)
-	  {
-	  case TA_Output_Real:
-	     TA_SetOutputParamRealPtr(paramHolder,i,&output[i][0]);
-         for( j=0; j < 2000; j++ )
-            output[i][j] = TA_REAL_MIN;
-		 break;
-	  case TA_Output_Integer:
-	     TA_SetOutputParamIntegerPtr(paramHolder,i,&output_int[i][0]);
-         for( j=0; j < 2000; j++ )
-            output_int[i][j] = TA_INTEGER_MIN;
-		 break;
-	  }
-   }
-
-   for( h=0; h < 2; h++ )
-   {
-   for( i=0; i < nbOuterLoop; i++ )
-   {
-	   for( j=0; j < nbInnerLoop; j++ )
-	   {
-		   /* Prepare input. */
-		   for( k=0; k < (int)funcInfo->nbInput; k++ )
-		   {
-			  TA_GetInputParameterInfo( handle, k, &inputInfo );
-			  switch(inputInfo->type)
-			  {
-			  case TA_Input_Price:
-				 TA_SetInputParamPricePtr( paramHolder, k,
-					 inputInfo->flags&TA_IN_PRICE_OPEN?&gDataOpen[j*stepSize]:NULL,
-					 inputInfo->flags&TA_IN_PRICE_HIGH?&gDataHigh[j*stepSize]:NULL,
-					 inputInfo->flags&TA_IN_PRICE_LOW?&gDataLow[j*stepSize]:NULL,
-					 inputInfo->flags&TA_IN_PRICE_CLOSE?&gDataClose[j*stepSize]:NULL,
-					 inputInfo->flags&TA_IN_PRICE_VOLUME?&gDataClose[j*stepSize]:NULL, NULL );
-				 break;
-			  case TA_Input_Real:
-				 TA_SetInputParamRealPtr( paramHolder, k, &gDataClose[j*stepSize] );
-				 break;
-			  case TA_Input_Integer:
-				 printf( "\nError: Integer input not yet supported for profiling.\n" );
-				 return TA_ABS_TST_FAIL_CALLFUNC_1;
-			  }
-		   }
-
-           #ifdef WIN32
-              QueryPerformanceCounter(&startClock);
-           #else
-              startClock = clock();
-           #endif
-
-		   /* Do the function call. */
-		   retCode = TA_CallFunc(paramHolder,0,inputSize-1,&outBegIdx,&outNbElement);
-		   if( retCode != TA_SUCCESS )
-		   {
-		      printf( "TA_CallFunc() failed zero data test [%d]\n", retCode );
-		      TA_ParamHolderFree( paramHolder );
-		      return TA_ABS_TST_FAIL_CALLFUNC_1;
-		   }
-
-		   #ifdef WIN32
-			   QueryPerformanceCounter(&endClock);
-			   clockDelta = (double)((__int64)endClock.QuadPart - (__int64) startClock.QuadPart);
-		   #else
-			   endClock = clock();
-			   clockDelta = (double)(endClock - startClock);
-		   #endif
-
-		   /* Setup global profiling info. */
-		   if( clockDelta <= 0 )
-		   {
-			   printf( "Error: Insufficient timer precision to perform benchmarking on this platform.\n" );
-			   return TA_ABS_TST_FAIL_CALLFUNC_1;
-		   }
-		   else
-		   {
-			   if( clockDelta > worstProfiledCall )
-			      worstProfiledCall = clockDelta;
-			   timeInProfiledCall += clockDelta;
-			   nbProfiledCall++;
-		   }
-
-		   /* Setup local profiling info for this particular function. */
-		   if( clockDelta > worstProfiledCallLocal )
-			   worstProfiledCallLocal = clockDelta;
-		   timeInProfiledCallLocal += clockDelta;
-		   nbProfiledCallLocal++;
-	   }
-   }
-   }
-
-   /* Output statistic (remove worst call, average the others. */
-   printf( "%g ", (timeInProfiledCallLocal-worstProfiledCallLocal)/(double)(nbProfiledCallLocal-1));
-
-   retCode = TA_ParamHolderFree( paramHolder );
-   if( retCode != TA_SUCCESS )
-   {
-      printf( "TA_ParamHolderFree failed [%d]\n", retCode );
-      return TA_ABS_TST_FAIL_PARAMHOLDERFREE;
-   }
-
-   return TA_TEST_PASS;
 }

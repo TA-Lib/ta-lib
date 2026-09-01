@@ -88,6 +88,11 @@
 #include "ta_test_func.h"
 #include "ta_utility.h"
 
+#define MFI_FLOOR_ORACLE 96
+#define MFI_FLOOR_SCALE  5680
+#define MFI_FLOOR_RANGE  13039
+#define MFI_FLOOR_EMPTY  48
+
 /**** Local declarations. ****/
 #define OUT_CAP 300          /* > nbBars */
 #define MFI_NB_BARS 252
@@ -288,10 +293,14 @@ static ErrorNumber test_mfi_oracle( const TA_History *history )
       }
    }
 
-   if( checks == 0 )
+   /* Literal floors, frozen at what these legs produce today. A count derived
+    * from the tables and loop bounds below would shrink with them, which is the
+    * trap test_div_zero.c's DZ_FLOOR_* exists to avoid: it would keep passing
+    * over half a table. Moving one is a deliberate edit. */
+   if( checks < MFI_FLOOR_ORACLE )
    {
-      printf( "\nFail: MFI external-oracle leg compared nothing against Tulip / "
-              "pandas-ta-classic.\n" );
+      printf( "\nFail: MFI external-oracle leg made %d comparison(s) against "
+              "Tulip / pandas-ta-classic, written with %d.\n", checks, MFI_FLOOR_ORACLE );
       return TA_MFI_VACUOUS;
    }
    return TA_TEST_PASS;
@@ -360,10 +369,11 @@ static ErrorNumber test_mfi_scale( const TA_History *history )
       }
    }
 
-   if( compares == 0 )
+   if( compares < MFI_FLOOR_SCALE )
    {
-      printf( "\nFail: MFI scale-invariance leg made no bit-exact comparison over "
-              "the %d volume scales.\n", (int)NB_MFI_SCALE );
+      printf( "\nFail: MFI scale-invariance leg made %d bit-exact comparison(s) "
+              "over the %d volume scales, written with %d.\n",
+              compares, (int)NB_MFI_SCALE, MFI_FLOOR_SCALE );
       return TA_MFI_VACUOUS;
    }
    return TA_TEST_PASS;
@@ -399,9 +409,10 @@ static ErrorNumber test_mfi_range( const TA_History *history )
       }
    }
 
-   if( checked == 0 )
+   if( checked < MFI_FLOOR_RANGE )
    {
-      printf( "\nFail: MFI range leg examined no value over periods 2..60.\n" );
+      printf( "\nFail: MFI range leg examined %d value(s) over periods 2..60, "
+              "written with %d.\n", checked, MFI_FLOOR_RANGE );
       return TA_MFI_VACUOUS;
    }
    return TA_TEST_PASS;
@@ -483,11 +494,11 @@ static ErrorNumber test_mfi_empty( void )
       checked++;
    }
 
-   if( checked == 0 )
+   if( checked < MFI_FLOOR_EMPTY )
    {
-      printf( "\nFail: MFI empty-window leg reached no flat-price zero-volume "
-              "case, so the accumulator residue it exists to catch was "
-              "unreachable.\n" );
+      printf( "\nFail: MFI empty-window leg reached %d flat-price zero-volume "
+              "case(s), written with %d -- the accumulator residue it exists "
+              "to catch is going unreached.\n", checked, MFI_FLOOR_EMPTY );
       return TA_MFI_VACUOUS;
    }
    return TA_TEST_PASS;

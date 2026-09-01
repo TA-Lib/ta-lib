@@ -59,9 +59,7 @@
 
 TA_LIB_API int TA_CDLLADDERBOTTOM_Lookback( void )
 {
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
    return ShadowVeryShort_avgPeriod + 4;
 }
 
@@ -80,9 +78,7 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM( int    startIdx,
    int outIdx;
    int ShadowVeryShortTrailingIdx;
    int lookbackTotal;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -190,9 +186,7 @@ TA_RetCode TA_S_CDLLADDERBOTTOM( int    startIdx,
    int outIdx;
    int ShadowVeryShortTrailingIdx;
    int lookbackTotal;
-   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
-   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;

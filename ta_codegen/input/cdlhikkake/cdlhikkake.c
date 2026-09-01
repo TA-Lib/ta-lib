@@ -36,7 +36,7 @@ TA_RetCode cdlhikkake(int startIdx, int endIdx,
    /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
     * state carried without an absolute bar index. */
    int cd;
-   double savedHigh, savedLow;
+   double savedHigh = 0.0, savedLow = 0.0;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
