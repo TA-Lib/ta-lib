@@ -78,6 +78,13 @@ FEED = 4096          # bars cycled through update/peek (power of two: index & ma
 # until this commit. Neither was found by CI; both were found by someone trying
 # to use the tool. A benchmark that measures nothing must fail, loudly, saying
 # what moved.
+# ONE harness, compiled against BOTH arms, so this tool A/Bs an implementation
+# and NOT a signature: if the API itself moved between the revisions, the arm
+# whose library does not have today's shape fails to compile and the run dies.
+# #310 is the worked example — `update` grew a caller-owned sink, so a base from
+# before it cannot build the harness this parses out of the working tree. There
+# is no silent-wrong mode here, only a loud one; measuring across such a change
+# needs a throwaway per-arm harness instead.
 FUNC_FLOOR = 170
 
 
@@ -180,8 +187,25 @@ def parse_java(root):
             declined[name] = "no update method"
             continue
         call = [x.split()[1] for x in m2.group(2).split(",") if x.strip()]
+        # Since #310 a MULTI-OUTPUT tier returns void and takes a caller-owned
+        # `<N>Out` as its last argument, so the bars are the call list minus
+        # that one. Detected off the emitted TYPE, not a name list: the sink is
+        # the only parameter whose type is not a bar. A harness that missed this
+        # would emit `void r = st.update(bar, out)` against an undeclared `out`
+        # -- loud, but only once someone runs the tool.
+        sinkty = sinkfield = None
+        if m2.group(1) == "void":
+            sinkty = m2.group(2).rsplit(",", 1)[-1].strip().split()[0]
+            call = call[:-1]
+            fm = re.search(r"public static final class %s\b.*?public (?:double|int) (\w+);"
+                           % re.escape(sinkty), src, re.S)
+            if not fm:
+                declined[name] = f"no field found on sink type {sinkty}"
+                continue
+            sinkfield = fm.group(1)
         funcs[name] = {"open": args, "call": call, "ret": m2.group(1),
-                       "cls": cls, "openfn": open_fn}
+                       "cls": cls, "openfn": open_fn,
+                       "sinkty": sinkty, "sinkfield": sinkfield}
     return funcs, declined
 
 
@@ -415,11 +439,12 @@ public class BenchStream {
 JAVA_BLOCK = """
       try {
          java.util.ArrayList<Double> all = new java.util.ArrayList<>();
+         %(decl)s
          for (int p = 0; p < passes + 2; p++) {
             Core.%(cls)s st = core.%(openfn)s(%(oargs)s);
-            for (int i = 0; i < 20000; i++) { %(ret)s r = st.%(call)s(%(cargs)s); %(consume)s }
+            for (int i = 0; i < 20000; i++) { %(body)s }
             long t0 = System.nanoTime();
-            for (int i = 0; i < iters; i++) { %(ret)s r = st.%(call)s(%(cargs)s); %(consume)s }
+            for (int i = 0; i < iters; i++) { %(body)s }
             if (p >= 2) all.add((System.nanoTime() - t0) / (double) iters);
          }
          java.util.Collections.sort(all);
@@ -601,12 +626,22 @@ def emit_java(funcs, names, call, period, marked):
                 "oargs": open_args(f, "java", name, period, marked),
             })
             continue
+        cargs = ", ".join(f"f_{series(a)}[i & {FEED - 1}]" for a in f["call"])
+        if f.get("sinkty"):
+            # Allocated once and reused, which is the usage the sink's own
+            # javadoc prescribes and the one worth timing -- allocating per
+            # iteration would measure the shape #310 removed.
+            decl = "Core.%s o = new Core.%s();" % (f["sinkty"], f["sinkty"])
+            body = "st.%s(%s, o); sink += o.%s;" % (call, cargs, f["sinkfield"])
+        else:
+            decl = ""
+            consume = "sink += r;" if ret in ("double", "int") else "sink += (r != null ? 1.0 : 0.0);"
+            body = "%s r = st.%s(%s); %s" % (
+                ret if ret in ("double", "int") else "var", call, cargs, consume)
         s.append(JAVA_BLOCK % {
-            "name": name, "call": call, "cls": f["cls"], "openfn": f["openfn"],
-            "ret": ret if ret in ("double", "int") else "var",
-            "consume": "sink += r;" if ret in ("double", "int") else "sink += (r != null ? 1.0 : 0.0);",
+            "name": name, "cls": f["cls"], "openfn": f["openfn"],
+            "decl": decl, "body": body,
             "oargs": open_args(f, "java", name, period, marked),
-            "cargs": ", ".join(f"f_{series(a)}[i & {FEED - 1}]" for a in f["call"]),
         })
     s.append('\n      System.err.println("sink " + sink);\n   }\n}\n')
     return "".join(s)
