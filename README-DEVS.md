@@ -10,19 +10,14 @@ Before committing, run ```scripts/sync.py``` to:
  - Ensure your local dev branch is up-to-date with both remote dev and main branches.
  - Do various check and fixes on your code (e.g. update "x.y.z" versioning in various files).
 
-It is safe to run from anywhere, including a `git worktree`. Those two bullets are
-independent halves, and the first one needs to check out dev and main — which git
-refuses when another worktree already holds them, the normal state when dev lives
-in the main checkout and feature work happens in worktrees beside it. Rather than
-fail, the script detects that (and a detached HEAD) and does the second half only,
-printing which case it hit. That is the half a feature branch wants anyway: the
-first updates dev, not the branch you are on.
-
-If it skipped the merge, your local dev is untouched — update it from its own
-checkout when you need to. And a source digest that lags is not a problem to chase:
-dev-nightly regenerates and commits it together with the dist assets, and
-`merge.py` refuses dev→main while the two disagree. Running `sync.py` first only
-saves that round trip.
+Safe to run from anywhere, including a `git worktree`. The two bullets are
+independent halves: the first needs to check out dev and main, which git refuses
+when another worktree already holds them, so from a worktree (or a detached HEAD)
+the script does the second half only and says which case it hit. That is the half
+a feature branch wants anyway, and your local dev is left untouched — update it
+from its own checkout. A source digest that lags needs no chasing either:
+dev-nightly regenerates and commits it with the dist assets, and `merge.py`
+refuses dev→main while the two disagree.
 
 Merge to main branch are done with ```scripts/merge.py``` by TA-Lib maintainers with the proper permissions.
 
@@ -59,12 +54,10 @@ scripts/build.py regtest        # Full pipeline: servers + C tests + cross-langu
 scripts/build.py regen-check    # The gate every PR runs (cargo + Python, ~1 min)
 ```
 
-`regen-check` is worth running before you open a PR if you touched anything under
-`ta_codegen/input/`: `ta_codegen/input/` is the source of truth and everything it
-produces is committed, so an input edit whose regenerated output was not committed
-fails CI. It is the same command the PR workflow runs, so a failure reproduces
-locally exactly. Only drift *that run introduces* fails it — the rest of your
-working tree can be dirty.
+Run `regen-check` before opening a PR if you touched `ta_codegen/input/`:
+everything it produces is committed, so an input edit whose regenerated output was
+not committed fails CI. It is the same command the PR workflow runs. Only drift
+*that run introduces* fails it — the rest of your working tree can be dirty.
 
 For more control, run `ta_regtest` directly from `bin/`:
 ```
@@ -131,8 +124,8 @@ Any dev with permission to merge to main branch can do a release.
 
 (11) Run "./scripts/post-release-vcpkg.py" and follow the instructions to submit a PR to microsoft/vcpkg. Monitor the PR is eventually merged by vcpkg maintainers. This may take a few days.
 
-(12) Monitor homebrew-core. The following formula will eventually be updated (may take an hour):
-https://github.com/Homebrew/homebrew-core/blob/30106807361198c58a395de65547694427adf229/Formula/t/ta-lib.rb
+(12) Monitor homebrew-core. The formula is updated within about an hour:
+https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/t/ta-lib.rb
 
 
 ## After a release
@@ -140,7 +133,7 @@ https://github.com/Homebrew/homebrew-core/blob/30106807361198c58a395de6554769442
 Right after a release is public, open the next development version so `dev`/`main`
 stop advertising an already-released version:
 
-(A) On dev, bump the VERSION file to the next patch (e.g. `0.7.2` -> `0.7.3`). You can adjust the actual versionlater, the key here is it just need to be different/higher.
+(A) On dev, bump the VERSION file to the next patch (e.g. `0.7.2` -> `0.7.3`). The exact number can be adjusted later; it only has to be higher.
 
 (B) Add a `## [0.7.3] Not Released Yet` entry at the top of CHANGELOG.md.
 
@@ -154,16 +147,11 @@ The website catches up on its own within a nightly cycle. Confirm with:
 
 
 ## I want to modify the code... should I care to rebuild the packages?
-No.
+No. Commit your source changes on dev and let the Github action repackage for
+you; it may take up to a day to regenerate and test **all** platforms.
 
-Commit your source code changes in devs and... just let the Github action do all the repackaging for you.
-
-It may take up to one day for the CI to regenerate and test for **all** platforms.
-
-The rest of this section is only if you want to re-package locally.
-
-You can call the ```scripts/package.py``` to generate the packages for your hosting platform.
-
-You can test your packages with ```scripts/test-dist.py```. This verifies from a TA-Lib user perspective. Notably, this simulates a ta-lib-python user.
-
-Try to avoid pushing your generated packages to the TA-Lib repo, but do not worry if you do. As needed, they will get overwritten by the "nightly dev" CI.
+To re-package locally anyway: ```scripts/package.py``` builds the packages for
+your host platform, and ```scripts/test-dist.py``` verifies them from a TA-Lib
+user's perspective (notably simulating a ta-lib-python user). Avoid pushing
+generated packages, but do not worry if you do — the "nightly dev" CI overwrites
+them.

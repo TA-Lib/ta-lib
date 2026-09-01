@@ -4,9 +4,8 @@
 //! A transcribed body is C, and some of C is not relevant to every backend: a
 //! `free()` has no counterpart where a `Vec` drops or a GC owns the memory, and
 //! a guard on a code the backend answered at the call site can no longer be
-//! taken. Rendering those as the empty string and leaving the scaffolding around
-//! them is what produced `if bufferIsAllocated != 0 { }` and
-//! `retCode = Success; if retCode != Success {`.
+//! taken. Rendering those as the empty string leaves the scaffolding standing —
+//! `if bufferIsAllocated != 0 { }`.
 //!
 //! So each backend states its own sequence, explicitly, at its entry point:
 //!
@@ -19,11 +18,8 @@
 //! The third argument is the code the surviving arm of a folded guard answers:
 //! `None` in the batch tiers, where "success with nothing produced" is a legal
 //! answer, and the insufficient-history code — in that backend's own spelling —
-//! in the stream tiers, where it is not.
-//!
-//! A sequence rather than a list of transform values, so a pass can be made
-//! conditional later without encoding the condition as data. C states no
-//! sequence at all — every pass here would be wrong there.
+//! in the stream tiers, where it is not. C states no sequence at all: every
+//! pass here would be wrong there.
 //!
 //! **Every pass is length-preserving.** A removed statement becomes an empty
 //! `Statement::Block`, which renders to nothing through the shared default. The

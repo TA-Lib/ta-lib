@@ -4571,7 +4571,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 /// library's the same type.
 ///
 /// Coverage rule (no P/Invoke fallback, ever): every function dispatches to
-/// the managed core or errors. A hybrid server would let 161 functions
+/// the managed core or errors. A hybrid server would let most functions
 /// vacuously "pass" by really being the C library — the exact failure mode
 /// this project bans.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]

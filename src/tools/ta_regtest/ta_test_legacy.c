@@ -61,71 +61,56 @@
 /* Per-function absolute tolerance against the frozen v0.6.4 value.
  *
  * A function absent from this table is compared EXACTLY, and that is the
- * majority: of the 83 in-scope functions with a real output, 58 reproduce
- * v0.6.4 bit for bit here. (The 65 with integer outputs are always exact and
- * can never appear below.)
+ * majority. An entry is an AUTHORIZED, MEASURED divergence, not slack: each
+ * bound is the largest deviation the function actually shows across its cases
+ * here, times ~3, rounded up to one significant digit.
  *
- * An entry is an AUTHORIZED, MEASURED divergence, not slack. Each bound is the
- * largest deviation the function actually shows across its cases in this table,
- * times ~3, rounded up to one significant digit.
- *
- * They are ABSOLUTE, and that is the right model rather than a convenience.
- * Both divergence causes below are driven by the magnitude of an INTERMEDIATE
- * at INPUT scale, not by the output: v0.6.4's E[x^2]-mean^2 loses ~eps*mean^2,
- * and a fused a*b+c site differs by ~ULP of a price-scale accumulator. Neither
- * shrinks when the output happens to be small, so the error really is a
- * constant floor per function on this series. The consequence is worth stating
- * plainly: at a function's SMALLEST sampled value the same bound is a larger
- * relative share -- ~8e-11 for VAR at 0.51, ~7.6e-11 for LINEARREG_SLOPE at
- * 0.027, ~4e-11 for STDDEV and LINEARREG_ANGLE. That is the genuine error
- * floor, not headroom, and it is still ~8 orders tighter than the 0.01
- * absolute window the hand-written tables use at the same magnitudes.
- *
- * (--fuzz-064 needs input-scaled bounds with caps and conditioning gates
- * instead, because its shapes span 1e-7 .. 1e9. One fixed series does not.)
+ * They are ABSOLUTE, which is the right model rather than a convenience. Both
+ * divergence causes are driven by the magnitude of an INTERMEDIATE at INPUT
+ * scale, not by the output: v0.6.4's E[x^2]-mean^2 loses ~eps*mean^2, and a
+ * fused a*b+c site differs by ~ULP of a price-scale accumulator. Neither shrinks
+ * when the output happens to be small, so the error is a constant floor per
+ * function on this series -- meaning that at a function's smallest sampled value
+ * the same bound is a larger relative share (~1e-10 for the tightest rows). That
+ * is the genuine error floor, not headroom, and still ~8 orders tighter than the
+ * 0.01 absolute window the hand-written tables use at those magnitudes.
  *
  * Two causes, both bounded and both pre-existing:
  *
- *   (a) explicit fma() adoption (PR #96). v0.6.4 predates the contract, so a
- *       fused site differs from it in the last bits.
+ *   (a) explicit fma() adoption; v0.6.4 predates the contract, so a fused site
+ *       differs from it in the last bits.
  *
- *   (b) an algorithm deliberately changed after v0.6.4 and pinned elsewhere:
- *       the cancellation-free variance form (#118: VAR, STDDEV, BBANDS), the
- *       same treatment applied to CORREL and BETA (#242), the O(1)
- *       sliding-sum LINEARREG family (#103: LINEARREG*, TSF), and TA_WMA's
- *       re-anchored weighted totals (#255), which APO and PPO inherit through
- *       TA_MA(TA_MAType_WMA) -- they are the only two rows here that move for a
+ *   (b) an algorithm deliberately changed after v0.6.4 and pinned elsewhere: the
+ *       cancellation-free variance form (VAR, STDDEV, BBANDS), the same
+ *       treatment in CORREL and BETA, the O(1) sliding-sum LINEARREG family, and
+ *       TA_WMA's re-anchored weighted totals -- which APO and PPO inherit
+ *       through TA_MA(TA_MAType_WMA), the only two rows here that move for a
  *       change to a function they merely dispatch to.
  *
- * Note what is NOT here and would be under a blanket contract bound: CCI (#7),
- * IMI (#112), KAMA, MACD, MACDEXT, APO, PPO, STOCHF and the rest of the
- * --fuzz-064 manifest are all bit-exact against v0.6.4 on this series. Their
- * divergences need the fuzz corpus's extreme magnitudes to appear, so pinning
- * them here at the contract bound would have bought unearned slack.
+ * A blanket contract bound would buy unearned slack: CCI, IMI, KAMA, MACD,
+ * MACDEXT, APO, PPO and STOCHF are all bit-exact against v0.6.4 on this series,
+ * their divergences needing the fuzz corpus's extreme magnitudes to appear.
  *
  * ONE PRINCIPLED EXCEPTION TO "3x MEASURED": a function reaching a libm routine
- * that is NOT correctly rounded (atan/sin/cos/exp/log) gets a floor of 8 ULP at
- * its own output magnitude, because its last bit is a property of the host libm
- * rather than of TA-Lib. Only MAMA needs it now.
+ * that is not correctly rounded gets a floor of 8 ULP at its own output
+ * magnitude, its last bit being a property of the host libm rather than of
+ * TA-Lib. Only MAMA needs it now.
  *
- * The bounds here were measured with both sides on ONE host's libm, so for the
- * two functions that still reach atan they bound the fma() drift, NOT a
- * cross-libm difference. That is survivable for these two because the atan is
- * smooth in their output: MAMA feeds it into a damped adaptive alpha, and
- * LINEARREG_ANGLE's atan is the terminal operation. It was NOT survivable for
- * the Hilbert family, whose atan becomes an integer loop bound -- which is why
- * those six are excluded outright rather than given a wider bound (see
- * ta_test_legacy_data.h). If MAMA or LINEARREG_ANGLE ever fails on a non-glibc
- * host, that is the cause: widen the floor with the measurement from that host,
- * or follow the Hilbert family out of the freeze.
+ * These bounds were measured with both sides on ONE host's libm, so for the two
+ * functions that still reach atan they bound the fma() drift, NOT a cross-libm
+ * difference. That is survivable because the atan is smooth in their output
+ * (MAMA feeds a damped adaptive alpha, LINEARREG_ANGLE's atan is terminal); it
+ * was not survivable for the Hilbert family, whose atan becomes an integer loop
+ * bound, which is why those are excluded outright rather than widened. If MAMA
+ * or LINEARREG_ANGLE ever fails on a non-glibc host, that is the cause: widen
+ * the floor with that host's measurement, or follow the Hilbert family out.
  *
  * Integer outputs are NEVER given a tolerance -- a candlestick or index flip
  * must fail regardless of what is in this table.
  *
- * AT RE-FREEZE: regenerate the data header against the new reference and delete
- * every row below. Both causes are divergences from v0.6.4 specifically; a
- * reference that postdates them is bit-exact. The libm floors are the one part
- * that may need to survive.
+ * AT RE-FREEZE: regenerate the data header and delete every row below. Both
+ * causes are divergences from v0.6.4 specifically, so a later reference is
+ * bit-exact. The libm floors are the one part that may need to survive.
  */
 typedef struct
 {

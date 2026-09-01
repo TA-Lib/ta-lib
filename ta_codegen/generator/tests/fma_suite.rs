@@ -123,7 +123,7 @@ fn fma_fusion_is_seed_invariant_across_all_functions() {
         }
         checked += 1;
     }
-    assert!(checked >= 150, "expected ~161 functions, only checked {checked}");
+    assert!(checked >= 150, "expected the whole corpus, only checked {checked}");
 }
 
 /// The known fusion-candidate functions must actually fuse at least one site

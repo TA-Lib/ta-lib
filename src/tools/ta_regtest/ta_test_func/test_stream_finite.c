@@ -52,66 +52,52 @@
  *
  * An input ARRAY is never scanned, in either tier: keeping one free of NaN and
  * +/-Inf is the caller's responsibility, and passing a non-finite one is
- * undefined behaviour (docs/error-handling-spec.md, "Non-finite input"). A
- * scan is a whole extra pass over caller memory the main loop is about to walk
- * again -- measured at a corpus median of 22% of Open -- and folding it into
- * that loop instead would buy a worse contract: a rejection partway through a
- * fill, output half written.
+ * undefined behaviour (docs/error-handling-spec.md, "Non-finite input"). A scan
+ * is a whole extra pass over caller memory the main loop is about to walk again,
+ * and folding it into that loop instead would buy a worse contract: a rejection
+ * partway through a fill, output half written.
  *
- * A SINGLE VALUE is always checked, because it is one comparison. For the
- * streaming tier that matters more than for batch, because a handle RETAINS
- * state: batch is handed a series, computes, and forgets, so a NaN reaches the
- * outputs that depend on that bar and no others, while a handle carries
- * recursive accumulators across calls and one non-finite bar poisons every
- * value it will ever produce afterwards -- long after the feed recovers.
- * Rejecting the bar and leaving the handle untouched is strictly more useful
- * than accepting it and going permanently NaN.
+ * A SINGLE VALUE is always checked, because it is one comparison, and it matters
+ * more in the streaming tier because a handle RETAINS state. Batch is handed a
+ * series, computes and forgets, so a NaN reaches only the outputs depending on
+ * that bar; a handle carries recursive accumulators, and one non-finite bar
+ * poisons every value it will ever produce, long after the feed recovers.
  *
  * What this pins, per function:
  *
  *   (a) Update and Peek reject a non-finite bar value in ANY input slot with
  *       TA_BAD_PARAM.
- *   (b) The handle is UNCHANGED by a rejected call -- the property that makes
- *       the rejection useful rather than merely safe. Verified against a
- *       control handle: two streams opened on the same history, one of them
- *       offered the bad bar first, must agree BIT FOR BIT on the next good
- *       bar. A rejection that half-advanced the state would pass (a) and fail
- *       here.
- *   (d) UpdateAndFill applies (a) and (b) PER BAR. It is n back-to-back
- *       Updates STOPPING AT THE FIRST ERROR, so a non-finite bar k is
- *       rejected exactly as Update rejects it -- the bars before it stay
+ *   (b) The handle is UNCHANGED by a rejected call -- what makes the rejection
+ *       useful rather than merely safe. Two streams opened on the same history,
+ *       one offered the bad bar first, must agree BIT FOR BIT on the next good
+ *       bar; a rejection that half-advanced the state passes (a) and fails here.
+ *   (c) A real optional parameter that is NaN is rejected too, which is NOT
+ *       redundant with the batch range check: `NaN < min` and `NaN > max` are
+ *       both false, so a plain range test admits NaN. The streaming tier spells
+ *       the same two comparisons inverted, `!(x >= min && x <= max)`.
+ *   (d) UpdateAndFill applies (a) and (b) PER BAR: it is n back-to-back Updates
+ *       STOPPING AT THE FIRST ERROR, so the bars before a bad bar k stay
  *       committed and their values stay written. That is the one place in the
  *       API where a call returns a failure code AND leaves output behind, so
- *       what it left has to be pinned: k values written, nothing from k up
- *       touched, and the handle indistinguishable from a control driven over
- *       the same bars one at a time -- the poisoned bar included, which the
- *       control must reject and which advances the range without committing
- *       (docs/error-handling-spec.md, U3). A whole-array pre-scan would pass
- *       "it rejects" and fail every one of those.
- *
- *   (e) The numbers themselves. (b) and (d) are EQUIVALENCES -- one handle
- *       against another, one tier against another -- so neither can see a
- *       change that moves both sides. (e) offers one bad bar to one handle and
- *       demands the exact range: BadParam, begIdx put, count exactly one
- *       higher, output untouched. Then a good bar, which must still produce a
- *       value. And the mirror, Peek, which advances nothing either way.
- *
- *   (c) A real optional parameter that is NaN is rejected too. This one is not
- *       redundant with the batch range check: `NaN < min` and `NaN > max` are
- *       BOTH false, so a plain range test admits NaN -- which is why the
- *       streaming tier spells the same two comparisons inverted,
- *       `!(x >= min && x <= max)`.
+ *       what it left is pinned -- k values written, nothing from k up touched,
+ *       and the handle indistinguishable from a control driven one bar at a
+ *       time, the poisoned bar included (which advances the range without
+ *       committing). A whole-array pre-scan would pass "it rejects" and fail
+ *       every one of those.
+ *   (e) The numbers themselves. (b) and (d) are EQUIVALENCES, so neither can see
+ *       a change that moves both sides. (e) offers one bad bar to one handle and
+ *       demands the exact range: BadParam, begIdx put, count exactly one higher,
+ *       output untouched; then a good bar, which must still produce a value; and
+ *       the mirror in Peek, which advances nothing either way.
  *
  * Coverage is by STREAM TIER, not by function count. The check is emitted from
- * one place per language, but the entry points it is emitted INTO are six
- * different code paths in c_stream.rs, so the seven functions here are chosen
- * to reach every one of them:
+ * one place per language, but into six different code paths in c_stream.rs, so
+ * these seven functions are chosen to reach every one:
  *
  *   SMA       loop tier             (emit_update / emit_peek_from)
  *   MINUS_DI  dual-mode tier        (emit_peek_dual)
- *   MA        dispatch tier         (its own Update/Peek loop, and the
- *                                    identity arm that never reaches a
- *                                    sub-stream at all)
+ *   MA        dispatch tier         (its own Update/Peek loop, and the identity
+ *                                    arm that never reaches a sub-stream)
  *   MAVP      period-bank tier      (its own Update/Peek)
  *   BBANDS    composed tier         (its own inline Peek; also the real
  *                                    optional parameters for (c))
@@ -119,8 +105,8 @@
  *   CDLDOJI   integer output, four price inputs
  *
  * The equivalent per-language checks live in each binding's own suite:
- * StreamApiTest (C#), StreamSmokeTest (Java), and the crate's
- * stream_finite tests (Rust).
+ * StreamApiTest (C#), StreamSmokeTest (Java), and the crate's stream_finite
+ * tests (Rust).
  */
 
 #include <stdio.h>

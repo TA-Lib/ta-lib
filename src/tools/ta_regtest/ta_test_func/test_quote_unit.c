@@ -51,25 +51,20 @@
  *   the same instrument priced in dollars, in cents or in BTC is the same
  *   instrument. So multiplying every price by a constant must not change what
  *   an indicator says -- an oscillator must return the SAME number, and a
- *   price-valued output must return the same number times that constant.
+ *   price-valued output the same number times that constant.
  *
- *   This gate makes that exact rather than approximate. The constant is a
- *   POWER OF TWO, and FP addition, subtraction, multiplication, division,
- *   sqrt, min/max and every comparison are exactly equivariant under a
- *   power-of-two rescale: no rounding decision anywhere in a homogeneous body
- *   can change. The outputs must therefore come back BIT-IDENTICAL after
- *   dividing out the scale factor, at any exponent that avoids overflow and
- *   the denormal floor.
+ *   This gate makes that exact rather than approximate. The constant is a POWER
+ *   OF TWO, and FP addition, subtraction, multiplication, division, sqrt,
+ *   min/max and every comparison are exactly equivariant under a power-of-two
+ *   rescale: no rounding decision anywhere in a homogeneous body can change. The
+ *   outputs must therefore come back BIT-IDENTICAL after dividing out the scale
+ *   factor, at any exponent that avoids overflow and the denormal floor.
  *
  *   That leaves exactly one way for a function to fail: an absolute constant
- *   meeting a quantity that carries the quote unit. Which is issue #253 --
- *   `TA_IS_ZERO`'s fixed 1e-14 sitting on a price, a range, a money flow or a
- *   sum of those. 20 functions failed this sweep when it was written
- *   (ACCBANDS ADX ADXR BETA BOP CCI CMO CMOU DX KAMA MINUS_DI NATR PLUS_DI PPO
- *   PVO RSI SMI STOCH STOCHF STOCHRSI, plus PVO again on the volume leg), and
- *   #243 (STDDEV/BBANDS) and #244 (MFI) would have failed it before their own
- *   fixes. It needs no oracle and no reference values: the invariant is
- *   internal, so it cannot go stale the way a frozen expected value does.
+ *   meeting a quantity that carries the quote unit -- `TA_IS_ZERO`'s fixed 1e-14
+ *   sitting on a price, a range, a money flow or a sum of those. It needs no
+ *   oracle and no reference values, so unlike a frozen expected value it cannot
+ *   go stale.
  *
  *   Legs:
  *     1. HOMOGENEITY, corpus-wide and exact. Every function, over three series
@@ -77,33 +72,29 @@
  *        The degree (0 for an oscillator, 1 for a price, 2 for a variance) is
  *        MEASURED from a x2 and a x4 probe rather than declared, so the table
  *        cannot drift away from the code.
- *     3. THE VALUE IT IS INVARIANT AT. Leg 1 proves the output does not depend
- *        on the quote unit; it cannot say whether the value it settles on is
- *        the right one, and before #253 the answer at these ticks was 0 --
- *        perfectly scale-invariant nonsense. So every fixed function carries a
- *        value from OUTSIDE this library, on the suite's own committed history,
- *        checked at a tick where the old code returned 0.
  *     2. RANGE, for the bounded oscillators, at every rung of the same ladder.
  *        Leg 1 cannot see a 0/0 that divides rounding residue into itself --
- *        residue rescales exactly like everything else -- and that is the trap
- *        #244 fell into when it relaxed MFI's guard. A window that empties
- *        while the sums stay finite is exactly what the "halt" series below
- *        produces, and a blown-up ratio leaves the documented range by orders
- *        of magnitude.
+ *        residue rescales exactly like everything else -- and a window that
+ *        empties while the sums stay finite is exactly what the "halt" series
+ *        below produces, leaving the documented range by orders of magnitude.
+ *     3. THE VALUE IT IS INVARIANT AT. Leg 1 proves the output does not depend
+ *        on the quote unit; it cannot say the value it settles on is the right
+ *        one, and a function returning 0 is perfectly scale-invariant nonsense.
+ *        So every fixed function carries a value from OUTSIDE this library, on
+ *        the suite's own committed history, checked at a tick where the old code
+ *        returned 0.
  *
- *   Exemptions, all of them things that are not homogeneous in the first
- *   place: the Math Transform group (a price is not a legal argument to sin,
- *   log or exp, and sqrt is degree one HALF), and LINEARREG_ANGLE, whose
- *   output is an arctangent of a slope. Every other function in the library is
- *   swept. The exempt names are checked to still exist, so the list cannot rot
- *   into a silent skip.
+ *   Exemptions, all of them things that are not homogeneous in the first place:
+ *   the Math Transform group (a price is not a legal argument to sin, log or
+ *   exp, and sqrt is degree one HALF), and LINEARREG_ANGLE, whose output is an
+ *   arctangent of a slope. Every other function is swept, and the exempt names
+ *   are checked to still exist so the list cannot rot into a silent skip.
  *
  *   PPO and PVO are a THIRD thing -- not exempt, and not passing: a known open
- *   defect, listed and asserted to still fail. See quKnownOpen below for why
- *   the fix is not simply the one the other nineteen took.
+ *   defect, listed and asserted to still fail. See quKnownOpen below for why the
+ *   fix is not the one the other functions took.
  */
 
-/**** Headers ****/
 #include <stdio.h>
 #include <string.h>
 #include <math.h>

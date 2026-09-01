@@ -1,148 +1,71 @@
-# Generated Streaming (Incremental) API for ta_codegen
+# Streaming (incremental) API
 
-Status: complete in all four languages — C, Rust, Java and .NET stream every function in the corpus, each verified bit-exact against its own batch tier by `ta_regtest --codegen`. Planned for release 0.8.1.
+Every function in the corpus streams, in C, Rust, Java and C#: a handle warmed
+on history, then one bar in and that bar's value out, bit-identical to what the
+batch tier reports for the same bar. The flag is per function (`stream` in the
+YAML `flags:`, surfaced as `TA_FUNC_FLG_STREAM`); everything else — the plan,
+the state shape, the tier — is derived from the IR, and
+`ta_codegen stream-census` prints what each function derives today.
 
-## Design
+This file is the contract and the shape. The error model is
+`docs/error-handling-spec.md`; the gates are `src/tools/ta_regtest/CLAUDE.md`.
 
-### Motivation
-Live-trading users often want the latest indicator value updated in O(1) per new bar — not a full recompute each tick. This has been requested over the years, and some TA-Lib derivative works have already attempted it (see prior art).
+## Lifecycle
 
-This design adds an official **streaming API** to TA-Lib for C, Rust, Java and .NET.
+1. **`open(history[], params) → (handle, value)`** — validates the parameters
+   exactly as the batch guarded entry does, consumes the history in one pass,
+   and returns a typed handle plus the value at the last history bar. It
+   requires `historyLen >= lookback + 1` (the unstable period in effect
+   included); with less there is no defined value yet, and the call fails with
+   `TA_INSUFFICIENT_HISTORY` — the library's one recoverable condition, which is
+   why it carries its own code. The history may be freed afterwards.
+2. **`update(handle, bar) → value`** — once per CLOSED bar. Always produces the
+   new value, and **allocates nothing**: the handle is sized at open.
+3. **`peek(handle, bar) → value`** — a provisional bar, evaluated without
+   committing. Call it as often as the forming bar is revised.
+4. **`close(handle)`** — explicit in C, nothing in the managed backends.
 
-The hard parts are **maintenance** and **validation**, and both are solvable when combining recent ta_codegen refactoring done in TA-Lib 0.7.1, and AI-advancement for automation.
-
-### Prior art: `talib.stream`
-
-The Python wrapper's streaming module returns the latest value by calling the C
-function at a single index (`startIdx = endIdx = len-1`), reaching back only
-`lookback` bars instead of building the whole array — cheaper than the Function
-API. A good experimental first cut; two limitations:
-
-- **No retained state** — every tick redoes the `lookback` reach-back, so it is
-  O(lookback)/tick, not O(1); nothing is carried between bars.
-- **Diverges from the batch for recursive indicators** — it re-seeds from the
-  trailing window, not full history, so for unstable/recursive functions
-  (RSI, EMA, ADX, …) its output does not match the full-history batch.
-
-### Prior art: `ta-lib-rt`
-
-[ta-lib-rt](https://github.com/trufanov-nok/ta-lib-rt) is a **fork of the C
-TA-Lib** that adds exactly this kind of incremental API.
-
-So the *concept* — per-indicator state + per-bar update — is not novel; ta-lib-rt got there first.
-
-ta-lib-rt shows it can be done. It is a great reference and inspiration to this design.
-
-This design adds **maintenance automation** to keep an official streaming API updated lockstep with the official TA-Lib batch API.
-
-### Public API (stream lifecycle)
-
-Every stream, in every language, is the same lifecycle:
-
-1. **`open(history[], params) → (handle, value)` — once.** Validates the params
-   (defaults substituted and ranges checked exactly as the batch guarded entry
-   does), consumes the provided history in one pass, and returns an opaque,
-   typed stream **handle** plus the current value (the output for the last
-   history bar). `open` **requires `historyLen >= min_history(params)`** —
-   the function's lookback + 1, including any unstable period in effect
-   (i.e. exactly `TA_XXX_Lookback() + 1`); with less history there
-   is no defined value yet and open fails. This keeps rule 2 unconditionally
-   true.
-2. **`update(handle, bar) → value` — once per closed bar.** Takes the handle
-   and the new input(s) (OHLCV for multi-input functions) and always produces
-   the new current value. `update` performs **no allocation** — the handle is
-   sized at open.
-3. **`close(handle)`.** Releases the stream — explicit in C, implicit
-   in managed languages (Rust/Java).
+Parameters and history are fixed at open; changing a parameter means a new
+stream. The handle is opaque and tied to the library version that created it —
+it is not serializable and never crosses a process boundary. The sanctioned
+checkpoint story is retaining history and re-opening, which is bit-identical by
+contract.
 
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
-this handle has an output for, in the input series' coordinates. Which calls
-move it, and which do not, is `docs/error-handling-spec.md` §2.4's business.
-The accessor is `TA_StreamOutRange` in C — one function, any handle —
-`out_range()` in Rust, `outRange()` in Java, `OutRange` in C#.
+it has an output for, in the input series' coordinates: `TA_StreamOutRange` in C
+(one accessor for any handle, since every stream struct leads with the same two
+ints), `out_range()`, `outRange()`, `OutRange`. Which calls move it is
+`docs/error-handling-spec.md` §2.4's business.
 
-Parameters and history are fixed at `open`; changing a parameter means a new stream.
+Multi-output functions produce one value per output per update: an out-pointer
+each in C, a tuple in Rust, a caller-owned sink in Java, a `readonly record
+struct` in C#.
 
-The handle is opaque and tied to the library version that created it — don't
-persist it across versions.
+## Peek commits nothing, and copies nothing that grows
 
-Signatures are in the *API shape per language* section below.
-
-After open, the initial history can be "freed" by the caller (everything needed is kept within the handle).
-
-Multi-output functions (MACD, BBANDS, STOCH) produce one value per output per
-update (a tuple/struct in managed languages, one out-pointer per output in C).
-
-
-### Forming bar (peek)
-
-Live feeds revise the *forming* bar many times before it closes; `update` is
-for **closed bars only** (it commits state irreversibly). For the forming bar
-the surface includes:
-
-- **`peek(handle, bar) → value`** — evaluate a provisional bar without
-  committing state. Calling `peek` any number of times between `update`s is
-  the intended intra-bar pattern.
-
-`peek` returns exactly the value `update` would return for that bar —
-bit-identical, guaranteed by construction: it is the same generated code as
-`update`, run without committing.
-
-**C runs a transition of its own that commits nothing.** The store into a
-handle buffer becomes two locals — the slot it targeted and the value it held —
-and every load that could land on that slot selects them back; a store no load
+`peek` returns exactly what `update` would return for that bar, bit-identically,
+because it is the same generated transition run as a second frame: a store into
+a handle buffer becomes two locals — the slot it targeted and the value it held
+— every load that could land on that slot selects them back, and a store no load
 can reach this bar is deleted outright. Nothing else about the body changes, so
-`peek` is still the same numbers in the same order. What it buys is the cost
-model: peek copies the handle's fixed-size part onto the stack — the scalars
-and the in-struct accumulators — and never a buffer, so its overhead is a fixed
-number of bytes where the buffers are a function of the period. Measured on
-this box, WMA's peek was 9 ns at period 30, 31 ns at 200 and
-474 ns at 2000 against a flat 4.4 ns update; it is now flat with it. The
-per-handle mirror buffers are gone with it — they were ~38% of every handle.
+it is the same numbers in the same order.
 
-`peek` writing nothing also means C no longer needs the composed tier's routing
-flag: the peek frame calls each sub-stream's `Peek` directly, so `update` stops
-testing a flag per sub-call.
+What that buys is the cost model. No backend copies a handle's BUFFERS: peek's
+overhead is a fixed number of bytes where the buffers are a function of the
+period, which is the difference between a peek that is flat in the period and
+one that is not. C still copies the struct itself — the fixed-size part, nothing
+behind a pointer. Java and C# additionally offer the accumulators to the shadow
+rewrite, because a managed array field is a reference and localizing one means
+cloning it; what survives is a clone only where the rewrite refuses, which today
+is an accumulator the batch body sums inside a loop. The offer is made from all
+four backends or from none — bit-identity has no room for a per-backend
+difference in what the frame rewrites.
 
-**Rust runs the same frame**, in all five tiers: the loop and dual-mode tiers
-against the borrowed state, the composed tier driving each sub-stream's public
-`peek`, and dispatch and the period bank routing straight into the callee's.
-MAVP peeks only the slot the bar's period selects, where its step advances every
-slot — the other slots' next values are not this bar's answer. Nothing copies a
-handle, so the thread-local scratch tier that used to absorb the deepest clones
-is gone entirely.
-
-Rust needs three things C does not, because its renderer keys on how a name is
-spelled and a frame's locals drop the `sp.` qualifier: a localized field must
-inherit the classification the QUALIFIED name carried; the `while i <= n` to
-`for i in ..` lowering must be off inside a frame, since it rebinds the counter
-as `usize`; and the outputs are rebound as `&mut` inside a block so the body
-keeps the `(*out) = …` spelling and every cast with it.
-
-**Java and .NET run the same frame**, tier for tier, with two differences that
-are theirs alone. A managed array field is a *reference*, so localizing one
-means cloning it, and that clone is a per-call allocation the other two
-backends do not pay. So the accumulators are offered to the shadow rewrite
-alongside the handle's buffers, and a store no load reaches is deleted outright
-instead — leaving a clone only where the rewrite refuses, which today is an
-accumulator the batch body sums inside a loop. The offer is made from all four
-backends or from none, for the bit-identity reason
-`transition_buffers_with_state_arrays` states. And `cur_<out>` is itself a
-handle field, so localizing the stores is what turns the cached output into the
-local `peek` returns.
-
-No backend copies a handle's BUFFERS to peek it any more. Java's `copyFrom`,
-both backends' per-thread scratch and the predicate that chose between a reused
-scratch and a throwaway are all deleted; the shipped `Core.java` lost ~14,000
-lines with them. C still copies the struct itself, which is the fixed-size part
-and nothing behind a pointer.
-
-No form writes the handle, which is what keeps Rust's `peek` a `&self` method
-and every backend's handles concurrently peekable — including two threads
-peeking the same handle, which a per-thread scratch could not serve. `update`
-never allocates (that is the hard constraint, not peek's). Neither does `peek`
-in C or Rust; in Java and .NET it allocates only where the surviving clone
-above is, and the generated doc comment on each `peek` says which of the two it
+No form writes the handle. That is what keeps Rust's `peek` a `&self` method and
+every backend's handles concurrently peekable, including two threads peeking the
+same handle. `update` never allocating is the hard constraint; `peek` also
+allocates nothing in C and Rust, and in the managed backends only where that
+surviving clone is — each generated `peek` doc comment says which of the two it
 is rather than claiming the stronger one everywhere.
 
 The property is structural, not observable: a peek that copied and then wrote
@@ -150,988 +73,391 @@ the copy would still answer correctly, so no value gate can see the difference.
 Each backend therefore carries its own sweep over every streamable function —
 `peek_suite` for C, `no_rust_peek_copies_the_handle`,
 `no_java_peek_copies_the_handle`, `no_csharp_peek_copies_the_handle` — asserting
-a frame is what runs, that it allocates nothing that grows with the period, and
+that a frame is what runs, that it allocates nothing growing with the period, and
 that the accumulators it still copies are the ones the shadow rewrite refused.
 
-### Full-history output at open (`OpenAndFill`)
+Two things Rust needs that C does not, because its renderer keys on how a name is
+spelled and a frame's locals drop the `sp.` qualifier: a localized field inherits
+the classification the QUALIFIED name carried, and the `while i <= n` → `for i in
+..` lowering is off inside a frame, since it rebinds the counter as `usize`.
 
-`open` returns only the value at the last history bar — yet it already computes the
-whole batch output internally and throws it away, keeping just that last value and the
-warmed-up state. So the common "compute over all of history, then go live" bootstrap
-pays for two passes — `batch(0, n-1)` then `open(history)` — when one already runs
-inside `open`. `OpenAndFill` keeps the discarded output:
+## `OpenAndFill` — the warm-up output `open` would have thrown away
 
-- **`open_and_fill(history[], params) → (handle, filled_outputs)` — once.** Does
-  everything `open` does *and* writes the full-history output arrays, bit-identical to
-  `batch(startIdx=0, endIdx=historyLen-1)`, in `open`'s single pass. One call gives you
-  the whole historical series *and* a live handle.
+`open` already computes the whole batch output internally and keeps only the last
+value, so a "backfill then go live" bootstrap otherwise pays two passes.
+`open_and_fill` keeps the output: everything `open` does, plus the full-history
+arrays, bit-identical to `batch(0, historyLen-1)`, in the same single pass.
 
-It is a **separate** entry point; `open` is byte-for-byte unchanged. The signature is
+It is a separate entry point; `open` is byte-for-byte unchanged. The signature is
 `open`'s input head followed by `batch`'s output tail — one array per output plus
-`outBegIdx`/`outNBElement` (both required). There is no `startIdx`: pinning bar 0 is
-exactly what makes the fill bit-exact (see *Semantic definition*). The output arrays must not alias the input or each other
-(rule S6) — not because the fill would compute the wrong answer, which it does not,
-but because the margin between its writes and the ring seeds' reads of the input tail
-is an accident of each body's arithmetic that nothing asserts.
+`outBegIdx`/`outNBElement`. There is no `startIdx`: pinning bar 0 is what makes
+the fill bit-exact. Rejection is `open`'s, not `batch`'s, so short history is an
+error here rather than a success with empty output.
 
-Rejection is `open`'s, not `batch`'s: too-short history returns
-`TA_INSUFFICIENT_HISTORY` and produces no handle (a handle needs a defined value, so
-short history is an error here, not batch's success-with-empty-output). It is the
-library's one recoverable condition, and carries its own code for that reason.
+Outputs may not alias the inputs or each other — not because the fill would
+compute the wrong answer, which it does not, but because the margin between its
+writes and the ring seeds' reads of the input tail is an accident of each body's
+arithmetic that nothing asserts.
 
-```c
-TA_SMA_Stream *s = NULL;
-double warmup[N];                  /* one array per output, caller-sized */
-int begIdx, nbElement;
-
-/* Fills warmup[] == batch(0, N-1) AND returns the live handle, in one pass. */
-TA_RetCode rc = TA_SMA_OpenAndFill( &s, history, N, 14,
-                                    &begIdx, &nbElement, warmup );
-/* ... plot warmup[begIdx .. begIdx+nbElement-1] ... */
-
-for (int i = 0; i < newBars; i++)      /* go live from the same handle */
-    TA_SMA_Update( s, bar[i], &out );
-TA_SMA_Close( s );
-```
-
-**When it helps.** Any "backfill then stream" startup. The saving is one-time warm-up
-work — roughly half of `open`'s cost for the scalar/ring tiers, less for composed — so
-at a few thousand history bars it is microseconds. The real wins are ergonomics, one
-fewer full-history allocation, and closing the two-pass footgun; not steady-state
+The saving is one-time warm-up work, so the case for it is ergonomics, one fewer
+full-history allocation, and closing the two-pass footgun — not steady-state
 throughput.
 
-**Availability.** C first (every streamable function has `OpenAndFill` wherever it has
-`Open` — same `TA_FUNC_FLG_STREAM` gate); Rust/Java/.NET follow their `open` emitters.
+## `UpdateAndFill` — n closed bars in one call
 
-### Catching up n bars at once (`UpdateAndFill`)
+Exactly `n` back-to-back `update` calls, in order: same values, same state, same
+per-bar rejection. What disappears is the per-call cost around the step — one
+call frame and one argument-check set for the whole run instead of one per bar.
+There is no out-meta pair; the range rides on the handle.
 
-`update` commits one bar. `UpdateAndFill` commits `n` and writes the `n` values
-into the caller's arrays — the streaming counterpart of what `OpenAndFill` does
-for the warm-up. It is the answer for a caller catching a live stream up over a
-gap, or replaying a batch of closed bars, without `n` round trips.
+**A rejected bar commits the bars before it.** The loop stops at the first error,
+so bar `k` being non-finite is rejected the way `update` rejects it: bars
+`[0, k)` stay committed with their values written, bar `k` and everything after
+does not, output slot `k` is untouched, and the handle's range has advanced by
+`k + 1` — the committed bars plus the rejected one, which `update` counts too.
+The caller reads the range to learn where it stopped and resumes with the rest.
+This is the one call in the library that returns a failure AND leaves output
+behind, so what it leaves is specified rather than merely allowed.
 
-- **`update_and_fill(bars[], outputs[]) → n values` — as often as you like.**
-  Exactly `n` back-to-back `update` calls, in order. Same values, same state,
-  same per-bar rejection; what disappears is the per-call cost around the step —
-  one call frame, one NULL/length/aliasing check set for the whole run instead
-  of one per bar.
+That advance is gated absolutely — one rejected `Update` counts one bar, a `Peek`
+none — by a leg in each backend's stream suite and by `out_range_advance_suite`
+over the emitted text of every streamable function in all four. Comparing an
+`UpdateAndFill` against a control handle driven one bar at a time cannot gate it:
+that compare is symmetric and stays green with the advance deleted from both
+arms.
 
-**What it saves.** Measured in C over 4096 bars against the same handle driven
-one `Update` at a time, medians of 51 interleaved reps with a noise floor under
-1%: **−2%** for `SMA`, **−19%** for `CDLDOJI`, **−9% to −15%** for `BBANDS`. The
-spread is the shape of what is removed rather than of the indicators: `SMA`
-passes one scalar and one pointer, `CDLDOJI` four and one, `BBANDS` one and
-three. Real, and worth having where a caller is replaying thousands of bars —
-but the ergonomics and the single range read are the larger part of the case,
-not a new performance tier.
+Reading the `n` bars as an input array instead — never scanned, `count += n`
+unconditionally — was rejected. The two reasons the warm-up scan was deleted stop
+applying here: that scan was an extra pass over caller memory, while this check
+is a comparison on a value the loop has already loaded, and a partial fill is
+unacceptable in `OpenAndFill` because it leaves no handle and a half-written
+array with nothing to describe it, where here it leaves `k` successful updates
+and a handle that says so. Under the array reading, `UpdateAndFill` would have
+been the one way to poison a handle silently.
 
-There is no `outBegIdx`/`outNBElement` pair: the range rides on the handle, so
-`TA_StreamOutRange` / `out_range()` / `outRange()` / `OutRange` answers
-afterwards — and answers it for a partial run too, which is the whole reason the
-next paragraph is expressible at all.
+Outputs may not alias the inputs or each other. Exact equality happens to be safe
+— the step takes bar `i` by value, so output `i` is written after every input `i`
+is read — and is rejected anyway, because it is the only case C can see and
+admitting it would advertise a guarantee whose immediate neighbourhood (an output
+overlapping an input at a non-zero offset) is silent corruption.
 
-**A rejected bar commits the bars before it.** `n` bars in one call is a loop of
-`n` `update`s that stops at the first error — what a caller acting on every
-failure would write by hand — so bar `k` being non-finite is rejected the way
-`update` rejects it: bars `[0, k)` stay committed with their values written, bar
-`k` and everything after it does not, output slot `k` is left alone, and the
-handle's range has advanced by `k + 1` (the `k` committed bars, plus the rejected
-one, which `update` counts too). The caller reads the range to learn where it
-stopped — the rejected bar is the last one counted — and resumes with the rest of
-the series. This is the one call in the library that returns a failure *and*
-leaves output behind, so what it leaves is specified rather than merely allowed.
+## Semantic definition
 
-The advance is gated absolutely — one rejected `Update` counts exactly one bar, a
-`Peek` none — by a leg in each backend's own stream suite, and by
-`out_range_advance_suite` over the emitted text of every streamable function in
-all four. Comparing an `UpdateAndFill` against a control handle driven one bar at
-a time cannot gate it: that compare is symmetric, and stays green with the advance
-deleted from both arms.
-
-The alternative was to read the `n` bars as an input *array* — never scanned,
-`count += n` unconditionally, marginally faster. It was rejected because the two
-reasons the warm-up scan was deleted (`docs/error-handling-spec.md`, the
-withdrawn rule S8) both stop applying here. That scan was an extra pass over caller memory;
-this check is a comparison on a value the loop has already loaded to step on.
-And a partial fill was unacceptable in `OpenAndFill` because it leaves no handle
-and a half-written array with nothing to describe it, where here it leaves `k`
-successful updates and a handle that says so. Meanwhile the reason the streaming
-tier rejects a bar at all is untouched: a handle retains accumulators, so one
-non-finite bar poisons every value it will ever produce. Under the array reading
-`UpdateAndFill` would have been the one way to poison a handle silently, in the
-entry point whose whole pitch is "the convenience form of a loop of `update`s".
-
-**Aliasing.** Outputs may not alias the inputs or each other, the same rule
-`OpenAndFill` carries. Exact equality happens to be safe here — the step takes
-bar `i` by value, so output `i` is written after every input `i` has been read —
-and is rejected anyway, because it is the only case C can see and admitting it
-would advertise a guarantee whose immediate neighbourhood (an output overlapping
-an input at a non-zero offset, which feeds the next bar a value the previous bar
-just wrote) is silent corruption.
-
-**Scope.** Streaming only. There is no batch-tier `UpdateAndFill` and none is
-proposed.
-
-### Semantic definition (the contract tests enforce)
-
-For every function F, parameters p, and series `x[0..t]`: after
-`open(x[0..k], p)` (any `k+1 >= min_history`) and
-`update(x[k+1]) … update(x[t])`, the stream value at every bar where batch
-reports an output is **bit-identical** to
-
-```
-batch_F(startIdx=0, endIdx=t, x[0..t])   at that bar,
-```
-
-computed under the same compatibility and candle settings — which must not
-change over the stream's lifetime (see *Concurrency across languages*) — and the
-unstable period in effect at `open`.
-
-Notes that make this precise:
+For every function F, parameters p and series `x[0..t]`: after `open(x[0..k], p)`
+for any `k+1 >= lookback + 1`, then `update(x[k+1]) … update(x[t])`, the stream
+value at every bar where batch reports an output is **bit-identical** to
+`batch_F(0, t, x[0..t])` at that bar — under the same compatibility and candle
+settings, which must not change over the stream's lifetime, and the unstable
+period in effect at open.
 
 - **The range matches batch too, not just the values.** After a handle has been
-  fed `N` bars, by any mixture of `open` / `openAndFill`, `update` and
-  `updateAndFill`, its `OutRange` is what the batch call over those same bars
-  reports. `stream_verify` carries a range leg for this in all four servers, with
-  one compare site per opener and one for the n-bar filler — it feeds only finite
-  bars, so a rejected bar's advance is invisible to it and is gated where
-  *Catching up n bars at once* says.
-- **The history given to `open` defines bar 0.** The stream matches batch
-  over exactly the series it has seen; for some seedings (e.g. EMA under
-  Metastock compatibility) values depend on the whole history — by design.
+  fed `N` bars by any mixture of the openers, `update` and `updateAndFill`, its
+  `OutRange` is what the batch call over those same bars reports.
+- **The history given to `open` defines bar 0.** For seedings that depend on the
+  whole history (EMA under Metastock compatibility), that is the definition, by
+  design.
 - **State is carried forward, never re-seeded.** Every update continues the
-  same computation batch would run from bar 0 — that is what makes
-  bit-exactness possible.
-- **Unstable period.** Honored exactly as in batch, where — with full
-  history — it only delays the first visible output: `open` requires
-  `TA_XXX_Lookback() + 1` bars; values are unaffected. It is read once at
-  `open`; changing it later affects only future opens, never a live stream.
-- **Non-finite input: single values are rejected, arrays are not checked.**
+  computation batch would run from bar 0, which is what makes bit-exactness
+  possible at all.
+- **Unstable period** is honored as in batch, where with full history it only
+  delays the first visible output. It is read once at open; changing it later
+  affects future opens, never a live stream.
+- **Non-finite input: single values are rejected, arrays are not checked.** An
+  input array is never scanned in either tier — keeping one free of NaN and ±Inf
+  is the caller's responsibility, and passing a non-finite one is undefined
+  behaviour. A scan is a whole extra pass over caller memory, and folding it into
+  the main loop instead would trade that for a worse contract: a rejection
+  partway through a fill, output already half written. A single value is always
+  checked, in both tiers, because it is one comparison: every bar in every input
+  slot, and every real optional parameter, where the range test would otherwise
+  admit NaN (`x < min` and `x > max` are both false for it, so the check is
+  spelled inverted, `!(x >= min && x <= max)`).
 
-  An **input array** is never scanned, in either tier. Keeping an array free of
-  NaN and ±Inf is the caller's responsibility; passing a non-finite one is
-  **undefined behaviour** — see `docs/error-handling-spec.md`, "Non-finite
-  input". A scan is a whole extra pass over caller-owned memory: measured at
-  ≈0.3 ns per bar per array, which is a corpus median of **22% of `Open`** and up
-  to 76% of a candlestick `OpenAndFill`. Folding it into the main loop instead
-  would trade that for a worse contract — a rejection partway through a fill,
-  with the output already half written.
-
-  A **single value** is always checked, in both tiers, because it is one
-  comparison and costs nothing measurable:
-
-  - every bar handed to `Update` / `Peek` / `UpdateAndFill`, in every input
-    slot — the n-bar filler checks bar `i` before committing it, which is a
-    per-bar test inside its loop, not a pre-scan of the array;
-  - every real optional parameter, which the range test would otherwise admit —
-    `x < min` and `x > max` are both false for NaN, so the check is spelled
-    inverted, `!(x >= min && x <= max)`, in **both** tiers.
-
-  The per-bar rejection earns its cost from the retained state. Batch is handed
-  a series, computes and forgets, so a NaN reaches the outputs depending on that
-  bar and no others. A handle carries recursive accumulators across calls, so one
-  non-finite bar poisons every value it will ever produce afterwards, long after
-  the feed recovers. Rejecting the bar and leaving the handle usable is strictly
-  more useful than accepting it and going permanently NaN.
-
-  **What "the handle is unchanged" does and does not cover.** The finite check
-  runs before any *state* is written, so the state half of the promise is
+  The per-bar rejection earns its cost from the retained state. Batch is handed a
+  series, computes and forgets, so a NaN reaches only the outputs depending on
+  that bar; a handle carries recursive accumulators, so one non-finite bar
+  poisons every value it will ever produce afterwards. The finite check runs
+  before any STATE is written, so that half of "the handle is unchanged" is
   unconditional and is what the generated docs say; `OutRange` is the one thing
-  an `Update` rejection does move (`docs/error-handling-spec.md` §2.4).
+  an `Update` rejection does move.
 
   Composition is where even the state half fails: a sub-stream re-checks an
-  intermediate the library itself computed and rejects it after its siblings
-  have advanced. Closing it means giving every function an internal, unchecked
+  intermediate the library itself computed and rejects it after its siblings have
+  advanced. Closing that would mean giving every function an internal, unchecked
   per-bar entry point for composition to call, which buys nothing inside the
   supported input range.
+- **A function whose documented output domain includes NaN or ±Inf may not drive
+  another function's sub-stream.** Such a callee would make the rejection above
+  routine rather than exotic, so `streaming::reject_nonfinite_callees` refuses the
+  combination at generation time. Clearing such a failure means either a
+  `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}` body for the callee without the domain
+  hole, or teaching the composed emitter to carry a rejection out of the step.
+  None of the `nan_inf_output` functions is composed by anything today, so the
+  gate is dormant against the shipped corpus; `nan_inf_callee_is_refused` injects
+  the flag onto MA so it can be seen firing.
 
-  Outputs are unchanged by all of this: a successful call still never produces
-  NaN, except from the seven functions flagged `nan_inf_output` (#191), which
-  have genuine domain holes.
+Batch and stream share no emitted code — both come from the same IR through
+independent emitters — so a common invisible bug has no shared surface to live
+in.
 
-- **Composition and `nan_inf_output`.** Because the tier assumes everything
-  inside the API is finite, a function whose *documented output domain* includes
-  NaN or ±Inf may not drive another function's sub-stream. Such a callee would
-  make the rejection above routine rather than exotic — reachable on ordinary
-  input rather than only at overflow magnitudes — so the combination is refused
-  outright.
+## API shape per language
 
-  So `streaming::reject_nonfinite_callees` refuses the combination at
-  generation time rather than shipping the silent version. Clearing such a
-  failure means either a `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}` body for the
-  callee without the domain hole, or teaching the composed emitter to carry a
-  rejection out of the step. None of the seven flagged functions (ACOS, ASIN,
-  LN, LOG10, SQRT, DIV, VWMA) is composed by anything today, so the gate is
-  dormant against the shipped corpus — `nan_inf_callee_is_refused` in
-  `tests/streaming_suite.rs` injects the flag onto MA so it can be seen firing.
-
-ta_regtest automation validates the batch API exhaustively including comparison
-against frozen references (e.g. 0.6.4). The stream tier is verified against
-batch (see *Verification*); what transfers is full-range value correctness.
-
-We purposely avoid code re-use between the generated batch and stream API,
-reducing risk of introducing common/invisible bugs. (Both are generated from
-the same IR, but through independent emitters — see *How it fits ta_codegen*.)
-
-### API shape per language (signatures)
-
-C — every entry point returns `TA_RetCode` like the rest of the library;
-"Stream" appears only in the handle type, the functions use the lifecycle
-verbs `Open`/`Update`/`Peek`/`Close`; every declaration carries `TA_LIB_API`
-(the Windows shared build exports nothing without it); allocation uses
-`TA_Malloc`/`TA_Free`:
+C: every entry point returns `TA_RetCode`, "Stream" appears only in the handle
+type, the handle leads and everything after it is in batch order, every
+declaration carries `TA_LIB_API` (the Windows shared build exports nothing
+without it), and allocation uses `TA_Malloc`/`TA_Free`.
 
 ```c
-TA_SMA_Stream *s = NULL;
-double out;
-
-/* open: validates params, consumes warm-up history in one pass,
- * allocates the handle, writes the value at the last history bar.
- * The handle leads (like Update/Peek/Close); everything after it is in
- * batch order — input, optional, output. */
-TA_LIB_API TA_RetCode TA_SMA_Open( TA_SMA_Stream **stream,     /* out */
-                                   const double   history[],
-                                   int            historyLen,
-                                   int            optInTimePeriod,
-                                   double         *outReal );  /* out */
-
-/* update: produces a value unless the bar is rejected -- NULL args, or a
- * non-finite input (see the NaN note above). */
-TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream,
-                                     double         inReal,
-                                     double        *outReal );
-
-/* update_and_fill: barCount closed bars in, barCount values out — exactly
- * barCount back-to-back Update calls, stopping at the first error. No out-meta
- * pair: read the range off the handle, whose last counted bar is the one that
- * failed. Outputs must not alias the inputs or each other. */
-TA_LIB_API TA_RetCode TA_SMA_UpdateAndFill( TA_SMA_Stream *stream,
-                                            const double   inReal[],
-                                            int            barCount,
-                                            double         outReal[] );
-
-/* peek: the same generated transition as update, rewritten to commit
- * nothing — the handle is const, and stays untouched. */
-TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
-                                   double               inReal,
-                                   double              *outReal );
-
+TA_LIB_API TA_RetCode TA_SMA_Open( TA_SMA_Stream **stream, const double inReal[],
+                                   int historyLen, int optInTimePeriod,
+                                   double *outReal );
+TA_LIB_API TA_RetCode TA_SMA_OpenAndFill( TA_SMA_Stream **stream, const double inReal[],
+                                          int historyLen, int optInTimePeriod,
+                                          int *outBegIdx, int *outNBElement,
+                                          double outReal[] );
+TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream, double inReal, double *outReal );
+TA_LIB_API TA_RetCode TA_SMA_UpdateAndFill( TA_SMA_Stream *stream, const double inReal[],
+                                            int barCount, double outReal[] );
+TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream, double inReal, double *outReal );
+TA_LIB_API TA_RetCode TA_SMA_Value( const TA_SMA_Stream *stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SMA_Clone( const TA_SMA_Stream *stream, TA_SMA_Stream **clone );
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
 
-/* out_range: the bars this handle has an output for. One accessor for
- * every function — it takes any TA_<N>_Stream *, because every stream struct
- * leads with the same two ints. */
-TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream,
-                                         int        *outBegIdx,
-                                         int        *outNBElement );
+TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream, int *outBegIdx, int *outNBElement );
 ```
 
-**Error model.** `docs/error-handling-spec.md` §2.3–2.5 specifies it, rule by
-rule and backend by backend. Two properties belong here instead, being shapes of
-this API rather than rules about a fault: `*stream` is NULL on every `Open`
-failure, and the warm-up history is an input array, so it is never scanned — see
-the non-finite bullet above.
-
-**Shapes.** Multi-input functions take the price scalars in batch order
-(`TA_CDLDOJI_Update(s, open, high, low, close, &outInteger)`).
-Multi-output functions take one out-pointer per output in batch order
-(`TA_MACD_Update(s, x, &outMACD, &outMACDSignal, &outMACDHist)`).
-Integer-output functions (CDL\*) use `int *outInteger`.
-
-Rust:
+Multi-input functions take the price scalars in batch order; multi-output ones
+take one out-pointer per output in batch order; `CDL*` outputs are
+`int *outInteger`. `*stream` is NULL on every `Open` failure.
 
 ```rust
-let core = Core::builder().build()?;              // immutable settings (issue #104)
-let (mut s, _last) = core.sma_open(&history, 14)?; // &self method on Core; the
-                                                  // handle holds its own Core
-                                                  // (a cheap by-value clone)
-for &x in new_bars { let v = s.update(x)?; }       // &mut self; Err(BadParam)
-                                                  // only on a non-finite bar
-s.update_and_fill(&gap_bars, &mut out)?;            // n bars, n values, one call
-let provisional = s.peek(forming_bar_close)?;      // &self: the same
-                                                  // transition, committing
-                                                  // nothing
-let r = s.out_range();                             // the bars this handle has
-                                                  // an output for
+let core = Core::builder().build()?;               // immutable settings
+let (mut s, _last) = core.sma_open(&history, 14)?; // &self on Core; the handle
+                                                   // holds its own Core by value
+let v = s.update(x)?;                              // &mut self
+s.update_and_fill(&gap_bars, &mut out)?;
+let provisional = s.peek(forming)?;                // &self, commits nothing
+let r = s.out_range();
 ```
-
-Java/.NET: small handle objects with the same `open(history, params)` +
-`update`/`peek` shape. Multi-output return small structs (`(f64, f64, f64)`
-for MACD in Rust; a tiny value class in Java/.NET).
-
-Java (shipped shape — design-panel reviewed):
 
 ```java
 Core core = new Core();
-Core.SmaStream s = core.smaOpen(history, 14);  // throws on reject; value() = last-bar value
-double v = s.update(bar);                        // one value per closed bar
-double p = s.peek(formingBarClose);              // forming bar, non-committing
-s.updateAndFill(gapBars, out);                   // n bars, n values, one call
-Core.SmaStream t = s.clone();                   // independent stream fork
-Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
-Core.MacdOut mv = new Core.MacdOut();            // allocate once, reuse per bar
-m.update(bar, mv);                               // mv.macd / mv.macdSignal / mv.macdHist
-Core.SmaStream s2 = core.smaOpenAndFill(history, 14, warmup);
-OutRange r = s2.outRange();                      // the bars this handle has an
-                                                 // output for
+Core.SmaStream s = core.smaOpen(history, 14);   // throws on reject
+double v = s.update(bar);
+double p = s.peek(formingBarClose);
+s.updateAndFill(gapBars, out);
+Core.SmaStream t = s.clone();                   // independent fork
+Core.MacdOut mv = new Core.MacdOut();           // allocate once, reuse per bar
+m.update(bar, mv);                              // mv.macd / .macdSignal / .macdHist
+OutRange r = s.outRange();
 ```
 
-- Handles are `public static final` classes **nested in `Core`** (`Core.SmaStream`),
-  named `<Name>Stream` (PascalCase, single-capitalized acronym, #278) from the
-  YAML `name` — they ride the existing per-function fragment splice into both
-  the shipped `Core.java` and the JSON-RPC server with zero new build plumbing.
-- Open rejections are unchecked exceptions: `InsufficientHistoryException`
-  (an `IllegalArgumentException` subclass — the one routine, data-dependent
-  condition, catchable separately) for `historyLen < lookback + 1`, plain
-  `IllegalArgumentException` for out-of-range parameters, an absent argument, an
-  input series that is not the history's length, an `OpenAndFill` output too
-  short for the fill, and `OpenAndFill` aliasing; `IllegalStateException` for
-  capture invariants. An empty history and one past `MAX_INDEX + 1` are the two
-  index faults, and carry the range codes (`docs/error-handling-spec.md` §2.3). Messages carry the
-  stable prefix `"<NAME> open:"`. Post-open, `update`/`peek` throw only
-  `IllegalArgumentException` on a non-finite bar (prefix `"<NAME> update:"` /
-  `"<NAME> peek:"`), leaving the handle's *state* untouched
-  (`docs/error-handling-spec.md` §2.4).
-- `value()` re-reads the value(s) at the last bar the stream counted — the bar
-  `outRange()` ends on — without recomputing.
-- A **multi-output** handle answers through a caller-owned sink rather than a
-  return: `void update(bars…, <N>Out)`, `void peek(…, <N>Out)`,
-  `void value(<N>Out)`, with `<N>Out` a mutable public-field class at `Core`
-  level. The caller allocates it once and reuses it, so every bar costs zero
-  bytes unconditionally — where a returned object depended on escape analysis
-  firing, which measurement showed it does not at the sites that matter (#310).
-  `<N>Out` carries no `equals`/`hashCode`: it is a buffer whose contents change
-  under any reference kept past the next call, and value equality on that breaks
-  `HashMap`/`HashSet` the moment a reused sink becomes a key. Single-output
-  handles are untouched and still return the bare `double`/`int`.
-- `clone()` is the universal deep copy (arrays cloned, sub-handles copied
-  recursively, the `Core` reference shared), and it is spelled the same in all
-  four backends: `TA_<N>_Clone`, `.clone()`, `clone()`, `Clone()`. It is the
-  only path left that copies a handle.
+```csharp
+Core.SmaStream s = core.SmaOpen(history, 14);
+double v = s.Update(bar);
+MacdValue m = macd.Update(bar);                 // readonly record struct
+```
 
-  It was `copy()` in Java, to avoid `ForkJoinTask.fork()`'s async connotation
-  and "Java's broken `clone()`". The first reason stands and is why the verb is
-  not `fork`. The second does not: what is broken is `Cloneable` +
-  `super.clone()` — the marker interface that changes `Object.clone()`'s
-  behaviour from outside the language, the field-by-field copy that fights
-  `final`, the contract that comes apart under inheritance. Every one of those
-  attaches to `super.clone()`, and the remedy the same critique prescribes is a
-  copy constructor, which is what every backend already emits. A `public <N>Stream
-  clone()` that never calls `super.clone()` needs no `Cloneable`, throws no
-  `CloneNotSupportedException`, and on a `final` handle cannot be inherited into
-  the broken case. C# reached this conclusion first and shipped a typed
-  `Clone()` with no `ICloneable`, for the same reason and against the same
-  objection. Rust has no choice at all — the fork is `Clone::clone`.
+Shape rules that are not visible in those lines:
+
+- Java handles are `public static final` classes nested in `Core`
+  (`Core.SmaStream`, PascalCase with a single-capitalized acronym), so they ride
+  the existing per-function fragment splice into both the shipped `Core.java` and
+  the JSON-RPC server with no new build plumbing.
+- Java rejections are unchecked and typed: `InsufficientHistoryException` for
+  short history (an `IllegalArgumentException` subclass, so it is catchable
+  separately), and the `TaLibArgumentException` / `TaLibIndexException` /
+  `TaLibStateException` family — each carrying its `RetCode` — for everything
+  else. Messages carry the stable prefix `"<NAME> open:"` / `"<NAME> update:"` /
+  `"<NAME> peek:"`. `docs/error-handling-spec.md` §2.3–2.5 is the rule-by-rule
+  source.
+- `value()` re-reads the value(s) at the last bar the stream counted, without
+  recomputing.
+- A **multi-output Java** handle answers through a caller-owned sink —
+  `void update(bars…, <N>Out)` — so a reused sink costs zero bytes per bar
+  unconditionally, where a returned object would depend on escape analysis firing
+  and measurement shows it does not at the sites that matter. `<N>Out` carries no
+  `equals`/`hashCode`: it is a buffer whose contents change under any reference
+  kept past the next call, and value equality on that breaks `HashMap`/`HashSet`
+  the moment a reused sink becomes a key. **C#** returns a `readonly record
+  struct` instead, which is allocation-free by construction — and therefore
+  carries .NET's `double` equality, where `NaN` equals `NaN` and `+0.0` equals
+  `-0.0`. Compare per component when bit identity is what you mean.
+- `clone()` is the universal deep copy — arrays cloned, sub-handles copied
+  recursively, the `Core` reference shared — spelled the same in all four
+  backends (`TA_<N>_Clone`, `.clone()`, `clone()`, `Clone()`), and it is the only
+  path left that copies a handle. Java's spelling needs no `Cloneable` and never
+  calls `super.clone()`, which is what the standard objection to Java `clone()`
+  actually attaches to; the remedy that objection prescribes is a copy
+  constructor, which is what every backend already emits.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
-  equality (complete in Java: arrays are identical or disjoint) — Java is the
-  one managed backend where `smaOpenAndFill(history, …, history)` compiles, so
-  the guard is load-bearing. The managed .NET emitter mirrors it with
-  `ReferenceEquals`, which additionally compiles for cross-typed `double[]`/
-  `int[]` output pairs where `==` would not.
-- `Integer.MIN_VALUE` keeps its batch meaning (use the documented default) in
-  streaming opens; the stream gate asserts `open(MIN_VALUE) == open(default)`
+  equality in Java (arrays are identical or disjoint, so that is complete) and by
+  `ReferenceEquals` in C#, which additionally compiles for cross-typed
+  `double[]`/`int[]` output pairs where `==` would not.
+- `Integer.MIN_VALUE` keeps its batch meaning — use the documented default — in a
+  streaming open, and the gate asserts `open(MIN_VALUE) == open(default)`
   bitwise.
-- Handles are deliberately **not serializable**: the sanctioned checkpoint
-  story is retaining history and re-opening (bit-identical by contract).
+- Handles are deliberately not serializable, and no managed handle implements
+  `AutoCloseable` or `IDisposable`: a handle is ordinary heap state, so GC
+  suffices. A P/Invoke wrapper over the C handles would own native memory and
+  need `SafeHandle`, which is why .NET has a managed emitter instead.
 
-**Java/.NET handle lifecycle.** Generated Java is pure Java — a stream handle
-is ordinary heap state, so "close" is literally nothing: no `AutoCloseable`,
-no finalizer; GC suffices. The same holds for .NET, because the .NET stream
-tier **is** a managed C# emitter mirroring the Java one: no `IDisposable`, no
-finalizer, and the handle types are verified to implement neither. A P/Invoke
-wrapper over the C handles would instead own native memory and need
-`SafeHandle`/`IDisposable` — a worse API; this design chose the managed
-emitter and accepted the later delivery date.
+## Concurrency
 
-One place the C# tier deliberately departs from the Java one, because the
-language offers something Java does not:
+One rule holds in every language, each enforcing it its own way:
 
-- **Multi-output values are a `readonly record struct`, not a caller-owned
-  sink.** A struct is returned by value into the caller's frame, so it is
-  allocation-free by construction and needs no out-parameter to be free; Java
-  has no such type and reaches the same zero through the sink (#310). The
-  consequence for callers is that the C# value carries .NET's `double` equality
-  — `NaN` equals `NaN` **and** `+0.0` equals `-0.0` — while `<N>Out` carries no
-  equality at all. Compare per component when bit identity is what you mean:
-  `BitConverter.DoubleToInt64Bits` in C#, `Double.doubleToRawLongBits` in Java.
+> **A stream's value-affecting settings (compatibility, candle settings) must not
+> change over its lifetime.**
 
-### Rust concurrency
+- **Rust** enforces it by construction: settings live in the immutable `Core` the
+  stream was opened from, so a violation is not expressible. `Core` is
+  `Send + Sync`, `open` is `&self`, and the handle holds its own `Core` by value
+  (a `&self` method cannot mint a shared `Arc`, and a clone of a small, deeply
+  immutable `Core` is observationally identical to a reference while keeping
+  handles free of lifetimes). A handle is `Send` but single-writer, because
+  `update(&mut self)` makes concurrent updates on one handle a compile error.
+- **C** documents it, as an extension of the existing batch-tier caveat: calling
+  `TA_SetCompatibility` / `TA_SetCandleSettings` while streams are open is
+  undefined, warm-up and ring sizes being derived from the settings in effect at
+  open. Where a candle range is BUFFERED — every trailing ring, and the
+  rescan-window reads routed into one — its value is the one the range type
+  produced when that bar was pushed, up to `back` bars earlier. That sits inside
+  the undefined region and is the more self-consistent of the two: a bar now
+  enters and leaves a running total as the identical double, so the sum
+  telescopes exactly. A single handle is single-writer; concurrent `Peek`s are
+  safe, the `const` being load-bearing.
+- **Java / C#** keep settings per-`Core`-instance, so there is no process-global
+  hazard, and candle settings are additionally snapshotted into CDL handles at
+  open, so a mid-stream change cannot produce torn per-bar reads. Single-writer
+  per handle; with no concurrent `update`, `peek` / `value()` / `clone()` never
+  write the handle and are safe to call concurrently after safe publication. A
+  multi-output `<N>Out` is the opposite case: a mutable buffer with no final
+  fields, carrying no publication guarantee of its own, so give each thread its
+  own sink.
 
-The Rust binding is shaped so concurrent batch and per-thread streams are
-enforced by the type system, not by convention. This justifies the API shape
-above:
+## How it fits ta_codegen
 
-- **`Core` is immutable after construction** (built via `Core::builder()`, no
-  setters — issue #104, closed). Its
-  fields are plain data, so `Core: Send + Sync`: share one `Arc<Core>`
-  read-only across threads and call any batch function concurrently — safe by
-  construction, since a call only *reads* the globals (compatibility, candle
-  settings, unstable period). Changing a setting means building a new `Core`
-  (it is small; cloning is cheap).
-- **`open` is a `&self` method on `Core`.** Compatibility is consumed during
-  seeding; for anything read per-bar (candle settings) the handle holds its
-  own `Core` **by value** — a `&self` method cannot mint a shared `Arc`, and a
-  clone of a small, deeply immutable `Core` is observationally identical to a
-  reference while keeping handles free of lifetimes. Settings cannot change
-  for a `Core` by design, so "settings stable over a stream's lifetime" holds
-  by construction even if the original `Core` is dropped. Opening and driving
-  streams concurrently from a shared `&Core` is therefore safe. (Unstable
-  period is read once at `open` — it only sizes the required history — and
-  never consulted again.)
-- **A stream handle is `Send` but single-writer.** `update(&mut self)` makes
-  concurrent updates on one handle a compile error, so the "one thread per
-  stream" rule is enforced, not merely advised; being `Send`, a handle can
-  still be moved between threads (e.g. a work-stealing pool) as long as it is
-  never driven from two at once.
+1. **Metadata, not logic.** A function opts in with `stream` in its YAML
+   `flags:`, which maps to `TA_FUNC_FLG_STREAM` in ta_abstract like every other
+   entry. No flag, no stream code. Everything else is derived from the IR:
+   `stream-census` reports what each function derives, and `generate` FAILS if a
+   flagged function stops being analyzable or its transition can no longer be
+   built. That gate is the answer to the one real maintenance coupling — a batch
+   rewrite can change a loop shape and break stream analyzability while leaving
+   batch outputs identical, and this catches it at the PR rather than at release.
+2. **Analysis** (`generator/src/streaming.rs`) reads the batch IR and never
+   changes it. It finds and classifies the steady loop (the parser does not
+   pre-isolate one; it appears as `while`, `do/while`, `for` or countdown forms,
+   and is absent entirely in composed functions), then derives loop-carried
+   scalars → state fields, current-bar reads → update parameters, trailing-window
+   reads and bounded `in[i-K]` look-backs → rings, CIRCBUF statements → state
+   rings.
+3. **The plan is one of five** `StreamPlan` variants, and the emitters key on it
+   rather than on any authored tier: `Loop` (the ordinary steady-state
+   transition), `DualMode` (a fixed-parameter choice settled at open),
+   `Composed` (a producer region plus a strictly-parsed tail pipeline over other
+   functions' PUBLIC sub-streams), `Dispatch` (an enum parameter selecting a
+   callee's stream — the supported-arm set is derived from the callees' own
+   stream flags at generation time) and `PeriodBank` (a bank of sub-streams
+   advanced in lockstep, for a per-bar variable period).
+4. **The four emitters** (`backends/{c,rust,java,csharp}_stream.rs`) are IR-to-IR
+   transforms feeding the existing statement/expression renderers, which is why
+   bit-exactness holds by construction and survives batch-code evolution — the
+   stream is re-derived from the same IR on every generate.
+   - `open` transcribes the ENTIRE batch body at `startIdx = 0` with output
+     writes redirected to last-value scalars, then captures the still-live locals
+     and ring fills into the state struct. Batch-equal state by construction;
+     compatibility-branched seeding and unstable-period skip logic come along
+     verbatim.
+   - `update` is the steady-loop body with the variable remapping, emitted once
+     as the transition; `peek` is the second frame of that same transition.
+   - Generation-time invariant checks: no global writes and no compatibility
+     reads outside `open` (candle-settings reads in CDL update bodies mirror
+     batch's own), no index-variable leakage, and the plan must match the
+     analyzed shape.
+5. **Composition goes through public stream handles**, never cross-TU internals,
+   and its bit-exactness composes by induction: each sub-stream is bit-exact
+   against its own batch over the full intermediate series, which is exactly what
+   the composed batch computes. `open` opens each sub-stream on its source series
+   at the sub-call's own start argument, passed VERBATIM — the callee clamps it
+   up to its own lookback, so the composer never computes a callee's lookback —
+   immediately before the batch call that consumes it.
 
-Stricter than in C, where `TA_Globals` is a process-wide mutable and
-concurrent batch is safe only if nothing calls `TA_SetX` meanwhile.
+Two source-form constraints the analyzer enforces with guiding errors, because
+they are what make a combine map streamable: write a combine loop with a single
+cursor and a same-bar offset index rather than two cursors, and flatten a
+sub-call left inside an `if (rc == TA_SUCCESS) { … }` into a top-level
+`if (rc != TA_SUCCESS) return rc;`.
 
-### Concurrency across languages (C / Java / .NET)
+## Cost profile
 
-The Rust guarantees above rest on one rule that holds in every language, each
-enforcing it its own way:
+Per update, by shape rather than by function: O(1) for per-bar maps, scalar
+recurrences and rolling sums; O(period) for window recomputers (the LINEARREG
+family, BETA, CORREL, AVGDEV, IMI, CCI, ULTOSC, the CDL candle averages); and for
+the window extrema, O(1) while the cached extremum sits away from the trailing
+edge and O(period) while it sits on it — **not** amortized O(1).
 
-> **A stream's value-affecting settings (compatibility, candle settings) must
-> not change over its lifetime.** In C nothing is copied into the handle —
-> settings remain the shared, effectively-static data they already are. The
-> managed tiers freeze instead of sharing where that is free or safer: Rust
-> handles embed the (immutable) `Core` by value, and Java handles snapshot the
-> few candle-setting primitives a CDL step reads per bar (~10 ints/doubles on
-> the 61 candle handles only) — so a mid-stream `SetCandleSettings` cannot
-> produce torn per-bar reads there. Under the rule, all three behaviors are
-> observationally identical.
+That last one is deliberate. The extrema functions transcribe batch's cached-index
+automaton over a ring, so the stream inherits batch's cost profile exactly,
+rescans and all. A monotonic deque would be amortized O(1), but batch uses
+different tie rules on its two paths (strict `<` on rescan, `<=` on the incoming
+side), so the selected INDEX is path-dependent and no single deque discipline
+reproduces it — MININDEX at period 2 on `[3,3]` diverges on the first output.
+That rules a deque out for every function that outputs an index or computes from
+one. It would be legal for the value-output subset, whose ties are bit-identical
+input copies, and substituting one there is still open.
 
-- **Rust.** Enforced by construction: settings live in the immutable `Core`
-  (issue #104) the stream was opened from; they cannot change, so a violation
-  is not even expressible.
-- **C.** Documented, as an extension of the existing batch-tier caveat:
-  calling `TA_SetCompatibility`/`TA_SetCandleSettings` while streams are open
-  is undefined (CDL\* warm-up and ring sizes are derived from the settings in
-  effect at `open`). Where a candle range is BUFFERED — every trailing ring,
-  and since #229 the rescan-window reads routed into one — its value is the one
-  the range type produced when that bar was pushed, up to `back` bars earlier;
-  everything else still reads the settings per bar. That sits inside the
-  undefined region above, and it is the more self-consistent of the two: a bar
-  now enters and leaves a running total as the identical double, so the sum
-  telescopes exactly. Streams add no *new* hazard —
-  the C batch tier already requires that nothing calls `TA_SetX` during
-  concurrent calls. Distinct handles are otherwise fully independent; a
-  single handle is **single-writer**: driving one handle from two threads
-  concurrently is undefined behavior where either is an `update` (C states as
-  documentation what Rust enforces with `&mut`). Concurrent `Peek`s are safe:
-  the `const` is now load-bearing, since peek writes neither the handle nor
-  anything behind its pointers — the same guarantee Java and .NET document.
-- **Java / .NET.** Settings live per-`Core`-instance, so there is no
-  process-global hazard; the same documented rule applies per instance: don't
-  mutate a `Core`'s settings while streams opened from it are live (candle
-  settings are additionally snapshotted into CDL handles at open — see above).
-  Single-writer per handle — `update`, and `peek`/`value()`/`clone()` count as
-  accesses under that rule; with no concurrent `update`, `peek`/`value()`/
-  `clone()` never write the handle and are safe to call concurrently after safe
-  publication (a stronger guarantee than C documents for `const` peek). No
-  synchronization in the generated code; safe publication when handing a
-  handle between threads is the caller's usual memory-model responsibility.
-  A multi-output `<N>Out` is the opposite case and needs saying: it is a
-  mutable buffer with no final fields, so it carries no publication guarantee
-  of its own and must not be shared between threads at all. Give each thread
-  its own sink.
+One ring-order constraint survives from the same family: some batch code sums its
+circular buffer IN BUFFER ORDER, so the FP summation order depends on the ring's
+rotation phase. The stream's phase must equal batch's, which `open` gets for free
+by capturing the live buffer and its rotation rather than memcpy'ing a trailing
+window.
 
-### Python (future consumer — exploration, not in scope)
+## Verification
 
-The Python wrapper is a separate project, but it is the origin of the
-`talib.stream` prior art and the largest consumer of the C library, so C
-is checked here against how Python *would* wrap it:
+Bit-identical comparison cannot ride the ordinary JSON path: inputs cross it at
+`%.15g` and the comparator is epsilon-based, so the two sides compute on subtly
+different numbers. `stream_verify` therefore runs entirely in-process, in each
+language's own server.
 
-- **Discovery.** `TA_GetFuncInfo()->flags & TA_FUNC_FLG_STREAM` — the same
-  bitmask `talib.abstract` already reads — tells the wrapper which functions
-  have a stream API.
-- **Shape.** A small extension type per function wrapping the C handle:
-  `s = talib.stream.SMA(timeperiod=14, history=closes)` → `s.update(price)`,
-  `s.peek(price)`. The capsule destructor calls `TA_XXX_Close`. This
-  removes both `talib.stream` limitations at the source: retained state makes
-  it O(1)/tick, and full-history seeding at open removes the
-  recursive-function divergence.
-- **Single-bar update is worth it from Python.** A Python→C call costs ~100 ns;
-  the update itself is nanoseconds. That overhead is real
-  but replaces today's O(lookback) reach-back *plus* the same call overhead —
-  strictly better, and far below tick rates that matter to a Python strategy
-  loop.
-- **No `TA_XXX_UpdateMany` in C now.** Chunked updates only matter
-  for replaying history, and `open(history)` already consumes history in one
-  C pass; live use is inherently one bar per call. If profiling of a real
-  consumer ever shows per-call overhead dominating, a generic
-  `update_many(ndarray) -> ndarray` entry point can be added later without
-  changing the handle model.
-- **GIL.** Do not release the GIL around a single update — the
-  release/reacquire costs more than the sub-microsecond update it unblocks.
-  (An eventual `update_many` should release it.)
-- **Free-threaded Python (3.13+).** One handle per thread — the same
-  single-writer rule Rust enforces — is safe with no GIL, because
-  update touches only handle-local state plus read-only settings (the
-  settings-stability rule above).
-- **multiprocessing / persistence.** Handles are not serializable — restating
-  the existing non-goal: a handle never crosses a process boundary or a
-  library version; each worker opens its own stream from history.
-- **asyncio.** Updates are non-blocking and sub-microsecond; call them
-  directly from coroutines. No special support needed.
+- Given `(funcName, params, gen_shape/seed/n, unstablePeriod, compatibility)` the
+  server generates the series from the seed (`fuzz_data.h`) and runs both
+  `batch(0, n-1)` and, for each warm-up prefix in
+  `{lookback+1, lookback+13, n/2, n-1}`, the stream trajectory — the prefixes are
+  the stream's analog of `doRangeTest`, exercising the open/update boundary where
+  an open-side seeding bug would hide. Comparison is bitwise per bar, and the
+  first divergence comes back inline as `%a` hex with its bar and output index;
+  the driver never parses a float.
+- Unstable period and compatibility are request parameters, pinned for both legs
+  and restored afterwards, so neither leg can contaminate the next request.
+- `ta_regtest`'s stream pass drives it per function with three parameter vectors
+  — defaults, every integer parameter at its true minimum, and min+1 — plus a
+  K>0 leg for unstable functions and a Metastock leg. Enum parameters get one
+  vector per non-default value, each with its own K and Metastock legs, since the
+  selected arm may be unstable or compatibility-seeded where the dispatcher is
+  not. An unsupported arm is verified LOUDLY through a generated expect-reject
+  precheck, which composes recursively with the caller's argument expressions
+  substituted, so a callee's stream landing later narrows every dependent
+  precheck on regenerate.
+- What each leg family can and cannot see — and why the state-equivalence leg is
+  the one that survives a candlestick's 3-valued output — is in
+  `src/tools/ta_regtest/CLAUDE.md`.
+- The grids run under ASan/UBSan/LSan (LSan has caught real sub-open leaks) and,
+  for CDL, under four candle-setting rounds: defaults, bumped, zeroed and
+  all-Shadows, the last gating macro arithmetic no default exercises.
 
-### Non-goals / risks
-- **No behavioral change to the batch tier.** The stream tier is additive.
-- **Every `MAType` streams**, including `MAType=MAMA`. MAMA has two outputs
-  (MAMA + FAMA); when a dispatcher (`MA`/`BBANDS`/`STOCH`/…) selects it, only
-  the MAMA line is wanted. FAMA is a **nullable output** (issue #125,
-  `TA_OUT_NULLABLE`): the dispatcher forwards the MAMA line and passes NULL for
-  FAMA — a supported trailing-NULL delegation, verified bit-exact vs batch.
-  (Historically MAMA's arm rejected at `open` because the batch discarded FAMA
-  into a throwaway malloc buffer, a shape the analyzer would not stream; the
-  malloc is gone. MAVP's per-bar variable period is supported too.)
-- **Single precision:** no `TA_S_*` stream twin; the stream tier is
-  double-only.
-- Handle lifetime: the handle is valid only within the exact library version
-  that created it — not serializable or persistable across versions or
-  processes. Cross-version persistence is out of scope for now; it may be
-  revisited once the streaming feature stabilizes.
-- Some annotation might be needed in the generator input to guide the stream
-  emitter.
-- **Maintenance coupling (accepted, gated):** a future batch rewrite of an
-  indicator (e.g. a class-A optimization) can change its loop shape and break
-  stream *analyzability* even while batch outputs are unchanged. The stream
-  tier therefore adds a generator gate: `generate` fails if a
-  `streaming: true` function is no longer analyzable, so the coupling is
-  caught at the PR that introduces it, not at release.
+## Constraints
 
-## Implementation
-
-### Feasibility evidence: spike (2026-07-09)
-
-A ta_codegen spike (branch `spike/streaming-codegen`, ~1,100 LOC
-`generator/src/streaming.rs` + a hand-written harness) validated the core
-mechanism end-to-end:
-
-- **Bit-exactness works as designed.** Generated C streams for MULT (T1),
-  EMA (T2, both compatibility modes) and SMA (T3, including period=1) were
-  verified **bit-identical to `batch(startIdx=0)`** over 2,000 bars across
-  43 parameter/warm-up/compat cases — 43/43, memcmp on doubles, including
-  short-history open rejection.
-- **`open` = whole-body transcription.** The spike transcribes the *entire*
-  batch body (with `startIdx=0`, `endIdx=historyLen-1`, output writes
-  redirected to a scalar) and then captures the still-live locals into the
-  state struct. No separate seed analysis is needed, and batch-equal state is
-  obtained by construction — including compatibility-branched seeding.
-- **Ring lags need no symbolic analysis.** The trailing-pointer lag
-  (`cursor − trailingIdx`) is loop-invariant, so `open` captures it
-  *numerically* at runtime from the transcribed locals and sizes/fills the
-  ring from the history tail. (Caveat for ring-order functions — see the T3
-  constraint below.)
-- **The emitters reuse the batch renderers.** The stream emitter is an
-  IR-to-IR transform (current-bar reads → `bar` param, carried locals →
-  state fields, trailing reads → ring slots, index bookkeeping dropped)
-  followed by the existing `render_statement`. Operation order is untouched,
-  which is *why* bit-exactness holds by construction. This also means the
-  bit-exactness argument survives batch-code evolution: the stream is
-  re-derived from the same IR on every generate.
-- **Analyzer census.** The naive spike census (62/161 clean) is superseded by
-  the Staging results below: all 161 functions stream in C — the four failure
-  categories all landed, including the CIRCBUF deep shapes (HT_\* family, MAMA)
-  and MAVP's period-bank tier.
-
-### Streamability tiers (classification of all 161 functions)
-
-Corrected after a full 161-function audit:
-
-| Tier | Shape | State | Per-update cost | Examples (not exhaustive) |
-|------|-------|-------|-----------------|---------------------------|
-| T1 | pure per-bar map | none | O(1) | ADD…DIV, math/price transforms, BOP |
-| T2 | scalar recurrence | O(1) scalars | O(1) | EMA, DEMA/TEMA/TRIX, MACD/MACDFIX, RSI, CMO, ADX/DI/DM/DX, ATR (steady), OBV, AD (cumulative), ADOSC, SAR/SAREXT, T3, TRANGE (prev-close scalar) |
-| T3 | fixed trailing window | ring O(period) | O(1) for rolling sums (SMA, WMA, SUM, VAR/STDDEV, MOM/ROC\*, MFI, TRIMA); **O(period)** for window recomputers (LINEARREG family, TSF, BETA, CORREL, AVGDEV, IMI, CCI, ULTOSC, CDL\* candle averages) | see left | KAMA (sliding ROC-sum ring — *not* T2), HT_\* family + MAMA (single loops, bounded ≤50-slot rings — *not* "needs restructuring") |
-| T4 | window extrema — value-output **and** index-observable alike | ring + cached-index automaton (transcribed verbatim) | O(1) while the cached extremum sits away from the trailing edge, **O(period)** while it sits on it — *not* amortized O(1), see #147 | MIN/MAX, MIDPOINT/MIDPRICE, WILLR, STOCH's raw range, MININDEX/MAXINDEX/MINMAXINDEX, AROON/AROONOSC |
-| TC | **composed** — calls other indicators over intermediate arrays | sub-stream handles as state members | sum of parts | BBANDS, STOCH/STOCHF (T4 + MA slowing), STOCHRSI, APO/PPO, MACDEXT, MA (factory over the 9 MA streams), ACCBANDS, ADXR (ADX sub-stream **+ O(period) ring of past ADX outputs** — not T2), STDDEV-as-written (fusable into VAR), NATR (degenerate path) |
-| PB | period bank (per-bar variable period) | (maxP-minP+1) MA sub-streams | sum of sub-streams | MAVP |
-
-Structural notes:
-
-- **A monotonic deque was scoped for the value-output half and never built.**
-  Batch extrema use *different* tie rules on their two paths (strict `<` on
-  rescan, `<=` on the incoming side), so the selected *index* is path-dependent
-  and no single deque discipline reproduces it (counterexample: MININDEX
-  period=2 on `[3,3]` diverges on the first output). That rules a deque out
-  outright for the functions that output the index or compute from it (AROON).
-  It would have been legal for the value-output ones — their ties are
-  bit-identical input copies, so values match regardless of which index wins —
-  but T4 shipped as **one** mechanism: every extrema function transcribes the
-  batch cached-index automaton over a ring (Staging §3 below). So the stream
-  inherits batch's cost profile exactly, rescans and all, rather than the
-  deque's amortized O(1). Substituting a deque for the value-output subset is
-  the streaming half of #147 and is still open.
-- **T3 ring-order constraint (CCI class).** Some batch code sums its circular
-  buffer *in buffer order*, so the FP summation order depends on the ring's
-  rotation phase. The stream's ring phase must equal batch's — the safe rule
-  is that `open` replays the entire provided history through the ring (never
-  memcpy'ing the trailing window) for any function whose batch iterates its
-  buffer by position. Rolling-sum T3 (SMA-style sequential trailing reads) is
-  phase-free; the spike verified the memcpy shortcut is safe there.
-- **The EMA cascades (DEMA/TEMA/TRIX/MACD) run in lockstep per-bar** — scalar
-  `prevEMA1/2/3`, no intermediate buffers — so the steady-state loop body
-  already *is* the stream transition function (verified in the spike: MACD
-  analyzes clean as T2). This does **not** extend to MACDEXT (three
-  runtime-`MAType` sub-streams → TC).
-- **TC composition model:** the state struct holds sub-stream handles;
-  `update()` feeds intermediate values through sub-streams in the same order
-  batch fills its temp buffers; `MAType` params dispatch at `open` to the
-  selected sub-stream (a stream MA handle is a small tagged union over the 9
-  MA streams). Sub-stream warm-up alignment must match batch's temp-buffer
-  seeding windows — this is the composed tier's one subtle piece and gets its
-  own spike (below). ~13 functions plus 4 open-time-only delegations
-  (SAR/SAREXT's one-bar `minus_dm` bootstrap, NATR's degenerate path,
-  MACDFIX's parameter aliasing).
-
-### How it fits ta_codegen
-
-1. **Metadata, not logic, in YAML**: a function opts in by adding `stream`
-   to its existing `flags:` list (`flags: [overlap, stream]`) — the same
-   list that already carries `unstable_period` etc., and the flag maps to
-   `TA_FUNC_FLG_STREAM` in ta_abstract like every other entry. No flag = no
-   stream code, ever. Everything else — the tier, the state shape — is
-   **derived from the IR**, never authored: there is nothing for a
-   developer to figure out when adding a function. `ta_codegen
-   stream-census` reports what each function derives (`--seed-yaml` writes
-   the flags), and `generate` **fails** if a flagged function is no longer
-   analyzable or its transition can no longer be built (the
-   maintenance-coupling gate).
-2. **Loop identification + analysis pass** (`generator/src/streaming.rs`).
-   The parser does *not* pre-isolate the steady-state loop — `FuncDef.body`
-   is a flat statement list and the loop appears as `while(i<=endIdx)`,
-   `do{...}while(i<=endIdx)`, `for(i=startIdx;...)`, or countdown forms, and
-   is absent entirely in composed functions. The pass therefore: finds and
-   classifies the steady loop; computes *loop-carried scalars* (read-before-
-   write across iterations) → state fields; *current-bar reads* → update
-   parameters; *trailing-window reads* and bounded `in[i-K]` look-backs →
-   rings/lag slots; CIRCBUF statements → state-struct rings (the IR already
-   models them). The batch IR is untouched; the analysis only *reads* it.
-   (Spike-validated, including the census that seeds the YAML tiers.)
-3. **Emitters** (`backends/c_stream.rs`, `rust_stream.rs`, …) are IR-to-IR
-   transforms feeding the *existing* statement/expression renderers:
-   - `open` = transcription of the **entire batch body** (`startIdx=0`,
-     output writes → last-value scalars) + a generated epilogue capturing the
-     live locals and ring fills into the state struct.
-     Batch-equal state by construction; compatibility-branched seeding and
-     the unstable-period skip logic come along verbatim — nothing is
-     stripped from the input code. (Spike-validated bit-exact.)
-   - `update` = the steady-loop body with the variable remapping, emitted
-     **once** as the transition function; `peek` runs a SECOND frame of the
-     same transition, rewritten to commit nothing — a store into a handle
-     buffer becomes two locals and every load that could reach the stored slot
-     selects them back, so peek copies the state struct onto the stack and
-     shares the buffers read-only. Both frames come from one IR, so there is no
-     hand-written peek logic to drift; `stream_verify` asserts peek == update
-     and that a peek leaves the handle alone. T4 transcribes the cached-index
-     automaton over a ring; TC emits sub-stream
-     calls in batch temp-buffer order.
-   - Generation-time invariant checks: no global *writes* and no
-     compatibility reads outside `open` (candle-settings reads in CDL\*
-     update bodies mirror batch's own); no index-variable leakage; declared
-     tier matches analyzed shape.
-4. **Servers**: `generate-servers` adds a `stream_verify` method (see
-   *Verification*). The warm-up prefix lengths are computed server-side from
-   the language's own generated lookback function (which folds in the
-   ambient unstable period) + 1. Mismatch diagnostics come back inline
-   (first-divergence bar and `%a` values), so no separate trajectory-dump
-   method is needed; one can be added later if debugging ever wants full
-   trajectories.
-5. **ta_abstract / introspection — DONE**: `TA_FUNC_FLG_STREAM`
-   (`0x02000000`, a previously free bit in the existing `TA_FuncFlags`
-   word) is set for every `streaming: true` function, sourced from the YAML
-   bool and mirrored into the Rust/Java abstract tables and
-   `ta_func_api.xml` (`<Flag>Streaming</Flag>`). Purely ABI-additive: no
-   struct or export changes; wrappers read `TA_GetFuncInfo()->flags` as
-   they always have, and warm-up sizing reuses the existing lookback
-   metadata (`min_history = lookback + 1`). The regtest stream pass
-   enforces set equality — a flagged function without a server stream (or
-   the reverse) fails the run.
-
-### Verification
-
-**Bit-identical comparison cannot ride the existing JSON path** — inputs are
-sent at `%.15g` and the comparator is epsilon-based, so the two sides compute
-on subtly different numbers. (At the time this was written the outputs were
-lossy too — the C server emitted `%.15g`, .NET `G15`, and doubles need 17
-significant digits to round-trip. That half is closed: every server writes
-hex-of-IEEE-bits for a real output array since #257/#258. The input half, and
-the epsilon comparator, are unchanged, so the conclusion below still holds.)
-Instead (implemented, riding the fuzz-064 seed-in idea one step further):
-
-- `stream_verify(funcName, params, gen_shape/seed/n, unstablePeriod,
-  compatibility)`: the server generates the input series from the seed
-  (`fuzz_data.h`), runs **both** `batch(startIdx=0)` and, for each warm-up
-  prefix in `{lookback+1, lookback+13, n/2, n-1}` (the stream analog of
-  `doRangeTest` — it exercises the open/update boundary, exactly where an
-  open-side seeding bug would hide), the stream trajectory (`Open` on the
-  prefix, `Update` per remaining bar, `Peek` spot-asserted equal to the
-  following `Update`), entirely in-process on identical in-memory inputs, and
-  compares **bitwise per bar** (memcmp on doubles) — stronger than a hash,
-  and the first divergence comes back inline as `%a` hex with its bar and
-  output index. The response carries flat per-leg match flags; the driver
-  never parses a float.
-- Unstable period and compatibility are **request parameters**: the server
-  pins them for both legs and restores them afterwards, so both legs always
-  run under identical ambient state (no sticky cross-request contamination).
-- ta_regtest’s stream pass (part of `--codegen`) drives it per function with
-  three param vectors — defaults, every integer param at its true minimum
-  (period==1, the #93/#94 territory the 0.6.4 fuzz must floor away), and
-  min+1 — plus a K>0 leg for unstable functions and a Metastock leg. Any
-  mismatch fails the run with `TA_CODEGEN_STREAM_MISMATCH`.
-- Servers without the method (the foreign languages until their emitters
-  land) are detected by a capability probe and skipped, not failed;
-  non-streamable functions answer `not_streamable` and count as skips.
-- Bit-exactness is verified as a *within-language* property; cross-language
-  batch equivalence is already covered at epsilon by the existing pass. The
-  stream grids run under ASan/UBSan/LSan (LSan has caught real sub-open leaks)
-  and, for CDL\*, under bumped/zeroed/all-Shadows candle settings. The
-  remaining follow-up is a second-compiler leg — bit-exactness is proven in
-  the gcc-built single-TU server; MSVC/clang builds are exercised by CI
-  compiles but not stream-verified.
-
-### Delivery surface (owned by ta_codegen, must ship together)
-
-The stream tier touches every generated deliverable, not just `src/ta_func`:
-`include/ta_func.h` declarations (with `TA_LIB_API`), CMake `LIB_SOURCES` +
-`src/ta_func/Makefile.am` + `ta_func_list.txt` (the dist-verification CI path
-builds from the autotools lists — a missed entry breaks the nightly),
-ta_abstract tables (streamable flag), the per-function website/`.md` docs and
-rustdoc (a `## Streaming` section per function page), and a `ta_bench` stream
-mode (ns/update per function, vs the batch amortized cost — the performance
-claim in *Motivation* gets measured, not asserted).
-
-### Staging
-
-0. **Census + flag authoring — DONE.** `ta_codegen stream-census` derives
-   each function's streamability from the IR (`--seed-yaml` writes the
-   `streaming: true` flags); `generate` fails if a declared function stops
-   being analyzable, and the same gate runs in `cargo test`. Rust's
-   pre-requisite, issue #104 (immutable `Core`), is closed.
-1. **T1 + T2 for C — DONE** (37 functions: 24 T1 maps and price transforms,
-   13 T2 recurrences — AD, ADOSC, ADX, DEMA, EMA, MACD, OBV, SAR, SAREXT,
-   T3, TEMA, TRANGE, TRIX), with `stream_verify` and the regtest stream pass
-   wired in and gating. Includes multi-output (MACD), price-input bars
-   (TRANGE, BOP), countdown-loop bodies (AD), and the batch's explicit
-   `period==1` identity paths (T3, TEMA) mirrored as a transition
-   short-circuit. *Discovered stage-1.5 class (deferred, census-tracked):*
-   param-degenerate paths the whole-body transcription cannot yet mirror —
-   RSI/CMO (`memmove` identity + a Metastock mid-loop exit),
-   MINUS/PLUS_DI/DM (unsmoothed `period<=1` alternate path), ATR/NATR
-   (`period<=1` delegates to TRANGE).
-2. **T3 ring machinery — DONE** (+18: SMA SUM VAR MOM ROC ROCP ROCR
-   ROCR100 KAMA BETA CORREL as trailing rings; LINEARREG ×4 + TSF as
-   O(period)/tick rescan windows over a ring in identical FP order; CCI +
-   MFI as CIRCBUF state — the batch loop already carries the circular
-   buffer, so open captures the LIVE buffer contents and rotation phase and
-   the ring-order constraint holds by construction, no replay needed).
-   (HT_\* and MAMA — needing cursor-aliased `startIdx`, `in[idx--]` reads and
-   fixed-size array locals — landed later as their own stage, below.)
-3. **T4 extrema — DONE** (+10: MIN MAX MININDEX MAXINDEX MINMAX
-   MINMAXINDEX MIDPOINT WILLR AROON AROONOSC), and **not** via deques: the
-   cached-index automaton is transcribed verbatim over an absolute-index
-   ring (`in[X]` → `ring[X % cap]`; the cursor and cached indices are
-   batch-absolute state ints, periodically rebased by a multiple of the
-   capacity long before INT_MAX — index differences and residues are
-   invariant, so values never change; index-observable outputs report the
-   rebased position beyond ~2^30 bars, where the batch contract is
-   inherently out of int range anyway). Ties, indices and values are
-   batch-exact by construction. Integer outputs are supported end-to-end.
-4. **CDL candlestick family — DONE** (+59 of 61, plus ULTOSC as a
-   side-effect = 125 streamable). The candle helpers are pure scalar
-   functions, so their calls transcribe directly; the transition renders
-   them as `TA_STREAM_CANDLE*` macros that mirror the batch macros'
-   arithmetic exactly (the helper source's algebraically-equal-but-
-   differently-rounded Shadows form must never be inlined). Settings are
-   read where batch reads them (per step, from the globals) under the
-   settings-stability rule; the harness re-verifies every CDL under
-   bumped and zeroed avgPeriods. New mechanisms, all language-neutral:
-   back/forward/counter-offset trailing rings (absolute-mod layout,
-   `cap = lag + back + 1`, current bar pre-written at `pos`), fixed-size
-   array locals as carried state, ternary-index normalization
-   (`in[c ? a : b]` → `c ? in[a] : in[b]`), widest-literal merge for
-   multi-bound rescan counters. Those rings hold ONE derived scalar per bar
-   rather than one buffer per input column, and the rescan window beside them
-   holds nothing at all: where every read through the counter is a shape the
-   ring already stores, the read is routed into the ring at a cursor-relative
-   offset (#229). Four windows keep their own buffer, for two different reasons:
-   AVGDEV and IMI are bounded by a parameter rather than a literal, so the ring
-   depth has nothing to compare against; HT_TRENDLINE and HT_TRENDMODE read raw
-   columns, which no derived ring holds. CDLHIKKAKE/CDLHIKKAKEMOD (which save bar
-   indices — absolute-index recall beyond the extrema automaton) later joined
-   via a bit-exact countdown + cached-value refactor, so all 61 CDL patterns
-   stream.
-5. **Stage-1.5 param-degenerate paths — PARTIALLY DONE** (+RSI, CMO, WMA,
-   AVGDEV, then DX and IMI = 131 streamable; DX's zero-denominator
-   `out[idx-1]` repeat carries as `lastOut_*` state refreshed after each
-   update, and IMI's cursor-anchored window
-   `for (i = cursor-(p-1); i <= cursor; i++)` normalizes to a descending
-   offset counter — bars still visit oldest-first, so FP accumulation
-   order is untouched): the period-1 `memmove` form now matches the
-   identity fast path, and block-scoped loop locals classify as temps.
-   One honest contract nuance came out of RSI/CMO under Metastock: their
-   batch emits a seed output and, when continuing, REWINDS and rebuilds
-   state — so no bit-exact continuation exists from the seed exit. Open
-   returns `TA_INSUFFICIENT_HISTORY` at exactly `lookback+1` in that mode (one
-   more bar is required); the verifier knows statically which functions have a
-   seed boundary and shifts its boundary leg. The remaining members
-   (ATR/NATR/MACDEXT/MACDFIX delegate to other functions at period 1,
-   DI/DM have a dual unsmoothed loop) belong with the composed tier.
-   Also from review: the candle-settings harness now runs FOUR rounds
-   (defaults, +3, zeroed, all-Shadows — the last gates the Shadows
-   macro arithmetic no default exercises), rounds continue past a
-   too-short-history rejection, and assigning a candle-setting local in
-   a steady loop is a hard analyzer error. (dual steady loops, memmove
-   identity, open-time delegation) — a controlled preview of composition.
-6. **TC composed functions** — **MA dispatch + composition spike DONE
-   (2026-07-10)**; the rest of the family is in progress. Composition goes
-   through the PUBLIC stream handles, not cross-TU internals:
-   - **`TA_MA_Stream` (DONE, 132 streamable).** The analyzer recognizes the
-     dispatch body shape (an optional leading "nothing to produce" guard, the
-     identity path, and a switch over an enum optional param whose arms
-     delegate the whole range) and the emitter renders a tagged
-     handle over the callees' public streams. The supported-arm set is
-     DERIVED from the callees' YAML stream flags at generation time —
-     TRIMA's arm joins automatically the moment its stream lands; MAMA's
-     arm (discarded-FAMA dummy-buffer shape) stays a documented Open
-     `TA_BAD_PARAM`. **(Superseded 2026-07: issue #125 made FAMA a nullable
-     output, so MA's MAMA arm now streams — it forwards the MAMA line and
-     passes NULL for FAMA. The dummy-buffer malloc is gone. The reject
-     narrative below is a dated record; see "Non-goals / risks" above.)**
-     A stream-flagged callee arm that loses its strict
-     whole-range delegation shape is a hard generate error, never a silent
-     reject (that would turn a generator regression into a vacuous pass).
-     Verification: the driver now sweeps enum (MAType) params — one vector
-     per non-default value, each with its own K and Metastock legs (the
-     selected arm may be unstable or compatibility-seeded even though the
-     dispatcher is not) — and the server carries a generated expect-reject
-     precheck for unsupported arms (`unsupportedArm`), so the documented
-     rejection is verified loudly. Both a wrong-period arm and a
-     wrongly-succeeding TRIMA arm were sabotage-tested; ASan/UBSan clean
-     over the full 9-MAType × period × K/compat × 7-shape grid.
-   - **STOCH composition spike (DONE, mechanism proven).** A hand-written
-     STOCH stream over public `TA_MA_Stream` handles: Open transcribes the
-     batch body — and since batch already MATERIALIZES the intermediate
-     series (STOCH's tempBuffer) before calling `ma(0, n-1, ...)` over it,
-     Open opens the sub-streams on those very arrays at the exact points
-     batch consumes them (raw %K before the in-place smoothing, smoothed %K
-     after) before they are freed. Update pipelines: transcribed extrema
-     step → raw %K → sub-Update(K) → sub-Update(D) → outputs. The peek frame
-     calls sub-Peek where the update frame calls sub-Update — the sub-handles
-     are heap pointers a struct copy shares rather than clones, so the routing
-     is what keeps a peek off them. Result: 14,580 cases across the full 9×9 MAType grid ×
-     6 param sets (incl. period-1 identity-MA composition and fastK=1) ×
-     5 data shapes (incl. CONSTANT and TIE_HEAVY) × 3 warm-up prefixes —
-     **1,146,950 update legs bit-identical to `batch(0, n-1)`**, peek ==
-     update on every bar, TRIMA/MAMA arms reject as documented, 0 failures;
-     a deliberate wrong-order sub-open (smoothed instead of raw %K) fails
-     4,394 legs, proving the harness. Bit-exactness composes by induction:
-     each sub-stream is bit-exact against its own batch over the full
-     intermediate series, which is exactly what the composed batch computes.
-   - **Generalized composed emitter — STOCH + STOCHF DONE (134
-     streamable).** The analyzer derives a `ComposedPlan`: the producer
-     region (`body[..=loop]`) re-analyzed through the ordinary loop
-     machinery with the intermediate series (`tempBuffer`) standing in as
-     its output, plus a strictly-parsed tail pipeline (whole-range
-     sub-calls over materialized series, tail-aligning memmoves into
-     outputs, guard/free/bookkeeping statements — anything else errors).
-     The emitter renders the step body once per frame: the producer
-     transition writes the series' current scalar, which pipelines through the
-     sub handles (sub-Update in the update frame, sub-Peek in the peek one). Open allocates scratch output
-     arrays (the tail writes real arrays), transcribes the batch body
-     verbatim with out-meta mapped to dummies in both pointer forms, and
-     opens each sub-stream on its source series at the sub-call's own
-     `sArg`, passed VERBATIM -- the callee clamps it up to its own lookback,
-     so the composer never computes a callee's lookback -- IMMEDIATELY
-     before the batch call
-     that consumes it; inserted failure returns replay the batch's own
-     guarded series free (LeakSanitizer caught the omission on the
-     honest-rejection legs). The expect-reject precheck composes
-     RECURSIVELY: STOCH inherits MA's unsupported arms with its argument
-     expressions substituted (`!(optInSlowK_Period == 1) &&
-     optInSlowK_MAType == TA_MAType_TRIMA || ...`), so TRIMA landing later
-     narrows every dependent precheck on regenerate. Wrong-order sub-open
-     sabotage caught; ASan/UBSan/LSan clean over the STOCH 10×9 MAType
-     grid.
-   - **Loopless composed pipelines — STDDEV + STOCHRSI DONE (136
-     streamable, 8,913 legs).** A composed body needs no producer loop: the
-     plan's `producer`/`series` are optional and the tail pipeline runs
-     directly over the caller's real input. STDDEV is `var(inReal)` in place
-     then a per-bar sqrt combine map (a param-selected `if (optInNbDev !=
-     1.0)` scaling variant); STOCHRSI is `rsi(inReal)` into a freshly
-     `malloc`'d intermediate, then `stochf` over it (a three-input,
-     two-output sub-call), then a bare `free`. New machinery, all
-     language-neutral: the analyzer resolves each per-bar step through a
-     cur-map (bar inputs are the update scalars, sub destinations get a
-     `cur_*` scalar, tail-aligning copies are aliases); the combine map is
-     transcribed by rewriting `series[cursor]` reads to the current scalar
-     and optional-param reads through the handle, then dropping the loop
-     shells; a multi-input sub-open shares one anchor with one `&src[subOff]`
-     per input; the fresh heap intermediate's `free` is captured as a
-     replayable series-free and re-emitted on every inserted sub-open
-     failure return (LeakSanitizer confirmed a deliberately-dropped replay
-     leaks the buffer on the honest-rejection legs, and the shipped code is
-     leak-clean). A same-shape gate (`check_composed_emittable`) replays the
-     cur-map at analysis time so a plan the emitter could not render is
-     rejected loudly. STOCHRSI inherits RSI's Metastock **seed boundary**
-     transitively (its `rsi` sub-stream cannot open at its own seed exit, so
-     STOCHRSI's Open honestly rejects one bar longer): the verifier derives
-     this through the same `<base>_lookback` closure the unstable-period pins
-     use and shifts the boundary leg. The stream sweep now also moves each
-     RealRange param to a non-default value, so STDDEV's scaling branch is
-     verified rather than run vacuously. A 1e-9 output perturbation fails
-     every leg; the unsupported `optInFastD_MAType` arm (MAMA — TRIMA joined
-     once its stream landed) expect-rejects through the recursive
-     STOCHRSI→stochf→ma precheck.
-   - **Same-bar combine maps — APO + PPO DONE (138 streamable).** A composed
-     combine map may now read a sub-output at a proven same-bar shift:
-     `outReal[i] = tempBuffer[i + offset] - outReal[i]`, where the fast MA fills
-     `tempBuffer` and the slow MA fills `outReal`. The offset comes from the two
-     sub-calls' element counts (`fastNb - *outNBElement`), which — for calls
-     sharing an endIdx — equals the begIdx shift `slowBeg - fastBeg` yet stays
-     non-negative (the wider fast window always has at least as many outputs), so
-     it never underflows the Rust `usize` index the way the begIdx difference
-     does when the slow MA is empty. The analyzer proves same-bar from that
-     element-count provenance **plus** a shared-endIdx check (a genuine lag —
-     ADXR's `period − 1` sub-output offset is a param expression, not an
-     element-count difference — is correctly refused, so it still needs a real
-     ring); the emitter's index-blind rewrite then collapses the read to the
-     current scalar. Two **streamable-source-form guiding errors** landed with it
-     (the real forward win — they teach every future combine author the shape):
-     G1 fires on a multi-cursor combine loop ("rewrite as a single cursor with a
-     same-bar offset index"), G2 on a sub-call left inside an
-     `if (rc == TA_SUCCESS) { … }` success-guard ("flatten to a top-level
-     `if (rc != TA_SUCCESS) return rc;`"). The source was rewritten to that form
-     — bit-identical to the guarded two-cursor original (the fuzz-064 differential
-     vs 0.6.4 is unchanged before/after) and portable (a plain array index, no
-     pointer or memmove).
-   - **MACDEXT, ADXR, BBANDS — DONE.** MACDEXT (loopless, three MA subs +
-     an all-EMA arm) via the OpenInternal start-anchor; ADXR via a real lag
-     ring (its combine reads a past ADX output at a param lag, not a same-bar
-     shift, so the combine-map gate correctly refuses the same-bar collapse);
-     BBANDS as composed MA + STDDEV sub-streams. The delegating
-     param-degenerates also landed (ATR/NATR period 1 = an embedded TRANGE
-     stream; MACDFIX = generation-time inlining of macd's IR with substituted
-     `0,0` args selecting the fixed k=0.15/0.075 coefficients inside macd's
-     body, which the public `TA_MACD_Open` validation can never accept), as did
-     the fixed-param dual transitions (DI/DM, TRIMA, MIDPRICE) selected once at
-     Open.
-   **Strategy: exhaust the C emitter tier by tier — every gotcha is
-   language-neutral — and only then port the proven model to Rust; the Rust
-   emitter is a re-rendering of settled machinery, not a second discovery.**
-7. **HT_\* family, MAMA, and MAVP — DONE**, completing all 161 functions in
-   C. The HT_\* Hilbert functions and MAMA stream over the existing
-   ring/circular-buffer/fixed-array machinery via two general steady-loop
-   normalizations (a carried-parity recognizer and an in-loop output-gate
-   strip); MAVP streams via the period-bank tier — a bank of `maxP-minP+1` MA
-   sub-streams advanced in lockstep.
-8. **Rust emitter** (re-applying the now-complete C model) — DONE; **Java
-   emitter** (nested handle classes over the same shared transition machinery,
-   verified by the same stream gate) — DONE; **.NET emitter** (managed C#, not
-   P/Invoke — see lifecycle section) — DONE, completing the campaign. The C#
-   port confirmed the strategy: it changed nothing in `streaming.rs` or in the
-   three shipped emitters, so those stayed byte-frozen by construction while it
-   landed, and all 172 emitted step bodies came out byte-identical to Java's
-   modulo a fixed table of language spellings.
+- **Double only.** There is no `TA_S_*` stream twin.
+- **The batch tier is unchanged.** The stream tier is purely additive.
+- **A handle is valid only within the exact library version that created it.**
+- **Every `MAType` streams, MAMA included.** When a dispatcher selects it only
+  the MAMA line is wanted, and FAMA is a nullable output the dispatcher passes
+  NULL for — a supported trailing-NULL delegation, verified bit-exact against
+  batch.
+- **RSI and CMO under Metastock have a seed boundary**: batch emits a seed output
+  and then REWINDS and rebuilds state, so no bit-exact continuation exists from
+  the seed exit. `open` requires one bar more than `lookback + 1` in that mode,
+  and the verifier knows statically which functions have a seed boundary and
+  shifts its boundary leg. STOCHRSI inherits it transitively through its `rsi`
+  sub-stream.

@@ -299,31 +299,23 @@ Things that are easy to get wrong here:
 
 ## Backend rendering
 
-Two shared tree-walkers own the variant dispatch; each backend supplies only the
-per-variant leaf formatting.
-
-- **`StatementEmitter`** (`backends/stmt_walk.rs`) — `walk_stmt()` holds the one
-  exhaustive `Statement` match (VarDecl, Assign, While, If, Switch, …) and threads
-  `indent`. Leaf hooks: `CStmt` (`c.rs`), `RustStmt` (`rust_lang.rs`), `JavaStmt`
-  (`java.rs`), `CsStmt` (`csharp.rs`).
-- **`ExprEmitter`** (`backends/expr_walk.rs`) — `walk()` holds the one exhaustive
-  `Expr` match (Var, Literal, BinOp, Cast, FuncCall, …). Leaf hooks: `CExpr`,
-  `RustExpr`, `JavaExpr`, `CsExpr`.
-- The `render_statement` / `render_statement_ctx` / `render_expr` functions are thin
-  wrappers that bundle the backend's render context and call the walker. C, Rust and
-  Java expose `render_statement()`; **C# has only `render_statement_ctx()`**. C's
-  public expression entry point is `render_expression()`.
-- builtins + cross-indicator dispatch (`backends/builtins.rs` + per-backend resolution)
+Two shared tree-walkers own the variant dispatch — `StatementEmitter`
+(`backends/stmt_walk.rs`) and `ExprEmitter` (`backends/expr_walk.rs`) — and each
+backend supplies only the per-variant leaf formatting (`CStmt`/`CExpr`,
+`RustStmt`/`RustExpr`, and so on). Both matches are exhaustive with no wildcard arm,
+which is what makes an IR addition a compile error in all four backends rather than a
+silent omission in three.
 
 **Cross-call dispatch per language** (a bare `sma(...)` in the `.c` file):
 
 | Call in `<name>.c` | C | Rust | Java | C# |
 |---|---|---|---|---|
-| `sma(...)` | `TA_SMA(...)` | `self.SMA(...)` | `SMA_Internal(...)` | `SMA(...)` |
-| `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.SMA_Lookback(...)` | `SMA_Lookback(...)` | `SMA_Lookback(...)` |
+| `sma(...)` | `TA_SMA(...)` | `self.SMA(...)` | `SMA(...)` | `SMA(...)` |
+| `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.SMA_Lookback(...)?` | `SMA_Lookback(...)` | `SMA_Lookback(...)` |
 
-(C also emits single-precision `TA_S_*` variants automatically; there is no Rust `_s`
-variant — Rust is concrete `f64`.)
+Every one of them is the callee's PUBLIC tier, so its rejection surfaces as that
+language's own failure mode. C also emits single-precision `TA_S_*` variants
+automatically; Rust is concrete `f64` and has no `_s` variant.
 
 ## Complexity tiers (reference order of increasing difficulty)
 

@@ -1,507 +1,304 @@
 # ta_regtest — Universal Regression Test Runner
 
-## What This Is
-
-ta_regtest validates TA-Lib indicator implementations. It has two modes:
-
-1. **C reference testing** — tests the shipped C indicator implementations directly (linked in). Uses hand-written test files (`test_ma.c`, `test_rsi.c`, etc.) with known-good expected values and `doRangeTest` range sweeps.
-
-2. **Codegen verification** — tests the generated indicator implementations (from ta_codegen) across all languages by driving JSON-RPC servers. Compares each language's output against the C reference.
+Two modes: the shipped **C** indicators linked in and checked against
+hand-written expected values (`ta_test_func/test_*.c`) plus `doRangeTest`
+sweeps, and **codegen verification** (`--codegen`), which drives one generated
+JSON-RPC server per language over pipes and compares each against that same C
+reference.
 
 ## Output contract
 
 A passing run prints one `<group>: Testing....done.` line per group and nothing
 else. Coverage counters are **asserted, not printed**: a gate that ran but
-compared nothing fails on its own floor — or, for a waiver count, its ceiling —
-rather than reporting a number nobody reads. When you add coverage, add the
-assert; a green run has no other output to add a line to.
+compared nothing fails on its own floor — or, for a waiver count, its ceiling.
+New coverage brings its own assert; a green run has no other output for it to
+land in.
 
 ## CLI Flags
 
 | Flag | Description |
 |------|-------------|
-| `--function=CSV` | Substring filter — matched against the **group tag** in `DO_TEST`, not the function name. A function absent from its group's tag is unreachable by this filter (that is why the composite groups spell out their members, e.g. `PVO,VWMA,CMF,...`). A tag element ending in `*` is a **prefix claim** instead: `All Candlesticks,CDL*` reaches all 61 candlesticks without spelling them out, and keeps reaching a 62nd. **A filter matching no group is now an error** (`TA_REGTEST_FILTER_MATCHED_NOTHING`) on a run with no `--codegen`/`--xlang-hash`/`--fuzz-064` — those legs filter by real function name and legitimately match no group. |
-| `--codegen` | Run codegen verification after C reference tests |
-| `--language=CSV` | Filter languages for codegen verification (e.g., `c,rust,java`) |
+| `--function=CSV` | Substring filter matched against the **group tag** in `DO_TEST`, not the function name — a function absent from its group's tag is unreachable by it, which is why the composite groups spell their members out. A tag element ending in `*` is a prefix claim (`CDL*`). Matching no group is `TA_REGTEST_FILTER_MATCHED_NOTHING`, except on the three self-contained legs below, which filter by real function name and legitimately match no group. |
+| `--codegen` | Codegen verification after the C reference tests |
+| `--language=CSV` | Narrow it (`c,rust,java,csharp`) |
 | `--fuzz-064` | Differential vs the frozen v0.6.4 oracle. **Self-contained** |
 | `--xlang-hash` | Cross-language bitwise parity gate. **Self-contained** |
 
-`--codegen`, `--fuzz-064` and `--xlang-hash` are **rejected in combination**
-(`TA_REGTEST_BAD_USER_PARAM`). The last two run their gate and `return` from
-`main()` before the normal suite, so a combination ran one and silently dropped
-the rest — `--codegen --xlang-hash` produced the parity gate and **zero**
-stream_verify legs while reading like it had run both. `scripts/regtest.py` was
-the live instance: it has one `ta_regtest` invocation and always prepends
-`--codegen`, so `regtest.py --xlang-hash` printed the REGTEST banner and ran
-none of it. It no longer accepts either flag — they are their own runs
-(`scripts/build.py xlang-hash` / `fuzz-064`) and its closing report names them
-every time.
-
-Examples:
-```bash
-./ta_regtest                                           # C reference tests only
-./ta_regtest --codegen                                 # C tests + all-language codegen
-./ta_regtest --codegen --language=c,rust               # Codegen for C and Rust only
-./ta_regtest --codegen --function=RSI,SMA              # Filter to specific functions
-```
+The last three are **rejected in combination** (`TA_REGTEST_BAD_USER_PARAM`):
+the two self-contained gates `return` from `main()` before the normal suite, so
+a combination runs one and silently drops the rest while reading as if it had
+run both. `scripts/regtest.py` accepts neither — they are their own runs
+(`scripts/build.py xlang-hash` / `fuzz-064`).
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `ta_regtest.c` | Main entry point. CLI flags: `--function=CSV`, `--codegen`, `--language=CSV` |
-| `test_codegen.c` | Codegen verification: spawns servers, sends JSON-RPC, compares results |
-| `test_codegen.h` | API: `test_codegen(history, languageFilter, functionFilter)` |
+| `ta_regtest.c` | Entry point, CLI, per-language server pipes |
+| `test_codegen.c/h` | Codegen verification, and home to the shared hash / tolerance / transport helpers the other gates reuse |
 | `codegen_pipe.c/h` | Subprocess pipe abstraction for JSON-RPC over stdin/stdout |
-| `ta_test_priv.h` | `doRangeTest()`, `checkExpectedValue()`, `RangeTestFunction` callback type |
-| `ta_test_func/test_*.c` | Per-indicator C reference tests (23+ files) |
-| `ta_test_reference.{h,c}` | The shared numerical-reference battery: external datasets, the double-double oracles, one RNG (issue #251) |
-| `ta_test_reference_golden.{h,c}` | GENERATED by `scripts/gen_test_reference.py`. Baked exact-rational goldens — do not hand-edit |
+| `ta_test_priv.h` | `doRangeTest()`, `checkExpectedValue()`, `RangeTestFunction`, `TA_RangeStability` |
+| `ta_test_reference.{h,c}` | Shared numerical-reference battery: external datasets, double-double oracles, one RNG |
+| `ta_test_reference_golden.{h,c}` | GENERATED by `scripts/gen_test_reference.py`. Exact-rational goldens — do not hand-edit |
 
-## The shared numerical-reference battery (issue #251)
+## The shared numerical-reference battery
 
-`ta_test_reference.{h,c}` holds what `test_stddev.c`, `test_correl.c`,
-`test_beta.c`, `test_bbands.c`, `test_linearreg.c` and `test_wma.c` used to
-carry a private copy of each: the external datasets (NIST StRD Norris and NumAcc1-4,
+Holds what the STDDEV, CORREL, BETA, BBANDS, LINEARREG and WMA suites would
+otherwise each copy: the external datasets (NIST StRD Norris and NumAcc1-4,
 Wilkinson's "nasty.dat", the pandas rolling-window adversarial arrays), the
-trusted oracles, and one random-number generator. `test_reference.c`
-(`--function=REFERENCE`) is the battery checking itself and belongs to no
-indicator.
+trusted oracles, and one RNG. `test_reference.c` (`--function=REFERENCE`) is the
+battery checking itself and belongs to no indicator.
 
-**The oracles accumulate in compensated double-double, not `long double`.** That
-was the portability hole #251 closed: `long double` is 64 mantissa bits on x86
-Linux, 53 on MSVC and 113 on AArch64, so a bound written and measured here was
-quietly WEAKER on Windows, where the referee had exactly the precision of the
-thing it refereed. The double-double form carries ~106 bits on every ABI using
-nothing but `double`. Its two-product uses the C99 `fma()` FUNCTION — a
-correctly-rounded operation rather than an optimisation, so `-ffp-contract` can
-neither break it nor be relied on to help.
+**The oracles accumulate in compensated double-double, not `long double`**,
+which is 64 mantissa bits on x86 Linux, 53 on MSVC and 113 on AArch64 — a bound
+measured here would be quietly weaker on the ABI where the referee has exactly
+the precision of the thing it referees. Double-double carries ~106 bits
+everywhere out of plain `double`, and its two-product uses the C99 `fma()`
+FUNCTION, a correctly-rounded operation that `-ffp-contract` can neither break
+nor be needed by.
 
 **Baked goldens where a table is feasible, the oracle where it is not.**
 `scripts/gen_test_reference.py` parses the datasets out of `ta_test_reference.c`
-and evaluates what each function must return on them in EXACT RATIONAL
-arithmetic — every input is a double, so every sum and product is exact, and the
-one square root a sigma or a correlation needs is taken at 50 digits — then
-writes `ta_test_reference_golden.{h,c}`. Those constants share no code with
-TA-Lib and cannot be co-wrong with it — the #228 trap — and a constant does not
-change precision when the ABI does. The LCG-driven sweeps generate far more
-windows than it would be sensible to bake and keep the runtime oracle;
-`test_reference.c` requires the oracle to reproduce every baked value to 1e-15,
-which is what lets those sweeps borrow the goldens' credibility.
-
-Regenerate with `scripts/gen_test_reference.py`; verify in place with
-`--check`. It is NOT on the PR gate (that stays lightweight) — `test_reference.c`
-catches a stale table at runtime instead, because the oracle would stop
-reproducing it.
-
-**Measured resolution.** The smallest uniform relative perturbation of every
-shipped output that each suite detects, from a mutation sweep (rebuild, run,
-bisect; `--function=REFERENCE` is the control and stays green throughout, since a
-library mutation cannot reach an oracle-vs-golden comparison):
-
-| suite | resolution | first leg to fire |
-|---|---|---|
-| `LINEARREG` | 1e-15 | #251 Wilkinson |
-| `WMA` | 1e-12 | #255 Wilkinson goldens (W1) |
-| `CORREL` | 1e-15 | #242 range invariant, then the #251 goldens at 1e-14 |
-| `BBANDS` | 1e-15 | #117 SMA fast-path equivalence |
-| `STDDEV`/`VAR` | 1e-12 | #118 NIST NumAcc1 |
-| `BETA` | 1e-12 | #242 Wilkinson W.IV.B |
-
-Two things that table says which are easy to get backwards. For `STDDEV`/`VAR`
-the #251 baked goldens only bite at 1e-8 -- NIST is the sharp edge there and the
-goldens are defence in depth, not the binding constraint. And the #251 BBANDS leg
-is invisible in that sweep because #117 fires first; measured on its own (the
-earlier legs stubbed out, with a control run) it detects 1e-9.
+and evaluates the required answers in EXACT RATIONAL arithmetic — every input is
+a double, so every sum and product is exact, and a sigma's square root is taken
+at 50 digits. Those constants share no code with TA-Lib and cannot be co-wrong
+with it, and a constant does not change precision when the ABI does. The
+LCG-driven sweeps generate far more windows than it would be sensible to bake
+and keep the runtime oracle; `test_reference.c` requires that oracle to
+reproduce every baked value to 1e-15, which is what lets the sweeps borrow the
+goldens' credibility. Regenerate with the script, verify with `--check`;
+deliberately off the PR gate, since `test_reference.c` catches a stale table at
+runtime.
 
 Two rules when touching it:
 
-- The dataset definitions live between the `BEGIN/END GENERATOR-PARSED DATASETS`
+- Dataset definitions live between the `BEGIN/END GENERATOR-PARSED DATASETS`
   markers, one `const double NAME[COUNT] = { ... };` each, plain decimal
   literals. The parser is deliberately narrow and errors rather than guessing.
-- The RNG streams are pinned by `test_reference.c`. Three per-file generators
-  became one, and every measured tolerance in the suites that use it was
-  measured on those exact sequences — the pins are what make that a checked
-  claim rather than a remembered one.
+- The RNG streams are pinned by `test_reference.c`, because every tolerance in
+  the suites that use it was measured on those exact sequences.
 
-## doRangeTest — The Core Testing Primitive
+## doRangeTest
 
-`doRangeTest()` is what makes ta_regtest thorough. It calls a `RangeTestFunction` callback hundreds of times with every possible `startIdx`/`endIdx` combination, verifying:
-- Output coherency across different ranges (same data regardless of range selection)
-- Lookback function consistency
-- Value comparison across ranges at a tolerance set by the function's
-  `TA_RangeStability` class — exact / epsilon / converging / skip (see
-  "Range-test tolerance is an explicit stability class" below). `doRangeTestEx`
-  takes the class explicitly; the legacy `doRangeTest` derives it.
+Calls a `RangeTestFunction` over every `startIdx`/`endIdx` combination, checking
+output coherency across ranges, lookback consistency, and values at the
+tolerance of the function's `TA_RangeStability` class. `doRangeTestEx` takes the
+class explicitly; the legacy `doRangeTest` derives it. Writing a callback:
+`TA_CallFunc` fills ALL outputs at once, so allocate every buffer, call it, then
+copy out the requested `outputNb`.
 
-### RangeTestFunction Callback Interface
+## Codegen verification
 
-```c
-typedef TA_RetCode (*RangeTestFunction)(
-    TA_Integer startIdx, TA_Integer endIdx,
-    TA_Real *outputBuffer,          // Write ONE output here (per outputNb)
-    TA_Integer *outputBufferInt,    // For integer outputs (candlestick patterns)
-    TA_Integer *outBegIdx,
-    TA_Integer *outNbElement,
-    TA_Integer *lookback,           // Must set this (call TA_GetLookback or function-specific)
-    void *opaqueData,               // Your context struct
-    unsigned int outputNb,          // Which output to write (0, 1, 2 for multi-output)
-    unsigned int *isOutputInteger   // Set to 1 if output is integer
-);
-```
+One generic callback driven by `TA_ForEachFunc` covers every indicator, building
+requests from ta_abstract metadata with no per-function hand-coding. Real inputs
+are named **positionally** (`inReal`, or `inReal0`/`inReal1`), price inputs by
+OHLCV component per the `TA_InputParameterInfo.flags` bitmask. Real outputs
+compare at `CODEGEN_EPSILON` (1e-6), integer outputs exactly.
 
-**Critical detail for generic callback**: `TA_CallFunc` fills ALL outputs at once. The callback must allocate all output buffers, call `TA_CallFunc`, then copy the requested `outputNb` into `outputBuffer`/`outputBufferInt`. Use `TA_GetLookback` on the `TA_ParamHolder` for the lookback value.
+The sweep **compares values by default** for every function; checking only
+coherency is how the TRIX partial-range mislabeling survived two decades.
+EMA-derived functions map to `TA_FUNC_UNST_EMA` in `UNSTABLE_MAP` so the
+unstable-period mechanism absorbs their legitimate trajectory dependence.
+Functions with genuine non-converging range dependence — accumulations seeded at
+`startIdx`, path-dependent state machines — are declared by the
+`path_dependent` YAML flag, surfaced as `TA_FUNC_FLG_PATH_DEP` and read off
+`funcInfo->flags`: the same public flag a wrapper sees, never a second
+hand-edited list.
 
-## Codegen Verification Architecture
+### Range-test tolerance is an explicit stability class, not `unstId == NONE`
 
-```
-ta_regtest
-  ├── ta_abstract API (enumerates functions, provides TA_CallFunc for C reference)
-  │
-  └── codegen_pipe → server subprocess (stdin/stdout JSON-RPC)
-        ├── ta_codegen_serve_c
-        ├── ta_codegen_serve_rust   (Rust)
-        ├── TaCodegenServe.class    (Java)
-        └── TaCodegenServe          (C#)
-```
-
-### Current State
-
-A single generic callback driven by `TA_ForEachFunc` enumeration covers every indicator automatically. The callback uses ta_abstract metadata (`TA_GetFuncInfo`, `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo`) to build JSON-RPC requests without any per-function hand-coding. `TA_CallFunc` executes the C reference, then the callback copies the requested `outputNb` into the range-test output buffer.
-
-The generic `doRangeTest` sweep **compares values by default** for every
-function (lesson from issue #98: the TRIX partial-range mislabeling survived
-two decades because this sweep used `TA_DO_NOT_COMPARE` everywhere, checking
-only coherency). EMA-derived functions (DEMA, TEMA, TRIX, MACD, MACDEXT,
-MACDFIX) map to `TA_FUNC_UNST_EMA` in `UNSTABLE_MAP` so the unstable-period
-mechanism absorbs their legitimate trajectory dependence. Documented
-exceptions that keep `TA_DO_NOT_COMPARE` (legitimate, non-converging range
-dependence): running accumulations seeded at `startIdx` (AD, ADOSC, OBV, NVI,
-PVI) and path-dependent state machines (SAR, SAREXT). This set is declared at
-the definition site by the `path_dependent` YAML flag and surfaced through
-`ta_abstract` as `TA_FUNC_FLG_PATH_DEP`, which `get_integer_tolerance()` reads
-from `funcInfo->flags` (issue #127 — the same public flag a wrapper sees, no
-hand-edited second list).
-
-#### Range-test tolerance is an explicit stability class, not `unstId == NONE`
-
-The cross-range value comparison (`dataWithinReasonableRange`) picks its tolerance
-from an explicit `TA_RangeStability` class (`ta_test_priv.h`), **decoupled** from
-whether a function carries an unstable-period id. This exists because the old
-"`unstId == NONE ? tight : loose`" inference let a *vestigial* unstable-period flag
-hand a finite-window function the loose convergence tolerance and hide a real bug
-(IMI #14, MFI #4). The four classes:
+Inferring the tolerance from the unstable-period id let a *vestigial* id hand a
+finite-window function the loose convergence envelope and hide a real bug, so
+`dataWithinReasonableRange` reads an explicit class instead:
 
 | Class | Tolerance | Who |
 |-------|-----------|-----|
-| `TA_STABLE_EXACT` | bit-exact (`==`) | fresh-recomputed finite window (IMI, price transforms, MOM/ROC, MIN/MAX/MIDPOINT/WILLR/AROON, AVGDEV, vector math). **LINEARREG/TSF left this class in #103** — they carry SumY/SumXY in an O(1) recurrence and sit at EPSILON. #254 re-anchored those sums (every `32*period` bars, and when a large value leaves the window), which is what makes the EPSILON class true at *any* call length rather than only on the 252-bar corpus; they stay at EPSILON because the re-anchor points are counted from each call's own start. See `test_codegen.c` `stability_class()` |
-| `TA_STABLE_EPSILON` | `1e-10` absolute | running-accumulator finite window + **default** (SMA, WMA, STDDEV, CORREL, CCI, ULTOSC, MFI, …) |
+| `TA_STABLE_EXACT` | bit-exact | fresh-recomputed finite window (price transforms, MOM/ROC, MIN/MAX/MIDPOINT/WILLR/AROON, AVGDEV, vector math) |
+| `TA_STABLE_EPSILON` | `1e-10` absolute | running-accumulator finite window, and the **default** |
 | `TA_STABLE_CONVERGING` | warm-up envelope (`0.5/temp`, ignore-first-N), relative to the larger magnitude floored at 0.2 | recursive/IIR — anything in `UNSTABLE_MAP` |
-| `TA_STABLE_SKIP` | not compared | `get_integer_tolerance() == TA_DO_NOT_COMPARE` — the `TA_FUNC_FLG_PATH_DEP`-flagged set (#127): AD, ADOSC, OBV, NVI, PVI, SAR, SAREXT |
+| `TA_STABLE_SKIP` | not compared | the `TA_FUNC_FLG_PATH_DEP` set |
 
-`stability_class()` (`test_codegen.c`) assigns the generic-gate class per function
-(explicit `exact[]` list from a source audit, `SKIP` **derived** from
-`get_integer_tolerance` so it never desyncs from the integer-output skip,
-`CONVERGING` from `UNSTABLE_MAP`, else `EPSILON`). `doRangeTestEx` **guards** the
-invariant: `CONVERGING` must carry an unstId; `EXACT`/`EPSILON` must not (that's the
-vestigial-flag trap); `SKIP` is exempt (ADOSC legitimately sweeps an internal EMA).
-The legacy `doRangeTest(unstId, integerTolerance)` is a wrapper that derives the
-class (never `EXACT`, a safe superset) for the hand-written per-function tests.
+LINEARREG/TSF carry SumY/SumXY in an O(1) recurrence, so they are EPSILON rather
+than EXACT. Their sums re-anchor every `32*period` bars and whenever a large
+value leaves the window, which is what makes EPSILON true at any call length and
+not just on the 252-bar corpus; the anchors count from each call's own start,
+which is why they cannot reach EXACT.
 
-After all functions run, ta_regtest prints:
-- A **cross-language timing comparison table** (wall-clock ns per call, speedup vs C)
-- A **CLI summary** with pass/fail counts and average timing per language
-- A **JSONL rolling report** (one JSON line per function per language) written to disk, tagged with git SHA
+`stability_class()` assigns it: an explicit `exact[]` list from a source audit,
+`SKIP` **derived** from `get_integer_tolerance` so it cannot desync from the
+integer-output skip, `CONVERGING` from `UNSTABLE_MAP`, else `EPSILON`.
+`doRangeTestEx` guards the invariant — `CONVERGING` must carry an unstId,
+`EXACT`/`EPSILON` must not, `SKIP` is exempt (ADOSC legitimately sweeps an
+internal EMA).
 
-### Input Type Complexity
+### Unstable-period functions
 
-Functions have different input types that affect JSON-RPC serialization:
+The functions carrying `TA_FUNC_FLG_UNST_PER` are the genuinely recursive ones
+(Wilder smoothing, EMA and adaptive EMA, the Hilbert IIRs); servers must be sent
+`unstablePeriod` for them. `TA_FuncUnstId` keeps retired ids as
+`TA_FUNC_UNST_UNUSED_*` — removing one renumbers the enum and breaks ABI.
 
-| Input Type | Example Functions | JSON Fields |
-|-----------|-------------------|-------------|
-| `TA_Input_Real` (single) | SMA, RSI, EMA | `"inReal": [...]` |
-| `TA_Input_Real` (two) | MULT, ADD, SUB | `"inReal0": [...], "inReal1": [...]` |
-| `TA_Input_Price` | STOCH, BBANDS, ADX, MACD | `"inHigh": [...], "inLow": [...], "inClose": [...]` |
-
-For `TA_Input_Price`, the `TA_InputParameterInfo.flags` bitmask tells you which OHLCV components are needed. Map from `TA_History`:
-- `TA_IN_PRICE_OPEN` → `history->open`
-- `TA_IN_PRICE_HIGH` → `history->high`
-- `TA_IN_PRICE_LOW` → `history->low`
-- `TA_IN_PRICE_CLOSE` → `history->close`
-- `TA_IN_PRICE_VOLUME` → `history->volume`
-- `TA_IN_PRICE_OPENINTEREST` → `history->openInterest`
-
-See `test_abstract.c` (lines 415-421) for the working reference.
-
-### Output Type Complexity
-
-| Output Type | Example Functions | JSON Fields |
-|------------|-------------------|-------------|
-| Single real | SMA, RSI, EMA | `"outReal": [...]` |
-| Multi real | BBANDS (3), MACD (3), STOCH (2) | `"outReal": [...], "outReal1": [...], "outReal2": [...]` |
-| Integer | CDL* patterns, MINMAXINDEX | `"outInteger": [...]` |
-
-Integer outputs use exact match comparison (or tolerance via `TA_DO_NOT_COMPARE`). Real outputs use epsilon comparison (currently `1e-6`).
-
-### Optional Parameter Types
-
-| Type | Example | JSON Parsing |
-|------|---------|-------------|
-| `TA_OptInput_IntegerRange` | `optInTimePeriod` | `json_find_int` |
-| `TA_OptInput_RealRange` | BBANDS `optInNbDevUp`, SAR `optInAcceleration` | `json_find_double` |
-| `TA_OptInput_IntegerList` | MA `optInMAType` | `json_find_int` |
-
-### Unstable Period Functions
-
-20 functions have a genuine unstable period that affects output (recursive /
-converging — Wilder smoothing, EMA/adaptive-EMA, Hilbert IIR). Must send
-`unstablePeriod` param to servers:
-ADX, ATR, CMO, DX, EMA, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE, KAMA, MAMA, MINUS_DI, MINUS_DM, NATR, PLUS_DI, PLUS_DM, RSI, T3
-
-The `TA_FuncUnstId` enum still has 24 entries: four retired ids are kept as
-`TA_FUNC_UNST_UNUSED_*` (removing one would renumber the enum → ABI break).
-**IMI** (#14) and **MFI** (#4) are *not* unstable — finite sliding-window
-indicators (IMI recomputes its window fresh each bar → bit-exact; MFI carries a
-running accumulator → ~1e-13 drift only); they carry no `unstable_period`
-abstract flag and are excluded from `UNSTABLE_MAP` so their range sweeps use the
-tight `TA_FUNC_UNST_NONE` tolerance rather than the loose convergence envelope.
-**ADXR** and **STOCHRSI** (#129) had ids that were never read — they follow
-their internal ADX/RSI instead, so `UNSTABLE_MAP` maps them to
-`TA_FUNC_UNST_ADX`/`_RSI` (the DEMA→EMA pattern), keeping the converging
-range tolerance and the stream K-leg coverage.
+**IMI** and **MFI** are NOT unstable: both are finite sliding windows (IMI
+recomputes fresh each bar and is bit-exact, MFI's accumulator drifts ~1e-13), so
+they carry no unstable flag and stay out of `UNSTABLE_MAP`, keeping the tight
+tolerance. **ADXR** and **STOCHRSI** follow their internal ADX/RSI, so
+`UNSTABLE_MAP` maps them to `TA_FUNC_UNST_ADX`/`_RSI` while their own ids stay
+unread.
 
 ## Abstract-metadata parity — every language server vs the C library
 
-`ta_regtest.c` opens a dedicated pipe per language and points `test_abstract.c`
-at it (`test_abstract_set_server`). There is one block per language, and **the
-block is the coverage**: `test_abstract_server_metadata()` and the server legs of
-`test_abstract()` both short-circuit to `TA_TEST_PASS` when no pipe is set, so a
-server can implement every RPC perfectly or not at all and, without a block,
-every gate stays green. The C# block was added for exactly that reason — its
-RPCs had none.
+`ta_regtest.c` opens a pipe per language and points `test_abstract.c` at it. One
+block per language, and **the block is the coverage**: the server legs
+short-circuit to `TA_TEST_PASS` when no pipe is set, so without a block a server
+can implement every RPC or none and every gate stays green.
 
-Each block runs two passes: the metadata getters (`TA_GetFuncInfo` +
-`TA_Get{Input,OptInput,Output}ParameterInfo`) for every function, and the
+Each block runs the metadata getters for every function, and the
 dynamic-dispatch path (`abstract_call` / `abstract_get_lookback` /
-`TA_FunctionDescriptionXML`) comparing output **values**. The C server is run as
-the **control arm**: it answers from the very `ta_abstract` it is compared
-against, so a failure there is a comparator defect, which is what makes a failure
-on Rust/Java/C# meaningful.
+`TA_FunctionDescriptionXML`) comparing **values**. The C server is the **control
+arm** — it answers from the very `ta_abstract` it is compared against, so a
+failure there is a comparator defect, which is what makes a failure elsewhere
+meaningful.
 
-Three properties keep the sweep from passing vacuously:
+Three properties keep the sweep from passing vacuously: a missing server is a
+hard failure when its language was named, not a skip; `ctx.checked == 0` fails,
+as does comparing zero opt-level hints or zero ranges on an unfiltered run; and
+`if( crefOpt->dataSet )` — which silently skips five field comparisons — is
+counted by `g_optExtendedCompared`, so "compared all the ranges" is
+distinguishable from "looked at none".
 
-* **A missing server is a hard failure when its language was named.**
-  `--language=csharp` on a box with no .NET SDK used to print a skip and exit 0.
-* **`ctx.checked == 0` fails**, and on an unfiltered run so does comparing zero
-  opt-level hints or zero ranges.
-* **`if( crefOpt->dataSet )` is counted.** That branch silently skips five field
-  comparisons; `g_optExtendedCompared` makes "we compared all the ranges"
-  distinguishable from "we looked at none".
+`abstract_verify_for_each_func()` compares the server's enumeration against
+`TA_ForEachFunc` as a **set** (C walks group by group, the registries are
+name-sorted, so an order-sensitive compare would fail on a correct server) and
+reports an extra, duplicate, omitted or miscounted function. It is the only gate
+that can see a function *missing from* a registry, since every per-function
+getter is driven by C's own enumeration.
 
-`abstract_for_each_func` **had no caller in any language** until
-`abstract_verify_for_each_func()`. It compares the server's enumeration against
-`TA_ForEachFunc` as a **set** — C walks group by group while the registries are
-name-sorted, so an order-sensitive compare would fail on a correct server — and
-reports a function C does not have, a duplicate, an omission, or a count
-mismatch. It is the only gate that can see a function *missing from* a registry,
-because the per-function getters are driven by C's own enumeration. Sabotage-
-proven: deleting one entry from the Java server's handler fails with
-`abstract_for_each_func omits 'WILLR'` while the metadata sweep still reports 0
-failures.
-
-**The binder parameter contract.** The dynamic legs used to bind every optional
-parameter at its declared default, so all four binders were exercised at one point
-in their domain. `d2_param_vectors` now drives, on `inputRandomData`, a
-non-default value per slot (distinct per slot — same-default siblings would
-otherwise hide a transposition), the default sentinel per slot, and both bounds
-out of range per slot, for integer *and* real domains. C and the server get the
-same vector, so this compares two binders rather than one against its own oracle.
-
-Two self-checks keep it honest, mirroring `--xlang-hash`'s `oorNotRejected` /
-`sentNotDefault`: an out-of-range probe C *accepts* is not out of range, and a
-sentinel is asserted against the all-defaults result rather than only against the
-server — otherwise both tiers could be wrong together. All four counts are
-asserted non-zero.
+**The binder parameter contract.** `d2_param_vectors` drives a non-default value
+per slot (distinct per slot — same-default siblings would hide a transposition),
+the default sentinel per slot, and both out-of-range bounds per slot, for
+integer and real domains. C and the server get the same vector, so this compares
+two binders rather than one against its own oracle. Two self-checks: an
+out-of-range probe C *accepts* is not out of range, and a sentinel is asserted
+against the all-defaults result rather than only against the server, so both
+tiers cannot be wrong together. All four counts are asserted non-zero.
 
 Opt-level `hint` is compared too. For a bespoke descriptor that is a genuine
-YAML-vs-C check. For the ~80 slots folded onto a predefined `TA_DEF_UI_*` it is
-not: since #195 the generator folds only when every field already agrees, so the
-hint matching is what selected the constant, and a stale generator literal shows
-up as a decline — a diff to the generated `tables/table_*.c` — rather than a
-divergence this gate could fail on.
+YAML-vs-C check; for a slot folded onto a predefined `TA_DEF_UI_*` it is not —
+the generator folds only when every field already agrees, so a stale literal
+shows up as a declined fold in the generated `tables/table_*.c` rather than here.
 
-Where this runs: **one** nightly job — dev-nightly's `xlang` step, which is the
-only one invoking `regtest.py --codegen` unfiltered. The other `--codegen`
-jobs narrow to `rust` or `c,rust`, and `main-nightly` runs `--xlang-hash`, which
-reaches `abstract_get_lookback` and no other abstract RPC. So every gate in this
-section has a single point of failure in CI. That is deliberate rather than
-overlooked: a second job would buy redundancy against runner flakiness, not
-against defects. Worth knowing before assuming a green `main` nightly says
-anything about abstract-metadata parity.
+**Where this runs: one nightly job** — dev-nightly's `xlang` step, the only
+unfiltered `regtest.py --codegen`. Everything in this section therefore has a
+single point of failure in CI, deliberately: a second job would buy redundancy
+against runner flakiness, not against defects. Worth knowing before assuming a
+green `main` nightly says anything about metadata parity.
 
-## The VARIANT gate — TA_/TA_S_ bitwise parity, no oracle (issue #137)
+## The VARIANT gate — `TA_`/`TA_S_` bitwise parity, no oracle
 
-Every function ships twice over: `TA_<N>` and `TA_S_<N>`. `test_variants.c`
-(tag `TA_S_,VARIANT`) asserts one exact contract across them, in-process, with no
-server and no oracle — so a bare `./ta_regtest` covers it, which is what the
-autotools dist nightly runs:
+`test_variants.c` (tag `TA_S_,VARIANT`) asserts one exact contract in-process,
+with no server and no oracle, so a bare `./ta_regtest` covers it — which is what
+the autotools dist nightly runs: **feed `TA_S_` a float array and `TA_` those
+same floats widened back; outputs must match bit for bit.**
 
-**`TA_S_` == `TA_` on widened inputs** — PR #33's contract. Feed `TA_S_` a float
-array and `TA_` those same floats widened back; outputs must match bit for bit.
+Dispatch comes from the generated `ta_variant_frame.h` — a header on purpose, so
+there is no source-list entry for the CMake and autotools lists to drift on. The
+counter that matters is `nbOutputCmp`, incremented **at the memcmp itself**: one
+bumped before the comparisons and independently of them would satisfy the assert
+while the gate checked strictly less.
 
-Dispatch comes from the generated `ta_variant_frame.h`
-(`generator/src/backends/variant_frame.rs`): two uniform thunks plus a row per
-function. A **header on purpose** — no source-list entry, so the CMake/autotools
-lists cannot drift.
+## The float leg — the same contract, in Java and C#
 
-Sabotage-proven to catch what nothing caught before: `-999.0` in **guarded**
-`TA_S_ADX`, and a `1e-12` drift in a `TA_S_` body (ref diff is 1e-9, float leg
-1e-6 — this gate is bitwise).
+`run_float_leg` is the cross-language form of the VARIANT gate: it sends one
+function twice to the *same* server — once normally, once with `"use_float":1` —
+on float-widened inputs and requires the two to agree, covering Java's and C#'s
+`float` overloads. Rust has no single-precision surface and is the only
+exclusion. Each call must come back with `"used_float":1`; a server ignoring the
+flag would return its double result twice and pass while verifying nothing.
 
-**It found a live defect on first run:** `TA_S_WMA` at `optInTimePeriod == 1` did
-`memmove(..., n * sizeof(double))` out of a `const float*` — wrong bits plus a
-`4n`-byte over-read, through the *public guarded* API (WMA's range is
-`[1,100000]`). Same shape in `TA_S_{RSI,CMO}`. Fixed in
-`ta_codegen/input/{wma,rsi,cmo}/` with a forward element loop, which the
-generator widens via an explicit `(double)` in the `TA_S_` bodies and which still
-handles the in-place `out == in` case from #94.
-
-The gate asserts its coverage non-zero, so it cannot pass by silently doing
-nothing. The counter that matters is `nbOutputCmp`, incremented **at the memcmp
-itself** — a counter bumped before the comparisons and independently of them
-would still satisfy the assert while the gate checks strictly less.
-
-## The float leg — the same contract, in Java and C# (issue #170)
-
-`test_variants.c` covers `TA_S_` == `TA_` in-process, which is C only. The
-**float leg** (`run_float_leg`, `test_codegen.c`) is the cross-language form: it
-sends one function twice to the *same* server — once normally, once with
-`"use_float":1` — on float-widened inputs, and requires the two to agree. That
-covers the other two float surfaces: Java's `float[]` Core overloads and C#'s,
-every function in each. Rust has no single-precision surface and is the only
-exclusion. Each call must come back with `"used_float":1`; a server that ignored
-the flag would return its double result twice and pass while verifying nothing.
-
-The leg runs **two parameter vectors**. The resolved defaults, and — since #170
-— the **default sentinel** (`TA_INTEGER_DEFAULT` / `TA_REAL_DEFAULT` in every
-optional slot, sent to *both* halves, so the property is "each tier substitutes
-the same declared default" and needs no oracle). The sentinel vector is not a
-refinement: it is the one that exposed the `TA_S_EMA` k-factor defect fixed in
-`2e9767397`, where the float body derived `k` from the raw sentinel because its
-initialiser ran before the prologue substituted it. The same defect was live in
-Java's float `EMA_Impl` and C#'s float `EMA`, and reaching only resolved
-defaults, no gate could see it there. Sabotage-proven both ways: reintroducing
-it in the Java and C# float bodies fails the sentinel pass on both, and with the
-sentinel pass switched off the identical sabotage passes clean.
+Two parameter vectors: the resolved defaults, and the **default sentinel** in
+every optional slot sent to *both* halves, so the property is "each tier
+substitutes the same declared default" and needs no oracle. The sentinel vector
+is what catches an initialiser reading the raw sentinel before the prologue
+substitutes it — invisible to any gate that only sends resolved defaults.
 
 Not asserted: `float(sentinel) == float(default)`. A body that mishandles the
-sentinel either diverges from its own double tier (the pair check) or is
-rejected outright (an error response where the resolved-default request
-succeeded is a hard failure, not a skip), and the double tier's own
-sentinel-selects-the-default contract belongs to `--xlang-hash` (#148).
+sentinel either diverges from its own double tier or is rejected outright (an
+error response where the resolved-default request succeeded is a hard failure,
+not a skip), and the double tier's own sentinel contract belongs to
+`--xlang-hash`. One exclusion, counted and printed: functions with no optional
+parameter, where the sentinel pass would re-send the request just made.
 
-One exclusion, counted and printed:
-
-* **Functions with no optional parameter**, where the pass would re-send the
-  request just made.
-
-Choice-list slots on Java used to be a second exclusion: `Core` takes a real
-`MAType` enum, so `Integer.MIN_VALUE` is unrepresentable and the generated Java
-server dies constructing one (#162), and that slot stayed at its explicit
-default. Since #182 the enum has a `DEFAULT` member carrying the identical
-contract, and it *is* representable, so `float_leg_set_sentinels` sends that
-instead (`codegen_enum_default_member`). `g_floatSentinelEnumWithheld` now only
-counts an enum that declares no such member. This matters more than it sounds:
-Java's `DEFAULT` check is the one that is *not* fused into an `INT_MIN` check —
-C, Rust and C# all write `if( sentinel || DEFAULT )` — so its float overload was
-the single surface no gate reached, which is the exact shape of the `TA_S_EMA`
-defect this leg exists to catch. `codegen_lang_can_pass_enum_sentinel` still
-withholds the raw sentinel from Java and is still shared with `--xlang-hash`.
+Choice-list slots: Java's `Core` takes a real `MAType`, so `INT_MIN` is
+unrepresentable and the generated server dies constructing one. The enum's
+`DEFAULT` member carries the identical contract and *is* representable, so
+`float_leg_set_sentinels` sends that; `g_floatSentinelEnumWithheld` counts only
+an enum declaring no such member. This matters more than it sounds: Java's
+`DEFAULT` check is the one *not* fused into an `INT_MIN` check — C, Rust and C#
+all write `if( sentinel || DEFAULT )` — so its float overload is the surface no
+other gate reaches.
 
 The floor is **per language** and counts comparisons *that diffed output
 elements*: a total would stay green while one server answered every sentinel
-request with an error, and one server silently opting out is the exact shape of
-the hole this closes. `eligible` (functions that reached the pass with a
-sentinel-able parameter) is what the floor tests against, so a `--function=`
-filter naming only parameterless functions is a legitimate zero.
+request with an error, which is the exact hole this closes. It tests against
+`eligible`, so a `--function=` filter naming only parameterless functions is a
+legitimate zero.
 
-`run_float_leg` snapshots and restores everything it touches in
-`CodegenRangeTestParam` — the `parse_ref_baseline` fields, `optOverride[]`, the
-request-shaping flags, the timing accumulators. Before #170 it was safe only
-because it happened to be the last statement of `sweep_run_variant`, and the
-first attempt at a second pass produced `SWEEP GUARDED MISMATCH [TA_ACCBANDS]`
-(the guarded call at the swept period against a baseline left at the default).
+`run_float_leg` must snapshot and restore everything it touches in
+`CodegenRangeTestParam` — `parse_ref_baseline` fields, `optOverride[]`, the
+request-shaping flags, the timing accumulators. Skipping that only appears to
+work while it is the last statement of `sweep_run_variant`.
 
 ## Transport
 
 `codegen_pipe_call` reads responses in 256KB chunks into a per-pipe buffer that
-persists across calls (a read can overrun the newline into the next response).
-It used to read one byte per `read()`; at ~2MB responses that was ~800k blocking
-syscalls per benchmarked function. The buffer is heap-allocated because these
-structs are `main()` locals, including a `CodegenPipe[SV_MAX_PIPES]` — inline it
-would not fit Windows' 1MB default stack.
-
-The paired server-side saving is the `no_output` request flag (see the root
-CLAUDE.md): callers that only want `timing_ns` suppress the output arrays. Every
-correctness path omits it and still gets the values.
+persists across calls, since a read can overrun the newline into the next
+response. The buffer is heap-allocated because these structs are `main()`
+locals, including a `CodegenPipe[SV_MAX_PIPES]` that inline would not fit
+Windows' 1MB default stack. The paired server-side saving is the `no_output`
+request flag: callers that only want `timing_ns` suppress the output arrays, and
+every correctness path omits it.
 
 ### Driving a server by hand
 
 Four traps, each of which costs a debugging cycle:
 
-**A real output array is a hex STRING, not a JSON number array.**
-`"outReal":"3ff0000000000000c000..."` — concatenated 16-hex-char groups, one per
-`double`'s IEEE-754 bits, the same encoding an input array may be sent in
-(#115). Every backend writes it (#257/#258); `json.loads` gives you a `str`, and
-`bytes.fromhex(s)` + `struct.unpack` is the read side. Integer outputs are
-still `[1,0,-1]`. A server answering `[...]` for a real output is either a
-third-party oracle bridge or a regression.
+**A real output array is a hex STRING, not a JSON number array** —
+`"outReal":"3ff0000000000000c000..."`, concatenated 16-hex-char groups of a
+`double`'s IEEE-754 bits, the same encoding an input array may be sent in.
+`json.loads` gives you a `str`; `bytes.fromhex(s)` + `struct.unpack` is the read
+side. Integer outputs are still `[1,0,-1]`. A server answering `[...]` for a
+real output is either a third-party oracle bridge or a regression.
 
-**Arguments are NESTED under `"params"`** — `{"method":"TA_X","params":{...}}`
-(`server_verify.c:210` and every sibling builder). The Rust server reads
-`req["params"]` and *panics* on a bounds assert if the fields are flat: it parses
-an empty input array, then `endIdx < inHigh.len()` fails. C# throws
-`IndexOutOfRangeException`. C and Java only appear to accept a flat request
-because their naive scanners find the field anywhere in the line. The external
-`ta_pandas_serve` oracle is the opposite — it reads `req.get(...)` at the top
-level only. Do not duplicate fields to satisfy both shapes; long requests
-silently truncate.
+**Arguments are NESTED under `"params"`** — `{"method":"TA_X","params":{...}}`.
+The Rust server reads `req["params"]` and *panics* on a bounds assert if the
+fields are flat; C# throws `IndexOutOfRangeException`; C and Java only appear to
+accept a flat request because their naive scanners find the field anywhere in
+the line. The external `ta_pandas_serve` oracle is the opposite, top level only.
+Do not duplicate fields to satisfy both shapes — long requests silently
+truncate.
 
 **Compact separators are mandatory.** The C and tulip servers scan for the
-literal `"field":`, so Python's `json.dumps` default `": "` makes every lookup
-miss and the C server answers `{"error":"Missing method field"}`. Use
+literal `"field":`, so `json.dumps`'s default `": "` makes every lookup miss and
+the C server answers `{"error":"Missing method field"}`. Use
 `separators=(",",":")`.
 
-**`fuzz_hash_init()` is `1469598103934665603`, which is NOT the standard FNV-1a
-64-bit offset basis** (`0xCBF29CE484222325` = `14695981039346656037`) despite the
-comment at `fuzz_data.h:637` saying so — the repo constant is that value with its
-last digit lost. Every server and both oracles use the repo constant, so a
-from-scratch reimplementation of the standard basis produces hashes that match
-nothing. Call `fuzz_hash_init()`; never retype the number.
+**`fuzz_hash_init()` is `1469598103934665603`, NOT the standard FNV-1a 64-bit
+offset basis** (`14695981039346656037`) despite the comment beside it — the repo
+constant is that value with its last digit lost. Every server and both oracles
+use the repo constant, so a from-scratch reimplementation of the standard basis
+matches nothing. Call `fuzz_hash_init()`; never retype the number.
 
 Servers launch from `bin/`: `java -cp ta_codegen_java TaCodegenServe` and
 `dotnet ta_codegen_csharp/TaCodegenServe.dll`.
 
-## Buffer Sizes
-
-- `JSON_BUF_SIZE` = 64KB in current code
-- `MAX_NB_TEST_ELEMENT` = 280 (max output elements per test)
-- At 20 chars/double, one 252-element array ≈ 5KB
-- Functions with OHLCV inputs need 5+ arrays in request — may need larger buffers
-- `test_abstract.c` uses up to 10000 bars for profiling — not needed for range tests
-
 ## Building
 
 ```bash
-# C-only (standard)
 cd cmake-build && cmake .. -DCMAKE_BUILD_TYPE=Release && make ta_regtest -j4
-cd ../bin && ./ta_regtest
-
-# With codegen verification
-./ta_regtest --codegen --language=c,rust --function=SMA,RSI
+cd ../bin && ./ta_regtest --codegen --language=c,rust --function=SMA,RSI
 ```
 
-## `stream_verify` — what each leg family can and cannot see (issues #240, #241, #246)
+## `stream_verify` — what each leg family can and cannot see
 
 One request drives seven families against one seeded series. They are not
 interchangeable, and the coverage they add is very uneven:
@@ -509,560 +306,386 @@ interchangeable, and the coverage they add is very uneven:
 | family | what it compares | blind to |
 |---|---|---|
 | `Open` prefix sweep | `Open(P)` + updates to `n-1`, every bar vs batch | nothing structurally — this IS the Update path |
-| `OpenAndFill` | the filled array vs `batch(0, n-1)`, plus the canary slack and the aliasing rejects | the Update path entirely: the fill is the batch transcription |
+| `OpenAndFill` | the filled array vs `batch(0, n-1)`, plus canary slack and the aliasing rejects | the Update path entirely: the fill is the batch transcription |
 | `OpenInternal` anchored leg | `OpenInternal(S)` vs `batch(S)` at the last bar | same — one more open, no update |
 | `Peek` | Peek vs the Update that immediately follows it | a defect in the step: both run it |
-| **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers (the batch transcription is one arm of the compare) |
-| `UpdateAndFill` (#246) | `Open(P)` then ONE call over the tail, every value vs batch, plus the canary slack above the run and the rejections each backend can express (an aliased or overlapping output, an output shorter than the run, a negative count, a zero-bar no-op) | the same thing every value family is blind to — that the handle knows how many bars it has consumed, which is why the range leg has a site here too |
-| **range** (#241) | the handle's `OutRange` against the batch range over the same bars, at four sites: the `OpenAndFill` handle, `Open(P)` + updates, `Open(P)` + one `UpdateAndFill`, and the anchored `OpenInternal` (Rust reaches three — its server is a separate crate and cannot see `_OpenInternal`) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is unreachable from here (it is pinned in the generator instead) |
+| **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers |
+| `UpdateAndFill` | `Open(P)` then ONE call over the tail, every value vs batch, plus canary slack and the rejections each backend can express (aliased or overlapping output, an output shorter than the run, a negative count, a zero-bar no-op) | what every value family is blind to — whether the handle knows how many bars it has consumed |
+| **range** | the handle's `OutRange` against the batch range, at four sites: the `OpenAndFill` handle, `Open(P)` + updates, `Open(P)` + one `UpdateAndFill`, and the anchored `OpenInternal` | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
 
-So of the five value families, three delegate to the batch transcription and one
-is same-tier: the prefix sweep's Update loop and the n-bar filler are the only
+Of the five value families, three delegate to the batch transcription and one is
+same-tier: the prefix sweep's Update loop and the n-bar filler are the only
 things looking at the streaming step, and both can only report a difference the
-**output** shows. (`UpdateAndFill` adds no independent numerics — it is the same
-step in a loop — so what it earns is the entry point's own argument handling and
-its partial commit, not a second opinion on the arithmetic.)
+**output** shows.
 
 For a candlestick the output is a 3-valued integer, so an arithmetic error in a
-`<Setting>PeriodTotal` is invisible until it crosses a decision threshold. Both
-directions were measured against #229's window fold, injecting a permanent
-one-bar rotation of a folded ring read:
+`<Setting>PeriodTotal` is invisible until it crosses a decision threshold.
+Injecting a permanent one-bar rotation of a folded ring read, the value legs
+caught a minority of the folded candlesticks at default settings and **none** in
+the `avgPeriod == 0` round (where `TA_STREAM_CANDLEAVERAGE` ignores the running
+total, about a quarter of every candlestick's legs); the state leg caught all of
+them in both. It is independent of firing density and of decision margin, which
+is what no amount of extra data buys.
 
-* at default settings the value legs caught **3 of 14** folded candlesticks
-  (CDLCOUNTERATTACK on MONO_DOWN, CDLKICKING and CDLKICKINGBYLENGTH on ZEROSUM)
-  across 9 shapes each; the state leg caught **14 of 14**;
-* in the `avgPeriod == 0` round — where `TA_STREAM_CANDLEAVERAGE` ignores the
-  running total entirely, about a quarter of every candlestick's legs — the
-  value legs caught **0 of 14** and the state leg still caught **14 of 14**.
-
-The state leg is therefore independent of firing density and of decision margin,
-which is what no amount of extra data buys.
-
-The **range** leg is the odd one out twice over. It is the only family that is
-not C-only *and* not a value comparison: it compares a number pair, so it sees
-what every value leg is structurally blind to — an output is the same whether or
-not the handle knows how many bars it has consumed. And it is the first
-family with a per-SITE ratchet rather than a total: each server reports which of
-its own compare sites fired (`range_sites`) and how many it has
-(`range_sites_n`), and the driver ORs the mask across the run and demands every
-bit. A total cannot see one site of three stop — measured, dropping C's anchored
-site moved the leg count only 174 -> 145, far above any floor worth setting.
-Rust declares two sites, not three: its server is a separate crate and cannot
-reach the `pub(crate)` `_OpenInternal` seam, so it says so rather than
-pretending. The mask and the count are checked against each other on emitted
-text by `sv_range_sites_mask_matches_the_declared_count`, because a site added
-without bumping the count, or one reusing another's bit, leaves a full mask at
-run time and fails open.
+The **range** leg is the odd one out twice over: the only family that is neither
+C-only nor a value comparison — it compares a number pair, so it sees what every
+value leg is structurally blind to — and the first with a per-SITE ratchet rather
+than a total. Each server reports which of its own sites fired (`range_sites`)
+and how many it has (`range_sites_n`); the driver ORs the mask across the run and
+demands every bit, because a total cannot see one site of three stop. Rust
+declares two sites: its server is a separate crate and cannot reach the
+`pub(crate)` `_OpenInternal` seam, so it says so rather than pretending.
+`sv_range_sites_mask_matches_the_declared_count` checks mask against count on
+emitted text, since a site added without bumping the count, or one reusing
+another's bit, leaves a full mask at run time and fails open.
 
 **Why it holds bit-for-bit.** `Update` is the transcribed batch loop body, so
-both routes execute the identical operation sequence over the identical bars,
-and a ring cursor is `historyLen % cap` on one side against the same number of
-`+1`s on the other. Two representation differences are real and are handled
-rather than tolerated: a trailing ring is compared **rotated by each handle's own
-cursor** (the plain oldest-slot layout re-bases every open to phase 0, so raw
-slot-by-slot fails 90 of 175 functions on the rotation alone), and the extrema
-automaton compares only its `xCap` live slots (the allocation is rounded up to a
-power of two and the slack is never written).
+both routes execute the identical operation sequence over the identical bars, and
+a ring cursor is `historyLen % cap` against the same number of `+1`s. Two
+representation differences are handled rather than tolerated: a trailing ring is
+compared **rotated by each handle's own cursor** (the oldest-slot layout re-bases
+every open to phase 0, so raw slot-by-slot fails most functions on rotation
+alone), and the extrema automaton compares only its `xCap` live slots, the
+allocation being rounded up to a power of two.
 
 **C only, and structurally so.** The C server is one translation unit that
-`#include`s every `ta_*.c`, so a stream state struct is a complete type there
-and the comparator costs no new API surface; in Rust the state lives in the
-`ta-lib` crate and the server is a separate one. What the leg catches is one IR
-rewrite reaching all four backends identically — the same argument
-`check_candle_windows.py` makes for scanning one backend. The comparators are
-generated from `c_stream::state_struct_text`, the same text the shipped struct is
-emitted from, and a state pointer with no length rule fails generation rather
-than being skipped. `ta_regtest` ratchets the comparator count against the
-streaming function count, because the set closes under a fixpoint over
-sub-handles and would otherwise shrink quietly.
+`#include`s every `ta_*.c`, so a stream state struct is a complete type there and
+the comparator costs no new API surface; in Rust the state lives in the `ta-lib`
+crate and the server is a separate one. What the leg catches is one IR rewrite
+reaching all four backends identically. The comparators are generated from
+`c_stream::state_struct_text`, the same text the shipped struct comes from, and a
+state pointer with no length rule fails generation rather than being skipped.
+`ta_regtest` ratchets the comparator count against the streaming function count,
+because the set closes under a fixpoint over sub-handles and would otherwise
+shrink quietly.
 
-## Signed zero: a value contract, not a bit contract (issue #147)
+## Signed zero: a value contract, not a bit contract
 
 `max(+0.0, -0.0)` has no defined answer, and the MIN/MAX family answers it
 **path-dependently**: the rescan keeps the oldest bar (strict `>`), the
-incremental step keeps the newest (`>=`), so which zero survives depends on the
-history that produced the window, not on its contents. No memoryless
-implementation of that family can match it everywhere. Bit identity is therefore
-*stronger* than what these algorithms define, and every gate here compares bits.
+incremental step the newest (`>=`), so which zero survives depends on the history
+that produced the window, not on its contents. No memoryless implementation can
+match that everywhere, so bit identity is *stronger* than what these algorithms
+define — and every gate here compares bits.
 
-So **cross-tier** comparisons — stream vs batch, and OpenAndFill's array vs batch
-— count "different bits, numerically equal" as **benign** instead of failing:
-`stream_verify` returns it per request as `benign`, the driver sums it and names
-each function on a `BENIGN TA_x` line. The total is no longer printed, so a
-change that starts flipping zeros is visible only through those per-function
-lines. Same
-class `--fuzz-064` already carries — `a == b` with differing bits can only be
-±0 — where dev lands 28 `TA_MIDPOINT` cases against v0.6.4.
+**Cross-tier** comparisons (stream vs batch, OpenAndFill's array vs batch)
+therefore count "different bits, numerically equal" as **benign**:
+`stream_verify` returns it per request, and the driver names each function on a
+`BENIGN TA_x` line. The total is not printed, so a change that starts flipping
+zeros is visible only through those lines. `--fuzz-064` carries the same class —
+`a == b` with differing bits can only be ±0.
 
 **Same-tier** comparisons stay strictly bitwise: peek vs update, `value()` vs
-update, copy-A vs copy-B, the `Integer.MIN_VALUE` sentinel pair. One code path
-run twice has no licence to differ at all. Integer outputs never reach this path.
+update, copy-A vs copy-B, the sentinel pair. One code path run twice has no
+licence to differ at all. Integer outputs never reach this path.
 
-This landed before anything needed it, on purpose. The comparator was sabotage-
-proven in all three servers from the start: flipping the sign of every zero the
-batch emits keeps the run green while counting it (C 564,415 / Rust 420,421 /
-Java 480,590 cases), and perturbing those same values to `1e-300` instead fails
-loudly with `STREAM FILL MISMATCH` and `"benign":0` — so the widened comparator
-still sees every difference that is not a zero's sign.
+**The comparator being right is not the same as the cell being reachable.**
+`FUZZ_WITH_ZEROS` reaches the family only through the defaults vector, and at the
+default periods that shape produces no ambiguous window at all: MIN/MAX/MINMAX
+run where no window is free of a negative bar, and MIDPOINT where ±0 ties on
+`close` cannot change the bits of `(highest+lowest)/2` without *both* extrema
+being zeros. Running the extra shapes on the boundary vectors (`range.min`,
+`min+1`) is what makes the arm live — those cells carry a handful of ambiguous
+windows per function — and is right independently of ±0, since those are the
+degenerate-arm periods and were otherwise seeing only `MONO_UP`/`MONO_DOWN`.
 
-**The comparator being right is not the same as the cell being reachable**, and
-for a full release it was not. `FUZZ_WITH_ZEROS` reaches the family only through
-the defaults vector, because the extra-shape legs used to run on `v == 0` alone
-and the `(v + variant) % 7` rotation hands a non-default vector shape `v` itself.
-At the defaults period that shape produces **no ambiguous window at all**: MIN /
-MAX / MINMAX run at 30, where 240 bars contain no window free of a negative bar,
-and MIDPOINT runs at 14, where the 10 ±0 ties on `close` cannot change the bits
-of `(highest+lowest)/2` — that needs *both* extrema to be zeros, i.e. an
-all-zero window. So a tie-break divergence in the one family the arm was written
-for was invisible: a `<=`→`<` swap in `TA_MIN`'s stream step counted **0**.
+Deliberately **not** surfaced in the user-facing docs: the sign of a zero is
+below the level a caller reasons about, and qualifying the published
+"bit-identical" wording would cost more clarity than it buys.
 
-Running the extra shapes on the boundary vectors too (`range.min`, `min+1` —
-periods 2 and 3 here) is what makes it live: those cells carry 5–21 ambiguous
-windows per function, and the same sabotage now counts 47. The boundary vectors
-are the right place for it independently of ±0 — they are the degenerate-arm
-periods (#93/#94) and were seeing only `MONO_UP`/`MONO_DOWN`.
+## `ta_test_legacy` — the frozen v0.6.4 reference
 
-Deliberately **not** surfaced in the user-facing docs. The published "bit-identical"
-wording stays as written: the sign of a zero is below the level a caller reasons
-about, and qualifying it there would cost more clarity than it buys.
-
-## `ta_test_legacy` — the frozen v0.6.4 reference (issue #188)
-
-The tight counterpart to the hand-written groups. `ta_test_legacy_data.h` holds
-911 values that released **v0.6.4** produced over the frozen 252-bar series —
-216 cases, 142 functions — each at the full 17 digits that round-trips to the
-exact double. `ta_test_legacy.c` replays every case against the current library
-(tag `LEGACY,064,FROZEN`). It is in the default `./ta_regtest` run: no tag, no
-worktree, no second build, no network.
-
-Note the tag names no function, breaking the house rule that every function a
-group covers appears in its tag — 148 names will not fit, and the group is
-all-or-nothing anyway. So `--function=SMA` does **not** reach *this* group;
-`--function=LEGACY` (or `064`, or `FROZEN`) does, and a bare run always does.
+`ta_test_legacy_data.h` holds the values released **v0.6.4** produced over the
+frozen 252-bar series, each at the full 17 digits that round-trips to the exact
+double; `ta_test_legacy.c` replays them against the current library (tag
+`LEGACY,064,FROZEN`). It is in the default `./ta_regtest` run: no tag, no
+worktree, no second build, no network. The tag names no function — the names will
+not fit and the group is all-or-nothing — so `--function=SMA` does not reach it;
+`LEGACY`, `064` or `FROZEN` does, and a bare run always does.
 
 **Why it exists.** `checkExpectedValue` compares against an absolute `0.01`
-window, and the hand-written constants carry 2–6 significant digits. That window
-is scale-blind: 161 of the 531 hand-written expected values sit below magnitude
-10, where `0.01` admits >0.1% relative error, and 89 sit below 1.0, where it
-admits >1%. On a bounded output (BOP, CORREL) the row is close to no assertion.
-Two constants were simply *wrong* and passed for two decades. Freezing full-
-precision values removes transcription as an error source entirely.
-
-**Why freeze when `--fuzz-064` already compares.** That gate needs the `v0.6.4`
-git tag, a `../ta-lib-064` worktree and a second full CMake build; it cannot run
-from a release tarball and it dies if the tag stops being fetchable. This table
-needs none of that. The two are complementary, not redundant: `--fuzz-064` is
-broad (118k comparisons, 7 shapes, extreme magnitudes) and transient; this is
-narrow, permanent, and in every build.
+window while the hand-written constants carry 2–6 significant digits. That window
+is scale-blind: a third of those values sit below magnitude 10, where it admits
+>0.1% relative error, and on a bounded output (BOP, CORREL) the row is close to
+no assertion. Freezing full-precision values removes transcription as an error
+source. **Why freeze when `--fuzz-064` compares:** that gate needs the `v0.6.4`
+tag, a `../ta-lib-064` worktree and a second CMake build, cannot run from a
+release tarball, and dies if the tag stops being fetchable. Broad-and-transient
+against narrow-and-permanent.
 
 **What it is not.** Not a correctness oracle — v0.6.4 is the same lineage and
 cannot catch a bug it already had. It is a *pin*. Correctness lives in the
-independent oracles: `test_stddev.c`'s two-pass/NIST variance work, the
-candlestick predicate gate, the metamorphic laws.
+independent oracles: the variance work in `test_stddev.c`, the candlestick
+predicate gate, the metamorphic laws.
 
-**Scope: 142 functions.** The rest are deliberately absent — every function that
-post-dates v0.6.4 (there is nothing frozen to compare against, so the set grows
-with each new indicator); STOCHRSI, which diverges on purpose (#107, pinned by
-`test_stoch.c`); and 18 for one reason: **the host libm**.
+**Scope.** Deliberately absent: every function post-dating v0.6.4 (nothing frozen
+to compare against, so the set grows with each new indicator); STOCHRSI, which
+diverges on purpose and is pinned by `test_stoch.c`; and everything whose value
+depends on **the host libm**.
 
-That reason is the one worth internalising, because it is *created* by freezing.
-`--fuzz-064` compares two binaries on one host with one libm, so it never sees
-it; a frozen table is read on every host. `atan`/`sin`/`cos`/`exp`/`log` are not
-correctly rounded, so a frozen value for the 12 pure passthroughs (ACOS…TANH)
-asserts "your libm matches the machine that generated this table" and nothing
-about TA-Lib. `sqrt`/`ceil`/`floor` are correctly rounded and stay in scope.
+That last reason is *created* by freezing — `--fuzz-064` compares two binaries on
+one host and never sees it, while a frozen table is read on every host.
+`atan`/`sin`/`cos`/`exp`/`log` are not correctly rounded, so a frozen value for
+the pure passthroughs (ACOS…TANH) asserts "your libm matches the machine that
+generated this table" and nothing about TA-Lib; `sqrt`/`ceil`/`floor` are
+correctly rounded and stay in. The Hilbert functions go out with a sharper edge:
+they turn an atan into an **integer** (`period = 360/(atan(Im/Re)*rad2Deg)`, then
+`(int)DCPeriod` as a loop bound), so one ULP near an integer boundary changes the
+iteration count and the output moves *discontinuously*, which no tolerance can
+bound. Not hypothetical: `scripts/package.py` builds and runs `ta_regtest.exe`
+under **MSVC**, against a different CRT, for both `x86_64` and `x86_32`. Two
+things that raises come out benign and are worth not re-deriving — MSVC's 32-bit
+arm does not reintroduce x87 80-bit intermediates (x86 has defaulted to
+`/arch:SSE2` since VS2012), and MSVC sitting outside the `-ffp-contract=off`
+guard is harmless (no `/arch:AVX2`, so no FMA instruction to contract into).
+What is left is purely the CRT's transcendentals, covered by `--xlang-hash`'s
+tolerance lane.
 
-The 6 Hilbert functions (HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE,
-HT_TRENDLINE, HT_TRENDMODE) go out for the same reason with a sharper edge: they
-turn an atan into an **integer** — `period = 360/(atan(Im/Re)*rad2Deg)`, then
-`DCPeriodInt = (int)DCPeriod` used as a loop bound. One ULP of libm difference
-near an integer boundary changes the iteration count, so the output moves
-*discontinuously* and no tolerance can bound it; HT_TRENDMODE's output is an
-integer outright. That is not hypothetical here — `scripts/package.py` builds and
-runs `ta_regtest.exe` under **MSVC** on the Windows nightly, against a different
-CRT, for **both** `x86_64` and `x86_32`.
+**The GCC i386 lane IS excess-precision, and no bit-exactness claim covers it.**
+`cmake/toolchain-linux-i386.cmake` builds the shipped i386 `.deb` with
+`i686-linux-gnu-gcc`, which sets no `-mfpmath` and defaults to `387`, and
+`C_EXTENSIONS` at its ON default means `-fexcess-precision=fast`. Under
+`FLT_EVAL_METHOD==2` an intermediate kept in a register carries 64 mantissa bits
+while one round-tripped through memory does not, so *any* difference in where a
+value lives changes results — batch and stream diverge there independently of
+anything the generator does — and nothing executes that artifact
+(`scripts/test-dist.py` is 64-bit only). Treat i386 as an unmodelled target:
+every bit-exact invariant in this file is stated for `FLT_EVAL_METHOD==0`.
 
-The two questions that raises both come out benign, and are worth recording so
-nobody re-derives them: **MSVC's** 32-bit arm does **not** reintroduce x87
-80-bit intermediates (MSVC has defaulted x86 to `/arch:SSE2` since VS2012, so
-doubles are SSE2 scalar and round to 53 bits like everywhere else), and MSVC being
-outside the `if(NOT MSVC) add_compile_options(-ffp-contract=off)` guard is
-harmless (no `/arch:AVX2`, so there is no FMA instruction for it to contract
-into). What is left is purely the CRT's transcendentals. Their cross-implementation coverage is `--xlang-hash`, which carries a
-transcendental tolerance lane for exactly this reason.
+MAMA (damped adaptive alpha) and LINEARREG_ANGLE (atan is terminal) reach `atan`
+and stay in: both are smooth in it, and MAMA carries the 8-ULP libm floor.
 
-**The GCC i386 lane is the one that IS excess-precision, and no bit-exactness
-claim covers it.** `cmake/toolchain-linux-i386.cmake` builds the shipped
-`ta-lib_<v>_i386.deb` with `i686-linux-gnu-gcc`, which sets no `-mfpmath` and
-therefore defaults to `387`; `CMAKE_C_STANDARD 11` with `C_EXTENSIONS` at its
-ON default means `-std=gnu11`, i.e. `-fexcess-precision=fast`. Under
-`FLT_EVAL_METHOD==2` an intermediate kept in a register carries 64 mantissa
-bits while one round-tripped through a `double` in memory does not, so *any*
-difference in where a value lives changes results — every batch body already
-uses local accumulators, so batch and stream diverge on that platform
-independently of anything the generator does. Nothing executes the artifact
-either: `scripts/test-dist.py` is 64-bit only and `scripts/package.py` stubs
-its dist-test pass. Treat i386 as an unmodelled target: the bit-exact
-invariants in this file are stated for `FLT_EVAL_METHOD==0`.
-
-Two functions still reach `atan` and stay in: MAMA (damped adaptive alpha) and
-LINEARREG_ANGLE (atan is the terminal operation). Both are smooth in it, MAMA
-carries the 8-ULP libm floor, and if either fails on a non-glibc host the header
-says what to do.
-
-**Tolerances are measured, not contractual.** Most in-scope functions with a real
-output reproduce v0.6.4 bit for bit and carry no row at all; 21 need a bound. Each bound is that function's largest measured deviation on this series
-× ~3 — absolute, because there is only one magnitude here, unlike `--fuzz-064`'s
-1e-7…1e9 shapes which need scaled bounds, caps and conditioning gates. The
-result is several orders tighter than the 1e-9 relative FMA contract would be:
-CCI, IMI, KAMA, MACD, MACDEXT, APO, PPO and STOCHF are all in the *exact* tier
-here, because their manifest divergences need extreme magnitudes to appear.
-`LEGACY_TOL` refuses a row for a function outside the freeze and refuses a
-zero/negative bound, so it cannot accumulate dead or vacuous slack.
-
-The one exception to "3× measured" is a floor of **8 ULP at the output
-magnitude** for a function reaching a non-correctly-rounded libm routine — only
-MAMA needs it now.
-
-**Coverage this adds.** The 61 candlestick patterns and the price/vector-math
-family had *no* pinned expected value against the standard series before this —
-`test_candlestick.c` uses synthetic predicate/MC-DC bars instead. 35 of the 61
-patterns fire somewhere on this series; the other 26 never do, so every sample
-for them is 0, which fails a pattern that *starts* firing but cannot see one
-that *stops*. Both sets are listed in the header rather than left implicit.
+**Tolerances are measured, not contractual.** Most in-scope functions reproduce
+v0.6.4 bit for bit and carry no row. Each bound that exists is that function's
+largest measured deviation on this series × ~3, absolute — there is only one
+magnitude here, unlike `--fuzz-064`'s 1e-7…1e9 shapes, which need scaled bounds
+and conditioning gates — so the result is orders tighter than the 1e-9 relative
+FMA contract. `LEGACY_TOL` refuses a row for a function outside the freeze and
+refuses a zero or negative bound, so it cannot accumulate dead slack. The one
+exception to "3× measured" is a floor of **8 ULP at the output magnitude** for a
+function reaching a non-correctly-rounded libm routine; only MAMA needs it.
 
 **Sampling, and the rule that was wrong first.** First/middle/last of each
 output, plus — for every INTEGER output — the first, middle and last occurrence
-of both its minimum and its maximum. The obvious rule (pin the bars where the
-pattern *fires*, i.e. the non-zero ones) reads backwards any discrete output
-whose rare arm is zero. HT_TRENDMODE is how that was found: it sits at 1 for most
-of the series, so first/middle/last landed on 1, 1, 1 and pinned nothing —
-forcing it to a constant 1 passed under that rule and failed under min/max at
-index 7. It has since left the freeze for the libm reason above, but the rule it
-exposed is what keeps the candlestick pins honest.
+of both its minimum and its maximum. The obvious rule (pin the bars where a
+pattern *fires*) reads backwards any discrete output whose rare arm is zero: one
+sitting at 1 for most of the series gives 1, 1, 1 and pins nothing, so forcing it
+to a constant passes. Patterns that never fire on this series are pinned at 0
+throughout, which fails a pattern that *starts* firing but cannot see one that
+*stops*; both sets are listed in the data header rather than left implicit.
 
-**Non-vacuity.** The group asserts what it actually compared — counters
-incremented *at* each comparison, never from `nbSample`. It fails if the
-comparison count does not equal the table's own total (a silently skipped sample),
-if any case missed the shape check, or if the table has shrunk below the literal
-`LEGACY_FLOOR_*` counts it was frozen with. The floors are literal rather than
-derived, because a floor computed from `TA_LEGACY_CASE` moves with it and would
-let half the rows be deleted while still "passing its floor". Proven: making the
-sample loop skip every second sample fails with *compared 564 value(s) but the
-table carries 938*.
+**Non-vacuity.** Counters are incremented *at* each comparison, never from
+`nbSample`. The group fails if the comparison count does not equal the table's
+own total (a silently skipped sample), if any case missed the shape check, or if
+the table has shrunk below the literal `LEGACY_FLOOR_*` counts it was frozen
+with — literal rather than derived, because a floor computed from
+`TA_LEGACY_CASE` moves with it and would let half the rows be deleted while still
+"passing its floor".
 
-**Sabotage-proven, all three tiers plus a bounded control:**
+**Two traps a re-freeze must avoid**, both recorded in the data header:
 
-| probe | result |
-|---|---|
-| `SMA` output `+1e-13` (exact tier) | fails — `[MA] diff 9.95e-14, tolerance 5e-14` |
-| `CDL3INSIDE` starts firing (`0`→`1`) | fails at a sample whose frozen value is 0 |
-| `CDL3INSIDE` stops firing (firing arm → `0`) | fails at index 3, frozen 100 |
-| `HT_TRENDMODE` forced constant `1` | fails at index 7, frozen 0 |
-| `EMA` output `+1e-12` | fails via `[APO]`, tolerance 0 |
-| `ADOSC` output `+1e-8` (below its 3e-8 bound, 10× its ULP) | **passes** |
-| `ADOSC` output `+1e-7` (above the bound) | fails — `diff 1e-07, tolerance 3e-08` |
+- The server names real inputs **positionally** (`inReal`, `inReal0`/`inReal1`),
+  not by the ta_abstract input name. MAVP is the one function where those differ
+  (`inReal`, `inPeriods`); sending the declared name makes the server find no
+  array and compute on whatever the previous request left in its buffer, with no
+  error.
+- MAVP needs a case whose periods do not saturate to `optInMaxPeriod` (hence its
+  third `wide-periods` case at `maxPeriod` 200). Under the default 30 every bar
+  clamps, its grouping / counting-sort path never runs, and its rows are
+  byte-identical to `SMA(30)` and `EMA(35)` — which is also what hid the trap
+  above.
 
-The last two are the pair that matters: they show the bound is finite and sits
-where the table says, not that the comparison is merely alive.
-
-**Two traps a re-freeze must avoid**, both of which bit during this one and are
-recorded in the data header:
-
-- The server names real inputs **positionally** (`inReal`, or `inReal0`/`inReal1`),
-  *not* by the ta_abstract input name. MAVP is the one function where those differ
-  — its inputs are `inReal` and `inPeriods`. Sending the declared name makes the
-  server find no array and compute on whatever the previous request left in its
-  buffer, with no error. It survived undetected until a case existed whose periods
-  did not saturate to `optInMaxPeriod`, because saturated garbage and saturated
-  `high` give the same answer. That is also why MAVP carries a third
-  `wide-periods` case (`maxPeriod` 200): under the default 30 every bar of `high`
-  clamps to 30, so MAVP's grouping / counting-sort path never runs and its rows
-  were byte-identical to `SMA(30)` and `EMA(35)`.
-
-**Maintenance.** The generator was a one-off and is not in the tree — the value
-is the frozen table and its exception comments, which are hand-maintained from
-here. Each case therefore carries everything needed to re-derive it by hand:
-function, every parameter value, sample index, and the pinned
-retCode/outBegIdx/outNbElement. Two things a regeneration must not lose: integer
-periods are never 1 (period-1 is the intentional v0.6.4 divergence fixed for
-#48/#59 — that territory belongs to the PERIOD1/BOUNDARY group) and MAType never
-exceeds 8 (9+ post-date the freeze: HMA #139, DISABLED #93, DEFAULT #182).
-
-The group establishes the state it needs rather than inheriting it: `DO_TEST`
-resets compatibility between groups but not unstable periods or candle settings,
-and earlier groups change both. It zeroes every unstable period (restoring them
-after), and restores the candle defaults.
+**Maintenance.** The generator was a one-off and is not in the tree, so each case
+carries everything needed to re-derive it by hand: function, every parameter
+value, sample index, and the pinned retCode/outBegIdx/outNbElement. A
+regeneration must not lose two things: integer periods are never 1 (period-1 is
+the intentional v0.6.4 divergence and belongs to the PERIOD1/BOUNDARY group) and
+MAType never exceeds 8 (9+ post-date the freeze). The group also establishes the
+state it needs rather than inheriting it — `DO_TEST` resets compatibility between
+groups but not unstable periods or candle settings, and earlier groups change
+both — zeroing every unstable period and restoring the candle defaults, then
+putting both back.
 
 **At re-freeze:** regenerate against the new reference and delete every
-`LEGACY_TOL` row — both divergence causes are specific to v0.6.4. The libm
-floors are the one part that may need to survive.
+`LEGACY_TOL` row; both divergence causes are specific to v0.6.4. The libm floors
+are the one part that may need to survive.
 
 ## `--fuzz-064` — bit-exact differential fuzz vs released v0.6.4
 
-An opt-in mode (`ta_regtest --fuzz-064`, never part of default/nightly `--codegen`
-runs) that proves the **current shipped library is bit-identical to the last
-release, v0.6.4**, function by function. It is the reusable regression oracle a
-class-A optimization (e.g. the MIDPOINT/MIDPRICE cached-index rewrite, or the
-EMA-cascade lockstep tranche) is validated against: run it before and after a
-change — the divergence set vs 0.6.4 must not grow.
+Opt-in, never part of a `--codegen` run, and proves the **current shipped library
+is bit-identical to v0.6.4** function by function. It is the regression oracle a
+class-A optimization is validated against: run it before and after — the
+divergence set must not grow. `scripts/build.py fuzz-064` builds and runs it;
+both CI nightlies gate on it.
 
-Build + run everything with `scripts/build.py fuzz-064`. Both CI nightlies
-(dev + main) run it as a gate (`fuzz-vs-0.6.4` job, C-only, `fetch-depth: 0`).
-
-Architecture (see `fuzz_data.h` + the fuzz block in `test_codegen.c`):
-- **Oracle:** `bin/ta_064_serve` — the frozen v0.6.4 `libta-lib.a` (built once in
-  the `../ta-lib-064` worktree @ tag `v0.6.4`) behind the current JSON-RPC
-  transport, **shadow-patched at build time** by `scripts/build_064_serve.py`
-  (no committed file changes). The current library is called **in-process**;
-  only 0.6.4 crosses the pipe.
-- **Inputs by seed:** the request carries only `(gen_shape, gen_seed, gen_n)`;
+- **Oracle:** `bin/ta_064_serve` — the frozen v0.6.4 `libta-lib.a` from the
+  `../ta-lib-064` worktree at tag `v0.6.4`, behind the current JSON-RPC
+  transport, **shadow-patched at build time** by `scripts/build_064_serve.py` (no
+  committed file changes). The current library is called **in-process**; only
+  0.6.4 crosses the pipe.
+- **Inputs by seed:** the request carries only `(gen_shape, gen_seed, gen_n)` and
   both ends run the identical generator in `fuzz_data.h`, so inputs are
-  byte-identical by construction (no array serialization, no precision to
-  reconcile). `FP_CONTRACT` is forced off so the generator can't be fused into
-  an FMA on one side only.
-- **Outputs by hash:** the server returns a 64-bit FNV hash of the raw output
-  bytes. On any mismatch the driver re-issues that one case with
-  `"full_output":1` (the ordinary array response, exact since #257/#258) to
-  pinpoint the diverging element.
-- **Coverage:** every function × 7 data shapes × 3 seeds × 3 sizes ×
-  parameter vectors (boundary periods, MA-type lists, real-param bounds) × 3
-  subranges ≈ 118k comparisons in ~17s.
+  byte-identical by construction. `FP_CONTRACT` is forced off so the generator
+  cannot be fused into an FMA on one side only.
+- **Outputs by hash:** a 64-bit FNV of the raw output bytes; on a mismatch the
+  driver re-issues that one case with `"full_output":1` to pinpoint the element.
+- **Coverage:** every function × 7 data shapes × 3 seeds × 3 sizes × parameter
+  vectors (boundary periods, MA-type lists, real-param bounds) × 3 subranges.
 
 Scope rules (deliberate):
-- **period == 1 is out of scope** vs 0.6.4 (it rejects / has period-1 OOB bugs);
-  periods are floored at 2. period-1 is validated by the *non-0.6.4*
-  comparisons instead. At period ≥ 2 there are **no waivers** — anything
-  non-benign is a real bug.
-- **Subset tolerance is 0.6.4-only:** functions added after 0.6.4 are skipped
-  via `ta_064_serve`'s `list_functions` (never failed). Any *non*-0.6.4
-  comparison must instead require an exact function-set match.
+
+- **period == 1 is out of scope** — 0.6.4 rejects it or has period-1 OOB bugs —
+  so periods are floored at 2 and period-1 is validated by the non-0.6.4
+  comparisons. At period ≥ 2 there are **no waivers**.
+- **Subset tolerance is 0.6.4-only:** post-0.6.4 functions are skipped via
+  `ta_064_serve`'s `list_functions`. Any non-0.6.4 comparison must instead
+  require an exact function-set match.
 - **Benign class:** a diff where every differing element is numerically equal
-  (`+0.0` vs `-0.0`, from cached-index rewrites) is reported, not failed.
-- **#98 exceptions:** TRIX/NATR `startIdx > lookback` cases are skipped
-  (mislabeled / wrong-close output through 0.6.4, fixed in 0.8.1), plus NATR
-  cases with a zero close in the output range (old code clobbered
-  `outReal[0]`). Comparing these against frozen oracles would diff the bug
-  fixes themselves. The fixed behavior is validated instead by the (now
-  value-comparing) range tests. (IMI and MFI no longer need an unstable-period
-  carve-out here: both are reclassified as stable finite-window indicators —
-  no `TA_FUNC_FLG_UNST_PER`, lookback ignores the unstable period — so the ref
-  sweep never runs a u&gt;0 variant for them.)
-  Reported in the summary as a `skipped:` line; everything else remains
-  waiver-free at period ≥ 2.
-- **#112 NaN-to-neutral (`TOL_NAN_TO`):** where 0.6.4's *successful* call emitted
-  NaN from an unchecked `x/0`, the fix substitutes a defined neutral value; that
-  categorical `NaN(0.6.4) → finite` divergence is tolerated by the manifest.
-  IMI is the first: an all-flat window (`FUZZ_CONSTANT`/`FUZZ_TIE_HEAVY`, every
-  `close == open`) made `upsum+downsum == 0` → `100*(0/0)` → NaN; the guard now
-  returns 50.0. The `FUZZ_064_TOL` entry `{ "IMI", TOL_NAN_TO, 50.0 }` tolerates
-  a case **only** when 0.6.4 is NaN *and* current is *exactly* 50.0 — any other
-  value (incl. a still-NaN regression, caught instead by `test_imi.c`) fails. The
-  exact-`==0.0` guard keeps this the *sole* IMI divergence from 0.6.4; every
-  `sum > 0` bar stays bit-identical. Reported as a `manifest-tolerated:` line.
-- **#244 MFI per-case skip:** v0.6.4 zeroed MFI whenever a window's money flow
-  summed under a literal `1.0` — a constant compared against a price times a
-  volume — and divided rounding residue by itself on an empty or one-sided
-  window, which is what put its output above 100. Those cases are skipped,
-  gated on `fuzz_mfi_064_blind()`; **every other MFI case is compared
-  bit-exact, with no manifest entry** — neither the reseed nor the range clamp
-  can fire on a case that got past the predicate, so all 3222 survivors are
-  bit-identical to v0.6.4. Categorical rather than graded, unlike the variance
-  and CORREL/BETA gates: there is no kappa, v0.6.4 either reports the index or
-  it does not. The new behaviour is additionally pinned by `test_mfi.c` against
-  two EXTERNAL oracles (Tulip Indicators 0.9.2, pandas-ta-classic 0.6.52 —
-  neither carries a threshold guard) plus an exact bit-identity sweep over
-  power-of-two volume scales. Reported as an `mfi-skipped:` line.
-- The oracle is reopened-and-retried once if it dies (latent 0.6.4 crash) so one
-  bad case can't sink the run.
+  (±0, from cached-index rewrites) is reported, not failed.
+- **Fixed-bug skips:** TRIX/NATR `startIdx > lookback` cases, and NATR cases with
+  a zero close in the output range. Comparing these would diff the fixes
+  themselves; the fixed behaviour is validated by the value-comparing range
+  tests. Reported as `skipped:`.
+- **NaN-to-neutral (`TOL_NAN_TO`):** where 0.6.4's *successful* call emitted NaN
+  from an unchecked `x/0` and the fix substitutes a defined neutral value. IMI is
+  the instance — an all-flat window made `upsum+downsum == 0` → `100*(0/0)`, and
+  the guard now returns 50.0. The entry tolerates a case **only** when 0.6.4 is
+  NaN *and* current is *exactly* 50.0, so a still-NaN regression still fails.
+  Reported as `manifest-tolerated:`.
+- **MFI per-case skip:** v0.6.4 zeroed MFI whenever a window's money flow summed
+  under a literal `1.0` — a constant compared against a price times a volume —
+  and divided rounding residue by itself on an empty or one-sided window, which
+  is what put its output above 100. Those cases are skipped, gated on
+  `fuzz_mfi_064_blind()`; **every other MFI case is compared bit-exact with no
+  manifest entry**. Categorical rather than graded: 0.6.4 either reports the
+  index or it does not. The new behaviour is pinned separately by `test_mfi.c`
+  against two external oracles plus a bit-identity sweep over power-of-two volume
+  scales. Reported as `mfi-skipped:`.
+- The oracle is reopened and retried once if it dies, so one latent 0.6.4 crash
+  cannot sink the run.
 
-## `--xlang-hash` — cross-language BITWISE parity gate (issue #113)
+## `--xlang-hash` — cross-language BITWISE parity gate
 
-An opt-in mode (`ta_regtest --xlang-hash`) that proves each **generated language
-server** computes **bit-identical** outputs to the **shipped in-process C
-library**, with **zero tolerance** (the sole carve-out is the transcendental
-calls of Java and C# — see below). It is the strong form of the cross-language `--codegen`
-check, which can only compare at `1e-6` (`CODEGEN_EPSILON`) because its INPUTS
-cross the JSON-RPC boundary as lossy `%.15g` — so the two sides compute on
-subtly different numbers, which no output-side fidelity can undo. (Outputs are
-lossless on every path since #257/#258; that half of the gap is closed.)
-`--xlang-hash` routes around the input boundary two ways — full-precision inputs
-(a seed both sides regenerate, or lossless hex-of-IEEE-bits) and outputs
-compared by a full-precision FNV hash — so a ~1e-10 FMA-fusion-site divergence
-that `1e-6` cannot see becomes a hard failure.
+Opt-in, proving each **generated language server** computes **bit-identical**
+outputs to the **shipped in-process C library**, zero tolerance apart from the
+transcendental lane. It is the strong form of `--codegen`, which can only compare
+at 1e-6 because its INPUTS cross the JSON-RPC boundary as lossy `%.15g` — the two
+sides compute on subtly different numbers, which no output-side fidelity can
+undo. This gate routes around that both ways: full-precision inputs (a seed both
+sides regenerate, or lossless hex-of-IEEE-bits) and outputs compared by a
+full-precision FNV hash, so a ~1e-10 fusion-site divergence becomes a hard
+failure. `scripts/build.py xlang-hash` builds and runs it; both CI nightlies gate
+on it. Needs cmake + gcc + cargo plus the **JDK** and the **.NET SDK**.
 
-Build + run everything with `scripts/build.py xlang-hash`. Both CI nightlies
-(dev + main) run it as a gate (`xlang-hash` job). Needs cmake + gcc + cargo, plus
-the **JDK** for the Java server and the **.NET SDK** for the managed C# server.
-
-Architecture (see `fuzz_data.h`, the Rust port in
-`ta_codegen/generator/templates/rust/fuzz.rs`, and `xlang_hash` in
-`test_codegen.c`):
-- **Golden = the in-process C library.** The C library is linked into
-  `ta_regtest`, so there is no JSON-RPC boundary on the C side — it is called
-  directly (`TA_CallFunc`) and its raw output hashed (`fuzz_hash_local`), exactly
-  as `--fuzz-064` treats the current library. Each language server crosses the
-  boundary and is diffed against it: **Rust**, **Java** and the managed **C#**.
-  C# rides the Java-style hex transport (no `fuzz_gen` port) and takes the same
-  tolerance lane. It was briefly configured as fully bitwise on the strength of
-  a green local run; dev-nightly **30776189041** then produced 25 `TA_LN`
-  mismatches on `ubuntu-latest` x86-64 from a commit that was bitwise-clean on
-  `ubuntu-24.04-arm` and on a glibc-2.39 + .NET-10.0.10 dev box. **.NET does not
-  guarantee `Math.*` reaches the platform libm.** Not a special-value problem —
-  C and C# agree bit-for-bit on `0.0`/`-0.0`/negatives including the NaN payload,
-  so it is a normal-value 1 ULP difference. `Math.FusedMultiplyAdd` is still
-  correctly rounded, so the FMA contract is untouched; only transcendentals
-  moved. Because the constant-shape skip is gated on the tolerance lane, C# now
-  inherits it for HT_DCPHASE/HT_SINE as well.
-- **Two transports (per-server `usesSeed` flag).**
-  - **Seed (Rust).** A request with `"gen_present":1` + `(gen_shape,gen_seed,gen_n)`
-    makes the server generate the OHLCV inputs from its own bit-exact `fuzz_gen`
-    port (price inputs → O/H/L/C/V/OI, generic reals → real0=close, real1=volume —
-    matching the driver), run the **guarded** function, and return `"out_hash"`.
-  - **Hex (Java).** Java's server has no `fuzz_gen` port (#114), so the driver
-    serializes its own seed-generated arrays losslessly (hex-of-IEEE-bits, the
-    `codegen_write_hexbits_array` transport shared with `server_verify`) into a
-    per-function `TA_<name>` request with `want_hash`. Same guarded call, same
-    `out_hash`. No server-side change was needed — this reuses the #115 machinery.
-  - Both take the digest of the **guarded** call — like-for-like with the golden's
-    `TA_CallFunc`.
+- **Golden = the in-process C library**, called directly via `TA_CallFunc` with
+  its raw output hashed. Each server crosses the pipe and is diffed against it.
+- **Two transports (per-server `usesSeed`).** *Seed* (Rust): `"gen_present":1` +
+  `(gen_shape,gen_seed,gen_n)`, the server generating inputs from its own
+  bit-exact `fuzz_gen` port. *Hex* (Java, C#): no `fuzz_gen` port, so the driver
+  serializes its own arrays via `codegen_write_hexbits_array`, the transport
+  shared with `server_verify`. Both hash the **guarded** call, like-for-like with
+  the golden.
 - **Transcendental tolerance (Java and C#).** Java's fdlibm differs from the C
-  libm by ~1 ULP on `atan/sin/cos/exp/log/...`; .NET's `Math.*` is not
-  guaranteed to reach the platform libm and empirically does not on some hosts.
-  A call that reaches a transcendental therefore cannot be bit-compared against
-  either. Those calls (decided **per call** — the ~20-name set OR a `*MAType`
-  == `TA_MAType_MAMA`, via the shared `codegen_call_is_transcendental`) drop the
-  `want_hash` and are element-compared at `CODEGEN_TRANSCENDENTAL_TOL` (1e-9)
-  by the shared `codegen_compare_tol` — the identical carve-out `server_verify`
-  uses. Every non-transcendental Java call, and every Rust call, stays bitwise.
-  The summary reports how many calls took the tolerance path per server (the
-  rest are bitwise), so the bitwise coverage is visibly non-vacuous.
+  libm by ~1 ULP on `atan/sin/cos/exp/log/...`, and **.NET does not guarantee
+  `Math.*` reaches the platform libm** — an ordinary-value 1 ULP difference,
+  host-dependent, so a locally clean run proves nothing here.
+  `Math.FusedMultiplyAdd` is still correctly rounded, so the FMA contract is
+  untouched; only transcendentals moved. Such calls are decided **per call** (the
+  name set OR a `*MAType == TA_MAType_MAMA`, via
+  `codegen_call_is_transcendental`), drop `want_hash`, and are element-compared at
+  `CODEGEN_TRANSCENDENTAL_TOL` (1e-9). Every other Java call and every Rust call
+  stays bitwise, and the summary reports the per-server tolerance-path count so
+  the bitwise coverage is visibly non-vacuous.
   `codegen_lang_needs_transcendental_tol` is the single definition of which
-  languages need it — `--xlang-hash` copies it into `XlangServer.tolTranscendental`
-  and `server_verify` reads it directly, because when the two carried the rule
-  as separate literals they drifted apart.
+  languages need it, read by both gates — as two literals they drifted.
 - **Input-port self-check.** Before the output gate, a `fuzz_in_hash` RPC on each
-  **seed** server hashes its generated OHLCV inputs; the driver compares against
-  its own in-process generation, so a `fuzz_gen`-port bug surfaces as an INPUT
-  mismatch, not a fake indicator-output bug. Hex servers (Java) send the driver's
-  exact arrays, so they have no port to self-check and are skipped here.
-- **Unstable-period axis (#116).** The 20 functions carrying
-  `TA_FUNC_FLG_UNST_PER` run the whole sweep a second time at unstable period
-  `XLANG_UNST_PERIOD` (3), with the in-process golden set through
-  `TA_SetUnstablePeriod` and the servers through the per-call field. 0 runs last,
-  so each function leaves the servers where the next one expects them. Only
-  `FUZZ_VEC_NORMAL` vectors repeat: the reject/sentinel classes assert parameter
-  *validation*, which runs before any unstable-period logic. Before this the gate
-  pinned `unstablePeriod: 0` everywhere and the axis was covered **only** by the
-  ref differential sweep, i.e. only by the frozen `ta_ref_serve` — the last thing
-  blocking its retirement.
+  *seed* server hashes its generated OHLCV inputs against the driver's own, so a
+  `fuzz_gen`-port bug surfaces as an INPUT mismatch rather than a fake
+  indicator-output bug. Hex servers have no port to check.
+- **Unstable-period axis.** Every function carrying `TA_FUNC_FLG_UNST_PER` runs
+  the sweep again at `XLANG_UNST_PERIOD` (3), the golden set via
+  `TA_SetUnstablePeriod` and the servers via the per-call field; 0 runs last, so
+  each function leaves the servers where the next expects them. Only
+  `FUZZ_VEC_NORMAL` vectors repeat — the reject/sentinel classes assert parameter
+  *validation*, which runs before any unstable-period logic.
   - **A non-zero period cannot ride the seed transport.** `abstract_call` carries
-    a `funcUnstId` that no driver has ever sent, so it reads 0
-    (`TA_FUNC_UNST_ADX`): the C handler would apply the period to ADX whatever
-    function was called, and the Rust handler ignores the field outright. The
-    per-function `TA_<name>` handler hardcodes the right id, so the unstable legs
-    force the hex transport on every server, Rust included.
+    a `funcUnstId` no driver has ever sent, so it reads 0 (`TA_FUNC_UNST_ADX`):
+    C's handler would apply the period to ADX whatever function was called, and
+    Rust's ignores the field. The per-function `TA_<name>` handler hardcodes the
+    right id, so the unstable legs force the hex transport on every server.
   - Non-vacuity is checked per function *before* the leg runs: the lookback must
     move between unstable 0 and 3. A flat lookback means the flag is lying and
-    fails the run rather than banking a leg that compares nothing. A `unstCases`
+    fails the run rather than banking a leg that compares nothing. An `unstCases`
     floor catches the axis going quiet wholesale.
-- **Coverage:** every function × 9 shapes × 3 seeds × 3 sizes × parameter
-  vectors × 3 subranges ≈ 237k comparisons **per server** (of which ~76k at a
-  non-zero unstable period), ~94% with non-empty output (a non-vacuity guard
-  fails the run if nothing produced output — an empty output hashes the same on
-  both sides).
+- **Coverage:** every function × 9 shapes × 3 seeds × 3 sizes × parameter vectors
+  × 3 subranges, per server, about a third at a non-zero unstable period. A
+  non-vacuity guard fails the run if nothing produced output, since an empty
+  output hashes the same on both sides.
 
 Scope rules (deliberate):
-- **No 0.6.4, no waivers; one tolerance and two skips.** This is
-  current-vs-current across languages, so — unlike `--fuzz-064` — there are none
-  of the `#98`/`#107`/FMA-transition carve-outs. Every case is bitwise except
-  the transcendental calls of Java and C# (1e-9, above). A non-tolerated
-  mismatch is a real fusion-site / codegen divergence to fix.
-- **The second skip: the choice-list default sentinel, Java only.** Every
-  optional parameter gets a `TA_*_DEFAULT` vector that must resolve to the
-  declared default, `enum:MAType` included. Java's `MAType` is a real enum, so
-  that value is unrepresentable there and the driver never sends it (withheld
-  cases are counted and printed); C, Rust and C# type the parameter as an integer
-  and are held to it. These cases carry their own count and their own non-vacuity
-  floor: they are a small subset of `sentCases`, so the combined total cannot show
-  that the leg has stopped running.
-- **The one ill-conditioning skip: HT_DCPHASE / HT_SINE on the constant shape,
-  for the tolerance-lane servers (Java and C#).** These two derive their output from `atan2` of the Hilbert
-  transform's in-phase/quadrature components. On `FUZZ_CONSTANT` (flat O=H=L=C,
-  zero variance) those components are floating-point noise (~0), so the phase is
-  `atan2(≈0,≈0)` — chaotically sensitive to the last bit of every transcendental
-  step. C and Rust share the system libm and stay **bit-identical** there (Rust:
-  0 mismatches on every shape); Java's fdlibm differs by ~1 ULP and this
-  ill-conditioning amplifies it to whole *degrees* (~2.9° on HT_DCPHASE); C#
-  inherits the skip because the gate keys on the tolerance lane. It is
-  not a codegen bug — all 8 non-degenerate shapes agree within 1e-9, and `atan2`
-  of a null signal is mathematically undefined — so no fixed tolerance can
-  separate it from fdlibm noise. `xlang_illcond` skips exactly these two
-  functions on exactly the constant shape, for the tolerance-lane servers; the
-  count is reported in the summary. Rust still gates HT_DCPHASE/HT_SINE bitwise on the constant
-  shape, so the C computation itself stays covered there.
-- **period == 1 is in scope** (no 0.6.4 to trip on it), though the shared
-  `fuzz_build_vectors` currently floors periods at 2; period-1 parity is also
-  covered by the `--codegen` edge sweeps.
-- Why this is expected GREEN (PR #96): every backend fuses the identical `a*b+c`
-  sites via the shared `backends/fma.rs` detector and builds with
-  `-ffp-contract=off`, and `fma`/`mul_add` are IEEE correctly-rounded → bit-
-  identical for equal operands (Java `Math.fma` included; only its fdlibm
-  transcendentals need the tolerance).
 
-## `server_verify` — bitwise C⇄server on the hard-coded tests (issue #115)
+- **No 0.6.4, no waivers; one tolerance and two skips.** Current-vs-current, so
+  none of `--fuzz-064`'s carve-outs apply. A non-tolerated mismatch is a real
+  fusion-site or codegen divergence to fix.
+- **The choice-list default sentinel, Java only.** Every optional parameter gets
+  a `TA_*_DEFAULT` vector that must resolve to the declared default,
+  `enum:MAType` included; Java's is a real enum, so the value is unrepresentable
+  and the driver never sends it (withheld cases counted and printed) while C,
+  Rust and C# are held to it. These cases carry their own count and floor, being
+  a subset of `sentCases` whose stopping the combined total could not show.
+- **The ill-conditioning skip: HT_DCPHASE / HT_SINE on the constant shape, for
+  the tolerance-lane servers.** Both derive their output from `atan2` of the
+  Hilbert transform's in-phase/quadrature components; on `FUZZ_CONSTANT` those
+  are floating-point noise, so the phase is `atan2(≈0,≈0)` — chaotically
+  sensitive to the last bit of every transcendental step, which amplifies ~1 ULP
+  to whole degrees. C and Rust share the system libm and stay bit-identical
+  there, so `xlang_illcond` skips exactly those two functions on exactly that
+  shape for exactly the tolerance-lane servers, and reports the count. Not a
+  codegen bug: every non-degenerate shape agrees within 1e-9, and `atan2` of a
+  null signal is undefined, so no fixed tolerance could separate it from libm
+  noise.
+- **period == 1 is in scope** (no 0.6.4 to trip on it), though
+  `fuzz_build_vectors` floors periods at 2; period-1 parity is covered by the
+  `--codegen` edge sweeps.
+- Expected GREEN because every backend fuses the identical `a*b+c` sites via the
+  shared `backends/fma.rs` detector and builds with `-ffp-contract=off`, and
+  `fma`/`mul_add` are IEEE correctly-rounded, hence bit-identical for equal
+  operands.
 
-`server_verify.c` runs during the hand-written tests (whenever `--codegen` is
-active and at least one language server started). It is the **same** "in-process
-C ⇄ language server, bit-for-bit, on identical inputs" operation as `--xlang-hash`
-— it just feeds the hard-coded test's exact arrays instead of a seed, and shares
-the driver core in `test_codegen.c` (`codegen_output_hash` /
-`codegen_hash_compare` / `codegen_hash_report`, declared in `test_codegen.h`;
-`--xlang-hash`'s `fuzz_hash_local` is a thin wrapper over `codegen_output_hash`).
+## `server_verify` — bitwise C⇄server on the hard-coded tests
 
-The hard-coded tests validate **in-process C vs the expected constants** at a
-legitimate tolerance. `server_verify` runs the *transitive* check: feed the same
-inputs to another language and compare to what C computed — which must be
-**exact** (same algorithm + same inputs ⇒ same bits). Do not give it a
-tolerance: a `1e-6` re-compare would be strictly weaker than "C == server, then
-C == expected ⇒ server == expected".
+Runs during the hand-written tests whenever `--codegen` is active and at least
+one server started. The **same** operation as `--xlang-hash` — in-process C ⇄
+language server, bit for bit, on identical inputs — fed the hard-coded test's
+exact arrays instead of a seed, sharing the driver core in `test_codegen.c`.
 
-- **Lossless input.** Inputs are serialized as **hex-of-IEEE-bits** strings (one
-  16-hex group per double, via `to_bits`/`from_bits` — no float-parse rounding,
-  no library in any language). Every server's array parser
-  (`json_find_double_array` / `parse_f64_array` / `jsonDoubleArray` /
-  `GetDoubleArray`) grew a "string ⇒ decode hex, else number array" branch; every
-  other caller sends a number array and is unaffected.
-- **Output by hash.** The request carries `want_hash:1`; each server's
-  **per-function** handler (`TA_<name>`, not `abstract_call`) returns
-  `out_hash` — a full-precision FNV-1a of the raw GUARDED output bytes — which the
-  shared `codegen_hash_compare` diffs against the C golden's `codegen_output_hash`.
-  Java/C# gained this hasher; the C per-function handler is `#ifndef
-  TA_REF_SERVE`-guarded (its `fuzz_hash_*` live in `fuzz_data.h`, absent from the
-  frozen `ta_ref_serve`, which `server_verify` never drives).
+The hard-coded tests validate in-process C against the expected constants at a
+legitimate tolerance; this runs the *transitive* check, feeding the same inputs
+to another language and requiring **exact** agreement with what C computed (same
+algorithm + same inputs ⇒ same bits). Do not give it a tolerance: a 1e-6
+re-compare would be strictly weaker than "C == server, then C == expected ⇒
+server == expected".
+
+- **Lossless input.** Hex-of-IEEE-bits strings, one 16-hex group per double, so
+  no float parsing in any language. Every server's array parser takes "string ⇒
+  decode hex, else number array"; every other caller is unaffected.
+- **Output by hash.** `want_hash:1`, answered by each server's **per-function**
+  handler (`TA_<name>`, not `abstract_call`) with an FNV-1a of the raw GUARDED
+  output bytes. C's per-function handler is `#ifndef TA_REF_SERVE`-guarded, its
+  `fuzz_hash_*` living in `fuzz_data.h`, absent from the frozen `ta_ref_serve`.
 - **Metastock legs are C-only, permanently.** A hand-written test running under
-  non-default compatibility is skipped for Rust, Java and C#, silently and by
-  design: `TA_SetCompatibility` is deprecated in C and the three ported backends
-  deliberately expose no equivalent (see the note in any generated
-  `Core_*` body), so there is no second implementation to compare against.
-  `codegen_lang_has_compatibility_api` is the single place that says so. This is
-  not a deferred gap — closing it would mean implementing a deprecated feature
-  in three backends so that a test could verify it.
-- **Tolerance rule.** Zero tolerance (bitwise) for **C ⇄ Rust** (Rust reaches
-  the same system libm as the golden). **Java and C#** are bitwise for
-  pure-arith + IEEE ops
-  (incl. SQRT/CEIL/FLOOR) but get a narrow `CODEGEN_TRANSCENDENTAL_TOL`
-  (1e-9, measured drift ~1e-13..1e-11) on the transcendental-using functions only
-  — Java's fdlibm ≠ the C libm by ~1 ULP. The transcendental set is decided **per
-  call**, not just by name: the MA-dispatch functions (MA/MAVP/BBANDS/MACDEXT/
-  APO/PPO/STOCH*) route to MAMA (which uses `atan`) when a `*MAType` parameter
-  selects `TA_MAType_MAMA` (7), so that call is transcendental for Java even
-  though the function name is not (integer outputs like HT_TRENDMODE still match
-  exactly). Rust stays bitwise even on the transcendentals. The
-  tolerance constant, the per-call `codegen_call_is_transcendental` test, the
-  `codegen_write_hexbits_array` input transport, and the `codegen_compare_tol`
-  element-compare all live in `test_codegen.c` (declared in `test_codegen.h`) —
-  **shared verbatim with the `--xlang-hash` tolerance legs** (#113), the same
-  operation on a seed instead of the hard-coded arrays. Which languages need the
-  tolerance is `codegen_lang_needs_transcendental_tol` — one definition read by
-  both gates.
+  non-default compatibility is skipped for Rust, Java and C# by design:
+  `TA_SetCompatibility` is deprecated in C and the ported backends expose no
+  equivalent, so there is no second implementation to compare against.
+  `codegen_lang_has_compatibility_api` is the single place that says so, and
+  closing this "gap" would mean implementing a deprecated feature in three
+  backends so that a test could verify it.
+- **Tolerance rule.** Bitwise for C ⇄ Rust (same system libm as the golden). Java
+  and C# are bitwise for pure arithmetic and IEEE ops (SQRT/CEIL/FLOOR included)
+  and take `CODEGEN_TRANSCENDENTAL_TOL` (1e-9, against measured drift
+  ~1e-13..1e-11) only on transcendental-using calls, decided per call — so an
+  MA-dispatch function routing to MAMA is transcendental for that call though its
+  name is not. Integer outputs still match exactly. The tolerance constant,
+  `codegen_call_is_transcendental`, `codegen_write_hexbits_array` and
+  `codegen_compare_tol` live in `test_codegen.c` and are shared verbatim with
+  `--xlang-hash`.

@@ -3,35 +3,32 @@
 //!
 //! Two folds funnel through the one propagation engine here:
 //!
-//! - **Compatibility fold.** Metastock compatibility is retired project-wide and
-//!   the managed `Core`s carry no compatibility field at all, so every
-//!   `TA_GetCompatibility()` test in the shared input sources is a compile-time
-//!   constant on those backends: `== DEFAULT` is true, `== METASTOCK` is false,
-//!   and the surviving `if` arm is spliced in place of the branch. C (which
-//!   still ships the setting) renders the same IR untouched.
+//! - **Compatibility fold.** The managed `Core`s carry no compatibility field,
+//!   so every `TA_GetCompatibility()` test in the shared input sources is a
+//!   compile-time constant there: `== DEFAULT` is true, `== METASTOCK` false,
+//!   and the surviving arm is spliced in place of the branch. C still ships the
+//!   setting and renders the same IR untouched.
 //!
 //! - **Float-overload comparison fold (C# only, statement level).** In the
 //!   single-precision variants the inputs are `float[]` while outputs are
 //!   `double[]`, so an input↔output identity test can never be true — and C#
-//!   additionally rejects `float[] == double[]` outright and promotes the
-//!   then-arm of a literal `if (false)` to a CS0162 unreachable-code error
-//!   under `-warnaserror`. Folding the whole statement removes both problems.
-//!   (Java renders the same comparisons as `false`/`true` literals instead,
-//!   which javac accepts; that behaviour is unchanged.)
+//!   rejects `float[] == double[]` outright, then promotes the then-arm of a
+//!   literal `if (false)` to a CS0162 unreachable-code error under
+//!   `-warnaserror`. Folding the whole statement removes both problems; Java
+//!   renders the same comparisons as literals, which javac accepts.
 //!
 //! [`ir_cleanup`](super::ir_cleanup) is the engine's third consumer, for the
 //! guard on a cross-call the backend has already answered.
 //!
 //! The engine handles both operand orders and propagates through `&&` / `||` /
-//! `!`, so a compound test such as `unstablePeriod == 0 && COMPATIBILITY() ==
-//! METASTOCK` collapses whole.
+//! `!`, so a compound test collapses whole.
 //!
 //! An absorbed operand is DISCARDED, and C evaluates a left operand
 //! unconditionally — short-circuiting protects only the right. So the engine
-//! refuses to absorb when the surviving-but-dropped side could do something
-//! (`expr_is_pure`), rather than resting on the leaf classifiers happening to
-//! sit beside pure reads. No condition in the corpus writes, so this costs
-//! nothing today and cannot be traded away by a future leaf.
+//! refuses to absorb when the dropped side could do something (`expr_is_pure`),
+//! rather than resting on the leaf classifiers happening to sit beside pure
+//! reads. No condition in the corpus writes, so this costs nothing today and
+//! cannot be traded away by a future leaf.
 
 use crate::ir::{BinOp, Expr};
 

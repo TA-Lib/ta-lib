@@ -48,125 +48,60 @@
  */
 
 /* Description:
- *     Numerical-reference tests for the TA_LINEARREG family and TA_TSF.
+ *     Numerical-reference tests for the TA_LINEARREG family and TA_TSF:
+ *     external reference datasets, and goldens computed outside the binary.
  *
- *     Before this file these five had no DEDICATED reference file, which is not
- *     the same as being uncovered, and an earlier draft of this comment claimed
- *     the stronger thing. What already existed: ta_test_legacy.c (frozen v0.6.4
- *     agreement -- same lineage, so it proves agreement, not correctness); the
- *     cross-language gates (the four backends agree with the C); the --codegen
- *     leg's range test, which classes all five EPSILON via
- *     test_codegen.c stability_class(); and test_period_boundary.c's
- *     testLinearRegRampOverflowProbe (#142), which checks all five against a
- *     closed form at period 1025. THIS FILE DOES NOT SUBSUME THAT LAST ONE --
- *     no leg here exceeds period 60, and its teeth are the UBSan nightly.
+ *     NIST StRD Norris does NOT fit here, despite certifying exactly an
+ *     intercept and a slope: it regresses y on an arbitrary x, while these
+ *     functions take ONE input array and regress it on the BAR INDEX, so there
+ *     is no second series to hand Norris' x to. (Norris stays where it is,
+ *     refereeing TA_CORREL and TA_BETA, which do take two.) Wilkinson's
+ *     "nasty.dat" fits exactly: its X column is 1..9, equally spaced, so
+ *     "regress each column on X" -- Wilkinson's own task IV.B -- is what these
+ *     functions compute at period 9, on RAW values with no price-to-return round
+ *     trip. BIG and LITTLE are the cancellation stressors, and LITTLE is the one
+ *     that catches this library.
  *
- *     What was missing is what #251 adds: external reference datasets, and
- *     arbitrary-value goldens computed outside the binary. Issue #103 rebuilt
- *     these functions on O(1) sliding sums, the same class of change as #118
- *     (VAR) and #242 (CORREL/BETA), and both of those turned out to be hiding a
- *     cancellation defect.
- *
- *     A NOTE ON WHAT NIST StRD CAN AND CANNOT PIN HERE
- *
- *     Issue #251 proposed refereeing this family with NIST StRD Norris, whose
- *     certified B0/B1 are exactly an intercept and a slope. It does not fit:
- *     Norris regresses y on an arbitrary x, and these functions take ONE input
- *     array and regress it on the BAR INDEX. There is no second input to hand
- *     Norris' x to. (Norris stays where it already is, refereeing TA_CORREL and
- *     TA_BETA, which do take two series.)
- *
- *     What fits perfectly instead is Wilkinson's "nasty.dat", the other set
- *     already in the shared battery: its X column is 1..9, equally spaced, so
- *     "regress each column on X" -- Wilkinson's own task IV.B -- is precisely
- *     what these functions compute at period 9, on RAW values with no
- *     price-to-return round trip. BIG and LITTLE are the cancellation
- *     stressors, and LITTLE is the one that catches this library (L1 below).
- *
- *     The legs:
- *
- *       L1  Wilkinson nasty.dat vs baked exact-rational goldens
- *       L2  the exact affine identity y = a*i + b, where all five answers are
- *           closed forms and no oracle is involved at all
- *       L3  the sliding-sum ladder vs baked goldens, at four periods
- *       L4  NIST StRD NumAcc3/NumAcc4, the univariate cancellation stressors
- *       L5  metamorphic shift / scale / time-reversal laws
- *       L6  an exactly constant window
- *       L7  the four outputs' internal consistency
- *       L8  random walks at four magnitudes, refereed by the shared oracle
- *       L9  range stability: the same bar computed with and without history
- *
- *     TWO TOLERANCE TERMS, AND WHAT EACH ONE SAYS ABOUT THE FUNCTIONS
- *
- *     Every leg uses the same bound, and both of its terms are derived from the
- *     arithmetic rather than fitted to the output:
+ *     TWO TOLERANCE TERMS. Every leg uses the same bound, and both terms are
+ *     derived from the arithmetic rather than fitted to the output:
  *
  *       slope   |err| <= eps * ( C_SLOPE*scaleNow + C_DRIFT*scaleHist*bars^1.5/period )
  *       values  |err| <= eps * ( period*C_VALUE*scaleNow + C_DRIFT*scaleHist*bars^1.5 )
  *
- *     scaleNow is |window mean| + sigma. scaleHist is the largest magnitude the
- *     call has seen up to this bar, and `bars` is how many outputs precede this
- *     one in the SAME call.
+ *     scaleNow is |window mean| + sigma; scaleHist is the largest magnitude the
+ *     call has seen up to this bar; `bars` is how many outputs precede this one
+ *     in the SAME call.
  *
- *     TERM 1, the cancellation. The slope is evaluated as
- *     (n*SumXY - SumX*SumY)/Divisor, and those two products are both about
- *     mean*n^3/2 while their difference is about slope*n^4/12 -- so the
- *     subtraction loses digits in proportion to how large the LEVEL is next to
- *     the TREND, and the absolute error left in the slope is ~eps*|mean| however
- *     small the slope itself is. The other three value outputs are the fitted
- *     line evaluated at one x, so they inherit that error multiplied by up to
- *     period/2 against values of size |mean| -- which is why they stay
- *     RELATIVELY accurate to a few ulp while the slope does not. (ANGLE is
- *     atan of the slope, so it inherits the slope's problem, not theirs.) Wilkinson LITTLE (a value of 1 carrying
- *     a 1e-8 spread) comes back 6.2e-9 wrong; a perfectly straight line at 2^26
- *     rising 2^-26 per bar returns a slope 21% to 100% wrong on the very FIRST
- *     output of the call, before any recurrence has run -- and at period 2 that
- *     is not a figure of speech: it returns -0.0 for a strictly positive,
- *     exactly representable slope, at every bar of that series. This is not new: the
- *     pre-#103 code evaluated the same expression on the same unshifted sums,
- *     and it is the defect class #118 fixed in TA_VAR and #242 in
- *     TA_CORREL/TA_BETA -- anchoring the window before summing would remove it.
+ *     TERM 1, THE CANCELLATION. The slope is (n*SumXY - SumX*SumY)/Divisor, and
+ *     those two products are both about mean*n^3/2 while their difference is
+ *     about slope*n^4/12 -- so the subtraction loses digits in proportion to how
+ *     large the LEVEL is next to the TREND, leaving ~eps*|mean| of absolute error
+ *     however small the slope itself is. A perfectly straight line at 2^26 rising
+ *     2^-26 per bar comes back 21% to 100% wrong on the very FIRST output of the
+ *     call, and at period 2 returns -0.0 for a strictly positive, exactly
+ *     representable slope. The three value outputs are the fitted line evaluated
+ *     at one x, so they inherit that error against values of size |mean| and stay
+ *     RELATIVELY accurate to a few ulp; ANGLE is atan of the slope and inherits
+ *     the slope's problem, not theirs. Anchoring the window before summing would
+ *     remove it; it is unreachable on market data and deliberately left.
  *
- *     TERM 2, the drift. #103 made SumY and SumXY running totals that were never
- *     recomputed, so every bar's rounding was added to a residue that no later
- *     bar could subtract: it grew with how far into the CALL a bar sat, and its
- *     size was set by the largest value the sums had ever held rather than by the
- *     current window, so one large print corrupted every later bar permanently.
+ *     TERM 2, THE DRIFT. The sums are running totals, so each bar's rounding
+ *     joins a residue no later bar can subtract. Re-anchoring every 32*period
+ *     bars, and on the bar a large value leaves the window, bounds it by one
+ *     interval instead of by the call; L10 and L11 pin the two mechanisms.
  *
- *     #254 FIXED THAT HALF. The sums are re-anchored every 32*period bars and on
- *     the bar a large value leaves the window, so the residue is now bounded by
- *     one interval instead of by the call, and a print's effect ends when it
- *     leaves rather than persisting. L10 and L11 pin the two mechanisms.
- *
- *     C_DRIFT SURVIVES ANYWAY, and the reason is worth stating because #254
- *     predicted otherwise ("delete this constant when the issue closes"). That
- *     prediction assumed BOTH defects were being fixed. Only the drift was --
- *     the cancellation in TERM 1 is untouched and unreachable on market data, so
- *     it was deliberately left. Bisected on the full suite, the constant is now
- *     pinned by:
- *
- *       - the cancellation legs -- L3's ladder binds at ~3.2, and L2/L4/L5 all
- *         fail below ~2. These are TERM 1 wearing TERM 2's constant, because the
- *         bound has only one place to put a k-dependent allowance;
- *       - residue accumulated BEFORE the first reseed can fire. L8 binds at ~0.4
- *         at k=10 and L9 at ~0.15 at k=41 with period 2, both inside the first
- *         32*period bars. No reseed policy removes this one, and it is why L9
- *         does NOT pass at an arbitrarily small constant -- something the first
- *         draft of this comment asserted without measuring it.
- *
- *     So the drift's own leg now binds ~20x below what the cancellation legs
- *     force the constant to be. The value stays at 11 (~3x the 3.2 that binds)
- *     while its MEANING has changed, and deleting it would fail L2 through L5.
- *     The before/after that does belong to the reseed is in L9's own table
- *     below, and in L10's ratio: 8.8 -> 1.0.
+ *     C_DRIFT SURVIVES THAT FIX, with its meaning changed: the drift's own leg
+ *     now binds ~20x below the constant, and what holds it up is TERM 1 wearing
+ *     TERM 2's constant -- the bound has only one place to put a k-dependent
+ *     allowance -- plus the residue accumulated before the first reseed can fire.
+ *     Deleting it fails L2 through L5.
  *
  *     Its exponent is 1.5, not 1: the residue is a random walk of per-bar
- *     roundings rather than their sum, and this library's cumulative-error law is
- *     already documented as n^1.5 (#180). Against bars^1 the worst measured ratio
- *     is 82.5 and the constant has to be 300, loose enough to be worthless at
- *     small k. All three constants are ~3x their worst measured ratio, calibrated
- *     on disjoint window sets (k <= 4 for the cancellation terms, k >= 16 for
- *     drift) so neither absorbs the other.
+ *     roundings rather than their sum, which is this library's documented
+ *     cumulative-error law. Against bars^1 the constant would have to be 300,
+ *     loose enough to be worthless at small k. All three constants are ~3x their
+ *     worst measured ratio, calibrated on disjoint window sets (k <= 4 for the
+ *     cancellation terms, k >= 16 for drift) so neither absorbs the other.
  */
 
 /**** Headers ****/
@@ -916,72 +851,36 @@ static ErrorNumber test_linearreg_random_walk( void )
    return TA_TEST_PASS;
 }
 
-/* (L9) RANGE STABILITY -- issue #254, and the leg that survives the corpus
- * change the ladder needed.
- *
- * The value at a bar must not depend on where the CALL started. ta_regtest
- * enforces that through doRangeTest, and the --codegen leg already applies it to
- * these five: test_codegen.c's stability_class() puts them in TA_STABLE_EPSILON,
- * with a note saying #103 moved them OUT of TA_STABLE_EXACT precisely because
- * the O(1) recurrence made them range-dependent. So the drift is not unnoticed
- * and not unenforced -- an earlier draft of this comment said both, and issue
- * #254 carries the correction.
+/* (L9) RANGE STABILITY. The value at a bar must not depend on where the CALL
+ * started. doRangeTest enforces that generally, and test_codegen.c's
+ * stability_class() puts these five in TA_STABLE_EPSILON, the O(1) recurrence
+ * having made them range-dependent.
  *
  * THE TIER IS ABSOLUTE, NOT RELATIVE. TA_STABLE_EPSILON is
- * TA_REAL_EQ(val1, val2, 1e-10) (test_util.c), and TA_REAL_EQ(x,v,ep) is
- * ((v-ep) <= x) && (x <= (v+ep)) (ta_func/ta_utility.h) -- an absolute band.
- * Reading a relative error against it, as that same draft did, overstates the
- * defect by orders of magnitude on a quantity that crosses zero.
+ * TA_REAL_EQ(val1, val2, 1e-10), and TA_REAL_EQ(x,v,ep) is
+ * ((v-ep) <= x) && (x <= (v+ep)). Reading a relative error against it overstates
+ * the defect by orders of magnitude on a quantity that crosses zero.
  *
- * WHAT THE CLASSIFICATION USED TO COST, and why #254 was worth doing. Measured
- * absolute |full-range call - same bar computed alone|, geometric random walk at
- * $100, 1.5% steps, seed 0xBEEF. Bold = over the 1e-10 tier:
+ * That classification was CORPUS-LIMITED before the re-anchor, and nothing said
+ * so: the residue grew without bound in the length of the call and was scaled by
+ * the largest value the sums had ever held, so the class held on the 252-bar
+ * history the gate uses, stopped holding around 2000 bars, and stopped holding
+ * AT 252 bars on a series carrying one large print -- which is inside the corpus
+ * the gate already runs.
  *
- *     bars     period 5     period 14    period 30      period 5, one 1000x print
- *      252     2.67e-12     4.84e-13     4.84e-14      *4.45e-10*
- *     1000     5.34e-11     5.46e-12     2.62e-13      *2.25e-09*
- *     2000    *1.62e-10*    1.19e-11     4.92e-13
- *     5000    *5.68e-10*    1.93e-11     6.83e-12      *1.21e-08*
- *    20000    *2.07e-09*   *2.03e-10*    3.79e-11      *4.82e-08*
+ * This leg pins the GROWTH LAW rather than any one number, so it keeps working
+ * from the other side: it passes with orders of margin, and a change that
+ * reintroduces the accumulation fails it. Non-vacuity is structural -- the
+ * comparison is the SAME function against itself on one window, so there is no
+ * oracle to be co-wrong with. L10 and L11 pin the two mechanisms directly, and
+ * are the ones to read first if this one ever goes red.
  *
- * The surviving claim from #254 was narrower than "an unnoticed defect" and
- * sharper: THE EPSILON CLASSIFICATION WAS CORPUS-LIMITED AND NOTHING SAID SO.
- * "~1e-9 drift across ranges" reads as a fixed magnitude; it was not. The residue
- * grew without bound in the length of the call, and its size was set by the
- * largest value the sums had ever held rather than by the current window -- so
- * the class held on the 252-bar history the gate uses, stopped holding at ~2000
- * bars, and stopped holding AT 252 bars if the series carried a single large
- * print, which is inside the corpus the gate already runs.
- *
- * FIXED. The same table with the re-anchor in place, worst over all four periods:
- * 2.8e-11 at 20000 bars and 6.2e-12 at 100000, on both corpora -- the residue is
- * now bounded by one reseed interval rather than by the call, so the column stops
- * growing instead of running to 1e-7. The class now holds at every length this
- * library accepts, which is what it always claimed.
- *
- * This leg still pins the GROWTH LAW rather than any one number, so it keeps
- * working from the other side: it now passes with orders of margin, and a change
- * that reintroduced the accumulation fails it. L10 and L11 are the legs that pin
- * the two mechanisms directly, and they are the ones to read first if this one
- * ever goes red.
- *
- * Non-vacuity is structural: the comparison is against the SAME function called
- * on one window, so there is no oracle to be co-wrong with.
- *
- * MEASURED HEADROOM, because "it has a bound" and "the bound is near what it
- * measures" are different claims: this leg runs 13x below its own bound at
- * period 2, 32x at 5, 56x at 14 and 111x at 30. It would therefore catch a
- * residue an order or two worse than today's, which is what pinning a growth
- * law needs, and it is not tightened further because the margin also absorbs
- * libm and platform variation.
- *
- * The two corpora come out COMPARABLE (13x/70x/56x/111x with the bad print),
- * which is worth recording because the opposite is the natural guess and it is
- * wrong: hist[k] makes the bound 1000x looser after the spike, so the outlier
- * corpus looks like it must be the slacker test. It is not, because the worst
- * ratio occurs EARLY, before the spike enters hist, and past bar 60 the error
- * and the bound rise together. Measured, not reasoned -- the reasoning gave the
- * wrong answer here.
+ * Measured headroom, because "it has a bound" and "the bound is near what it
+ * measures" are different claims: 13x below its own bound at period 2, rising to
+ * 111x at 30, and the margin also absorbs libm and platform variation. The two
+ * corpora come out comparable, which is worth recording because the natural
+ * guess is wrong: hist[k] makes the bound 1000x looser after the spike, but the
+ * worst ratio occurs EARLY, before the spike enters hist.
  */
 static ErrorNumber test_linearreg_range_stability( void )
 {

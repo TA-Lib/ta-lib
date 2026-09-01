@@ -2,67 +2,52 @@
 #define BENCH_CORPUS_H
 
 /* bench_corpus.h — the benchmark input corpus: the synthetic price series the
- * ta_bench binaries measure on.
- *
- * One shared header so ta_bench, ta_bench_direct and the two generated benches
- * (ta_bench_cg, ta_bench_stream) measure the SAME series; before this each
- * carried its own copy of the same seed-42 walk.
+ * ta_bench binaries measure on. One shared header, so ta_bench,
+ * ta_bench_direct and the two generated benches measure the SAME series.
  *
  * Every series is a pure function of its BenchCorpusCfg and n — no time(), no
- * rand(), no locale, no platform state — so the same selection reproduces byte
- * for byte on re-run (`--verify-corpus` checks exactly that). Unlike
- * fuzz_data.h these arrays are never hashed or compared against an oracle, only
- * timed, so no cross-toolchain bit-identity is required and the
- * -ffp-contract=off constraint of fuzz_data.h (#150) does not apply here.
+ * rand(), no locale, no platform state — so a selection reproduces byte for byte
+ * (`--verify-corpus` checks exactly that). These arrays are only ever timed,
+ * never hashed or compared against an oracle, so no cross-toolchain bit
+ * identity is required and fuzz_data.h's -ffp-contract=off constraint does not
+ * apply.
  *
- * There is a WEAKER property one caller does depend on, though. ta_bench_direct
- * prints a ratio between its own in-process run (CMake, -O3, no LTO) and a
- * ta_bench_cg subprocess (gcc -O3 -flto, single TU) — two independently
- * compiled copies of this header. That ratio is only meaningful if both halves
- * generate the SAME workload, so keep the generators here free of anything a
- * build flag can reorder: no reassociable reductions, no fast-math-sensitive
- * idioms. The current shapes satisfy this; the walk family is immune outright
- * (its scale factors are exact powers of two), and the rest are strict
- * sequential recurrences.
+ * There is a WEAKER property one caller depends on. ta_bench_direct prints a
+ * ratio between its own in-process run (CMake, -O3, no LTO) and a ta_bench_cg
+ * subprocess (gcc -O3 -flto, single TU) — two independently compiled copies of
+ * this header — and that ratio is only meaningful if both halves generate the
+ * same workload. So keep the generators free of anything a build flag can
+ * reorder: no reassociable reductions, no fast-math-sensitive idioms. The walk
+ * family is immune outright (its scale factors are exact powers of two) and the
+ * rest are strict sequential recurrences.
  *
- * WHY MORE THAN ONE SHAPE — the rolling min/max shared by MIN, MAX, MINMAX,
+ * WHY MORE THAN ONE SHAPE. The rolling min/max shared by MIN, MAX, MINMAX,
  * MIDPOINT, MIDPRICE, WILLR, STOCH and STOCHF caches the window extremum with
- * its index and rescans the whole window whenever that extremum falls out of
- * it, so its cost is input-dependent. What a corpus has to vary is how often
- * that rescan fires, i.e. how often the window extremum is its OLDEST bar:
+ * its index and rescans the whole window whenever that extremum falls out, so
+ * its cost is input-dependent. What a corpus must vary is how often that rescan
+ * fires — how often the window extremum is its OLDEST bar. On a driftless walk
+ * the rate decays as ~1/sqrt(period); on a trending leg it is set by the per-bar
+ * drift/noise ratio and is nearly independent of the period. The two classes
+ * therefore separate further the longer the window (1.1x the rescan rate at
+ * period 14, 3x at 200), and a lone zero-drift walk cannot see it. The trend
+ * case is majority-quiet, not pathological: within an uptrend the low stays
+ * pinned near the oldest bar while the high refreshes almost every bar, so the
+ * dual-extremum functions degrade on either trend direction and the
+ * single-extremum ones on one direction each. Real markets alternate trending
+ * and range-bound legs, which is what `trend-chop-*` covers.
  *
- *   - on a driftless walk the rate decays as ~1/sqrt(period), because the
- *     extremum of a long driftless window is seldom at its start: measured
- *     33%/23%/9% of bars (either extremum) at period 14/30/200;
- *   - on a trending leg the rate is set by the per-bar drift/noise ratio and is
- *     nearly independent of the period: 36%/30%/27% for trend-chop-1p at the
- *     default --trend-strength (~43% of the bars inside a trend leg itself).
- *
- * So the two classes separate further the longer the window — 1.1x the rescan
- * rate at period 14, 3x at period 200 — and a lone zero-drift walk cannot see
- * it. Note the trend case is a MAJORITY-quiet one, not a pathological one: it
- * is the minority of bars that rescan, just far more of them than on the walk.
- * Within an uptrend it is the low that is pinned near the oldest bar while the
- * high refreshes almost every bar, so the dual-extremum functions degrade on
- * either trend direction and the single-extremum ones on one direction each.
- * Real markets alternate trending and range-bound legs, which is why
- * `trend-chop-*` is the input class this corpus was missing (issue #147).
- *
- * THE TAIL SHAPES ARE NOT PEERS — `constant` is the worst case in the family,
- * at 2*(period-1) inner comparisons per bar, exactly TWICE `mono-up`/`mono-down`
- * (period-1). The reason is a tie-break, not the trend mechanism above: the
- * rescan loop compares with strict `>` / `<`, so on equal values it leaves
+ * THE TAIL SHAPES ARE NOT PEERS. `constant` is the family's worst case at
+ * 2*(period-1) inner comparisons per bar, exactly TWICE `mono-up`/`mono-down`.
+ * The reason is a tie-break, not the trend mechanism above: the rescan loop
+ * compares with strict `>` / `<`, so on equal values it leaves
  * highestIdx/lowestIdx parked on trailingIdx, the `< trailingIdx` guard refires
- * on the very next bar, and the `>= highest` / `<= lowest` fast-path arms — the
- * ones that would otherwise move the cached index onto the newest bar and end
- * the rescans — never execute at all. Flat input does this to BOTH extrema
- * indefinitely; a monotone ramp pins only one of the two (in an up-ramp the high
- * is always the newest bar), which is precisely why it costs half as much.
+ * on the next bar, and the `>= highest` / `<= lowest` fast-path arms — which
+ * would otherwise move the cached index onto the newest bar and end the rescans
+ * — never execute. Flat input does that to BOTH extrema indefinitely; a monotone
+ * ramp pins only one, which is why it costs half as much.
  *
- * `randwalk` stays the default and reproduces the pre-existing seed-42 series
- * bit for bit, so numbers taken before this corpus existed remain comparable.
- * Shapes are opt-in via --shape=NAME: a benchmark run costs the same as before
- * unless you ask for another class.
+ * `randwalk` is the default and its seed-42 series is pinned, so numbers taken
+ * across releases stay comparable. Other shapes are opt-in via --shape=NAME.
  */
 
 #include <math.h>

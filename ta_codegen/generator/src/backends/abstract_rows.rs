@@ -4,9 +4,7 @@
 //! facts: a function's name, group, hint, flag bits, its inputs (with price
 //! components already folded into one bundle), its optional parameters and
 //! their domains, its outputs, and its unstable-period id. Those facts are
-//! derived here, **once**, and rendered by [`rust_abstract`](super::rust_abstract),
-//! [`java_abstract`](super::java_abstract), [`java_metadata`](super::java_metadata)
-//! and [`csharp_metadata`](super::csharp_metadata).
+//! derived here, **once**, and rendered by the Rust, Java and C# registries.
 //!
 //! ## Why the model is typed rather than a bag of `i32` codes
 //!
@@ -18,19 +16,18 @@
 //!
 //! ## What is deliberately NOT rendered from these rows
 //!
-//! The **C** abstract layer (`ta_abstract_c`) and **`func_api_xml`** derive their
-//! values independently, and that is load-bearing rather than an oversight:
-//! `test_abstract.c` proves each language server's metadata against the C
-//! library's `ta_abstract` at run time. If C's tables were built from these rows
-//! too, that gate would compare a generator against itself and could no longer
-//! fail on a wrong row. C stays the independent oracle. (The two pieces C *does*
-//! share — [`price_bundle`](super::price_bundle) for input folding, and the flag
-//! vocabulary pinned by `flag_sync` against `include/ta_abstract.h` — are shared
-//! precisely because an independent gate already covers them.)
+//! The **C** abstract layer (`ta_abstract_c`) and **`func_api_xml`** derive
+//! their values independently, and that is load-bearing: `test_abstract.c`
+//! proves each language server's metadata against the C library's `ta_abstract`
+//! at run time, so building C's tables from these rows too would leave that
+//! gate comparing a generator against itself. The two pieces C *does* share —
+//! [`price_bundle`](super::price_bundle) for input folding, and the flag
+//! vocabulary `flag_sync` pins against `include/ta_abstract.h` — are shared
+//! precisely because an independent gate already covers them.
 //!
 //! A row carries no derived name: there is one identity, `name`, and every
-//! backend spells it verbatim, so there is nothing per-backend left to store or
-//! to drift from the real signature.
+//! backend spells it verbatim, so there is nothing per-backend to store or to
+//! drift from the real signature.
 
 use std::collections::HashMap;
 

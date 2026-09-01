@@ -1,74 +1,60 @@
 //! Generates the C# streaming API section appended to each shipped
-//! `Core_<NAME>.cs` — the managed .NET sibling of `java_stream.rs` /
-//! `rust_stream.rs` / `c_stream.rs`.
-//!
-//! Like the other three it consumes the backend-neutral [`crate::streaming`]
-//! layer (`StreamPlan`, `StreamModel`, `build_transition`, the `NameMap` trait)
-//! and renders through the existing [`super::csharp`] statement/expression
-//! walkers. `streaming.rs` and the three shipped stream emitters are not
-//! touched by this module — that is what keeps the other backends byte-frozen
-//! by construction while this one lands.
+//! `Core_<NAME>.cs`. Like the other stream emitters it consumes the
+//! backend-neutral [`crate::streaming`] layer (`StreamPlan`, `StreamModel`,
+//! `build_transition`, the `NameMap` trait) and renders through the
+//! [`super::csharp`] statement/expression walkers.
 //!
 //! # Pinned decisions
 //!
 //! - **The handle is a `public sealed class <Name>Stream` nested in
-//!   `partial class Core`** — PascalCase, acronym single-capitalized (issue
-//!   #278; only the batch tier still spells `<NAME>` verbatim) — with a
-//!   *sibling* nested `public readonly record struct <Name>Value` for
-//!   multi-output functions. The `Value` type cannot itself be named `Value`:
-//!   a nested type and a member of the same name is CS0102, and the member
-//!   name is the one every language's documentation references.
+//!   `partial class Core`**, with a *sibling* nested
+//!   `public readonly record struct <Name>Value` for multi-output functions.
+//!   That type cannot itself be named `Value`: a nested type sharing a member's
+//!   name is CS0102, and the member name is the one every language's
+//!   documentation references.
 //!
-//! - **Every handle field is `internal`, every constructor `internal`.** A
-//!   *sibling* nested type cannot reach another's `private` members, and
-//!   `MavpStream`'s copy constructor builds `MaStream` copies while
-//!   `MaStream`'s step calls `SmaStream.Update`. One rule beats per-field
-//!   analysis, and `internal` is invisible to consumers. Internal constructors
-//!   additionally stop `System.Text.Json` from minting a half-built handle,
-//!   which is the positive act C# needs where Java gets not-serializable free.
+//! - **Every handle field and constructor is `internal`.** A sibling nested
+//!   type cannot reach another's `private` members, and handles do call across
+//!   each other (a copy constructor building another's copy, a step calling
+//!   another's `Update`). One rule beats per-field analysis, and `internal` is
+//!   invisible to consumers. It also stops `System.Text.Json` minting a
+//!   half-built handle — the positive act C# needs where Java gets
+//!   not-serializable for free.
 //!
 //! - **The step stays a method on `Core`, not on the handle.** Transcribed
-//!   bodies render unstable-period reads as
-//!   `this.unstablePeriod[(int)FuncUnstId.X]`, which only compiles inside a
-//!   `Core` instance method. Measured, `core.Step(sp, x)` versus
-//!   `this.Step(x)` is 3.44–3.54 against 3.39–3.47 ns/bar — indistinguishable.
+//!   bodies read the unstable period as `this.unstablePeriod[(int)FuncUnstId.X]`,
+//!   which only compiles inside a `Core` instance method; passing the handle in
+//!   measured indistinguishable from `this`.
 //!
 //! - **The `NameMap` prefixes are Java's, verbatim** (`sp.x`, `sp.cur_y`,
-//!   `sp.ring_v_a`, ...). This is load-bearing, not cosmetic:
-//!   [`super::fma::stream_base`] strips exactly `sp->`, `sp.` and `cur_` to
-//!   decide integer-versus-float typing, so any other scheme needs `fma.rs`
-//!   extended, and getting that wrong is a ~1 ULP cross-language divergence
-//!   with nothing pointing at the cause.
+//!   `sp.ring_v_a`, ...). Load-bearing: [`super::fma::stream_base`] strips
+//!   exactly `sp->`, `sp.` and `cur_` to decide integer-versus-float typing, so
+//!   any other scheme needs `fma.rs` extended, and getting that wrong is a
+//!   ~1 ULP cross-language divergence with nothing pointing at the cause.
 //!
-//! - **Double-only.** `single_precision` is always `false` and no `float[]`
-//!   overload is emitted; the streaming contract is `double` in every language.
+//! - **Double-only.** No `float` overload is emitted; the streaming contract is
+//!   `double` in every language.
 //!
-//! # Emission rules that are measurements, not preferences
+//! # Emission rules that were measured, not preferred
 //!
-//! Each of these was measured on the shipped shape (dotnet 10, pinned cores,
-//! interleaved arms, min-of-N over 3–5 process launches). They are recorded so
-//! that a later reader does not re-optimize on intuition in either direction.
+//! Recorded so that a later reader does not re-optimize on intuition:
 //!
-//! - No `MethodImpl` attributes. `Update` is 3.39–3.51 ns/bar inlinable against
-//!   6.69–7.10 behind `NoInlining`; the JIT's IL-size heuristic already inlines
-//!   the small steps and correctly declines the ~400-byte candlestick ones.
-//! - `Update`/`Peek`/`Value` stay thin — no validation, no null checks (there
-//!   are no array arguments), no logging. That is what keeps them inlinable.
-//! - No unsafe indexing: `MemoryMarshal.GetArrayDataReference` + `Unsafe.Add`
-//!   measured 4.26–4.55 against 3.44–3.47 ns/bar — a *regression*.
-//! - No array-hoisting pass (3.35–3.48 against 3.39–3.47 — noise). Hoist only a
+//! - No `MethodImpl` attributes: the JIT's IL-size heuristic already inlines
+//!   the small steps and correctly declines the big candlestick ones.
+//! - `Update`/`Peek`/`Value` stay thin — no validation, no logging. That is
+//!   what keeps them inlinable.
+//! - No unsafe indexing (`MemoryMarshal.GetArrayDataReference` + `Unsafe.Add`
+//!   measured a *regression*) and no array-hoisting pass (noise). Hoist only a
 //!   *counted* loop bound, where it genuinely drops a check.
-//! - No `[StructLayout]`: the CLR uses `LayoutKind.Auto` for reference types
-//!   and packs them itself; `Sequential` would disable that.
+//! - No `[StructLayout]`: the CLR packs reference types itself under
+//!   `LayoutKind.Auto`, and `Sequential` would disable that.
 //! - Rings stay `double[]`/`int[]` fields. `Span<T>` cannot be a field (CS8345)
 //!   and `Memory<T>` costs a span materialization per access.
 //! - The copy constructor uses `new T[n]` + `Array.Copy`, never
 //!   `(double[])x.Clone()` — 2.3x.
-//! - Dispatch is a `switch` + cast, but *not* because virtual calls are slow:
-//!   an interface call measured 4.41–4.74 against the switch's 5.55–5.72
-//!   ns/bar. The switch wins on cross-language parity and on not adding a type
-//!   hierarchy across 172 handles, and that is the whole argument.
-
+//! - Dispatch is a `switch` + cast, and *not* because virtual calls are slow —
+//!   an interface call measured faster. The switch wins on cross-language
+//!   parity and on not adding a type hierarchy across every handle.
 use std::cell::Cell;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fmt::Write;

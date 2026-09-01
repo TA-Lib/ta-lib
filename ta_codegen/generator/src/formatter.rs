@@ -1,40 +1,31 @@
-//! A conservative C re-indenter for the `ta_codegen/input/*.c` source-of-truth.
-//!
-//! The input `.c` files are the human-maintained source of truth. The
-//! pre-`ta_codegen` reference C was properly indented, but when these inputs
-//! were rewritten (by an AI, during the cutover) the indentation was not
-//! preserved: statements ended up flat at a fixed 4-space margin regardless of
-//! nesting depth, which is hard to read. This module tidies them up by:
-//!
-//! 1. **re-indenting** so the left margin reflects `{}` / `()` nesting again;
-//! 2. **stripping trailing whitespace** from every line;
-//! 3. **collapsing blank-line runs** to at most one (and dropping leading /
-//!    trailing blank lines), so files end in a single newline.
+//! A conservative C re-indenter for the `ta_codegen/input/*.c` source-of-truth,
+//! run as a pre-pass before anything else reads those files. It re-indents so
+//! the left margin reflects `{}` / `()` nesting, strips trailing whitespace, and
+//! collapses blank-line runs to at most one, so a file ends in a single newline.
 //!
 //! # The safety invariant
 //!
-//! The property that makes this safe to run on files where comments are
-//! *load-bearing* — the candlestick recognizers position `//` comments to the
-//! right of individual `&&` operands inside an `if` predicate — is:
+//! Comments here are load-bearing — the candlestick recognizers position `//`
+//! comments to the right of individual `&&` operands inside an `if` predicate —
+//! so:
 //!
 //! > **The ordered sequence of non-blank lines, each trimmed of surrounding
 //! > whitespace, is identical before and after.**
 //!
-//! Only *whitespace* (leading + trailing) and *blank-line runs* ever change. No
-//! code or comment line is added, dropped, reordered, or edited; there is no
-//! token reflow, no line joining, no line splitting. A trailing comment
-//! therefore cannot move relative to the operand it annotates. [`reindent_source`]
-//! asserts this via [`content_preserved`] on its own output in debug builds, and
-//! the `format` command re-checks it before writing any file.
+//! Only whitespace and blank-line runs ever change. No line is added, dropped,
+//! reordered or edited, and there is no reflow, joining or splitting, so a
+//! trailing comment cannot move relative to the operand it annotates.
+//! [`reindent_source`] asserts this via [`content_preserved`] on its own output
+//! in debug builds, and the `format` command re-checks it before writing.
 //!
-//! Two deliberate carve-outs keep generated output byte-identical (the parser
-//! already trims comment lines and is whitespace-insensitive, but it *does*
-//! preserve blank lines inside `/* ... */`): blank lines inside a block comment
-//! are never collapsed, and every comment line's interior is left untouched.
+//! Two carve-outs keep generated output byte-identical, the parser being
+//! whitespace-insensitive except that it preserves blank lines inside
+//! `/* ... */`: blank lines in a block comment are never collapsed, and a
+//! comment line's interior is never touched.
 //!
-//! Because indentation is computed by a lightweight structural scan (not a full
-//! parse), an exotic construct can at worst produce *slightly wrong indentation*
-//! on a line — never corrupted code and never a displaced comment.
+//! Indentation comes from a lightweight structural scan rather than a parse, so
+//! an exotic construct can at worst mis-indent a line — never corrupt code and
+//! never displace a comment.
 
 /// Spaces per indentation level. Matches the C backend's emitter (`c.rs` uses
 /// `indent + 3`), so input and generated output share one house style.

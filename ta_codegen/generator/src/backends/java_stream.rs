@@ -1,43 +1,32 @@
-//! Java stream emitter — the Java twin of `backends/rust_stream.rs` /
-//! `backends/c_stream.rs`.
+//! Java stream emitter: appends a `/**** Streaming API *****/` section to each
+//! generated per-function Java fragment, which the shipped `Core.java` splice
+//! and the JSON-RPC server inline both pick up unchanged.
 //!
-//! For every YAML-declared streamable function this appends a
-//! `/**** Streaming API *****/` section to the generated per-function Java
-//! fragment (which the shipped `Core.java` splice and the JSON-RPC server
-//! inline both pick up unchanged): a `public static final class <Base>Stream`
-//! nested in `Core` (per-handle state as package-private fields, `update`/
-//! `peek`/`value`/`clone` methods, a copy constructor), a package-private
-//! `<base>StepImpl(sp, bars...)` transition method on `Core` (so batch
-//! rendering conventions — `this.compatibility`, cross-calls, `Math.fma`
-//! sites — work verbatim), a `private RetCode <base>OpenImpl(sp, ...)`
-//! transcription of the whole batch body, the package-private
-//! `<base>OpenInternal(in, startIdx, ...)` composition seam, and the public
-//! `<base>Open` / `<base>OpenAndFill` constructors. `<base>` is camelCase
-//! (`sma`, `htTrendline`) — idiomatic Java, not C's verbatim uppercase name.
+//! Bit-exactness argument (the same one C and Rust make): the open body
+//! transcribes the ENTIRE batch body through the same statement renderer as the
+//! batch backend, then captures the still-live locals into the handle; the
+//! per-bar step is `streaming::build_transition` rendered through the same
+//! walkers. No expression text is hand-built outside the shared renderers.
 //!
-//! Bit-exactness argument (same as C/Rust): the open body transcribes the
-//! ENTIRE batch body through the same statement renderer as the batch backend,
-//! then captures the still-live locals into the handle; the per-bar step is
-//! `streaming::build_transition` rendered through the same walkers. No
-//! expression text is hand-built outside the shared renderers.
+//! The step is a method on `Core`, not on the handle, so batch rendering
+//! conventions — `this.compatibility`, cross-calls, `Math.fma` sites — work
+//! verbatim.
 //!
-//! Deliberate Java shapings vs C/Rust (design-panel reviewed; see
-//! docs/streaming-api-design.md Java sections):
-//! - Open failures surface as unchecked exceptions. Inside the private
-//!   `OpenImpl` the batch body's reject returns stay plain `RetCode` (no throw
-//!   statements ever cross the shared renderer — its `expr_stmt` hook skips
-//!   bare identifiers); the early-SUCCESS no-data/seed-boundary returns are
-//!   mapped to `InsufficientHistory` so the thin wrapper can type the
-//!   one routine, data-dependent condition as `InsufficientHistoryException`
-//!   (an `IllegalArgumentException` subclass). `InternalError` (capture
-//!   invariant) becomes `IllegalStateException`; every other reject a plain
-//!   `IllegalArgumentException`. Messages carry the stable prefix
-//!   `"<NAME> open:"`, where `<NAME>` is the function as the metadata registry
-//!   spells it (`SMA`, `HT_TRENDLINE`) — not C's `TA_`-prefixed symbol and not
-//!   the Java method name. `update`/`peek` never throw after a successful open.
-//! - There is no `close`: a handle is ordinary heap state — GC suffices (no
-//!   AutoCloseable, no finalizer). Handles are deliberately NOT serializable;
-//!   the sanctioned checkpoint story is re-opening from retained history.
+//! Deliberate Java shapings vs C/Rust:
+//! - Open failures surface as unchecked exceptions, typed by the thin public
+//!   wrapper. Inside `OpenImpl` the batch body's rejects stay plain `RetCode`,
+//!   because no throw statement may cross the shared renderer; the early
+//!   SUCCESS no-data/seed-boundary returns are mapped to `InsufficientHistory`
+//!   so the one routine, data-dependent condition can be typed
+//!   `InsufficientHistoryException` (an `IllegalArgumentException` subclass).
+//!   `InternalError` becomes `IllegalStateException`, every other reject a
+//!   plain `IllegalArgumentException`. Messages carry the stable prefix
+//!   `"<NAME> open:"`, `<NAME>` spelled as the metadata registry spells it —
+//!   not C's `TA_`-prefixed symbol, not the Java method name. `update`/`peek`
+//!   never throw after a successful open.
+//! - There is no `close`: a handle is ordinary heap state and GC suffices.
+//!   Handles are deliberately NOT serializable; the sanctioned checkpoint story
+//!   is re-opening from retained history.
 //! - `peek` runs a non-committing frame against the live handle: its cost is
 //!   flat in the period, and what it allocates per call is bounded by the
 //!   indicator, never by the period. `clone()` exposes the copy constructor as
@@ -47,10 +36,9 @@
 //!   passes in (mutable public fields, batch output order, no equality), so a
 //!   reused sink costs nothing per bar. Single-output functions return the
 //!   primitive directly.
-//! - Candle settings are SNAPSHOTTED into the handle at open (primitive
-//!   fields), matching Rust's frozen-by-copy observable semantics — the step
-//!   never reads the live (mutable, torn-read-prone) `CandleSetting` objects.
-
+//! - Candle settings are SNAPSHOTTED into the handle at open, matching Rust's
+//!   frozen-by-copy observable semantics — the step never reads the live,
+//!   mutable, torn-read-prone `CandleSetting` objects.
 use std::cell::Cell;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fmt::Write;

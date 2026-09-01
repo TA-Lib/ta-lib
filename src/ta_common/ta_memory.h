@@ -81,102 +81,20 @@
 
 /* CIRCBUF : Circular Buffer Macros.
  *
- * The CIRCBUF is like a FIFO buffer (First In - First Out), except
- * that the rate of data coming out is the same as the rate of
- * data coming in (for simplification and speed optimization).
- * In other word, when you add one new value, you must also consume
- * one value (if not consume, the value is lost).
+ * A FIFO whose output rate equals its input rate: adding a value consumes the
+ * slot it overwrites, so the oldest value must be READ BEFORE the new one is
+ * written. `Id` can be any string, so several can live in one function.
  *
- * The CIRCBUF size is unlimited, so it will automatically allocate and
- * de-allocate memory as needed. In C/C++. when small enough, CIRCBUF will
- * instead use a buffer "allocated" on the stack (automatic variable).
+ *    CIRCBUF_PROLOG(Id,Type,Size)  declares `Id` (a Type*), `Id_Idx` (where to
+ *                                  consume and add) and a Size-element array on
+ *                                  the STACK -- keep Size reasonable.
+ *    CIRCBUF_INIT(Id,Type,Size)    elects that stack array, or heap-allocates
+ *                                  when the runtime Size does not fit it. Size
+ *                                  here may be large. Pair with DESTROY on
+ *                                  every exit path.
+ *    CIRCBUF_NEXT(Id)              advance the index.
  *
- * Multiple CIRCBUF can be used within the same function. To make that
- * possible the first parameter of the MACRO is an "Id" that can be
- * any string.
- *
- * CIRCBUF_PROLOG(Id,Type,Size);
- *          Will declare all the needed variables. 2 variables are
- *          important:
- *                 1) 'Id' will be a ptr of the specified Type.
- *                 2) 'Id'_Idx indicates from where to consume and
- *                     to add the data.
- *
- *          Important: You must consume the oldest data before
- *                     setting the new data!
- *
- *          The Size must be reasonable since it might "allocate"
- *          an array of this size on the stack (each element are 'Type').
- *
- * CIRCBUF_CONSTRUCT(Id,Type,Size);
- *         Must be called prior to use the remaining macros. Must be
- *         followed by CIRCBUF_DESTROY when leaving the function.
- *         The Size here can be large. If the static Size specified
- *         with CIRCBUF_PROLOG is not sufficient, this MACRO will
- *         allocate a new buffer from the Heap.
- *
- * CIRCBUF_DESTROY(Id,Size);
- *         Must be call prior to leave the function.
- *
- * CIRCBUF_NEXT(Id);
- *         Move forward the indexes.
- *
- * Example:
- *     TA_RetCode MyFunc( int size )
- *     {
- *        CIRCBUF_PROLOG(MyBuf,int,4);
- *        int i, value;
- *        ...
- *        CIRCBUF_CONSTRUCT(MyBuf,int,size);
- *        ...
- *        // 1st Loop: Fill MyBuf with initial values
- *        //           (must be done).
- *        value = 0;
- *        for( i=0; i < size; i++ )
- *        {
- *           // Set the data
- *           MyBuf[MyBuf_Idx] = value++;
- *           CIRCBUF_NEXT(MyBuf);
- *        }
- *
- *        // 2nd Loop: Get and Add subsequent values
- *        //           in MyBuf (optional)
- *        for( i=0; i < 3; i++ )
- *        {
- *           // Consume the data (must be done first)
- *           printf( "%d ", MyBuf[MyBuf_Idx] );
- *
- *           // Set the new data (must be done second)
- *           MyBuf[MyBuf_Idx] = value++;
- *
- *           // Move the index forward
- *           CIRCBUF_NEXT(MyBuf);
- *        }
- *
- *        // 3rd Loop: Empty MyBuf (optional)
- *        for( i=0; i < size; i++ )
- *        {
- *           printf( "%d ", MyBuf[MyBuf_Idx] );
- *           CIRCBUF_NEXT(MyBuf);
- *        }
- *
- *        CIRCBUF_DESTROY(MyBuf);
- *        return TA_SUCCESS;
- *     }
- *
- *
- * A call to MyFunc(5) will output:
- *    0 1 2 3 4 5 6 7
- *
- * The value 0 to 4 are added by the 1st loop.
- * The value 5 to 7 are added by the 2nd loop.
- *
- * The value 0 to 2 are displayed by the 2nd loop.
- * The value 3 to 7 are displayed by the 3rd loop.
- *
- * Because the size 5 is greater than the
- * value provided in CIRCBUF_PROLOG, a buffer will
- * be dynamically allocated (and freed).
+ * The `_CLASS` variants and `CIRCBUF_REF` exist for a struct or class Type.
  */
 #define CIRCBUF_PROLOG(Id,Type,Size) Type local_##Id[Size]; \
                                   int Id##_Idx; \

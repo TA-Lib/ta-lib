@@ -31,120 +31,65 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Frozen v0.6.4 reference values (issue #188).
+/* Frozen v0.6.4 reference values, over the frozen 252-bar ta_regtest series.
+ * Every value carries the full 17 significant digits v0.6.4 produced, so it
+ * round-trips to the exact double and transcription is not an error source.
+ * GENERATED -- do not hand-edit values. The COMMENTS here and the tolerance
+ * table in ta_test_legacy.c are hand-maintained, and are where the maintenance
+ * lives. `src/tools/ta_regtest/CLAUDE.md` states what this group is for.
  *
- * WHAT THIS IS
- *   911 values from released v0.6.4, over the frozen 252-bar ta_regtest
- *   series, covering 142 functions in 216 cases. Every value is the
- *   full 17 significant digits v0.6.4 produced, so it round-trips to the exact
- *   double -- transcription is not an error source here, which is the whole
- *   point (the hand-written tables carry 2-6 digits against an absolute 0.01
- *   window; a third of those values are small enough that the window admits a
- *   >0.1% relative error).
+ * SCOPE. Deliberately absent: every function that post-dates v0.6.4, which has
+ *   no answer to freeze (they carry their own tests); STOCHRSI, which diverges
+ *   on purpose and is pinned by test_stoch.c; and everything whose value depends
+ *   on the host libm. That last group is the 12 pure passthroughs (ACOS..TANH),
+ *   since atan/sin/cos/exp/log are not correctly rounded and a frozen value
+ *   would assert "your libm matches the machine that generated this table", plus
+ *   the 6 Hilbert functions, whose atan becomes an INTEGER loop bound
+ *   (period = 360/(atan(Im/Re)*rad2Deg), then (int)DCPeriod) so one ULP of libm
+ *   difference near a boundary changes the iteration count and the output moves
+ *   discontinuously. sqrt/ceil/floor are correctly rounded and stay in scope.
+ *   This bites here and not in --fuzz-064 because that gate compares two
+ *   binaries on ONE host with ONE libm, while a frozen table is read on every
+ *   host; the cross-implementation coverage is --xlang-hash's tolerance lane.
  *
- * WHAT IT IS NOT
- *   Not a correctness oracle. v0.6.4 is the same lineage, so it cannot catch a
- *   bug v0.6.4 already had. This is a PIN: it catches drift. Correctness lives
- *   in the independent oracles (test_stddev.c's two-pass/NIST variance work,
- *   the candlestick predicate gate, the metamorphic laws).
- *
- * WHY FREEZE IT WHEN ta_064_serve ALREADY COMPARES
- *   --fuzz-064 needs the v0.6.4 git tag, a worktree and a second full CMake
- *   build. This table needs none of that: it runs from a release tarball in a
- *   plain ./ta_regtest, and it survives the tag becoming unfetchable.
- *
- * SCOPE -- 26 of the 168 shipped functions are deliberately absent:
- *
- *   7  post-date v0.6.4, so it has no answer to freeze:
- *      CMF CMOU HMA NVI PVI PVO VWMA
- *      (covered by their own tests -- test_cmf.c, test_cmou.c, test_composite.c,
- *      test_per_cv.c)
- *
- *   1  STOCHRSI -- intentionally diverges from v0.6.4 (issue #107); its values
- *      are pinned by test_stoch.c instead.
- *
- *  12  pure libm passthroughs: ACOS ASIN ATAN COS COSH EXP LN LOG10 SIN SINH
- *      TAN TANH. atan/sin/cos/exp/log are NOT correctly rounded, so a frozen
- *      value asserts "your libm matches the machine that generated this table"
- *      and nothing about TA-Lib -- it would false-red on musl, macOS or a later
- *      glibc. (sqrt/ceil/floor ARE correctly rounded and stay in scope.)
- *
- *   6  the Hilbert family: HT_DCPERIOD HT_DCPHASE HT_PHASOR HT_SINE
- *      HT_TRENDLINE HT_TRENDMODE. Same rule as above with a sharper edge --
- *      they turn an atan into an INTEGER (period = 360/(atan(Im/Re)*rad2Deg),
- *      then DCPeriodInt = (int)DCPeriod, used as a loop bound). A host libm
- *      differing by one ULP near an integer boundary changes the iteration
- *      count, so the output moves DISCONTINUOUSLY and no tolerance can bound
- *      it; HT_TRENDMODE's output is an integer outright. This matters here and
- *      not in --fuzz-064 because that gate compares two binaries on ONE host
- *      with ONE libm, while a frozen table is read on every host. Their
- *      cross-implementation coverage is --xlang-hash, which carries a
- *      transcendental tolerance lane for exactly this reason.
- *
- * ONE-SIDED CASES -- 26 candlestick patterns never fire anywhere on this
- *   series, so every sample frozen for them is 0. That is a ONE-SIDED
- *   assertion, and worth being precise about: it fails a pattern that starts
- *   firing where v0.6.4 did not (verified -- flipping one CDL3INSIDE arm to a
- *   non-zero value is caught at a sample whose frozen value is 0), but it
- *   cannot see one that stops firing. They also still pin
+ * ONE-SIDED CASES. A candlestick pattern that never fires anywhere on this
+ *   series is pinned at 0 at every sample, which fails a pattern that STARTS
+ *   firing but cannot see one that STOPS. Those patterns are listed in the table
+ *   below by their all-zero rows; two-sided coverage for them is
+ *   test_candlestick.c's predicate / MC-DC gate. The pins still cover
  *   retCode/outBegIdx/outNbElement, so a lookback or shape regression fails.
- *   Two-sided coverage for these is test_candlestick.c's predicate / MC-DC
- *   gate, which builds bars that make each pattern fire. Listed so this is
- *   never mistaken for full coverage:
- *      CDL2CROWS CDL3BLACKCROWS CDL3LINESTRIKE CDL3STARSINSOUTH
- *      CDL3WHITESOLDIERS CDLABANDONEDBABY CDLADVANCEBLOCK CDLBREAKAWAY
- *      CDLCONCEALBABYSWALL CDLCOUNTERATTACK CDLGAPSIDESIDEWHITE CDLHIKKAKEMOD
- *      CDLIDENTICAL3CROWS CDLINNECK CDLKICKING CDLKICKINGBYLENGTH
- *      CDLMATHOLD CDLMORNINGDOJISTAR CDLONNECK CDLRISEFALL3METHODS
- *      CDLSHOOTINGSTAR CDLSTICKSANDWICH CDLTASUKIGAP CDLTHRUSTING
- *      CDLTRISTAR CDLUPSIDEGAP2CROWS
  *
- *   The other 35 candlestick patterns DO fire here and their pins are two-sided.
- *
- * SAMPLING -- first, middle and last of each output. Every INTEGER output
+ * SAMPLING. First, middle and last of each output; every INTEGER output
  *   additionally pins the first, middle and last occurrence of both its minimum
- *   and its maximum value over the series. Pinning only the non-zero bars would
- *   have been the obvious rule and is wrong: it reads the discrete outputs whose
- *   rare arm is zero exactly backwards. HT_TRENDMODE is the case that proves it
- *   -- it sits at 1 for most of the series, so first/middle/last landed on 1,
- *   1, 1 and pinned nothing, while min/max reaches both arms.
+ *   and its maximum. Pinning only the non-zero bars reads backwards any discrete
+ *   output whose rare arm is zero -- a function sitting at 1 for most of the
+ *   series gives 1, 1, 1 and pins nothing.
  *
- * INPUTS -- a `real` input takes close; a second `real` input takes high. Price
- *   inputs take the OHLCV components ta_abstract declares. ta_test_legacy.c
- *   mirrors this exactly (legacy_setup_inputs); the two must not drift.
+ * INPUTS. A `real` input takes close, a second `real` input takes high, and
+ *   price inputs take the OHLCV components ta_abstract declares.
+ *   ta_test_legacy.c's legacy_setup_inputs mirrors this; the two must not drift.
  *
- * RANGE -- every case is the full call, startIdx 0 to endIdx 251. The
- *   partial-range dimension (startIdx > lookback, outBegIdx placement) is NOT
- *   pinned here: it belongs to doRangeTest, which sweeps every start/end pair
- *   for every function and is where issue #98 was caught.
+ * RANGE. Every case is the full call, startIdx 0 to endIdx 251. The
+ *   partial-range dimension belongs to doRangeTest.
  *
- * PARAMETERS -- each function contributes its ta_abstract defaults, plus one
- *   deliberately non-default set where it has parameters at all. Integer
- *   periods are never 1 (period-1 is the intentional v0.6.4 divergence fixed
- *   for #48/#59; that territory belongs to the PERIOD1/BOUNDARY group) and
- *   MAType never exceeds 8 (9+ post-date the freeze: HMA #139, DISABLED #93,
- *   DEFAULT #182).
+ * PARAMETERS. Each function contributes its ta_abstract defaults, plus one
+ *   non-default set where it has parameters. Two things a regeneration must not
+ *   lose: integer periods are never 1 (that territory belongs to the
+ *   PERIOD1/BOUNDARY group) and MAType never exceeds 8 (9+ post-date the freeze).
  *
- * RE-FREEZE -- regenerate against the new reference, then DELETE the rows in
- *   ta_test_legacy.c's LEGACY_TOL (do not set them to 0.0 -- the gate rejects a
- *   zero row on purpose, since absence already means exact). The divergences
- *   they absorb exist only because v0.6.4 predates the explicit-fma() contract
- *   (PR #96); the libm floors are the one part that may need to survive.
+ * RE-FREEZE. Regenerate against the new reference, then DELETE the rows in
+ *   ta_test_legacy.c's LEGACY_TOL -- do not set them to 0.0, the gate rejects a
+ *   zero row on purpose, since absence already means exact. The libm floors are
+ *   the one part that may need to survive.
  *
- *   One trap a regeneration must not fall into, found the hard way here:
- *
- *   - The server names real inputs POSITIONALLY (inReal, or inReal0/inReal1
- *     when there are several), NOT by the ta_abstract input name. MAVP is the
- *     one function where those differ -- its inputs are named inReal and
- *     inPeriods. Send the YAML name and the server finds no array and computes
- *     on whatever the PREVIOUS request left in its buffer, with no error. That
- *     went undetected here until a case existed whose periods did not saturate
- *     to optInMaxPeriod, because saturated garbage and saturated `high` give
- *     the same answer.
- *
- * GENERATED -- do not hand-edit values. Hand-editing the COMMENTS and the
- *   tolerance table in ta_test_legacy.c is expected and is where the
- *   maintenance lives.
+ *   One trap a regeneration must not fall into: the server names real inputs
+ *   POSITIONALLY (inReal, or inReal0/inReal1), NOT by the ta_abstract input
+ *   name. MAVP is the one function where those differ -- its inputs are inReal
+ *   and inPeriods. Send the declared name and the server finds no array and
+ *   computes on whatever the PREVIOUS request left in its buffer, with no error.
+ *   It stayed undetected until a case existed whose periods did not saturate to
+ *   optInMaxPeriod, because saturated garbage and saturated `high` give the same
+ *   answer.
  */
 
 #ifndef TA_TEST_LEGACY_DATA_H

@@ -499,8 +499,8 @@ static int check_stream_counter_parity( void )
 #define CODEGEN_EPSILON  1e-6   /* float leg (TA_S_*): single-precision noise */
 /* Double-leg cross-language / cross-version tolerance. Tightened from 1e-6 to
  * 1e-9 (issue #113 follow-up): a full-precision measurement of every language
- * server vs the frozen reference showed the real floor is <1e-11 for all 161
- * functions except LINEARREG_ANGLE (~4.4e-10, the authorized #103 recurrence) —
+ * server vs the frozen reference showed the real floor is <1e-11 for every
+ * function except LINEARREG_ANGLE (~4.4e-10, the authorized recurrence) —
  * the %.15g transport was never the limit. Applied as 1e-9 * max(1, |value|). */
 #define CODEGEN_EPSILON_DOUBLE  1e-9
 #define JSON_BUF_SIZE    (128 * 1024)   /* 128KB: enough for OHLCV inputs */
@@ -1440,7 +1440,7 @@ static void compare_codegen_output_generic(
                 /* Double leg, tightened 1e-6 -> 1e-9 (issue #113 follow-up).
                  * A full-precision measurement of every language server against the
                  * frozen reference found the cross-language / cross-version
-                 * divergence is <1e-11 for all 161 functions EXCEPT LINEARREG_ANGLE
+                 * divergence is <1e-11 for every function EXCEPT LINEARREG_ANGLE
                  * (~4.4e-10, the authorized #103 O(1) sliding-sum recurrence vs the
                  * frozen O(n) recompute). The 1e-6 floor was never a transport
                  * limit — the transport contributes <1e-11, and since #257/#258

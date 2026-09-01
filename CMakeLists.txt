@@ -48,19 +48,12 @@ if(NOT MSVC)
     add_compile_options(-ffp-contract=off)
 endif()
 
-# Warnings. The C build enabled none until now, so a clean build proved nothing
-# about dead code -- an uninitialized value reaching persisted stream state
-# (STOCH/STOCHF) and ~860 dead declarations sat unreported. Two are switched
-# back off deliberately:
-#   -Wunused-parameter  every indicator takes the full OHLCV signature whether
-#                       or not it reads all of it; 7 candlesticks legitimately
-#                       ignore an input, and the signature is public API.
-#   -Wunknown-pragmas   `#pragma STDC FP_CONTRACT OFF` (fuzz_data.h) is honored
-#                       by clang/MSVC and ignored by GCC (issue #150). It is
-#                       correct where it works, so keep it and drop the notice.
-# NOT -Werror: this must stay buildable on compilers whose warning sets differ
-# (MSVC and the i386 GCC cross-build both ship from here). Regression-proofing
-# belongs in one CI job, not in everyone's build.
+# Warnings, never -Werror: MSVC and the i386 GCC cross-build ship from here and
+# their warning sets differ. One CI job holds the line instead.
+#   -Wno-unused-parameter  the uniform OHLCV signature is public API; some
+#                          indicators legitimately read only part of it.
+#   -Wno-unknown-pragmas   `#pragma STDC FP_CONTRACT OFF` (fuzz_data.h) is
+#                          honored by clang/MSVC, ignored by GCC (issue #150).
 if(NOT MSVC)
     add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas)
 endif()

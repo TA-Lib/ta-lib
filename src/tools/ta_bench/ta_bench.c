@@ -295,7 +295,7 @@ static void bench_one_function(const TA_FuncInfo *fi, void *opaque) {
 
     /* Collect timing from all active servers.
      * Run 3 passes and keep the minimum per server — eliminates icache noise
-     * from running all 161 indicators back-to-back in one binary. */
+     * from running every indicator back-to-back in one binary. */
     long long ref_ns = 0;
     long long timings[16] = {0};
     long long t_max[16] = {0};

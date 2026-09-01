@@ -49,29 +49,17 @@
 /* Description:
  *
  * DIV's published Notes say: "Zero divided by zero gives NaN; anything else
- * divided by zero gives positive or negative infinity. Neither is reported as
- * an error." That is true by construction in every backend, and no test in any
- * language asserted the VALUE (issue #249). Three gates get close and none
- * arrives:
+ * divided by zero gives positive or negative infinity. Neither is reported as an
+ * error." That is true by construction in every backend, and nothing else
+ * asserts the VALUE: the abstract sweep skips its zero dataset for the Math
+ * group, the fuzz generators map a generic second real input to volume (never
+ * zero), and the finite-output gate EXEMPTS DIV via TA_FUNC_FLG_NAN_INF_OUT --
+ * a permission, not an assertion.
  *
- *   - the abstract sweep's inputZeroData dataset is skipped for the "Math"
- *     group (isMath(), test_abstract.c), so DIV only ever saw inputRandomData;
- *   - the --fuzz-064 / --xlang-hash generators map a generic second real input
- *     to VOLUME, which is 1000.0 + [0,1e6) and never zero -- FUZZ_WITH_ZEROS
- *     included, since that shape zeroes CLOSE, i.e. real0;
- *   - the finite-output gate (#191) EXEMPTS DIV via TA_FUNC_FLG_NAN_INF_OUT,
- *     which is a permission, not an assertion. Nothing ever checked that the
- *     exemption is earned.
- *
- * A fourth does reach a zero divisor, and it matters for reading leg (d)
- * below. test_variants.c's V_REG_ZERO_VOLUME / V_REG_FLAT_ZERO_VOLUME regimes
- * set the whole volume series to 0.0, and its real-input dealer hands a second
- * real input the VOLUME series (the same convention as test_codegen.c) -- so
- * TA_DIV and TA_S_DIV have been fed a +0.0 divisor on every bare ta_regtest run
- * since #137. What that gate takes from it is `rcS == rcD` plus a memcmp of the
- * two variants against EACH OTHER: never TA_SUCCESS, never a value, and two
- * variants wrong the same way pass it. Of the twelve rows below exactly one,
- * "+x / +0 -> +Inf", is data it has already seen.
+ * test_variants.c does feed TA_DIV and TA_S_DIV a +0.0 divisor on every bare
+ * ta_regtest run, but all it takes from that is `rcS == rcD` plus a memcmp of
+ * the two variants against EACH OTHER: never TA_SUCCESS, never a value, and two
+ * variants wrong the same way pass it.
  *
  * What this group pins, on one table covering every sign combination:
  *
@@ -81,36 +69,29 @@
  *       either zero, +/-Inf per the sign rule for a non-zero over a zero.
  *   (c) The controls: a zero NUMERATOR over a non-zero divisor stays a signed
  *       zero, and ordinary quotients are untouched. A guard added to "fix" (b)
- *       would most plausibly over-fire on one of these -- the shape of the IMI
- *       #112 guard, which needed exactly this pair of tests.
- *   (d) TA_S_DIV agrees BIT FOR BIT with TA_DIV here. test_variants.c already
- *       makes that comparison on a +0.0 divisor (above), so what this adds is
- *       the other eleven rows -- every NaN row, both negative-zero divisors,
- *       the negative numerator -- and it adds an oracle: a stated value rather
- *       than the other variant.
+ *       would most plausibly over-fire on one of these.
+ *   (d) TA_S_DIV agrees BIT FOR BIT with TA_DIV, over every row and against a
+ *       stated value rather than against the other variant.
  *   (e) The streaming tier agrees, on BOTH of the loops it emits. `_OpenImpl`
  *       carries its own transcription of the batch body (the warm-up fill) and
- *       `_StepImpl` carries the per-bar one, so a guard added to one is
- *       invisible to the other -- measured: an `_OpenImpl`-only guard on a zero
- *       divisor survives every other assertion in this file. The whole table
- *       therefore goes through OpenAndFill, and again through Peek/Update on a
- *       second handle, and the handle must report having committed every bar.
- *       Neither entry point may reject the bar: both guard their INPUTS with
- *       TA_IS_FINITE and a zero divisor is finite, so a guard mistakenly
- *       widened to the OUTPUT would turn every case here into TA_BAD_PARAM
- *       while every batch assertion above stayed green.
+ *       `_StepImpl` the per-bar one, so a guard added to one is invisible to the
+ *       other -- measured: an `_OpenImpl`-only guard survives every other
+ *       assertion in this file. The whole table therefore goes through
+ *       OpenAndFill, and again through Peek/Update on a second handle, and the
+ *       handle must report having committed every bar. Neither entry point may
+ *       reject the bar: both guard their INPUTS with TA_IS_FINITE and a zero
+ *       divisor is finite, so a guard mistakenly widened to the OUTPUT would
+ *       turn every case here into TA_BAD_PARAM while the batch assertions above
+ *       stayed green.
  *   (f) DIV declares TA_FUNC_FLG_NAN_INF_OUT. (a)-(e) are what makes that
- *       declaration true; this is the other half, so the #191 carve-out cannot
- *       be silently deleted or silently spread.
+ *       declaration true, so the carve-out cannot be silently deleted or spread.
  *
  * Cross-language: each batch call is re-issued through server_verify, which
- * feeds the identical arrays to every running language server (Rust, Java, C#)
- * as lossless hex-of-IEEE-bits and compares a full-precision hash of the raw
- * output bytes against what C produced. That is bit-for-bit, so it covers the
- * NaN PAYLOAD as well as the value -- all four backends emit their host's
- * default NaN because all four reach the same hardware divide. It runs under
- * --codegen only, and the C-only assertions above stand alone in a bare
- * ta_regtest run.
+ * feeds the identical arrays to every running server as lossless
+ * hex-of-IEEE-bits and compares a full-precision hash of the raw output bytes
+ * against C's. Bit-for-bit, so it covers the NaN PAYLOAD as well as the value.
+ * It runs under --codegen only; the C-only assertions above stand alone in a
+ * bare run.
  */
 
 #include <stdio.h>

@@ -6,17 +6,12 @@
 //! [`abstract_rows`](super::abstract_rows), the same rows those two render, so
 //! the three cannot disagree.
 //!
-//! ## Why the server has no table of its own
-//!
 //! `TaCodegenServe.csproj` compiles `../library/src/**/*.cs` directly, so the
-//! JSON-RPC server answers the `ta_abstract` metadata RPCs **out of the shipped
-//! catalogue**. `test_abstract.c` therefore proves the shipped artifact against
-//! the C library, not a test-only copy of it. Java's server still carries a
-//! second, inline table, and that duplicate had silently omitted the
-//! per-parameter `hint` for as long as nothing compared it — the failure mode
-//! this shape avoids by construction. (The hint is compared now, and Java's
-//! table carries it, so the specific instance is closed; the shape that allowed
-//! it is not.)
+//! JSON-RPC server answers the `ta_abstract` RPCs **out of the shipped
+//! catalogue** and `test_abstract.c` proves the shipped artifact against the C
+//! library rather than a test-only copy of it. Java's server still carries a
+//! second, inline table, where a field it omits stays invisible until something
+//! compares it.
 //!
 //! ## Shape notes
 //!
@@ -29,11 +24,11 @@
 //!   the shape a C# consumer expects.
 //! * Dispatch is a pair of delegate thunks emitted **inside the same expression
 //!   as the parameter lists they index**, not a name-keyed `switch` in a
-//!   separate file. Slot agreement is then adjacency rather than a second
-//!   derivation — the class of bug Java's separate `Dispatch.java` can have.
+//!   separate file, so slot agreement is adjacency rather than a second
+//!   derivation.
 //! * Doc comments are required: the shipped csproj sets
 //!   `GenerateDocumentationFile` with `TreatWarningsAsErrors`, so a missing
-//!   `<summary>` on a public member is a build error. The 168 rows live in
+//!   `<summary>` on a public member is a build error. The rows live in
 //!   `private static` factories and so cost none.
 
 use std::collections::HashMap;
