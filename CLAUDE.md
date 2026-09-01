@@ -191,11 +191,11 @@ scripts/build.py servers        # Generate + compile the JSON-RPC language serve
 scripts/build.py regen-check    # The PR gate: regenerating must change nothing
                                 # (cargo + Python only; the same command CI runs)
 scripts/build.py test           # C reference tests only (quick)
+scripts/build.py ta_ref_serve   # The frozen pre-cutover oracle, from the pinned-tag worktree
 scripts/build.py regtest        # Servers (cargo) + C tests + cross-language verification.
-                                # Needs bin/ta_ref_serve to already exist; it does NOT build it,
-                                # so in a fresh worktree this aborts at the oracle. Use
-                                # scripts/regtest.py, which builds ta_ref_serve from the
-                                # pinned-tag reference worktree first.
+                                # Needs bin/ta_ref_serve to already exist; build it with the
+                                # target above. Building the oracle is build.py's job -- nothing
+                                # on a test path repairs what it is about to measure.
 
 # ta_codegen (run from ta_codegen/generator/)
 cargo run -- generate                            # Generate everything, all backends
