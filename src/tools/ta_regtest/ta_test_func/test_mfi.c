@@ -288,8 +288,12 @@ static ErrorNumber test_mfi_oracle( const TA_History *history )
       }
    }
 
-   printf( "  MFI external oracles: %d comparison(s) vs Tulip 0.9.2 + pandas-ta-classic 0.6.52,"
-           " at natural volume and 2^-60 (issue #244)\n", checks );
+   if( checks == 0 )
+   {
+      printf( "\nFail: MFI external-oracle leg compared nothing against Tulip / "
+              "pandas-ta-classic.\n" );
+      return TA_MFI_VACUOUS;
+   }
    return TA_TEST_PASS;
 }
 
@@ -356,9 +360,12 @@ static ErrorNumber test_mfi_scale( const TA_History *history )
       }
    }
 
-   printf( "  MFI scale invariance: %d bit-exact comparison(s) over %d volume scales"
-           " spanning the retired 1.0 threshold (issue #244)\n",
-           compares, (int)NB_MFI_SCALE );
+   if( compares == 0 )
+   {
+      printf( "\nFail: MFI scale-invariance leg made no bit-exact comparison over "
+              "the %d volume scales.\n", (int)NB_MFI_SCALE );
+      return TA_MFI_VACUOUS;
+   }
    return TA_TEST_PASS;
 }
 
@@ -392,7 +399,11 @@ static ErrorNumber test_mfi_range( const TA_History *history )
       }
    }
 
-   printf( "  MFI range: %d value(s) over periods 2..60, all within [0,100]\n", checked );
+   if( checked == 0 )
+   {
+      printf( "\nFail: MFI range leg examined no value over periods 2..60.\n" );
+      return TA_MFI_VACUOUS;
+   }
    return TA_TEST_PASS;
 }
 
@@ -472,7 +483,12 @@ static ErrorNumber test_mfi_empty( void )
       checked++;
    }
 
-   printf( "  MFI empty window: %d case(s) -- flat price and zero volume, each over 24"
-           " price phases -- report 0.0 rather than accumulator residue\n", checked );
+   if( checked == 0 )
+   {
+      printf( "\nFail: MFI empty-window leg reached no flat-price zero-volume "
+              "case, so the accumulator residue it exists to catch was "
+              "unreachable.\n" );
+      return TA_MFI_VACUOUS;
+   }
    return TA_TEST_PASS;
 }

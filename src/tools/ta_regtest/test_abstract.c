@@ -982,7 +982,6 @@ static ErrorNumber abstract_verify_for_each_func( void )
         return TA_ABSTRACT_CALL_MISMATCH;
     }
 
-    printf( "  Abstract for-each parity: %d functions enumerated, all matched\n", nbFromServer );
     return TA_TEST_PASS;
 }
 
@@ -1006,10 +1005,6 @@ ErrorNumber test_abstract_server_metadata( const char *functionFilter )
     g_optHintCompared = 0;
     g_optExtendedCompared = 0;
     TA_ForEachFunc( metaParityCb, &ctx );
-
-    printf( "  Abstract metadata parity: %d functions checked, %d failed"
-            " (%d opt hints, %d opt ranges/lists compared)\n",
-            ctx.checked, ctx.failed, g_optHintCompared, g_optExtendedCompared );
 
     /* A real disagreement outranks the vacuity checks below, and must be
      * reported as itself: letting a dead server fall through to the
@@ -1893,9 +1888,14 @@ static ErrorNumber checkFuncHandleFoldsCase( void )
    if( ctx.nbFailed != 0 )
       return TA_ABS_TST_FAIL_NAME_CASE_FOLD;
 
-   printf( "  Name lookup case fold: %d spellings resolved to their own row, "
-           "%d name(s) stored upper case\n",
-           ctx.nbChecked, ctx.nbCanonical );
+   if( ctx.nbChecked == 0 || ctx.nbCanonical == 0 )
+   {
+      printf( "\nFail: name-lookup case fold resolved %d spelling(s) and %d "
+              "canonical name(s) -- the sweep enumerated nothing.\n",
+              ctx.nbChecked, ctx.nbCanonical );
+      return TA_ABS_TST_FAIL_NAME_CASE_FOLD;
+   }
+
    return TA_TEST_PASS;
 }
 
@@ -1907,8 +1907,6 @@ ErrorNumber test_abstract( void )
    const TA_FuncHandle *handle;
    int i;
    const char *xmlArray;
-
-   printf( "Testing Abstract interface\n" );
 
    retValue = allocLib();
    if( retValue != TA_TEST_PASS )
@@ -2028,9 +2026,6 @@ ErrorNumber test_abstract( void )
    }
    } /* end crefChecksum scope */
 
-   printf( "  Non-finite parameter contract: %lld probe(s) over %lld function(s) "
-           "— every real optional parameter at NaN, +Inf and -Inf, call and lookback\n",
-           g_d2NonFinite, g_d2NonFiniteFuncs );
    /* Literal floors. 24 real parameters x 3 values x 2 assertions (call and
     * lookback) = 144, across the 14 functions that declare one. Derived counts
     * would move with the corpus and let the sweep go quiet unnoticed; these fail
@@ -2046,11 +2041,6 @@ ErrorNumber test_abstract( void )
 
    if( g_abstractPipe )
    {
-      printf( "  Abstract server verification: all calls match C\n" );
-      printf( "  Binder parameter contract (#164): %lld vector(s) driven through both "
-              "binders — %lld non-default, %lld default-sentinel, %lld out-of-range "
-              "(both bounds, integer and real)\n",
-              g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject );
 
       /* Every count is asserted, not merely printed. The whole sweep is built
        * from the declared domains, so a metadata change (a range collapsing, a
@@ -3367,8 +3357,6 @@ static ErrorNumber testHolderStaysReusable( void )
       return TA_ABS_TST_FAIL_HOLDER_NOT_REUSABLE;
    }
 
-   printf( "ParamHolder reuse: a rejected setter leaves the holder computing "
-           "%d unchanged value(s); a correct rebind moves them\n", wantNb );
    return TA_TEST_PASS;
 }
 
@@ -3669,14 +3657,6 @@ static ErrorNumber test_default_calls(void)
       indexRangeNbFuncs = indexRangeNbChecked = 0;
       indexRangeNbAccept = indexRangeNbNoProbe = 0;
       TA_ForEachFunc( testIndexRange, &errNumber );
-      if( errNumber == TA_TEST_PASS )
-         printf( "  Index range (#180): %d case(s) over %d function(s); the "
-                 "startIdx boundary is checked for all, the endIdx boundary for "
-                 "%d (the other %d expose no optional parameter the prologue is "
-                 "certain to reject)\n",
-                 indexRangeNbChecked, indexRangeNbFuncs, indexRangeNbAccept,
-                 indexRangeNbNoProbe );
-
       /* Exact accounting rather than a round floor. Every function runs the six
        * always-applicable rows, and the boundary-accept row either ran or was
        * counted as unprobeable — so these two identities pin the whole table.
@@ -3714,9 +3694,6 @@ static ErrorNumber test_default_calls(void)
                  ioAliasNbChecked );
          errNumber = TA_ABS_TST_FAIL_INPLACE_ALIAS_VACUOUS;
       }
-      if( errNumber == TA_TEST_PASS )
-         printf( "In-place alias gate: %d (input,output) pairs bitwise-verified\n",
-                 ioAliasNbChecked );
    }
 
    /* The ParamHolder error contract -- the refusals, not the successes (#164). */
@@ -3740,14 +3717,6 @@ static ErrorNumber test_default_calls(void)
                  g_holderPriceNullErr, g_holderInputErr, g_holderOutputErr );
          errNumber = TA_ABS_TST_FAIL_HOLDER_CONTRACT_VACUOUS;
       }
-      if( errNumber == TA_TEST_PASS )
-         printf( "ParamHolder error contract: %lld refusals asserted "
-                 "(%lld wrong-type, %lld bad-index, %lld NULL, %lld NULL price "
-                 "component, %lld unbound-input, %lld unbound-output)\n",
-                 g_holderTypeErr + g_holderIndexErr + g_holderNullErr +
-                 g_holderPriceNullErr + g_holderInputErr + g_holderOutputErr,
-                 g_holderTypeErr, g_holderIndexErr, g_holderNullErr,
-                 g_holderPriceNullErr, g_holderInputErr, g_holderOutputErr );
    }
 
    /* A rejected SETTER leaves the holder as it found it (#266). */

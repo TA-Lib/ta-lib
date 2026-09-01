@@ -470,7 +470,7 @@ static int check_stream_counter_parity( void )
 {
     int javaIdx = lang_index_by_name("java");
     int csIdx   = lang_index_by_name("csharp");
-    int i, bad = 0, compared = 0;
+    int i, bad = 0;
 
     if( javaIdx < 0 || csIdx < 0 )
         return 0;
@@ -480,7 +480,6 @@ static int check_stream_counter_parity( void )
         const FuncStreamCounters *r = &g_streamCounters[i];
         if( !r->seen[javaIdx] || !r->seen[csIdx] )
             continue;
-        compared++;
         if( r->legs[javaIdx] != r->legs[csIdx]
             || r->benign[javaIdx] != r->benign[csIdx] )
         {
@@ -491,11 +490,6 @@ static int check_stream_counter_parity( void )
                    r->legs[csIdx], r->benign[csIdx]);
             bad++;
         }
-    }
-    if( compared > 0 )
-    {
-        printf("  Java/C# stream counter parity: %d function(s) compared, "
-               "%d mismatch(es)\n", compared, bad);
     }
     return bad;
 }
@@ -3941,7 +3935,6 @@ static ErrorNumber test_predicate_parity(CodegenPipe *cp, const CodegenLanguage 
             }
         }
     }
-    printf("  Predicate parity (IS_ZERO family): %d values x 3 builtins match the C macro\n", n);
     return TA_TEST_PASS;
 }
 
@@ -4076,8 +4069,6 @@ static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage
             nbChecked++;
         }
     }
-    printf("  Index range (#180): %d case(s) match C's TA_MAX_INDEX contract\n",
-           nbChecked);
     return TA_TEST_PASS;
 }
 
@@ -4177,9 +4168,6 @@ static ErrorNumber test_unstable_wildcard(CodegenPipe *cp, const CodegenLanguage
         }
     }
 
-    printf("  Unstable-period wildcard: set-all reaches EMA (ADOSC outBegIdx %d at "
-           "unstable %d, %d at %d)\n",
-           expected[0], periods[0], expected[1], periods[1]);
     return TA_TEST_PASS;
     #undef UW_NBBAR
     #undef UW_FAST
@@ -4321,8 +4309,6 @@ static ErrorNumber test_unstable_bounds(CodegenPipe *cp, const CodegenLanguage *
             (int)TA_FUNC_UNST_ALL);
     codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE);
 
-    printf("  Unstable-period bounds: %d accepted, %lld and %lld refused with no write\n",
-           (int)TA_MAX_INDEX, rejects[0], rejects[1]);
     return TA_TEST_PASS;
     #undef UB_NBBAR
     #undef UB_FAST
@@ -4394,7 +4380,6 @@ static ErrorNumber test_codegen_for_language(
         printf("\n");
         return errNb;
     }
-    printf("  Server started (pid=%d)\n", cp.child_pid);
 
     /* Allocate reusable JSON buffers */
     char *requestBuf = malloc(JSON_BUF_SIZE);
@@ -4553,9 +4538,6 @@ static ErrorNumber test_codegen_for_language(
             }
         }
 
-        printf("  Ref differential sweep: %d variants across %d functions%s\n",
-               ctx.sweepVariants, ctx.sweepFunctions,
-               ctx.error == TA_TEST_PASS ? ", all match ta_ref_serve" : "");
         if( g_frozenEnumSkips > 0 )
             printf("  post-freeze enums: %lld MAType value(s) > %d excluded vs ta_ref_serve "
                    "(#139, #93, #182; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
@@ -4598,26 +4580,6 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamValueLegs     = 0;
             ctx.streamBenign        = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
-            /* The benign total is printed unconditionally, zero included: the
-             * whole point of counting the +/-0 class rather than ignoring it is
-             * that a change which starts flipping zeros shows up as a number
-             * moving off 0, in a line that is always there to compare against. */
-            printf("  Stream verify: %d functions, %d legs bit-exact vs batch, "
-                   "%d expected-reject probes, %d without a stream, "
-                   "%lld benign signed-zero\n"
-                   "  OpenAndFill verify: %d functions, filled array == batch(0,n-1) bitwise\n"
-                   "  UpdateAndFill verify: %d functions, n bars in one call == batch over the same bars\n"
-                   "  State-equivalence verify: %d functions, %d legs, handle after "
-                   "Open(P)+updates == handle after Open(n) bitwise\n"
-                   "  OutRange verify: %d functions, %d legs across %d of %d compare "
-                   "site(s), the handle's range == the batch range over the same bars\n",
-                   ctx.streamFunctions, ctx.streamLegs, ctx.streamRejectArms,
-                   ctx.streamSkipped, ctx.streamBenign, ctx.streamFillFunctions,
-                   ctx.streamUFillFunctions,
-                   ctx.streamStateFunctions, ctx.streamStateLegs,
-                   ctx.streamRangeFunctions, ctx.streamRangeLegs,
-                   codegen_popcount(ctx.streamRangeSites),
-                   codegen_popcount(ctx.streamRangeSitesAll));
             /* Coverage ratchet: every function with a server stream must ALSO
              * verify OpenAndFill (the emit side and this verify side both gate on
              * the same has_open_and_fill, so they cannot desync silently — but if
@@ -4680,14 +4642,6 @@ static ErrorNumber test_codegen_for_language(
                        "streaming functions\n", lang->name, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
-            if( codegen_lang_has_peek_probe(lang->name) )
-                printf("  Peek non-commit verify: %d functions, %lld peek(s), a peeked "
-                       "handle stays bit-identical to a twin that was not\n",
-                       ctx.streamPeekFunctions, ctx.streamPeekProbes);
-            if( ctx.streamValueFunctions > 0 )
-                printf("  Value accessor verify: %d functions, %lld probe(s), the accessor reports "
-                       "the bar the stream is on at open, after update, and after both fills\n",
-                       ctx.streamValueFunctions, ctx.streamValueLegs);
             if( ctx.error == TA_TEST_PASS && ctx.streamValueFunctions > 0 &&
                 ctx.streamValueFunctions != ctx.streamFunctions )
             {
@@ -4696,10 +4650,6 @@ static ErrorNumber test_codegen_for_language(
                        ctx.streamValueFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
-            if( ctx.streamCloneFunctions > 0 )
-                printf("  Clone independence verify: %d functions, %lld fork(s) driven to "
-                       "the end, fork and original each bit-exact vs batch and each other\n",
-                       ctx.streamCloneFunctions, ctx.streamCloneLegs);
             /* Without this floor a server that stopped peeking reads exactly
              * like one that peeked and passed. */
             if( ctx.error == TA_TEST_PASS && ctx.streamFunctions != 0 &&
@@ -9583,7 +9533,7 @@ ErrorNumber test_codegen(const TA_History *history,
      * parameter) rather than a bare count, so a --function= filter naming only
      * parameterless functions is a legitimate zero rather than a failure. */
     {
-        long sentinelTotal = 0, sentinelEligible = 0;
+        long sentinelEligible = 0;
         for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
         {
             if( g_floatSentinelEligible[li] > 0 && g_floatSentinelWithOutput[li] == 0 )
@@ -9595,7 +9545,6 @@ ErrorNumber test_codegen(const TA_History *history,
                        g_floatSentinelCompared[li]);
                 return TA_CODEGEN_OUTPUT_MISMATCH;
             }
-            sentinelTotal    += g_floatSentinelWithOutput[li];
             sentinelEligible += g_floatSentinelEligible[li];
         }
 
@@ -9681,11 +9630,6 @@ ErrorNumber test_codegen(const TA_History *history,
                 if( total == 0 )
                     continue;               /* language not run */
                 anyLang = 1;
-                printf("  retCode census [%s]:", ALL_LANGUAGES[li].display);
-                for( b = 0; b < RC_BUCKETS; b++ )
-                    if( g_retCodeSeen[li][b] > 0 )
-                        printf(" %s=%ld", RC_NAME[b], g_retCodeSeen[li][b]);
-                printf("\n");
                 if( g_retCodeSeen[li][RC_BUCKETS - 1] > 0 )
                 {
                     printf("\nCODEGEN FAILED: %s answered %ld call(s) with a code outside "
@@ -9767,47 +9711,8 @@ ErrorNumber test_codegen(const TA_History *history,
                     return TA_CODEGEN_OUTPUT_MISMATCH;
                 }
             }
-            {
-                long slackTotal = 0;
-                for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
-                    slackTotal += g_slackCalls[li];
-                if( slackTotal > 0 )
-                    printf("  output bound: %ld call(s) at the produced count + %d "
-                           "(slack is legal), the rest exactly at it\n",
-                           slackTotal, OUT_SLACK_PAD);
-            }
 
-            if( startSweepTotal > 0 )
-            {
-                printf("  startIdx-axis sweep: %ld range(s) with output compared "
-                       "at startIdx > 0", startSweepTotal);
-                if( g_startSweepSkipped98 > 0 )
-                    printf(", %ld withheld (TRIX/NATR partial range — the frozen "
-                           "reference predates issue #98)", g_startSweepSkipped98);
-                printf("\n");
-            }
 
-            /* Printed per language, not as a total: the differential floor
-             * above tests one language against the others, so the numbers it
-             * reads have to be visible. Printed even where the value legs found
-             * plenty, because a produced count of zero is the one answer the
-             * value legs cannot examine. */
-            {
-                long zeroTotal = 0;
-                for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
-                    zeroTotal += g_zeroCountCompared[li];
-                if( zeroTotal > 0 )
-                {
-                    printf("  produced count at zero:");
-                    for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
-                        if( g_codegenCompared[li] > 0 || g_zeroCountCompared[li] > 0 )
-                            printf(" %s=%ld", ALL_LANGUAGES[li].display,
-                                   g_zeroCountCompared[li]);
-                    printf("  (comparison(s), one per output, where C produced nothing "
-                           "and the server's own count was checked against it; no "
-                           "output element is diffed there)\n");
-                }
-            }
         }
 
         /* The per-language floor above is silent when NOTHING is eligible
@@ -9884,12 +9789,6 @@ ErrorNumber test_codegen(const TA_History *history,
         {
             printf("All %d language(s) passed codegen verification (float leg: %ld "
                    "acknowledged comparison(s))\n", langsTested, g_floatLegCompared);
-            printf("  default-sentinel pass: %ld comparison(s) with output over %ld "
-                   "eligible function-language pair(s)", sentinelTotal, sentinelEligible);
-            if( g_floatSentinelEnumWithheld > 0 )
-                printf(", %ld choice-list slot(s) withheld (see "
-                       "codegen_lang_can_pass_enum_sentinel)", g_floatSentinelEnumWithheld);
-            printf("\n");
         }
         else
             printf("All %d language(s) passed codegen verification (no float leg: "

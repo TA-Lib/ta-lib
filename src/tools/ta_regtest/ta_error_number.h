@@ -298,6 +298,7 @@ typedef enum
   TA_TSTCDL_PARAMHOLDERFREE_FAIL = 909,
   TA_TSTCDL_PREDICATE_MISMATCH   = 910,
   TA_TSTCDL_PREDICATE_VACUOUS    = 911,
+  TA_TSTCDL_COVERAGE_SHRANK      = 912,
    
   /* Error code related to test_merge */
   TA_TSTMERGE_AC_ADDFAILED_1          = 1000,
@@ -483,6 +484,13 @@ typedef enum
   TA_STREAM_ADVANCE_SETUP_FAILED     = 1646,
   TA_STREAM_ADVANCE_VACUOUS          = 1647,
   TA_STREAM_ADVANCE_VALUE_NOT_HELD   = 1648,
+
+  /* Coverage counters no other check pins. These groups report nothing on
+   * success, so a count that reached zero is the only remaining way they can
+   * run without comparing anything. */
+  TA_MFI_VACUOUS                     = 1650,
+  TA_CMOU_VACUOUS                    = 1651,
+  TA_MAVP_VACUOUS                    = 1652,
 
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */

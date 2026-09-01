@@ -1170,10 +1170,6 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
               flagged.nb, PB_MIN_FLAGGED );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
-   printf( "\n  Period-1 identity (%s): %d moving average(s) copy their input "
-           "bit-exactly (%u MAType value(s), %d exempt, %d flagged outside the enum)",
-           what, checked, maTypeList->nbElement, exempt, extra );
-
    return TA_TEST_PASS;
 }
 
@@ -1274,8 +1270,6 @@ static ErrorNumber testStreamIdentityAtPeriodOne( const TA_History *hostile )
    errNb = pbCheckSameSeries( "DEMA(1) OpenAndFill", fill, in, nb );
    if( errNb != TA_TEST_PASS ) return errNb;
 
-   printf( "\n  Period-1 streaming copy: EMA and DEMA, Open/Peek/Update/OpenAndFill "
-           "over %d bars of the Sterbenz-hostile series", n );
    return TA_TEST_PASS;
 }
 
@@ -1309,7 +1303,6 @@ static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history )
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   printf( "\n" );
    return TA_TEST_PASS;
 }
 
@@ -1687,11 +1680,6 @@ static ErrorNumber testMacdSignalOneHostile( void )
       }
    }
 
-   printf( "\n  MACD signal=1: contract held on %u shapes x 3 functions; the "
-           "naive step would have lost %d/%d/%d bars\n",
-           (unsigned)(sizeof(pbMacdRuns)/sizeof(pbMacdRuns[0]) *
-                      sizeof(pbMacdLo)/sizeof(pbMacdLo[0])),
-           nbNaive[0], nbNaive[1], nbNaive[2] );
 
    return TA_TEST_PASS;
 }
@@ -2638,9 +2626,6 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
    if( ctx.errNb != TA_TEST_PASS )
       return ctx.errNb;
 
-   printf( "\n  Lookback/call parity: %d case(s) compared over %d swept parameter value(s)\n",
-           ctx.nbLookbackParity, ctx.nbParamTested );
-
    if( ctx.nbParamTested == 0 )
    {
       printf( "\nFail: boundary sweep tested no parameter (enumeration broken?)\n" );
@@ -2669,8 +2654,6 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
                  "value(s)\n", ctx.nbLookbackParityServer, ctx.nbParamTested );
          return TA_REGTEST_OPTIMIZATION_REF_ERROR;
       }
-      printf( "  boundary sweep: %d lookback/batch case(s) compared per server (#256)\n",
-              ctx.nbLookbackParityServer );
    }
 
    /* The period > input-length empty-output contract must be exercised against
@@ -2683,8 +2666,6 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
                  "servers (period>input contract vacuous)\n" );
          return TA_REGTEST_OPTIMIZATION_REF_ERROR;
       }
-      printf( "  boundary sweep: %d empty-output case(s) cross-checked vs servers\n",
-              ctx.nbServerEmpty );
    }
 
    return TA_TEST_PASS;

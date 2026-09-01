@@ -873,21 +873,40 @@ static int pbTotSole, pbTotDisj, pbTotDisjCond, pbTotDisjWaive;
 static int pbTotArmTerm, pbTotArmFlip, pbTotArmWaive;
 static int pbTotMigrated;
 
-/* Print what the gate actually covered. A gate that does not report its own
- * coverage cannot be seen to be shrinking: a waiver count that drifts upward,
- * or a migration that stalls, both look exactly like a green run. */
-static void pb_report_totals( void )
+/* Floors on coverage, ceilings on waivers, all literal. The gate says nothing on
+ * success, so these are what keep it from shrinking unnoticed: a migration that
+ * stalls trips a floor, a waiver count that drifts upward trips a ceiling.
+ * Moving one is a deliberate edit. */
+static ErrorNumber pb_check_totals( void )
 {
-   printf("  MC/DC: %d function(s), %d condition(s) declared, %d detect(s), "
-          "%d flipped, %d control(s), %d waived\n",
-          pbTotMigrated, pbTotCond, pbTotDetect, pbTotFlip, pbTotControl,
-          pbTotWaive);
-   printf("  MC/DC disjuncts: %d alternative(s) inside %d condition(s), "
-          "%d sole-true case(s), %d waived\n",
-          pbTotDisj, pbTotDisjCond, pbTotSole, pbTotDisjWaive);
-   printf("  MC/DC arm terms: %d term(s) inside those alternatives, "
-          "%d attributed flip(s), %d waived\n",
-          pbTotArmTerm, pbTotArmFlip, pbTotArmWaive);
+   const struct { const char *what; int got, bound, ceiling; } chk[] = {
+      { "functions migrated",    pbTotMigrated,   61, 0 },
+      { "conditions declared",   pbTotCond,      381, 0 },
+      { "detects",               pbTotDetect,     97, 0 },
+      { "flips",                 pbTotFlip,      445, 0 },
+      { "controls",              pbTotControl,   384, 0 },
+      { "waivers",               pbTotWaive,      20, 1 },
+      { "disjunct alternatives", pbTotDisj,       18, 0 },
+      { "disjunct conditions",   pbTotDisjCond,    8, 0 },
+      { "sole-true cases",       pbTotSole,       18, 0 },
+      { "disjunct waivers",      pbTotDisjWaive,   2, 1 },
+      { "arm terms",             pbTotArmTerm,   138, 0 },
+      { "arm flips",             pbTotArmFlip,   103, 0 },
+      { "arm waivers",           pbTotArmWaive,   32, 1 },
+   };
+   size_t i;
+
+   for( i = 0; i < sizeof(chk)/sizeof(chk[0]); i++ )
+      if( chk[i].ceiling ? chk[i].got > chk[i].bound
+                         : chk[i].got < chk[i].bound )
+      {
+         printf( "\nFail: MC/DC %s: %d against the %d it was written with -- "
+                 "coverage moved the wrong way.\n",
+                 chk[i].what, chk[i].got, chk[i].bound );
+         return TA_TSTCDL_COVERAGE_SHRANK;
+      }
+
+   return TA_TEST_PASS;
 }
 
 /* The body shared by pb_check_mcdc and pb_check_mcdc_p -- everything past
@@ -1092,11 +1111,7 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
                   { found = 1; break; }
             for( w = 0; w < pbNdw && !found; w++ )
                if( pbDwCond[w] == c && pbDwK[w] == j )
-               {
                   found = 1;
-                  printf("  %s MC/DC disjunct waiver c%d alt%d: %s\n",
-                         name, c, j, pbDwWhy[w]);
-               }
             if( !found )
             {
                printf("  %s MC/DC: c%d alternative %d has no sole-true case and "
@@ -1144,11 +1159,7 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
                       pbEarm[k] == a && pbEconj[k] == j ) { found = 1; break; }
                for( w = 0; w < pbNaw && !found; w++ )
                   if( pbAwCond[w]==c && pbAwArm[w]==a && pbAwJ[w]==j )
-                  {
                      found = 1;
-                     printf("  %s MC/DC arm waiver c%d alt%d term%d: %s\n",
-                            name, c, a, j, pbAwWhy[w]);
-                  }
                if( !found )
                {
                   printf("  %s MC/DC: c%d alt%d term %d has no attributed flip "
@@ -1330,9 +1341,6 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
                    name, pbWcond[k], pbNbCond-1);
             fails++;
          }
-         /* Printed, not just stored: a waiver is a claim, and a claim nobody
-          * can see is a claim nobody can refute. */
-         printf("  %s MC/DC waiver c%d: %s\n", name, pbWcond[k], pbWhy[k]);
       }
       for( k=0; k<pbNbCond; k++ )
       {
@@ -11176,8 +11184,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_xsidegap3methods(); e = pb_check_mcdc("CDLXSIDEGAP3METHODS", TA_CDLXSIDEGAP3METHODS, cond_xsidegap3methods); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_concealbabyswall(); e = pb_check_mcdc("CDLCONCEALBABYSWALL", TA_CDLCONCEALBABYSWALL, cond_concealbabyswall); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3outside();        e = pb_check_mcdc("CDL3OUTSIDE",         TA_CDL3OUTSIDE,         cond_3outside);        if( e != TA_TEST_PASS ) return e;
-   pb_report_totals();
-   return TA_TEST_PASS;
+   return pb_check_totals();
 }
 
 /* Push one matrix row into the library. Fails loudly rather than skipping: a
@@ -11538,13 +11545,7 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
    if( restoredMismatch )
       return TA_CDLSET_NOT_RESTORED;
 
-   printf( "  Candle settings matrix: %u row(s) x %u function(s), %d call(s), "
-           "%d moved (%d by value, %d on a non-zero output), %d setting(s) "
-           "pushed to the language servers\n",
-           (unsigned int)NB_CDL_GLOBALS, (unsigned int)NB_TEST, calls, moved,
-           valueMoved, nonZeroPairs, server_verify_candle_syncs() - syncsBefore );
-
-   /* Per-setting coverage. Without this the totals above can be carried
+   /* Per-setting coverage. Without this the totals asserted below can be carried
     * entirely by two or three popular settings while the rest are inert. */
    {
       static const char *SETTING_NAME[] = {
@@ -11555,10 +11556,6 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
       errNb = cdl_setting_coverage( history, perSetting );
       if( errNb != TA_TEST_PASS )
          return errNb;
-      printf( "  Candle settings matrix, per setting:" );
-      for( st = 0; st < (int)TA_AllCandleSettings; st++ )
-         printf( " %s=%d", SETTING_NAME[st], perSetting[st] );
-      printf( "\n" );
       for( st = 0; st < (int)TA_AllCandleSettings; st++ )
       {
          /* BodyVeryLong is exempt BY MEASUREMENT, not by convenience: it is in
@@ -11578,11 +11575,11 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
    /* Non-vacuity. A row that never changes an output, or settings that never
     * reach the servers, would let this whole sweep pass while comparing every
     * language at the defaults -- the exact hole #216 was filed for. */
-   if( moved == 0 || valueMoved == 0 || nonZeroPairs == 0 )
+   if( calls == 0 || moved == 0 || valueMoved == 0 || nonZeroPairs == 0 )
    {
       printf( "Failed: the candle settings matrix is vacuous "
-              "(%d moved, %d by value, %d on a non-zero output)\n",
-              moved, valueMoved, nonZeroPairs );
+              "(%d call(s), %d moved, %d by value, %d on a non-zero output)\n",
+              calls, moved, valueMoved, nonZeroPairs );
       return TA_CDLSET_VACUOUS_NO_MOVE;
    }
    if( server_verify_active() && server_verify_candle_syncs() == syncsBefore )

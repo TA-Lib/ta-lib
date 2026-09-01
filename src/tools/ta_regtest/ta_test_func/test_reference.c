@@ -168,8 +168,6 @@ ErrorNumber test_func_reference( TA_History *history )
               (int)REF_EXPECTED_GOLDEN, (int)REF_EXPECTED_OTHER );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
-   printf( "\n  Reference battery (#251): %d checks (baked goldens, datasets, RNG streams)\n",
-           ref_comparisons );
 
    return TA_TEST_PASS;
 }

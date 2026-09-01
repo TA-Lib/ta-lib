@@ -8,6 +8,14 @@ ta_regtest validates TA-Lib indicator implementations. It has two modes:
 
 2. **Codegen verification** — tests the generated indicator implementations (from ta_codegen) across all languages by driving JSON-RPC servers. Compares each language's output against the C reference.
 
+## Output contract
+
+A passing run prints one `<group>: Testing....done.` line per group and nothing
+else. Coverage counters are **asserted, not printed**: a gate that ran but
+compared nothing fails on its own floor — or, for a waiver count, its ceiling —
+rather than reporting a number nobody reads. When you add coverage, add the
+assert; a green run has no other output to add a line to.
+
 ## CLI Flags
 
 | Flag | Description |
@@ -286,7 +294,7 @@ Three properties keep the sweep from passing vacuously:
 * **A missing server is a hard failure when its language was named.**
   `--language=csharp` on a box with no .NET SDK used to print a skip and exit 0.
 * **`ctx.checked == 0` fails**, and on an unfiltered run so does comparing zero
-  opt-level hints or zero ranges — the counts are printed *and* asserted.
+  opt-level hints or zero ranges.
 * **`if( crefOpt->dataSet )` is counted.** That branch silently skips five field
   comparisons; `g_optExtendedCompared` makes "we compared all the ranges"
   distinguishable from "we looked at none".
@@ -313,8 +321,8 @@ same vector, so this compares two binders rather than one against its own oracle
 Two self-checks keep it honest, mirroring `--xlang-hash`'s `oorNotRejected` /
 `sentNotDefault`: an out-of-range probe C *accepts* is not out of range, and a
 sentinel is asserted against the all-defaults result rather than only against the
-server — otherwise both tiers could be wrong together. All four counts are printed
-and asserted non-zero.
+server — otherwise both tiers could be wrong together. All four counts are
+asserted non-zero.
 
 Opt-level `hint` is compared too. For a bespoke descriptor that is a genuine
 YAML-vs-C check. For the ~80 slots folded onto a predefined `TA_DEF_UI_*` it is
@@ -359,11 +367,10 @@ Sabotage-proven to catch what nothing caught before: `-999.0` in **guarded**
 generator widens via an explicit `(double)` in the `TA_S_` bodies and which still
 handles the in-place `out == in` case from #94.
 
-The gate prints its coverage and asserts it non-zero, so it cannot pass by
-silently doing nothing. The counter that matters is `nbOutputCmp`, incremented
-**at the memcmp itself** — a counter bumped before the comparisons and
-independently of them lets a deleted comparison leave the summary printing
-byte-identical numbers while the gate checks strictly less.
+The gate asserts its coverage non-zero, so it cannot pass by silently doing
+nothing. The counter that matters is `nbOutputCmp`, incremented **at the memcmp
+itself** — a counter bumped before the comparisons and independently of them
+would still satisfy the assert while the gate checks strictly less.
 
 ## The float leg — the same contract, in Java and C# (issue #170)
 
@@ -581,9 +588,10 @@ implementation of that family can match it everywhere. Bit identity is therefore
 
 So **cross-tier** comparisons — stream vs batch, and OpenAndFill's array vs batch
 — count "different bits, numerically equal" as **benign** instead of failing:
-`stream_verify` returns it per request as `benign`, the driver sums it into the
-`Stream verify:` line (printed even at 0, so a change that starts flipping zeros
-shows as a number moving) and names each function on a `BENIGN TA_x` line. Same
+`stream_verify` returns it per request as `benign`, the driver sums it and names
+each function on a `BENIGN TA_x` line. The total is no longer printed, so a
+change that starts flipping zeros is visible only through those per-function
+lines. Same
 class `--fuzz-064` already carries — `a == b` with differing bits can only be
 ±0 — where dev lands 28 `TA_MIDPOINT` cases against v0.6.4.
 
@@ -734,8 +742,8 @@ forcing it to a constant 1 passed under that rule and failed under min/max at
 index 7. It has since left the freeze for the libm reason above, but the rule it
 exposed is what keeps the candlestick pins honest.
 
-**Non-vacuity.** The group prints and asserts what it actually compared —
-counters incremented *at* each comparison, never from `nbSample`. It fails if the
+**Non-vacuity.** The group asserts what it actually compared — counters
+incremented *at* each comparison, never from `nbSample`. It fails if the
 comparison count does not equal the table's own total (a silently skipped sample),
 if any case missed the shape check, or if the table has shrunk below the literal
 `LEGACY_FLOOR_*` counts it was frozen with. The floors are literal rather than

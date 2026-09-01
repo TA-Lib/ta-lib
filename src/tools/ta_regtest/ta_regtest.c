@@ -126,6 +126,25 @@ static int svLanguageEnabled( const char *filter, const char *name )
    return 0;
 }
 
+/* The tag a group is declared with is the `--function=` filter key, so it spells
+ * out every function it covers and can run to any length. What gets printed is
+ * width-bounded instead, so the "Testing" column lines up: a group whose tag
+ * overflows gives a short label saying what it covers, and anything still too
+ * long is cut with an ellipsis rather than pushing the column right. */
+#define TAG_W 50
+
+static const char *displayTag( const char *tag, const char *label )
+{
+   static char buf[TAG_W+1];
+   const char *s = label ? label : tag;
+
+   if( strlen(s) <= TAG_W )
+      return s;
+   memcpy( buf, s, TAG_W-3 );
+   memcpy( buf+TAG_W-3, "...", 4 );
+   return buf;
+}
+
 /**** Global functions definitions.   ****/
 int main( int argc, char **argv )
 {
@@ -255,12 +274,18 @@ int main( int argc, char **argv )
    }
 
    /* Test utility like List/Stack/Dictionary/Memory Allocation etc... */
+   printf( "%*s: Testing....", TAG_W, "Utility functions" );
+   fflush(stdout);
+   showFeedback();
    retValue = test_internals();
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed an internal test with code=%d\n", retValue );
       return retValue;
    }
+   hideFeedback();
+   printf( "done.\n" );
+   fflush(stdout);
 
    /* A server that will not start is only a legitimate skip when the caller
     * did not ask for that language. `--language=csharp` on a box without the
@@ -285,7 +310,12 @@ int main( int argc, char **argv )
 
    /* Test abstract interface.
     * When codegen mode is active, also verify each call against the server.
+    * The line covers the whole phase, cross-language legs included, so it closes
+    * at the retValue check below rather than at test_abstract() itself.
     */
+   printf( "%*s: Testing....", TAG_W, "Abstract interface" );
+   fflush(stdout);
+   showFeedback();
    {
       CodegenPipe abstractPipe;
       int abstractPipeOpen = 0;
@@ -316,7 +346,6 @@ int main( int argc, char **argv )
          {
             test_abstract_set_server(&abstractPipe, "c");
             abstractPipeOpen = 1;
-            printf( "  (with server verification)\n" );
             /* The control arm. C's server answers the metadata RPCs from the
              * very ta_abstract this compares against, so a failure here is a
              * defect in the comparator, not in a backend — which is what makes
@@ -367,7 +396,6 @@ int main( int argc, char **argv )
          if( codegen_pipe_open(&rustAbstractPipe, rustArgv) == TA_TEST_PASS )
          {
             ErrorNumber e;
-            printf( "Testing Abstract metadata parity (Rust server vs C)\n" );
             test_abstract_set_server(&rustAbstractPipe, "rust");
             e = test_abstract_server_metadata(functionFilter);
             /* Full dynamic-dispatch path (abstract_call / abstract_get_lookback /
@@ -375,7 +403,6 @@ int main( int argc, char **argv )
              * VALUES to the C for every function. */
             if( e == TA_TEST_PASS )
             {
-               printf( "Testing Abstract dynamic dispatch (Rust server vs C)\n" );
                e = test_abstract();
             }
             test_abstract_set_server(NULL, NULL);
@@ -403,12 +430,10 @@ int main( int argc, char **argv )
       if( codegen_pipe_open(&javaAbstractPipe, javaArgv) == TA_TEST_PASS )
       {
          ErrorNumber e;
-         printf( "Testing Abstract metadata parity (Java server vs C)\n" );
          test_abstract_set_server(&javaAbstractPipe, "java");
          e = test_abstract_server_metadata(functionFilter);
          if( e == TA_TEST_PASS )
          {
-            printf( "Testing Abstract dynamic dispatch (Java server vs C)\n" );
             e = test_abstract();
          }
          test_abstract_set_server(NULL, NULL);
@@ -440,12 +465,10 @@ int main( int argc, char **argv )
       if( codegen_pipe_open(&csharpAbstractPipe, csharpArgv) == TA_TEST_PASS )
       {
          ErrorNumber e;
-         printf( "Testing Abstract metadata parity (C# server vs C)\n" );
          test_abstract_set_server(&csharpAbstractPipe, "csharp");
          e = test_abstract_server_metadata(functionFilter);
          if( e == TA_TEST_PASS )
          {
-            printf( "Testing Abstract dynamic dispatch (C# server vs C)\n" );
             e = test_abstract();
          }
          test_abstract_set_server(NULL, NULL);
@@ -462,9 +485,12 @@ int main( int argc, char **argv )
 
    if( retValue != TA_TEST_PASS )
    {
-      printf( "Failed: Abstract interface Tests (error number = %d)\n", retValue );
+      printf( "\nFailed: Abstract interface Tests (error number = %d)\n", retValue );
       return retValue;
    }
+   hideFeedback();
+   printf( "done.\n" );
+   fflush(stdout);
 
    /* Perform all regresstions tests (except when ta_regtest is executed for profiling only). */
    if( !doExtensiveProfiling )
@@ -527,8 +553,6 @@ int main( int argc, char **argv )
                for( p = 0; p < nbSvPipes; p++ )
                   pipes[p] = &svPipes[p];
                server_verify_init(pipes, svPipeLang, nbSvPipes);
-               printf( "  (hand-written tests verified against %d language server(s))\n",
-                       nbSvPipes );
             }
          }
 
@@ -553,11 +577,14 @@ int main( int argc, char **argv )
             return retValue;
       }
 
-      if( insufficientClockPrecision != 0 )
+      /* Only when -p asked for a profile. The per-call timing accumulates on
+       * every run, so ungated this reports a profile nobody requested -- or, on
+       * a platform whose clock cannot resolve one call, warns about it. */
+      if( doExtensiveProfiling && insufficientClockPrecision != 0 )
       {
    	   printf( "\nWarning: Code profiling not supported for this platform.\n" );
       }
-      else if( nbProfiledCall > 0 )
+      else if( doExtensiveProfiling && nbProfiledCall > 0 )
       {
          printf( "\nNumber profiled function call       = %d function calls", nbProfiledCall );
 
@@ -718,17 +745,16 @@ static ErrorNumber testTAFunction_ALL( void )
                                      "unused arrays are NULL" contract so readers
                                      (test_variants.c build_regime) can trust it */
 
-   printf( "Testing the TA functions\n" );
-
    initGlobalBuffer();
 
    /* Make tests for each TA functions. */
-   #define DO_TEST(func,str) \
+   #define DO_TEST(func,str) DO_TEST_LBL(func,str,NULL)
+   #define DO_TEST_LBL(func,str,label) \
       { \
       if( matchesFilter(functionFilter, str) ) \
       { \
          nbGroupsRun++; \
-         printf( "%50s: Testing....", str ); \
+         printf( "%*s: Testing....", TAG_W, displayTag(str,label) ); \
          fflush(stdout); \
          showFeedback(); \
          TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
@@ -740,19 +766,23 @@ static ErrorNumber testTAFunction_ALL( void )
          fflush(stdout); \
       } \
       }
-   DO_TEST( test_func_1in_1out, "MATH,VECTOR,DCPERIOD/PHASE,TRENDLINE/MODE,"
-                                "HT_DCPERIOD,HT_DCPHASE,HT_TRENDLINE,HT_TRENDMODE,MEDPRICE" );
-   DO_TEST( test_func_ma,       "All Moving Averages,"
-                                "SMA,EMA,WMA,DEMA,TEMA,TRIMA,KAMA,MAMA,T3,MA" );
+   DO_TEST_LBL( test_func_1in_1out, "MATH,VECTOR,DCPERIOD/PHASE,TRENDLINE/MODE,"
+                                "HT_DCPERIOD,HT_DCPHASE,HT_TRENDLINE,HT_TRENDMODE,MEDPRICE",
+                                "Math, vector, Hilbert Transforms, MEDPRICE" );
+   DO_TEST_LBL( test_func_ma,   "All Moving Averages,"
+                                "SMA,EMA,WMA,DEMA,TEMA,TRIMA,KAMA,MAMA,T3,MA",
+                                "All Moving Averages (SMA..T3, MA)" );
    DO_TEST( test_func_wma,      "WMA,HMA/RESEED" );
    DO_TEST( test_func_per_hl,   "AROON,AROONOSC,CORREL,BETA,MIDPRICE" );
    DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC,NATR,ACCBANDS,WAD" );
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
    DO_TEST( test_func_rsi,      "RSI,CMO" );
    DO_TEST( test_func_imi, "IMI" );
-   DO_TEST( test_func_minmax,   "MIN,MAX,MININDEX,MAXINDEX,MINMAX,MINMAXINDEX,MIDPOINT" );
+   DO_TEST_LBL( test_func_minmax, "MIN,MAX,MININDEX,MAXINDEX,MINMAX,MINMAXINDEX,MIDPOINT",
+                                "Rolling min/max family, MIDPOINT" );
    DO_TEST( test_func_po,       "PO,APO,PPO" );
-   DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX,PLUS_DI,PLUS_DM,MINUS_DI,MINUS_DM" );
+   DO_TEST_LBL( test_func_adx,  "ADX,ADXR,DI,DM,DX,PLUS_DI,PLUS_DM,MINUS_DI,MINUS_DM",
+                                "Wilder Directional Movement (ADX/DI/DM)" );
    DO_TEST( test_func_sar,      "SAR,SAREXT" );
    DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
@@ -768,7 +798,8 @@ static ErrorNumber testTAFunction_ALL( void )
     * table took test_func_stddev down first and the one diagnostic that would
     * name the real cause never ran -- the leg would have been silent in exactly
     * the case it exists for. */
-   DO_TEST( test_func_reference, "REFERENCE,GOLDEN,ORACLE,NUMERICS" );
+   DO_TEST_LBL( test_func_reference, "REFERENCE,GOLDEN,ORACLE,NUMERICS",
+                                "Statistical reference: NIST StRD, Wilkinson" );
    DO_TEST( test_func_stddev,   "STDDEV,VAR" );
    /* CORREL numerical robustness (#242). Separate from the per_hl group so the
     * probes can be reached on their own; --function=CORREL matches both. */
@@ -781,8 +812,9 @@ static ErrorNumber testTAFunction_ALL( void )
     * stability_class(). This file adds the reference datasets and the
     * arbitrary-value goldens, and does NOT subsume either -- no leg here exceeds
     * period 60. */
-   DO_TEST( test_func_linearreg,
-            "LINEARREG,LINEARREG_SLOPE,LINEARREG_ANGLE,LINEARREG_INTERCEPT,TSF" );
+   DO_TEST_LBL( test_func_linearreg,
+            "LINEARREG,LINEARREG_SLOPE,LINEARREG_ANGLE,LINEARREG_INTERCEPT,TSF",
+            "Linear regression family, TSF" );
    DO_TEST( test_func_avgdev,   "AVGDEV" );
    DO_TEST( test_func_bbands,   "BBANDS" );
    DO_TEST( test_func_period_boundary, "PERIOD1/BOUNDARY" );
@@ -814,11 +846,13 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_cmou,      "CMOU" );
    DO_TEST( test_func_variants,  "TA_S_,VARIANT" );
    DO_TEST( test_candle_precision, "CDLDOJI,CANDLE,VARIANT,PRECISION" );
-   DO_TEST( test_func_rolling_extremum,
-            "MIN,MAX,MINMAX,MIDPOINT,MIDPRICE,WILLR,ROLLING,BLOCKSCAN" );
+   DO_TEST_LBL( test_func_rolling_extremum,
+            "MIN,MAX,MINMAX,MIDPOINT,MIDPRICE,WILLR,ROLLING,BLOCKSCAN",
+            "Rolling extremum block scan" );
    DO_TEST( test_func_legacy,    "LEGACY,064,FROZEN" );
-   DO_TEST( test_func_stream_finite,
-            "SMA,MINUS_DI,MA,MAVP,BBANDS,STOCH,CDLDOJI,STREAM,FINITE" );
+   DO_TEST_LBL( test_func_stream_finite,
+            "SMA,MINUS_DI,MA,MAVP,BBANDS,STOCH,CDLDOJI,STREAM,FINITE",
+            "Streaming finite-input gate" );
 
    /* A filter that matched nothing must not read as success. The group tags are
     * hand-maintained and cover far fewer names than the library exports, so a

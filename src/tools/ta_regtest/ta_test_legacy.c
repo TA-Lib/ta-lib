@@ -460,11 +460,6 @@ static ErrorNumber check_coverage( void )
 
    funcs = legacy_distinct_funcs();
 
-   printf( "  Frozen v0.6.4 reference: %ld value(s) over %d case(s) / %d "
-           "function(s); %ld real, %ld integer, %ld shape\n",
-           g_legacyRealCmp + g_legacyIntCmp, (int)g_legacyShapeCmp, funcs,
-           g_legacyRealCmp, g_legacyIntCmp, g_legacyShapeCmp );
-
    if( g_legacyRealCmp + g_legacyIntCmp != expected )
    {
       printf( "Fail: compared %ld value(s) but the table carries %ld. A sample "
@@ -500,8 +495,6 @@ ErrorNumber test_func_legacy( TA_History *history )
    int          i;
    unsigned int savedUnst[TA_FUNC_UNST_COUNT];
    unsigned int u;
-
-   printf( "Testing frozen v0.6.4 reference values (#188)\n" );
 
    if( history->nbBars != 252 )
    {

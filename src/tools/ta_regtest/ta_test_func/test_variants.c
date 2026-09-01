@@ -299,18 +299,16 @@ ErrorNumber test_func_variants( TA_History *history )
 
    /* Non-vacuity. A gate that silently compared nothing is worse than no gate:
     * it reads as coverage. Fail on zero rather than printing a cheerful zero. */
-   if( ctx.nbFunc == 0 || ctx.nbCompare == 0 || ctx.nbValueCmp == 0 ||
-       ctx.nbOutputCmp == 0 )
+   if( ctx.nbFunc == 0 || ctx.nbVector == 0 || ctx.nbCompare == 0 ||
+       ctx.nbValueCmp == 0 || ctx.nbOutputCmp == 0 )
    {
-      printf( "\nVariant gate Fail: vacuous run (%ld functions, %ld comparisons, "
-              "%ld of them with output elements, %ld output memcmp(s))\n",
-              ctx.nbFunc, ctx.nbCompare, ctx.nbValueCmp, ctx.nbOutputCmp );
+      printf( "\nVariant gate Fail: vacuous run (%ld functions, %ld vectors, "
+              "%ld comparisons, %ld of them with output elements, "
+              "%ld output memcmp(s))\n",
+              ctx.nbFunc, ctx.nbVector, ctx.nbCompare, ctx.nbValueCmp,
+              ctx.nbOutputCmp );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
-
-   printf( "\n  Variant parity: %ld functions x %ld vectors, %ld TA_/TA_S_ "
-           "comparisons (%ld with output, %ld output memcmp(s)), bit-identical\n",
-           ctx.nbFunc, ctx.nbVector, ctx.nbCompare, ctx.nbValueCmp, ctx.nbOutputCmp );
    (void)nbDelegating;
 
    return TA_TEST_PASS;
@@ -422,9 +420,6 @@ ErrorNumber test_candle_precision( TA_History *history )
               " range in double, not float.\n", outD[0], outS[0] );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
-
-   printf( "\n  Candle precision (issue #138): CDLDOJI TA_/TA_S_ parity on a high/low"
-           " span past the float ULP -- bit-identical (out=%d)\n", outD[0] );
 
    return TA_TEST_PASS;
 }

@@ -1250,8 +1250,6 @@ ErrorNumber test_func_stream_finite( TA_History *history )
     * every tier's warm-up, and values it can poison in place. */
    (void)history;
 
-   printf( "Testing streaming non-finite input rejection\n" );
-
    sf_build_series();
    sfBarRejects = sfStateHolds = sfParamRejects = 0;
    sfUfRejects = sfUfCommits = sfUfValues = sfUfCanaries = sfUfGuards = 0;
@@ -1275,22 +1273,6 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    if( ( errNb = sf_uf_guards()  ) != TA_TEST_PASS ) return errNb;
 
    if( ( errNb = sf_advance()    ) != TA_TEST_PASS ) return errNb;
-
-   printf( "  Streaming finite-input gate: %d bar rejection(s), "
-           "%d state-unchanged compare(s), %d NaN-parameter rejection(s)\n",
-           sfBarRejects, sfStateHolds, sfParamRejects );
-   printf( "  UpdateAndFill partial-commit gate: %d rejection(s), %d control "
-           "rejection(s), %d range compare(s), %d value compare(s), "
-           "%d untouched slot(s), %d argument answer(s)\n",
-           sfUfRejects, sfUfCtrlRejects, sfUfCommits, sfUfValues,
-           sfUfCanaries, sfUfGuards );
-   printf( "  Rejected-Update advance gate (U3, absolute): %d rejection(s) "
-           "counted once, %d untouched output(s), %d resumed bar(s), "
-           "%d value(s) produced, %d Peek(s) that moved nothing, "
-           "%d Value read(s) held across the rejection, "
-           "%d Value read(s) tracking the next good bar\n",
-           sfAdvRejects, sfAdvHolds, sfAdvResumes, sfAdvValues,
-           sfAdvPeekStills, sfAdvValueHolds, sfAdvValueTracks );
 
    /* Non-vacuity. The floors are literal, not derived from the loops above: a
     * count computed from the trip count moves with it, and would let half the

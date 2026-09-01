@@ -105,7 +105,6 @@ ErrorNumber test_internals( void )
 {
    ErrorNumber retValue;
 
-   printf( "Testing utility functions\n" );
 
    retValue = testCircularBuffer();
    if( retValue != TA_TEST_PASS )
@@ -497,11 +496,6 @@ static ErrorNumber testStreamShortHistory( void )
          shUpper++;
       }
    }
-
-   printf( "  Streaming short history (S7): %d rejection(s) reporting "
-           "TA_INSUFFICIENT_HISTORY, %d control(s)\n", shShort, shControl );
-   printf( "  Streaming history upper bound (S2): %d rejection(s)\n", shUpper );
-   printf( "  Streaming empty history (S1): %d rejection(s)\n", shEmpty );
 
    /* Literal floors, not derived from the cases above: a count computed from the
     * loop would move with a deleted case and still "pass". */
@@ -1087,14 +1081,6 @@ static ErrorNumber testBatchArgumentContract( void )
       }
       u6aFill++;
    }
-
-   printf( "  Declined output at UpdateAndFill (U6a): %d check(s)\n", u6aFill );
-
-   printf( "  Batch argument contract (B4): %d rejection(s), %d control(s)\n",
-           bacReject, bacAccept );
-
-   printf( "  Streaming argument contract (S4): %d rejection(s), %d control(s)\n",
-           s4Reject, s4Accept );
 
    /* Literal floors: a count derived from the cases above would move with a
     * deleted case and still pass. */

@@ -879,10 +879,6 @@ static ErrorNumber quOracleLeg( const TA_History *history )
       return TA_QUOTE_UNIT_VACUOUS;
    }
 
-   printf( "  Quote-unit oracle (issue #253): %d function(s) at 2^%d -- where the old"
-           " library returned 0 -- match an implementation outside this library"
-           " (pandas-ta-classic 0.6.52, or the published formula).\n",
-           checks, QU_ORACLE_EXP );
    return TA_TEST_PASS;
 }
 
@@ -963,18 +959,6 @@ ErrorNumber test_func_quote_unit( TA_History *history )
               ctx.degreeSeen[6] );
       return TA_QUOTE_UNIT_VACUOUS;
    }
-
-   printf( "  Quote-unit invariance (issue #253): %d function(s) x %d series x %d"
-           " power-of-two rescale(s) on 2 axes -- %d bit-exact comparison(s),"
-           " %d skipped past the normal range, %d exempt; %d also swept at the"
-           " minimum of every integer parameter.\n",
-           ctx.nbFunc, QU_NB_SERIES, QU_NB_SCALE, ctx.nbCompare,
-           ctx.nbSkipped, ctx.nbExempt, ctx.nbMinParams );
-   printf( "  Quote-unit range: %d value(s) inside the documented bounds of %d"
-           " bounded output(s) at every rung.\n", ctx.nbRangeCheck, QU_NB_RANGE );
-   printf( "  Quote-unit known open (#253): %s still divide by a moving average guarded"
-           " with the fixed band; both confirmed still failing, so the entry cannot rot"
-           " into a silent pass.\n", "PPO and PVO" );
 
    return TA_TEST_PASS;
 }

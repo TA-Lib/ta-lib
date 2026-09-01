@@ -564,8 +564,6 @@ ErrorNumber test_func_div_zero( TA_History *history )
               DZ_N, g_dzChecked, DZ_FLOOR_CASES, DZ_FLOOR_CHECKS );
       return TA_DIVZERO_VACUOUS;
    }
-   printf( "\n  DIV zero divisor: %d value(s) over %d sign case(s), "
-           "batch + sub-range + TA_S_ + both stream loops\n", g_dzChecked, DZ_N );
 
    return TA_TEST_PASS;
 }

@@ -344,9 +344,12 @@ ErrorNumber test_func_mavp( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
-   printf( "\n  MAVP grouping: %d MAType(s) from the generated ta_abstract list,"
-           " each shape at unstable 0 and 7%s\n", mvNbTypes,
-           server_verify_active() ? " (both cross-language)" : "" );
+   if( mvNbTypes == 0 )
+   {
+      printf( "\nFail: MAVP grouping swept no MAType -- the generated ta_abstract "
+              "list came back empty, so every shape above compared nothing.\n" );
+      return TA_MAVP_VACUOUS;
+   }
 
    return TA_TEST_PASS;
 }

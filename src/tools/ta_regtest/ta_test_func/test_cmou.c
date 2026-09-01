@@ -481,7 +481,12 @@ static ErrorNumber test_cmou_empty_window( void )
          }
       }
 
-   printf( "  CMOU empty window: %d bar(s) over 6 spike shapes x periods 2..30 report"
-           " 0.0 rather than accumulator residue (issue #253)\n", checks );
+   if( checks == 0 )
+   {
+      printf( "\nFail: CMOU empty-window gate checked no bar -- no window in the "
+              "spike corpus went entirely flat, so the residue it exists to catch "
+              "was never reachable.\n" );
+      return TA_CMOU_VACUOUS;
+   }
    return TA_TEST_PASS;
 }

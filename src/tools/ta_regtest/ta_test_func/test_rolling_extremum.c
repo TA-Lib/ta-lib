@@ -447,14 +447,12 @@ ErrorNumber test_func_rolling_extremum( TA_History *history )
     * no other test reaches, so a change that quietly stopped reaching it would
     * make this file look green for the wrong reason.
     */
-   if( nbHeapCase == 0 )
+   if( nbCase == 0 || nbHeapCase == 0 )
    {
-      printf( "Fail: no case ran at a period above the CIRCBUF stack buffer\n" );
+      printf( "Fail: rolling extremum sweep ran %d case(s), %d of them above the "
+              "CIRCBUF stack buffer -- neither may be zero\n", nbCase, nbHeapCase );
       return TA_REGTEST_ROLLING_EXTREMUM_VACUOUS;
    }
-
-   printf( "\n  Rolling extremum block scan: %d case(s) vs a naive window scan, "
-           "%d above the CIRCBUF stack buffer\n", nbCase, nbHeapCase );
 
    return TA_TEST_PASS;
 }

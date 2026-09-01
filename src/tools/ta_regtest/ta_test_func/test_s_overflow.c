@@ -185,8 +185,6 @@ ErrorNumber test_func_s_overflow( TA_History *history )
 
    (void)history;
 
-   printf( "Testing single-precision (TA_S_) arithmetic overflow (PR #33)\n" );
-
    for( i = 0; i < sizeof(cases)/sizeof(cases[0]); i++ )
    {
       errNb = runCase( &cases[i] );
