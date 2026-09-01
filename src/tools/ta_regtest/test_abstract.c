@@ -90,6 +90,8 @@ static long long g_d2Vectors = 0;
 static long long g_d2NonDefault = 0;
 static long long g_d2Sentinel = 0;
 static long long g_d2Reject = 0;
+/* Pairs of integer slots driven at both orderings; see d2_param_vectors step 1b. */
+static long long g_d2Ordering = 0;
 /* Non-finite parameter probes; see d2_nonfinite_params. */
 static long long g_d2NonFinite = 0;
 static long long g_d2NonFiniteFuncs = 0;
@@ -146,6 +148,7 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    /* Per-server, so the summary line reports the server it names rather than a
       running total across every server tested so far. */
    g_d2Vectors = g_d2NonDefault = g_d2Sentinel = g_d2Reject = 0;
+   g_d2Ordering = 0;
    g_d2NonFinite = g_d2NonFiniteFuncs = 0;
    g_d2OorNotRejected = g_d2SentNotDefault = 0;
    if( cp )
@@ -1441,6 +1444,7 @@ static void d2_set_opts( TA_ParamHolder *paramHolder, const TA_FuncHandle *handl
 #define D2_CLASS_NON_DEFAULT 0
 #define D2_CLASS_SENTINEL     1
 #define D2_CLASS_REJECT       2
+#define D2_CLASS_ORDERING     3
 
 /* The all-defaults C result, captured before the sweep so the sentinel class can
  * assert what it exists to assert. */
@@ -1464,6 +1468,27 @@ static unsigned long long d2_digest( const TA_FuncInfo *funcInfo, const TA_FuncH
         }
     }
     return h;
+}
+
+/* A low and a high in-range value for one integer slot, far enough apart that a
+ * PAIR of them expresses an ordering in both directions. Small on purpose: what
+ * this class tests is the relation between two slots, and a large period only
+ * buys runtime -- but not `min` itself, so a degenerate period is not the only
+ * thing the class ever sees. Returns 0 when the domain has no room for two
+ * distinct values, which is not a failure: the slot simply cannot be ordered. */
+static int d2_lo_hi( const TA_OptInputParameterInfo *oi, double *lo, double *hi )
+{
+    const TA_IntegerRange *r = (const TA_IntegerRange *)oi->dataSet;
+    if( !r || r->max <= r->min ) return 0;
+    int a = r->min + 2;
+    int b = r->min + 9;
+    if( a > r->max ) a = r->max;
+    if( b > r->max ) b = r->max;
+    if( a >= b ) { a = r->min; b = r->max; }
+    if( a >= b ) return 0;
+    *lo = (double)a;
+    *hi = (double)b;
+    return 1;
 }
 
 static ErrorNumber d2_drive( const char *funcName, const TA_FuncHandle *handle,
@@ -1659,6 +1684,48 @@ static ErrorNumber d2_param_vectors( const char *funcName, const TA_FuncHandle *
     ErrorNumber e = d2_drive(funcName, handle, funcInfo, paramHolder, input, size,
                              vec, "non-default", relaxValues, D2_CLASS_NON_DEFAULT, NULL);
     if( e != TA_TEST_PASS ) return e;
+
+    /* 1b. Parameter INTERACTION. Steps 1-3 each move ONE slot away from the
+     *     default, or move every slot by a fixed per-slot offset -- neither can
+     *     express a RELATION between two of them. A function whose behaviour
+     *     turns on one is then value-checked only near the defaults on the
+     *     tier that reaches the shipped binder (#322).
+     *
+     *     Driven off the declared domains, so a new function or a new pair of
+     *     integer parameters is covered the day it lands, with no list here.
+     *     BOTH orderings per pair: which side of a relation is the interesting
+     *     one is a property of the function, which this sweep does not know. */
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        const TA_OptInputParameterInfo *oiK;
+        double loK, hiK;
+        TA_GetOptInputParameterInfo(handle, k, &oiK);
+        if( oiK->type != TA_OptInput_IntegerRange ) continue;
+        if( !d2_lo_hi(oiK, &loK, &hiK) ) continue;
+
+        for( j = k + 1; j < funcInfo->nbOptInput; j++ )
+        {
+            const TA_OptInputParameterInfo *oiJ;
+            double loJ, hiJ;
+            unsigned int m;
+            int ord;
+
+            TA_GetOptInputParameterInfo(handle, j, &oiJ);
+            if( oiJ->type != TA_OptInput_IntegerRange ) continue;
+            if( !d2_lo_hi(oiJ, &loJ, &hiJ) ) continue;
+
+            for( ord = 0; ord < 2; ord++ )
+            {
+                for( m = 0; m < funcInfo->nbOptInput; m++ ) vec[m] = base[m];
+                vec[k] = ord ? hiK : loK;
+                vec[j] = ord ? loJ : hiJ;
+                g_d2Ordering++;
+                e = d2_drive(funcName, handle, funcInfo, paramHolder, input, size,
+                             vec, "ordering", relaxValues, D2_CLASS_ORDERING, NULL);
+                if( e != TA_TEST_PASS ) return e;
+            }
+        }
+    }
 
     /* 2. and 3., one parameter at a time so a failure names the slot. */
     for( k = 0; k < funcInfo->nbOptInput; k++ )
@@ -2038,12 +2105,18 @@ ErrorNumber test_abstract( void )
          return TA_ABSTRACT_CALL_MISMATCH;
       }
 
-      if( g_d2Vectors == 0 || g_d2NonDefault == 0 || g_d2Sentinel == 0 || g_d2Reject == 0 )
+      /* Ordering carries a LITERAL floor, not merely non-zero, for the reason
+       * the non-finite sweep above states: a derived count moves with the
+       * corpus and lets the class go quiet unnoticed. 64 pairs today; it rose
+       * from 62 when KC landed, which is the class doing its job. Raise it when
+       * a function gains an integer parameter -- that is the point. */
+      if( g_d2Vectors == 0 || g_d2NonDefault == 0 || g_d2Sentinel == 0 || g_d2Reject == 0
+          || g_d2Ordering < 64 )
       {
          printf( "  ABSTRACT ERROR: the binder parameter-contract sweep produced no "
-                 "vectors of some class (%lld/%lld/%lld/%lld) — the binders are back "
+                 "vectors of some class (%lld/%lld/%lld/%lld/%lld) — the binders are back "
                  "to being tested only at their declared defaults\n",
-                 g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject );
+                 g_d2Vectors, g_d2NonDefault, g_d2Sentinel, g_d2Reject, g_d2Ordering );
          return TA_ABSTRACT_CALL_MISMATCH;
       }
    }
