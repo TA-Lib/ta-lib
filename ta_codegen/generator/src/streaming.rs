@@ -7444,7 +7444,109 @@ fn peek_tail_trimmed(
     if transition[last + 1..].iter().any(|s| diverts(s) || writes_out_of_band(s)) {
         return transition.to_vec();
     }
-    transition[..=last].to_vec()
+    prune_orphaned_stores(transition[..=last].to_vec())
+}
+
+/// Drop a kept store whose only readers left with the trimmed tail — but only
+/// where doing so cannot move a fused multiply-add (#328).
+///
+/// The cut in [`peek_tail_trimmed`] orphans locals like CORREL's `trailingX`:
+/// the store survives in the kept prefix while every reader sat in the deleted
+/// recurrence, so the shipped C carries a `-Wunused-but-set-variable` and all
+/// four backends compute a value nothing uses. The store is only removable when
+/// its right side is FUSION-FREE, because the fusion gate anchors peek's fused
+/// sites as a character-for-character prefix of update's: deleting a store that
+/// carries a multiply-add (MAMA's `Q2`/`I2`) removes sites from the MIDDLE of
+/// that run and the prefix breaks while the remaining sites are live. "No
+/// multiplication and no call" is decidable here without importing `fma.rs`'s
+/// per-backend knowledge — a fused site cannot come out of an expression that
+/// has no multiply in it — at the cost of leaving the four Hilbert stores in
+/// place, which is the trade #328 records.
+///
+/// One pass, top level only, single-mention only: a name written twice (one
+/// store per branch arm) or read anywhere in the kept frame is left alone, and
+/// no fixpoint is attempted — a store this pass removes cannot orphan another,
+/// because a right side with no reads of prunable locals was required to begin
+/// with. That last claim is enforced rather than assumed: candidates whose
+/// right side mentions ANOTHER candidate are kept.
+fn prune_orphaned_stores(kept: Vec<Statement>) -> Vec<Statement> {
+    fn count_stmt(s: &Statement, out: &mut std::collections::BTreeMap<String, usize>) {
+        walk_stmt_exprs(s, &mut |top| {
+            walk_expr(top, &mut |e| {
+                if let Expr::Var(n) = e {
+                    *out.entry(n.clone()).or_insert(0) += 1;
+                }
+            });
+        });
+        for b in nested_bodies(s).0 {
+            for x in b {
+                count_stmt(x, out);
+            }
+        }
+    }
+    // Mentions of every name across the whole kept frame, nested bodies
+    // included, counting assignment targets like `names_mentioned` does.
+    let mut mentions: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
+    for s in &kept {
+        count_stmt(s, &mut mentions);
+    }
+
+    let fusion_free = |e: &Expr| -> bool {
+        let mut safe = true;
+        walk_expr(e, &mut |x| match x {
+            Expr::BinOp(_, BinOp::Mul, _) | Expr::FuncCall(..) => safe = false,
+            _ => {}
+        });
+        safe
+    };
+
+    let candidate = |s: &Statement| -> Option<String> {
+        if let Statement::Assign { target: Expr::Var(n), value, compound: false } = s {
+            // `cur_*` is the localize spelling for state and output fields, and
+            // an OUTPUT's reader is not in this IR at all: every emitter writes
+            // the caller-visible result off `cur_<out>` in its own epilogue,
+            // after the frame's last statement. A mention count over the
+            // transition cannot see that, so anything carrying the marker is
+            // off limits -- deleting `cur_outReal = ...` would leave peek
+            // answering the seed. `contains`, not `starts_with`: the NameMap
+            // hands these back already qualified (`sp->cur_out...`,
+            // `sp.cur_out...`), and a prefix test silently matched nothing.
+            if n.contains("cur_") {
+                return None;
+            }
+            // Locals only. A qualified name (`sp->x`, `sp.x`) is a field write:
+            // harmless to a peek's answer on C's scratch copy, but this pass
+            // exists for orphaned TEMPS, and a field is never one -- its reader
+            // is the next bar, outside any frame this can see.
+            if !n.chars().all(|c| c.is_alphanumeric() || c == '_') {
+                return None;
+            }
+            if mentions.get(n).copied() == Some(1) && fusion_free(value) {
+                return Some(n.clone());
+            }
+        }
+        None
+    };
+    let names: BTreeSet<String> = kept.iter().filter_map(candidate).collect();
+
+    kept.into_iter()
+        .filter(|s| {
+            let Some(n) = candidate(s) else { return true };
+            // Keep a candidate whose right side reads another candidate: removing
+            // both in one pass would change which of the two this pass proved dead.
+            let mut reads_candidate = false;
+            if let Statement::Assign { value, .. } = s {
+                walk_expr(value, &mut |e| {
+                    if let Expr::Var(v) = e {
+                        if v != &n && names.contains(v) {
+                            reads_candidate = true;
+                        }
+                    }
+                });
+            }
+            reads_candidate
+        })
+        .collect()
 }
 
 /// Whether `s`, or anything nested in it, assigns to one of `sinks`.
@@ -9857,5 +9959,81 @@ mod tests {
         ));
         let m = analyze(&f).expect("analyzes");
         assert_eq!(names(&m.state), ["buf"]);
+    }
+
+    // ---- prune_orphaned_stores (#328) ------------------------------------
+    // The corpus cannot exercise the fusion guard: every shipped orphan that
+    // reaches the candidate filter happens to be fusion-free (the fused ones,
+    // MAMA's Q2/I2, are branch-nested and twice-mentioned, so they never get
+    // that far). These are therefore the guard's ONLY controls -- measured on
+    // dev, sabotaging the guard changes no generated byte today.
+    fn st_assign(name: &str, value: Expr) -> Statement {
+        Statement::Assign { target: Expr::Var(name.into()), value, compound: false }
+    }
+
+    #[test]
+    fn prune_drops_a_fusion_free_orphan() {
+        let kept = vec![
+            st_assign("trailingX", Expr::BinOp(
+                Box::new(Expr::Var("a".into())),
+                BinOp::Sub,
+                Box::new(Expr::Var("b".into())),
+            )),
+            st_assign("sp->out", Expr::Var("a".into())),
+        ];
+        let out = prune_orphaned_stores(kept);
+        assert_eq!(out.len(), 1, "the orphan store goes; the sink store stays");
+    }
+
+    #[test]
+    fn prune_keeps_a_multiply_and_a_call() {
+        for value in [
+            Expr::BinOp(
+                Box::new(Expr::Var("a".into())),
+                BinOp::Mul,
+                Box::new(Expr::Var("b".into())),
+            ),
+            Expr::FuncCall("fma".into(), vec![]),
+        ] {
+            let kept = vec![st_assign("q2", value)];
+            assert_eq!(
+                prune_orphaned_stores(kept).len(),
+                1,
+                "a store whose right side could carry a fused site is not prunable"
+            );
+        }
+    }
+
+    #[test]
+    fn prune_keeps_the_output_localize_whatever_its_qualifier() {
+        for name in ["cur_outReal", "sp->cur_outReal", "sp.cur_outReal"] {
+            let kept = vec![st_assign(name, Expr::Var("tempReal".into()))];
+            assert_eq!(
+                prune_orphaned_stores(kept).len(),
+                1,
+                "{name}: the epilogue reads cur_* outside this IR"
+            );
+        }
+    }
+
+    #[test]
+    fn prune_keeps_a_store_with_a_reader() {
+        let kept = vec![
+            st_assign("x", Expr::Var("a".into())),
+            st_assign("sp->out", Expr::Var("x".into())),
+        ];
+        assert_eq!(prune_orphaned_stores(kept).len(), 2);
+    }
+
+    #[test]
+    fn prune_keeps_a_candidate_that_reads_another_candidate() {
+        // Both are top-level, single-mention, fusion-free -- but y reads x, so
+        // deleting both in one pass would have proved y dead with x still there.
+        let kept = vec![
+            st_assign("y", Expr::Var("x".into())),
+            st_assign("x", Expr::Var("a".into())),
+        ];
+        let out = prune_orphaned_stores(kept);
+        assert_eq!(out.len(), 1, "x goes; y is kept because it reads a candidate");
     }
 }

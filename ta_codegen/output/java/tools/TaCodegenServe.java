@@ -73253,8 +73253,6 @@ class Core {
              CorrelStream sp = this;
              double x = 0.0;
              double y = 0.0;
-             double trailingX = 0.0;
-             double trailingY = 0.0;
              double ssX = 0.0;
              double ssY = 0.0;
              double spXY = 0.0;
@@ -73375,8 +73373,6 @@ class Core {
              /* Save the trailing values before writing the output, since the input
               * and output might be the same array.
               */
-             trailingX = (((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal0[trailingIdx & sp.xMask] : pkVal0) - shiftX;
-             trailingY = (((trailingIdx & sp.xMask) != pkSlot1) ? sp.x_inReal1[trailingIdx & sp.xMask] : pkVal1) - shiftY;
              trailingIdx += 1;
              /* Output the new coefficient.
               *
@@ -163275,7 +163271,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "920810256cf6d24f";
+    static final String SPLICED_GENCODE_DIGEST = "4f9b721aa7b1c8ad";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
