@@ -7405,12 +7405,17 @@ pub fn peek_transition_widest(
     // shadow-rewrite a read in the KEPT prefix, moving arithmetic this pass has
     // no business moving.
     let wide = transition_buffers_with_state_arrays(model, names);
-    let elected = if peek_transition(transition, &wide, slot_cast.clone()).is_ok() {
+    let elected = if peek_transition(transition, &wide, &model.temps, slot_cast.clone()).is_ok() {
         wide
     } else {
         transition_buffers(model, names)
     };
-    peek_transition(&peek_tail_trimmed(model, names, transition), &elected, slot_cast)
+    peek_transition(
+        &peek_tail_trimmed(model, names, transition),
+        &elected,
+        &model.temps,
+        slot_cast,
+    )
 }
 
 /// `transition` with every statement below its last store to an output sink
@@ -7764,26 +7769,10 @@ fn walk_stmt_own_exprs(s: &Statement, f: &mut dyn FnMut(&Expr)) {
 /// would spin, so [`drop_stores_no_load_reaches`] refuses the whole rewrite
 /// instead (`has_empty_loop`).
 fn emptied_by_deletion(s: &Statement) -> bool {
-    fn condition_writes(e: &Expr) -> bool {
-        let mut writes = false;
-        walk_expr(e, &mut |x| {
-            if matches!(
-                x,
-                Expr::PostIncrement(_)
-                    | Expr::PreIncrement(_)
-                    | Expr::PostDecrement(_)
-                    | Expr::PreDecrement(_)
-                    | Expr::FuncCall(..)
-            ) {
-                writes = true;
-            }
-        });
-        writes
-    }
     match s {
         Statement::Block { body } => body.is_empty(),
         Statement::If { condition, then_body, else_body, .. } => {
-            then_body.is_empty() && else_body.is_empty() && !condition_writes(condition)
+            then_body.is_empty() && else_body.is_empty() && !expr_has_effect(condition)
         }
         _ => false,
     }
@@ -7899,6 +7888,106 @@ fn drop_stores_no_load_reaches(
     out
 }
 
+/// Whether removing `e` would remove an effect: an increment, or a call `pure`
+/// does not vouch for — this layer cannot tell on its own.
+fn expr_effect(e: &Expr, pure: &dyn Fn(&str) -> bool) -> bool {
+    let mut found = false;
+    walk_expr(e, &mut |x| {
+        found |= match x {
+            Expr::PostIncrement(_)
+            | Expr::PreIncrement(_)
+            | Expr::PostDecrement(_)
+            | Expr::PreDecrement(_) => true,
+            Expr::FuncCall(n, _) => !pure(n),
+            _ => false,
+        };
+    });
+    found
+}
+
+/// [`expr_effect`] vouching for no call at all.
+///
+/// The fused multiply-add needs no vouching: it is a rendered [`Expr::BinOp`]
+/// and never an [`Expr::FuncCall`].
+pub(crate) fn expr_has_effect(e: &Expr) -> bool {
+    expr_effect(e, &|_| false)
+}
+
+/// Every name `stmts` READS, which for a store to a bare variable is neither
+/// its target nor the target's own occurrence at the head of a compound value.
+///
+/// Those two exclusions are the whole difference from [`names_mentioned`], and
+/// the second is what makes a `+=` chain retire: `compound` keeps the self-read
+/// in the value, so counting it would hold every accumulator alive by its own
+/// update. Only the head occurrence goes — `x += x * 2` still reads `x`.
+fn names_read(stmts: &[Statement], out: &mut BTreeSet<String>) {
+    for s in stmts {
+        match s {
+            Statement::Assign { target: Expr::Var(v), value: Expr::BinOp(l, _, r), compound: true }
+                if matches!(&**l, Expr::Var(n) if n == v) =>
+            {
+                expr_var_names(r, out);
+            }
+            Statement::Assign { target: Expr::Var(_), value, .. } => expr_var_names(value, out),
+            _ => walk_stmt_own_exprs(s, &mut |e| expr_var_names(e, out)),
+        }
+        match s {
+            Statement::VarDecl { name, .. } | Statement::For { var: name, .. } => {
+                out.insert(name.clone());
+            }
+            _ => {}
+        }
+        for body in nested_bodies(s).0 {
+            names_read(body, out);
+        }
+    }
+}
+
+/// `transition` with every store to a frame temp nothing reads removed, until
+/// nothing more goes.
+///
+/// Whole-variable, so it needs no liveness lattice: a temp read nowhere is one
+/// whose every store is dead, wherever the control flow puts them. The fixpoint
+/// is what pays — trimming a peek frame at its last output store orphans the
+/// temps the tail read, and each store deleted is what exposes the next.
+///
+/// `temps` is the frame's own scratch list, never a shape test: an output sink
+/// is a bare [`Expr::Var`] in two of the four backends, and state is one in all
+/// four. A call is refused unless [`pure_helper_names`] vouches for it, so an
+/// unlisted callee costs a store that stays, never one that should not have
+/// gone.
+fn purge_dead_temp_stores(
+    transition: &[Statement],
+    temps: &[(String, VarType)],
+) -> Vec<Statement> {
+    let named: BTreeSet<&str> = temps.iter().map(|(n, _)| n.as_str()).collect();
+    let pure = pure_helper_names();
+    let mut out = transition.to_vec();
+    loop {
+        let mut read: BTreeSet<String> = BTreeSet::new();
+        names_read(&out, &mut read);
+        let dead: BTreeSet<&str> =
+            named.iter().copied().filter(|n| !read.contains(*n)).collect();
+        if dead.is_empty() {
+            return out;
+        }
+        let hit = std::cell::Cell::new(false);
+        let next = strip_stmts(&out, &|s| {
+            let drop = matches!(s, Statement::Assign { target: Expr::Var(v), value, .. }
+                if dead.contains(v.as_str())
+                    && !expr_effect(value, &|n| pure.contains(n)));
+            hit.set(hit.get() | drop);
+            drop
+        });
+        // A loop the deletion emptied would spin where its body was what ended
+        // it, exactly as in [`drop_stores_no_load_reaches`]; give the round back.
+        if !hit.get() || has_empty_loop(&next) {
+            return out;
+        }
+        out = next;
+    }
+}
+
 /// Rewrite `transition` so it computes the same values without storing into
 /// any handle buffer — see [`PeekShadow`].
 ///
@@ -7922,11 +8011,17 @@ fn drop_stores_no_load_reaches(
 pub fn peek_transition(
     transition: &[Statement],
     buffers: &[(String, bool)],
+    temps: &[(String, VarType)],
     slot_cast: Option<VarType>,
 ) -> Result<PeekTransition, String> {
     let bufs: BTreeMap<String, bool> = buffers.iter().map(|(n, i)| (n.clone(), *i)).collect();
     let transition = &drop_stores_no_load_reaches(transition, &bufs)[..];
     validate_peekable(transition, &bufs, 0)?;
+    // After the refusals and before the shadow rewrite: the purge only removes
+    // statements, so running it ahead of `validate_peekable` could turn a
+    // refusal into an acceptance and flip the buffer election, and running it
+    // after the rewrite would orphan the shadows `prune_dead_shadows` counts.
+    let transition = &purge_dead_temp_stores(transition, temps)[..];
     let shadowed: BTreeSet<String> = buffers
         .iter()
         .map(|(n, _)| n.clone())
@@ -8369,7 +8464,7 @@ mod tests {
     }
 
     fn pk(stmts: &[Statement]) -> PeekTransition {
-        peek_transition(stmts, &[("buf".to_string(), false)], None).expect("peekable")
+        peek_transition(stmts, &[("buf".to_string(), false)], &[], None).expect("peekable")
     }
 
     /// The tail ring push: kept for the NEXT bar, and peek has none.
@@ -8494,7 +8589,7 @@ mod tests {
             (vec![escaping], "escapes or is written"),
             (vec![handing_out], "escapes or is written"),
         ] {
-            let err = peek_transition(&stmts, &[("buf".to_string(), false)], None)
+            let err = peek_transition(&stmts, &[("buf".to_string(), false)], &[], None)
                 .expect_err("must refuse");
             assert!(err.contains(want), "expected `{want}`, got `{err}`");
         }
@@ -8609,6 +8704,7 @@ mod tests {
                 Statement::Assign { target: Expr::Var("acc".into()), value: k(), compound: false },
             ],
             &[("buf".to_string(), false)],
+            &[],
             None,
         )
         .expect_err("must refuse");
@@ -8632,6 +8728,7 @@ mod tests {
                 ],
             }],
             &[("buf".to_string(), false)],
+            &[],
             None,
         )
         .expect_err("must refuse");
@@ -8649,6 +8746,7 @@ mod tests {
                 body: vec![buf_store("buf", Expr::Var("pos".into()), Expr::Var("bar".into()))],
             }],
             &[("buf".to_string(), false)],
+            &[],
             None,
         )
         .expect_err("must refuse");
@@ -9156,6 +9254,7 @@ mod tests {
             peek_transition(
                 &transition,
                 &transition_buffers_with_state_arrays(&m, &TestNames),
+                &m.temps,
                 None
             )
             .is_err(),
@@ -9271,6 +9370,119 @@ mod tests {
     fn peek_tail_is_unchanged_where_nothing_stores_a_sink() {
         let stmts = vec![tail_store(), tail_store()];
         assert_eq!(trim(&stmts).len(), 2);
+    }
+
+    // ---- purge_dead_temp_stores -------------------------------------------
+
+    fn temps(names: &[&str]) -> Vec<(String, VarType)> {
+        names.iter().map(|n| ((*n).to_string(), VarType::Real)).collect()
+    }
+
+    fn compound(t: &str, op: BinOp, rhs: Expr) -> Statement {
+        Statement::Assign {
+            target: var(t),
+            value: Expr::BinOp(Box::new(var(t)), op, Box::new(rhs)),
+            compound: true,
+        }
+    }
+
+    /// The fixpoint: `q` is the only reader of the `j` chain, so the chain is
+    /// reachable only once `q`'s own store has gone.
+    #[test]
+    fn purge_retires_a_compound_chain_once_its_only_reader_goes() {
+        let stmts = vec![
+            assign(var("j"), var("sp->seed")),
+            compound("j", BinOp::Add, var("live")),
+            compound("j", BinOp::Mul, var("live")),
+            assign(var("q"), add(var("live"), var("j"))),
+            assign(Expr::PointerDeref("out_outReal".into()), var("live")),
+        ];
+        let out = purge_dead_temp_stores(&stmts, &temps(&["j", "q", "live"]));
+        assert_eq!(out.len(), 1, "only the output write answers anything: {out:?}");
+    }
+
+    /// One read anywhere holds every store to that temp, wherever the control
+    /// flow puts them.
+    #[test]
+    fn purge_keeps_every_store_to_a_temp_something_reads() {
+        let stmts = vec![
+            assign(var("j"), var("sp->seed")),
+            compound("j", BinOp::Add, var("live")),
+            Statement::If {
+                condition: le(var("a"), var("b")),
+                then_body: vec![assign(Expr::PointerDeref("out_outReal".into()), var("j"))],
+                else_body: Vec::new(),
+                cond_comments: Vec::new(),
+            },
+        ];
+        assert_eq!(purge_dead_temp_stores(&stmts, &temps(&["j"])).len(), 3);
+    }
+
+    /// The head exclusion is the target's OWN occurrence and nothing else —
+    /// discounting a compound value's head unconditionally would purge the
+    /// store that feeds it.
+    #[test]
+    fn purge_discounts_only_the_target_at_the_head_of_a_compound_value() {
+        let stmts = vec![
+            Statement::Assign {
+                target: var("acc"),
+                value: Expr::BinOp(Box::new(var("feed")), BinOp::Add, Box::new(Expr::Literal(1.0))),
+                compound: true,
+            },
+            assign(var("feed"), var("bar")),
+            assign(Expr::PointerDeref("out_outReal".into()), var("acc")),
+        ];
+        assert_eq!(purge_dead_temp_stores(&stmts, &temps(&["acc", "feed"])).len(), 3);
+    }
+
+    /// A vouched helper is a value and nothing else, so a dead store carrying
+    /// one goes. SYNTH8 is the fixture that reaches this; no shipped function
+    /// does.
+    #[test]
+    fn purge_drops_a_dead_store_whose_value_calls_a_vouched_helper() {
+        let stmts = vec![assign(
+            var("dead"),
+            Expr::FuncCall("ta_candlerange".into(), vec![var("inHigh"), var("inLow")]),
+        )];
+        assert!(purge_dead_temp_stores(&stmts, &temps(&["dead"])).is_empty());
+    }
+
+    /// Both refusals on the value, neither reachable from the shipped corpus.
+    #[test]
+    fn purge_keeps_a_dead_store_whose_value_has_an_effect() {
+        for value in [
+            Expr::FuncCall("TA_MA_Peek".into(), vec![var("sub")]),
+            Expr::PostIncrement(Box::new(var("sp->i"))),
+        ] {
+            let stmts = vec![assign(var("dead"), value.clone())];
+            assert_eq!(purge_dead_temp_stores(&stmts, &temps(&["dead"])).len(), 1, "{value:?}");
+        }
+    }
+
+    /// The temp list is the whitelist, never the target's shape: Java and C#
+    /// spell an output sink as a bare `Expr::Var`, and all four spell state
+    /// that way.
+    #[test]
+    fn purge_keeps_a_dead_store_to_a_name_that_is_not_a_temp() {
+        let stmts =
+            vec![assign(var("sp->cur_outReal"), var("bar")), assign(var("dead"), var("bar"))];
+        let out = purge_dead_temp_stores(&stmts, &temps(&["dead"]));
+        assert_eq!(out.len(), 1);
+        assert!(
+            matches!(&out[0], Statement::Assign { target: Expr::Var(v), .. } if v == "sp->cur_outReal")
+        );
+    }
+
+    /// A loop the deletion emptied would spin where its body was what ended it,
+    /// so the round goes back whole rather than leaving the loop standing.
+    #[test]
+    fn purge_gives_back_a_round_that_would_empty_a_loop() {
+        let stmts = vec![Statement::While {
+            condition: le(var("i"), var("n")),
+            body: vec![compound("dead", BinOp::Add, var("i"))],
+        }];
+        let out = purge_dead_temp_stores(&stmts, &temps(&["dead"]));
+        assert!(matches!(&out[..], [Statement::While { body, .. }] if body.len() == 1), "{out:?}");
     }
 
     #[test]

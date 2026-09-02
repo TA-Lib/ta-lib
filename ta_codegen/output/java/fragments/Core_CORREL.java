@@ -731,8 +731,6 @@
          CorrelStream sp = this;
          double x = 0.0;
          double y = 0.0;
-         double trailingX = 0.0;
-         double trailingY = 0.0;
          double ssX = 0.0;
          double ssY = 0.0;
          double spXY = 0.0;
@@ -850,11 +848,6 @@
                ssY = 0.0;
             }
          }
-         /* Save the trailing values before writing the output, since the input
-          * and output might be the same array.
-          */
-         trailingX = (((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal0[trailingIdx & sp.xMask] : pkVal0) - shiftX;
-         trailingY = (((trailingIdx & sp.xMask) != pkSlot1) ? sp.x_inReal1[trailingIdx & sp.xMask] : pkVal1) - shiftY;
          trailingIdx += 1;
          /* Output the new coefficient.
           *
