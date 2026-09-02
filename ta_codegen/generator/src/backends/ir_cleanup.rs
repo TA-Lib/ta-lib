@@ -310,7 +310,7 @@ pub(crate) fn drop_inert_guards(body: &[Statement]) -> Vec<Statement> {
                 Statement::If { condition, then_body, else_body, .. }
                     if renders_nothing(then_body)
                         && renders_nothing(else_body)
-                        && !expr_writes(condition) =>
+                        && !crate::streaming::expr_has_effect(condition) =>
                 {
                     Statement::Block { body: Vec::new() }
                 }
@@ -335,25 +335,6 @@ fn renders_nothing(body: &[Statement]) -> bool {
         Statement::Comment(_) => true,
         _ => false,
     })
-}
-
-/// Does evaluating this expression change anything? A call is included because
-/// this module cannot know whether it is pure.
-fn expr_writes(e: &Expr) -> bool {
-    let mut writes = false;
-    crate::streaming::walk_expr(e, &mut |x| {
-        if matches!(
-            x,
-            Expr::PostIncrement(_)
-                | Expr::PreIncrement(_)
-                | Expr::PostDecrement(_)
-                | Expr::PreDecrement(_)
-                | Expr::FuncCall(..)
-        ) {
-            writes = true;
-        }
-    });
-    writes
 }
 
 /// Apply `pass` to every nested body, leaving this statement's own shape alone.

@@ -338,118 +338,241 @@ fn mask_buffer_reads(body: &str, buffers: &BTreeSet<String>) -> String {
     out
 }
 
-/// Collapse `(<idx> != pkSlotN) ? <arm> : pkValN` down to `<arm>` — the inverse
-/// of the peek rewrite, so what is left is the expression update renders.
-fn undo_selects(body: &str) -> String {
-    let mut s = body.to_string();
-    while let Some(hit) = s.find("pkSlot") {
-        // Back to the `(` that opens the comparison.
-        let b: Vec<char> = s.chars().collect();
-        let mut depth = 0i32;
-        let mut open = None;
-        for k in (0..hit).rev() {
-            match b[k] {
-                ')' => depth += 1,
-                '(' => {
-                    if depth == 0 {
-                        open = Some(k);
-                        break;
-                    }
-                    depth -= 1;
-                }
-                _ => {}
-            }
-        }
-        let Some(open) = open else { break };
-        // Past `) ? ` to the arm, then over the arm to ` : pkValN`.
-        let Some(q) = s[hit..].find("? ").map(|k| hit + k + 2) else { break };
-        let mut depth = 0i32;
-        let mut end = None;
-        for (k, c) in s[q..].char_indices() {
-            match c {
-                '(' | '[' => depth += 1,
-                ')' | ']' => {
-                    if depth == 0 {
-                        break;
-                    }
-                    depth -= 1;
-                }
-                ':' if depth == 0 => {
-                    end = Some(q + k);
-                    break;
-                }
-                _ => {}
-            }
-        }
-        let Some(end) = end else { break };
-        let arm = s[q..end].trim().to_string();
-        let Some(tail) = s[end..].find("pkVal").map(|k| end + k) else { break };
-        let after = s[tail..]
-            .find(|c: char| !c.is_ascii_digit() && c != 'p' && c != 'k' && c != 'V' && c != 'a' && c != 'l')
-            .map_or(s.len(), |k| tail + k);
-        // The select sits inside the parens the comparison opened.
-        let close = if after < s.len() && s.as_bytes()[after] == b')' { after + 1 } else { after };
-        s = format!("{}{}{}", &s[..open], arm, &s[close..]);
+/// Collapse `(<idx> != pkSlotN) ? <read> : pkValN` down to `<read>` — the
+/// inverse of the peek rewrite, so what is left is the expression update
+/// renders. Per LINE, and only where the `pkSlotN` found is the comparison:
+/// every peek body declares its shadows first, and a scan that started from a
+/// declaration would find no comparison to unwind and collapse nothing.
+fn undo_selects(line: &str) -> String {
+    let mut s = line.to_string();
+    while let Some((lo, hi, arm)) = leftmost_select(&s) {
+        s = format!("{}{}{}", &s[..lo], arm, &s[hi..]);
     }
     s
 }
 
-/// Every balanced `fma(...)` call in `body`, in order.
+/// The span of the leftmost select and the read it picks.
+fn leftmost_select(s: &str) -> Option<(usize, usize, String)> {
+    let b = s.as_bytes();
+    let hit = s.find("pkSlot")?;
+    let mut name_end = hit;
+    while name_end < b.len() && (b[name_end].is_ascii_alphanumeric() || b[name_end] == b'_') {
+        name_end += 1;
+    }
+    if !s[name_end..].starts_with(") ? ") {
+        return None;
+    }
+    // Back to the `(` that opens the comparison.
+    let mut depth = 0i32;
+    let mut open = None;
+    for k in (0..hit).rev() {
+        match b[k] {
+            b')' => depth += 1,
+            b'(' => {
+                if depth == 0 {
+                    open = Some(k);
+                    break;
+                }
+                depth -= 1;
+            }
+            _ => {}
+        }
+    }
+    let open = open?;
+    // Past `) ? ` to the arm, then over the arm to ` : pkValN`.
+    let arm_start = name_end + 4;
+    let mut depth = 0i32;
+    let mut colon = None;
+    for (k, c) in b.iter().enumerate().skip(arm_start) {
+        match *c {
+            b'(' | b'[' => depth += 1,
+            b')' | b']' => {
+                if depth == 0 {
+                    break;
+                }
+                depth -= 1;
+            }
+            b':' if depth == 0 => {
+                colon = Some(k);
+                break;
+            }
+            _ => {}
+        }
+    }
+    let arm = s[arm_start..colon?].trim().to_string();
+    let mut hi = colon? + s[colon?..].find("pkVal")?;
+    while hi < b.len() && (b[hi].is_ascii_alphanumeric() || b[hi] == b'_') {
+        hi += 1;
+    }
+    // The rewrite wraps the select in its own parens, and those must go with it
+    // — but only when they ARE its own: `fabs(<select>)` opens and closes the
+    // same way and taking that pair leaves the line unbalanced.
+    let wrapped = open > 0
+        && b[open - 1] == b'('
+        && hi < b.len()
+        && b[hi] == b')'
+        && !(open >= 2 && (b[open - 2].is_ascii_alphanumeric() || b[open - 2] == b'_'));
+    Some(if wrapped { (open - 1, hi + 1, arm) } else { (open, hi, arm) })
+}
+
+/// `(` minus `)` over `text`.
+fn paren_balance(text: &str) -> i32 {
+    text.bytes().map(|c| i32::from(c == b'(') - i32::from(c == b')')).sum()
+}
+
+/// A real `fma(` token at `i`, not the tail of a longer identifier.
+fn fma_at(b: &[char], i: usize) -> bool {
+    b[i..].starts_with(&['f', 'm', 'a', '('])
+        && (i == 0 || !(b[i - 1].is_alphanumeric() || b[i - 1] == '_'))
+}
+
+/// Every `fma(...)` call `body` both opens and closes, in source order — one
+/// nested in another call's arguments included, so the list is what the frame
+/// fuses rather than what its outermost calls hide.
 fn fma_calls(body: &str) -> Vec<String> {
-    let mut out = Vec::new();
     let b: Vec<char> = body.chars().collect();
-    let mut i = 0usize;
-    while let Some(rel) = body[i..].find("fma(") {
-        let start = i + rel;
-        let mut depth = 0usize;
-        let mut k = start + 3;
+    let mut out = Vec::new();
+    for i in (0..b.len()).filter(|&i| fma_at(&b, i)) {
+        let (mut depth, mut k) = (0usize, i + 3);
         while k < b.len() {
             match b[k] {
                 '(' => depth += 1,
-                ')' => {
-                    depth -= 1;
-                    if depth == 0 {
-                        break;
-                    }
-                }
+                ')' => depth -= 1,
                 _ => {}
             }
+            if depth == 0 {
+                out.push(b[i..=k].iter().collect::<String>().split_whitespace().collect::<Vec<_>>().join(" "));
+                break;
+            }
             k += 1;
-        }
-        out.push(body[start..=k.min(b.len() - 1)].split_whitespace().collect::<Vec<_>>().join(" "));
-        i = k + 1;
-        if i >= body.len() {
-            break;
         }
     }
     out
 }
 
-/// Peek fuses where update does — a PREFIX of update's sites, with the same
-/// ARGUMENTS in the same order, not merely the same number of them. A count is blind to a product
-/// moving across the fusion boundary, which `canonicalize_accumulator_add` can
-/// do on its own: it matches the accumulator by raw string equality, and the
-/// peek rewrite is what first changes a store's target (`buf[k]` -> `pkValN`).
-/// The peek body is compared after undoing the rewrite — buffer subscripts
-/// masked to one token, selects collapsed to the arm update would render.
+/// How many `fma(` `text` opens, closed or not.
+fn fma_opens(text: &str) -> usize {
+    let b: Vec<char> = text.chars().collect();
+    (0..b.len()).filter(|&i| fma_at(&b, i)).count()
+}
+
+/// `line` split at its top-level assignment operator, as `(target, the
+/// statement with its whitespace collapsed)`.
+fn assignment(line: &str) -> Option<(String, String)> {
+    let l = line.trim();
+    let b: Vec<char> = l.chars().collect();
+    let mut depth = 0i32;
+    for (i, c) in b.iter().enumerate() {
+        match c {
+            '(' | '[' => depth += 1,
+            ')' | ']' => depth -= 1,
+            '=' if depth == 0 => {
+                if b.get(i + 1) == Some(&'=') || (i > 0 && matches!(b[i - 1], '=' | '!' | '<' | '>')) {
+                    return None;
+                }
+                let lhs: String = b[..i].iter().collect();
+                let lhs = lhs.trim_end_matches(['+', '-', '*', '/', '&', '|', '^', '%', ' ']);
+                let stmt = l.split_whitespace().collect::<Vec<_>>().join(" ");
+                return (!lhs.is_empty()).then(|| (lhs.to_string(), stmt));
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Every `fma(...)` in `body` keyed to the target of the assignment carrying
+/// it. `<expr>` names a call that sits in no assignment.
+fn fma_sites(body: &str) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    for line in body.lines() {
+        let calls = fma_calls(line);
+        if calls.is_empty() {
+            continue;
+        }
+        let lhs = assignment(line).map_or_else(|| "<expr>".to_string(), |(t, _)| t);
+        out.extend(calls.into_iter().map(|c| (lhs.clone(), c)));
+    }
+    out
+}
+
+/// The statements of `body` assigning one of `targets`, in order.
+fn assignments_to(body: &str, targets: &BTreeSet<String>) -> Vec<String> {
+    body.lines()
+        .filter_map(assignment)
+        .filter_map(|(t, s)| targets.contains(&t).then_some(s))
+        .collect()
+}
+
+/// A frame body with the peek rewrite undone: buffer subscripts masked to one
+/// token, selects collapsed to the arm update renders. Answers how many
+/// statements the collapse touched, which is the only thing that says it ran.
+fn unrewritten(body: &str, buffers: &BTreeSet<String>) -> (String, usize, usize) {
+    let masked = mask_buffer_reads(body, buffers);
+    let (mut collapsed, mut unbalanced) = (0usize, 0usize);
+    let out: Vec<String> = masked
+        .lines()
+        .map(|l| {
+            let u = undo_selects(l);
+            collapsed += usize::from(u != l);
+            // The collapse removes matched pairs, so it cannot move the line's
+            // balance. A count of CHANGED lines cannot tell a working collapse
+            // from one that corrupts a fifth of them; this can.
+            unbalanced += usize::from(paren_balance(&u) != paren_balance(l));
+            u
+        })
+        .collect();
+    (out.join("\n"), collapsed, unbalanced)
+}
+
+/// Whether `small` is a subsequence of `big`, answering the index in `small`
+/// that ran out of matches.
+fn subsequence<T: PartialEq>(small: &[T], big: &[T]) -> Result<(), usize> {
+    let mut rest = big;
+    for (i, s) in small.iter().enumerate() {
+        match rest.iter().position(|x| x == s) {
+            Some(k) => rest = &rest[k + 1..],
+            None => return Err(i),
+        }
+    }
+    Ok(())
+}
+
+/// Peek renders every multiply-add it still EVALUATES exactly as update renders
+/// it, and fuses nothing update does not.
 ///
-/// Measured today: 29 peek bodies fuse, 50 carry a select, 11 carry both, and
-/// ZERO fuse over a select operand. So the argument comparison is live against
-/// a reordering, and the select-collapse half is armed for the first function
-/// that puts a buffer read inside a multiply-add — the case where the THEN-arm
-/// classification rule would otherwise bite silently.
+/// Whether a site survived is decided from the peek text by the assignment
+/// TARGET — nothing done to the expression moves it — because one list cannot
+/// answer both halves:
 ///
-/// A prefix and not equality because peek stops at its last output store, so
-/// the sites in the tail update runs for the NEXT bar are not there to compare
-/// (HT_PHASOR 5 of 8, MAMA 7 of 10). Nothing is given up: `stream_fma` is built
-/// ONCE per function from `func.stream_source()` and guards the emission of
-/// BOTH frames, so truncation cannot re-classify a site peek still evaluates —
-/// and a site re-fused, dropped or reordered in the MIDDLE breaks the prefix
-/// exactly as it broke equality.
+/// - **Order, and no fusion of peek's own.** Peek's calls are a subsequence of
+///   update's, arguments and all. A count is blind to a product moving across
+///   the fusion boundary, which `canonicalize_accumulator_add` can do on its
+///   own: it matches the accumulator by raw string equality against the target,
+///   and the peek rewrite is what first changes one (`buf[k]` -> `pkValN`).
+/// - **Deletion accounting.** For every target update fuses into, the
+///   statements peek still assigns to it are a subsequence of update's BY WHOLE
+///   STATEMENT. Neither the leg above nor pairing each call with its target can
+///   carry this: unfusing a site DELETES it from a list of calls, leaving a
+///   subsequence, which is green on exactly the divergence this exists for.
+///
+/// A subsequence and not a prefix because peek stops at its last output store
+/// and then drops every store to a temp nothing reads, so the sites it no
+/// longer evaluates go missing from the MIDDLE. Nothing is given up: the frozen
+/// `stream_fma` sets guard both frames, so a deletion cannot re-classify a site
+/// peek still evaluates, and the second leg is what proves a site was deleted
+/// rather than unfused.
+///
+/// Three shapes are refused rather than handled, all absent today: an `fma(`
+/// that does not close on its own line, which the per-line keying would
+/// mis-read; a multiply-add stored into a buffer slot, whose target the peek
+/// rewrite renames, so the anchor could not follow it; and a call in no
+/// assignment, which has no anchor and so must survive verbatim.
 #[test]
-fn a_peek_frame_fuses_the_same_multiply_adds_as_its_update_frame() {
-    let mut total_sites = 0usize;
-    let mut fusing_functions = 0usize;
+fn a_peek_frame_fuses_every_multiply_add_it_still_evaluates() {
+    let (mut pairs, mut fusing, mut sites, mut anchors) = (0usize, 0usize, 0usize, 0usize);
+    let (mut aligned, mut unanchored, mut collapsed) = (0usize, 0usize, 0usize);
+    let mut refused: Vec<String> = Vec::new();
     let mut mismatches: Vec<String> = Vec::new();
 
     for name in indicators() {
@@ -462,33 +585,83 @@ fn a_peek_frame_fuses_the_same_multiply_adds_as_its_update_frame() {
         ) else {
             continue;
         };
+        pairs += 1;
         let buffers = handle_buffers(&src, &upper);
-        let a = fma_calls(&mask_buffer_reads(&step, &buffers));
-        let b = fma_calls(&undo_selects(&mask_buffer_reads(&peek, &buffers)));
-        total_sites += a.len();
-        if !a.is_empty() {
-            fusing_functions += 1;
+        let (u, _, ub_step) = unrewritten(&step, &buffers);
+        let (p, n, ub_peek) = unrewritten(&peek, &buffers);
+        collapsed += n;
+        if ub_step + ub_peek > 0 {
+            refused.push(format!("{upper}: undoing a select left {} line(s) unbalanced", ub_step + ub_peek));
         }
-        if b.len() > a.len() || b != a[..b.len()] {
+        for body in [&u, &p] {
+            for line in body.lines().filter(|l| fma_opens(l) != fma_calls(l).len()) {
+                refused
+                    .push(format!("{upper}: an `fma(` does not close on its line: {}", line.trim()));
+            }
+        }
+
+        let us = fma_sites(&u);
+        let ps = fma_sites(&p);
+        sites += us.len();
+        if us.is_empty() {
+            // The anchors below are update's fused targets, so a frame with
+            // none skips every leg — and peek fusing where update does not is
+            // the one direction that needs no anchor to see.
+            if !ps.is_empty() {
+                mismatches.push(format!("{upper}: peek fuses {ps:?} where update fuses nothing"));
+            }
+            continue;
+        }
+        fusing += 1;
+        let targets: BTreeSet<String> =
+            us.iter().filter(|(t, _)| t != "<expr>").map(|(t, _)| t.clone()).collect();
+        if targets.contains("<BUF>") || targets.iter().any(|t| t.starts_with("pkVal")) {
+            refused.push(format!("{upper}: a multiply-add is stored into a buffer slot"));
+        }
+        anchors += targets.len();
+        let calls = |v: &[(String, String)], want: bool| -> Vec<String> {
+            v.iter().filter(|(t, _)| (t == "<expr>") == want).map(|(_, c)| c.clone()).collect()
+        };
+        let (uf, pf) = (calls(&us, false), calls(&ps, false));
+        let (uc, pc) = (calls(&us, true), calls(&ps, true));
+        unanchored += uc.len();
+        let ua = assignments_to(&u, &targets);
+        let pa = assignments_to(&p, &targets);
+        aligned += pa.len();
+
+        if let Err(i) = subsequence(&pf, &uf) {
             mismatches.push(format!(
-                "{upper}: update fuses {} site(s), peek {}\n    update: {:?}\n    peek:   {:?}",
-                a.len(),
-                b.len(),
-                a,
-                b
+                "{upper}: peek fuses `{}`, which is not update's next site\n    update: {uf:?}\n    peek:   {pf:?}",
+                pf[i]
+            ));
+        } else if let Err(i) = subsequence(&pa, &ua) {
+            mismatches.push(format!(
+                "{upper}: peek evaluates `{}`, which update does not render that way\n    update: {ua:?}\n    peek:   {pa:?}",
+                pa[i]
+            ));
+        } else if uc != pc {
+            mismatches.push(format!(
+                "{upper}: a multiply-add in no assignment differs\n    update: {uc:?}\n    peek:   {pc:?}"
             ));
         }
     }
 
+    assert!(refused.is_empty(), "a shape this gate cannot anchor:\n{}", refused.join("\n"));
     assert!(
-        fusing_functions >= 10 && total_sites >= 20,
-        "only {fusing_functions} function(s) / {total_sites} site(s) fuse in the update \
-         frame, so this gate is not measuring anything"
+        pairs >= 170 && fusing >= 25 && sites >= 110 && anchors >= 80 && unanchored >= 4,
+        "{pairs} frame pair(s), {fusing} fusing, {sites} update site(s) over {anchors} \
+         target(s), {unanchored} unanchored — too few for this to be measuring anything"
+    );
+    assert!(
+        aligned >= 140 && collapsed >= 170,
+        "{aligned} peek statement(s) aligned on a fused target and {collapsed} select(s) \
+         collapsed — each leg needs its own floor, or one can go dead while the other \
+         reads green"
     );
     assert!(
         mismatches.is_empty(),
-        "peek's multiply-adds are not a leading run of update's, which is a silent \
-         ~1 ULP divergence in a comparison that must be bitwise:\n{}",
+        "a peek frame does not render a multiply-add the way its update frame does, which \
+         is a silent ~1 ULP divergence in a comparison that must be bitwise:\n{}",
         mismatches.join("\n")
     );
 }
@@ -728,4 +901,86 @@ fn a_peek_frame_stops_at_its_last_output_store() {
             in_step[k]
         );
     }
+}
+
+/// The locals `body` declares as a bare scalar, in declaration order. A
+/// declaration with an initializer is not one: the shadow pair is written where
+/// it is declared, and its reads are the selects.
+fn declared_scalars(body: &str) -> Vec<String> {
+    body.lines()
+        .filter_map(|l| {
+            let l = l.trim().strip_suffix(';')?;
+            let (ty, name) = l.split_once(' ')?;
+            (matches!(ty, "double" | "int" | "float" | "long" | "short" | "char")
+                && !name.is_empty()
+                && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_'))
+            .then(|| name.to_string())
+        })
+        .collect()
+}
+
+/// Whether `text` names `word` other than as part of a longer identifier.
+fn names_word(text: &str, word: &str) -> bool {
+    text.match_indices(word).any(|(i, _)| {
+        let b = text.as_bytes();
+        let before = i == 0 || !(b[i - 1].is_ascii_alphanumeric() || b[i - 1] == b'_');
+        let j = i + word.len();
+        let after = j >= b.len() || !(b[j].is_ascii_alphanumeric() || b[j] == b'_');
+        before && after
+    })
+}
+
+/// Whether any statement of `body` READS `name` — which for a store to it is
+/// the text right of the `=`, so `x += 1` and `x = f(x)` are told apart the way
+/// the purge tells them apart. The declaration is not a statement: counting it
+/// makes every local read and the sweep vacuous.
+fn body_reads(body: &str, name: &str) -> bool {
+    body.lines().filter(|l| declared_scalars(l).is_empty()).any(|l| {
+        let scan = match assignment(l) {
+            Some((t, _)) if t == name => l.split_once('=').map_or("", |(_, r)| r),
+            _ => l,
+        };
+        names_word(scan, name)
+    })
+}
+
+/// No peek frame declares a local nothing reads.
+///
+/// The tail trim orphans them — the readers it deletes are the recurrence for
+/// the NEXT bar — and the purge is what takes the stores with them, which is
+/// what lets `temps_used` drop the declaration. Nothing else would say if that
+/// stopped: the shape is a `-Wall` warning in C and no CI job compiles with
+/// `-Werror`, while the other three backends' compilers cannot see it at all
+/// (the Rust crate allows the lint wholesale, CS0219 does not fire on a
+/// non-constant, javac has no such diagnostic).
+#[test]
+fn no_peek_frame_declares_a_local_nothing_reads() {
+    let (mut swept, mut locals) = (0usize, 0usize);
+    let mut offenders: Vec<String> = Vec::new();
+
+    for name in indicators() {
+        let Some((func, enums)) = load(&name) else { continue };
+        let src = stream_c(&func, &enums);
+        let upper = func.name.to_uppercase();
+        let Some(peek) = body_of(&src, &format!("TA_RetCode TA_{upper}_Peek(")) else { continue };
+        swept += 1;
+        for local in declared_scalars(&peek) {
+            locals += 1;
+            if !body_reads(&peek, &local) {
+                offenders.push(format!("{upper}: {local}"));
+            }
+        }
+    }
+
+    assert!(
+        swept > 170 && locals > 350,
+        "{swept} peek frame(s) over {locals} local(s) — too few for this to be measuring anything"
+    );
+    assert!(
+        offenders.is_empty(),
+        "a peek frame computes into a local nothing reads, so the trim orphaned it and \
+         nothing purged it ({} local(s)):\n{}",
+        offenders.len(),
+        offenders.join("\n")
+    );
 }

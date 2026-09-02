@@ -1485,10 +1485,6 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Peek( const TA_HT_PHASOR_Stream *stream, doub
    double hilbertTempReal;
    double detrender;
    double Q1;
-   double jI;
-   double jQ;
-   double Q2;
-   double I2;
    double todayValue;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
@@ -1531,27 +1527,15 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Peek( const TA_HT_PHASOR_Stream *stream, doub
       *outQuadrature= Q1;
       *outInPhase= sp->I1ForEvenPrev3;
       hilbertTempReal = sp->a * sp->I1ForEvenPrev3;
-      jI = 0 - sp->jI_Even[sp->hilbertIdx];
-      jI += hilbertTempReal;
-      jI -= sp->prev_jI_Even;
       sp->prev_jI_Even = sp->b * sp->prev_jI_input_Even;
-      jI += sp->prev_jI_Even;
       sp->prev_jI_input_Even = sp->I1ForEvenPrev3;
-      jI *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * Q1;
-      jQ = 0 - sp->jQ_Even[sp->hilbertIdx];
-      jQ += hilbertTempReal;
-      jQ -= sp->prev_jQ_Even;
       sp->prev_jQ_Even = sp->b * sp->prev_jQ_input_Even;
-      jQ += sp->prev_jQ_Even;
       sp->prev_jQ_input_Even = Q1;
-      jQ *= adjustedPrevPeriod;
       if( ++sp->hilbertIdx == 3 )
       {
          sp->hilbertIdx = 0;
       }
-      Q2 = fma(0.2, Q1 + jI, 0.8 * sp->prevQ2);
-      I2 = fma(0.2, sp->I1ForEvenPrev3 - jQ, 0.8 * sp->prevI2);
       /* The variable I1 is the detrender delayed for
        * 3 price bars.
        *
@@ -1582,23 +1566,11 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Peek( const TA_HT_PHASOR_Stream *stream, doub
       *outQuadrature= Q1;
       *outInPhase= sp->I1ForOddPrev3;
       hilbertTempReal = sp->a * sp->I1ForOddPrev3;
-      jI = 0 - sp->jI_Odd[sp->hilbertIdx];
-      jI += hilbertTempReal;
-      jI -= sp->prev_jI_Odd;
       sp->prev_jI_Odd = sp->b * sp->prev_jI_input_Odd;
-      jI += sp->prev_jI_Odd;
       sp->prev_jI_input_Odd = sp->I1ForOddPrev3;
-      jI *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * Q1;
-      jQ = 0 - sp->jQ_Odd[sp->hilbertIdx];
-      jQ += hilbertTempReal;
-      jQ -= sp->prev_jQ_Odd;
       sp->prev_jQ_Odd = sp->b * sp->prev_jQ_input_Odd;
-      jQ += sp->prev_jQ_Odd;
       sp->prev_jQ_input_Odd = Q1;
-      jQ *= adjustedPrevPeriod;
-      Q2 = fma(0.2, Q1 + jI, 0.8 * sp->prevQ2);
-      I2 = fma(0.2, sp->I1ForOddPrev3 - jQ, 0.8 * sp->prevI2);
       /* The varaiable I1 is the detrender delayed for
        * 3 price bars.
        *

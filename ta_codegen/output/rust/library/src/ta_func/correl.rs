@@ -1186,8 +1186,6 @@ impl CorrelStream {
             let outReal = &mut outReal;
             let mut x: f64 = 0.0_f64;
             let mut y: f64 = 0.0_f64;
-            let mut trailingX: f64 = 0.0_f64;
-            let mut trailingY: f64 = 0.0_f64;
             let mut ssX: f64 = 0.0_f64;
             let mut ssY: f64 = 0.0_f64;
             let mut spXY: f64 = 0.0_f64;
@@ -1307,10 +1305,6 @@ impl CorrelStream {
                     ssY = 0.0;
                 }
             }
-            // Save the trailing values before writing the output, since the input
-            // and output might be the same array.
-            trailingX = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(trailingIdx & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
-            trailingY = (if ((trailingIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(trailingIdx & sp.xMask) as usize] } else { pkVal1 }) - shiftY;
             trailingIdx += 1;
             // Output the new coefficient.
             //

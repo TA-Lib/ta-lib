@@ -1018,10 +1018,6 @@
          double hilbertTempReal = 0.0;
          double detrender = 0.0;
          double Q1 = 0.0;
-         double jI = 0.0;
-         double jQ = 0.0;
-         double Q2 = 0.0;
-         double I2 = 0.0;
          double todayValue = 0.0;
          double I1ForEvenPrev2 = sp.I1ForEvenPrev2;
          double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
@@ -1084,26 +1080,14 @@
             cur_outQuadrature = Q1;
             cur_outInPhase = I1ForEvenPrev3;
             hilbertTempReal = sp.a * I1ForEvenPrev3;
-            jI = 0 - sp.jI_Even[hilbertIdx];
-            jI += hilbertTempReal;
-            jI -= prev_jI_Even;
             prev_jI_Even = sp.b * prev_jI_input_Even;
-            jI += prev_jI_Even;
             prev_jI_input_Even = I1ForEvenPrev3;
-            jI *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * Q1;
-            jQ = 0 - sp.jQ_Even[hilbertIdx];
-            jQ += hilbertTempReal;
-            jQ -= prev_jQ_Even;
             prev_jQ_Even = sp.b * prev_jQ_input_Even;
-            jQ += prev_jQ_Even;
             prev_jQ_input_Even = Q1;
-            jQ *= adjustedPrevPeriod;
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
-            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -1133,23 +1117,11 @@
             cur_outQuadrature = Q1;
             cur_outInPhase = I1ForOddPrev3;
             hilbertTempReal = sp.a * I1ForOddPrev3;
-            jI = 0 - sp.jI_Odd[hilbertIdx];
-            jI += hilbertTempReal;
-            jI -= prev_jI_Odd;
             prev_jI_Odd = sp.b * prev_jI_input_Odd;
-            jI += prev_jI_Odd;
             prev_jI_input_Odd = I1ForOddPrev3;
-            jI *= adjustedPrevPeriod;
             hilbertTempReal = sp.a * Q1;
-            jQ = 0 - sp.jQ_Odd[hilbertIdx];
-            jQ += hilbertTempReal;
-            jQ -= prev_jQ_Odd;
             prev_jQ_Odd = sp.b * prev_jQ_input_Odd;
-            jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
-            jQ *= adjustedPrevPeriod;
-            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
-            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
