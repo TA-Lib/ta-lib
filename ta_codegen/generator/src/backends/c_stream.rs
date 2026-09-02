@@ -1460,11 +1460,6 @@ fn emit_composed_frame_body(
     counter: &Cell<usize>,
     frame: StepFrame,
 ) {
-    if let Some(model) = &cp.producer {
-        for (name, ty) in &model.temps {
-            let _ = writeln!(decls, "   {};", c_decl(ty, name));
-        }
-    }
     for (name, ty) in &cp.map_temps {
         let _ = writeln!(decls, "   {};", c_decl(ty, name));
     }
@@ -1503,19 +1498,23 @@ fn emit_composed_frame_body(
         };
         let transition = streaming::build_transition(model, &names)
             .unwrap_or_else(|e| panic!("streaming transition: {e}"));
-        // The shadow locals join the declarations above, ahead of the rebase:
-        // the extrema rebase is a STATEMENT, and a declaration after it would
-        // be C99, which this tier's producers (STOCH, STOCHF) would be the only
-        // place in the emitted library to need.
-        let transition = match frame {
-            StepFrame::Commit => transition,
+        let (transition, temps, shadow_decls) = match frame {
+            StepFrame::Commit => (transition, model.temps.clone(), String::new()),
             StepFrame::Peek => {
                 let pt = streaming::peek_transition_widest(model, &names, &transition, None)
                     .unwrap_or_else(|e| panic!("{}: {e}", func.name));
-                decls.push_str(&peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3));
-                answer_bare_returns(&pt.body)
+                let body = answer_bare_returns(&pt.body);
+                let temps = streaming::temps_used(&model.temps, &body);
+                (body, temps, peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3))
             }
         };
+        // Into `decls`, both of them: the extrema rebase below is a STATEMENT,
+        // and a declaration after it would be C99, which this tier's producers
+        // would be the only place in the emitted library to need.
+        for (name, ty) in &temps {
+            let _ = writeln!(decls, "   {};", c_decl(ty, name));
+        }
+        decls.push_str(&shadow_decls);
         emit_extrema_rebase(o, model);
         let mut body_c = String::new();
         for s in &transition {

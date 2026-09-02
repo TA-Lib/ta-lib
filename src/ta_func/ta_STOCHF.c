@@ -572,9 +572,9 @@ static void TA_STOCHF_ReleaseImpl( struct TA_STOCHF_Stream *sp )
 /* Private function, not in public API. */
 static TA_RetCode TA_STOCHF_StepImpl( struct TA_STOCHF_Stream *sp, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )
 {
-   double tmp;
    double cur_tempBuffer = 0.0;
    double cur_outFastD = 0.0;
+   double tmp;
 
    if( sp->today >= 1073741824 )
    {
@@ -1065,9 +1065,9 @@ TA_LIB_API TA_RetCode TA_STOCHF_Peek( const TA_STOCHF_Stream *stream, double inH
 {
    struct TA_STOCHF_Stream scratch;
    struct TA_STOCHF_Stream *sp = &scratch;
-   double tmp;
    double cur_tempBuffer = 0.0;
    double cur_outFastD = 0.0;
+   double tmp;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
