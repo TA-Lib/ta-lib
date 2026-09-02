@@ -115,7 +115,7 @@ extern double gDataClose[];
  * repo (ta4j_serve), on OpenJDK 21.0.12. Inputs were sent as hex-of-IEEE-bits
  * (issue #115) and the returned hex decoded back bit-identically to the decimal
  * arrays, so the capture is lossless; every row below was emitted mechanically
- * from that session by scratch/supertrend_emit.py, none transcribed by hand.
+ * from that session, none transcribed by hand.
  *
  * ta4j is the only independent implementation of THIS formula that could be
  * run. Its SuperTrendIndicator carries both bands every bar, releases each on
