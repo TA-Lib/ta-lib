@@ -2315,6 +2315,133 @@ fn sync_pom_indicator_count(root: &Path, n_funcs: usize) {
     backends::write_if_changed(&pom_path, &new_text, "pom.xml", n_funcs);
 }
 
+/// A Rust sample that both crate front pages carry -- the `lib.rs` crate docs
+/// and `README.md`.
+///
+/// The two pages render differently and always will: one is rustdoc with
+/// intra-doc links, the other is Markdown that has to stand on crates.io. What
+/// they have no business differing on is the CODE, which is the same claim
+/// about the same API made twice, compiled on two separate paths (`cargo test
+/// --doc` for the module docs, `ReadmeExamples` for the README). Two copies of
+/// a claim is one copy that can go quietly wrong, so the body is authored once
+/// here and the wrapper each page needs is added on the way out (#179 D5).
+struct FrontPageExample {
+    /// The crate items the body names. The README rendering appends `RetCode`
+    /// for its `fn main` signature, so leave it out unless the body itself
+    /// spells it.
+    uses: &'static [&'static str],
+    /// Statements, unindented and unwrapped: no `fn main`, no trailing `Ok`.
+    /// The `?` operator is expected -- both wrappers absorb it.
+    body: &'static str,
+}
+
+impl FrontPageExample {
+    /// The `use` line, in the one shape rustfmt would leave alone: braces only
+    /// where there is more than one item.
+    fn use_line(items: &[&str]) -> String {
+        match items {
+            [only] => format!("use ta_lib::{only};"),
+            many => format!("use ta_lib::{{{}}};", many.join(", ")),
+        }
+    }
+
+    /// The `//!`-prefixed doctest for `lib.rs`. Runs the body bare and closes
+    /// with the type-annotated `Ok` that gives `?` something to return to --
+    /// hidden with `#`, so the reader sees only the call.
+    fn as_doc(&self) -> String {
+        let mut out = String::from("//! ```\n");
+        for line in [Self::use_line(self.uses), String::new()]
+            .into_iter()
+            .chain(self.body.lines().map(str::to_string))
+        {
+            if line.is_empty() {
+                out.push_str("//!\n");
+            } else {
+                out.push_str("//! ");
+                out.push_str(&line);
+                out.push('\n');
+            }
+        }
+        out.push_str("//! # Ok::<(), ta_lib::RetCode>(())\n//! ```");
+        out
+    }
+
+    /// The fenced block for `README.md`: a `fn main` a reader can paste into an
+    /// empty binary, which is what a front page outside rustdoc has to be.
+    fn as_readme(&self) -> String {
+        let mut items: Vec<&str> = self.uses.to_vec();
+        if !items.contains(&"RetCode") {
+            items.push("RetCode");
+        }
+        let mut out = format!(
+            "```rust\n{}\n\nfn main() -> Result<(), RetCode> {{\n",
+            Self::use_line(&items)
+        );
+        for line in self.body.lines() {
+            if line.is_empty() {
+                out.push('\n');
+            } else {
+                out.push_str("    ");
+                out.push_str(line);
+                out.push('\n');
+            }
+        }
+        out.push_str("    Ok(())\n}\n```");
+        out
+    }
+}
+
+/// The batch call: the first thing either page shows.
+const EXAMPLE_QUICK_START: FrontPageExample = FrontPageExample {
+    uses: &["Core", "RetCode"],
+    body: r#"let close = [11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0];
+let core = Core::new();
+let mut sma = vec![0.0; close.len()];
+
+let out = core.SMA(0, close.len() - 1, &close, 3, &mut sma)?;
+
+// The first 3-period average lands at input index 2 (the lookback):
+assert_eq!((out.beg_idx, out.count), (2, 8));
+assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3"#,
+};
+
+/// The builder. The read-back is what makes it an assertion rather than a
+/// syntax demonstration: `build()` is the tier that can reject, so a sample
+/// that stops at `build()?` proves only that the call compiles.
+const EXAMPLE_CONFIGURATION: FrontPageExample = FrontPageExample {
+    uses: &["Core", "FuncUnstId"],
+    body: r#"let core = Core::builder()
+    .unstable_period(FuncUnstId::EMA, 10)
+    .build()?;
+
+assert_eq!(core.get_unstable_period(FuncUnstId::EMA)?, 10);"#,
+};
+
+/// The streaming tier, and the one sample that has to show all four of the
+/// contract's moving parts: warm-up, peek, commit, and a rejected bar.
+const EXAMPLE_LIVE_DATA: FrontPageExample = FrontPageExample {
+    uses: &["Core"],
+    body: r#"let history = [11.0, 12.0, 13.0, 14.0, 15.0];
+let core = Core::new();
+let (mut sma, last) = core.sma_open(&history, 3)?;
+
+assert_eq!(last, 14.0); // (13 + 14 + 15) / 3, the last history bar
+assert_eq!(sma.out_range().count, 3);
+
+// A bar that has not closed yet: ask without committing it.
+assert_eq!(sma.peek(16.0)?, 15.0);
+assert_eq!(sma.out_range().count, 3);
+
+// Once it closes, commit it — same value, and the range advances.
+assert_eq!(sma.update(16.0)?, 15.0);
+assert_eq!(sma.out_range().count, 4);
+
+// A non-finite bar is rejected, and still counted: the handle's output for
+// it is the previous one, held, and its state is untouched.
+assert!(sma.update(f64::NAN).is_err());
+assert_eq!(sma.out_range().count, 5);"#,
+};
+
 fn generate_rust_crate_scaffolding(
     out_base: &Path,
     funcs: &[ir::FuncDef],
@@ -2361,6 +2488,12 @@ fn generate_rust_crate_scaffolding(
             .replace("$N_CANDLES", &n_candles.to_string())
             .replace("$INSTALL_REQ", &install_req)
             .replace("$FUNC_INDEX", &func_index)
+            .replace("$EX_QUICK_START_DOC", &EXAMPLE_QUICK_START.as_doc())
+            .replace("$EX_QUICK_START_MD", &EXAMPLE_QUICK_START.as_readme())
+            .replace("$EX_CONFIGURATION_DOC", &EXAMPLE_CONFIGURATION.as_doc())
+            .replace("$EX_CONFIGURATION_MD", &EXAMPLE_CONFIGURATION.as_readme())
+            .replace("$EX_LIVE_DATA_DOC", &EXAMPLE_LIVE_DATA.as_doc())
+            .replace("$EX_LIVE_DATA_MD", &EXAMPLE_LIVE_DATA.as_readme())
     };
     // Two-crate Cargo workspace: `library/` is the published `ta-lib` crate;
     // `tools/` holds the JSON-RPC server/bench — a layer on top of the library.
@@ -2578,20 +2711,7 @@ path = "src/lib.rs"
 //!
 //! # Quick start
 //!
-//! ```
-//! use ta_lib::{Core, RetCode};
-//!
-//! let close = [11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0];
-//! let core = Core::new();
-//! let mut sma = vec![0.0; close.len()];
-//!
-//! let out = core.SMA(0, close.len() - 1, &close, 3, &mut sma)?;
-//!
-//! // The first 3-period average lands at input index 2 (the lookback):
-//! assert_eq!((out.beg_idx, out.count), (2, 8));
-//! assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3
-//! # Ok::<(), ta_lib::RetCode>(())
-//! ```
+$EX_QUICK_START_DOC
 //!
 //! # API shape
 //!
@@ -2614,14 +2734,7 @@ path = "src/lib.rs"
 //! [`Core::builder()`] and then frozen, so a `Core` is `Send + Sync` and
 //! can be shared read-only across threads (e.g. via `Arc`) with no locking:
 //!
-//! ```
-//! use ta_lib::{Core, FuncUnstId};
-//!
-//! let core = Core::builder()
-//!     .unstable_period(FuncUnstId::EMA, 10)
-//!     .build()?;
-//! # Ok::<(), ta_lib::RetCode>(())
-//! ```
+$EX_CONFIGURATION_DOC
 //!
 //! The setters are infallible so that they chain; a rejected argument is
 //! reported once, by `build()`, as [`RetCode::BadParam`].
@@ -2634,7 +2747,11 @@ path = "src/lib.rs"
 //! points of indicators built on fused multiply-adds are compiled twice and the
 //! hardware-FMA clone is selected at runtime (the same dispatch the C library
 //! performs via `target_clones`); both paths are correctly rounded, so results
-//! are bit-identical either way. The streaming tier stays single-path.
+//! are bit-identical either way. Calling that clone is the one `unsafe` in the
+//! crate's shipped dependency graph: it lives in `ta-lib-dispatch`, inside the
+//! `is_x86_feature_detected!("fma")` test that has just proved it sound, and
+//! `forbid` here does not see it because it expands from another crate's macro.
+//! The streaming tier stays single-path.
 //!
 //! # Live data
 //!
@@ -2644,30 +2761,7 @@ path = "src/lib.rs"
 //! you already have, and from then on one bar in gives that bar's value out,
 //! with no re-scan of the series and no allocation per bar.
 //!
-//! ```
-//! use ta_lib::Core;
-//!
-//! let history = [11.0, 12.0, 13.0, 14.0, 15.0];
-//! let core = Core::new();
-//! let (mut sma, last) = core.sma_open(&history, 3)?;
-//!
-//! assert_eq!(last, 14.0); // (13 + 14 + 15) / 3, the last history bar
-//! assert_eq!(sma.out_range().count, 3);
-//!
-//! // A bar that has not closed yet: ask without committing it.
-//! assert_eq!(sma.peek(16.0)?, 15.0);
-//! assert_eq!(sma.out_range().count, 3);
-//!
-//! // Once it closes, commit it — same value, and the range advances.
-//! assert_eq!(sma.update(16.0)?, 15.0);
-//! assert_eq!(sma.out_range().count, 4);
-//!
-//! // A non-finite bar is rejected, and still counted: the handle's output for
-//! // it is the previous one, held, and its state is untouched.
-//! assert!(sma.update(f64::NAN).is_err());
-//! assert_eq!(sma.out_range().count, 5);
-//! # Ok::<(), ta_lib::RetCode>(())
-//! ```
+$EX_LIVE_DATA_DOC
 //!
 //! The handle's value at every bar is bit-identical to what the batch call
 //! reports for that bar. [`SmaStream::out_range`] carries the same
@@ -2761,22 +2855,7 @@ ta-lib = "$INSTALL_REQ"
 
 ## Quick start
 
-```rust
-use ta_lib::{Core, RetCode};
-
-fn main() -> Result<(), RetCode> {
-    let close = [11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0];
-    let core = Core::new();
-    let mut sma = vec![0.0; close.len()];
-
-    let out = core.SMA(0, close.len() - 1, &close, 3, &mut sma)?;
-
-    // The first 3-period average lands at input index 2 (the lookback):
-    assert_eq!((out.beg_idx, out.count), (2, 8));
-    assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3
-    Ok(())
-}
-```
+$EX_QUICK_START_MD
 
 Every indicator is a method on `Core` with the same calling pattern: `&[f64]`
 input slices, a `startIdx..=endIdx` range, caller-provided output slices, and a
@@ -2794,18 +2873,7 @@ not an error — the same contract as C, Java and C#.
 period and candlestick thresholds — are chosen up front with a builder and then
 frozen:
 
-```rust
-use ta_lib::{Core, FuncUnstId, RetCode};
-
-fn main() -> Result<(), RetCode> {
-    let core = Core::builder()
-        .unstable_period(FuncUnstId::EMA, 10)
-        .build()?;
-
-    assert_eq!(core.get_unstable_period(FuncUnstId::EMA)?, 10);
-    Ok(())
-}
-```
+$EX_CONFIGURATION_MD
 
 The setters are infallible so that they chain; a rejected argument is reported
 once, by `build()`, as `RetCode::BadParam`.
@@ -2822,32 +2890,7 @@ handle up on the history you already have, and from then on one bar in gives
 that bar's value out — no re-scan of the series, no allocation per bar, and
 bit-identical to what the batch call reports for the same bar.
 
-```rust
-use ta_lib::{Core, RetCode};
-
-fn main() -> Result<(), RetCode> {
-    let history = [11.0, 12.0, 13.0, 14.0, 15.0];
-    let core = Core::new();
-    let (mut sma, last) = core.sma_open(&history, 3)?;
-
-    assert_eq!(last, 14.0); // (13 + 14 + 15) / 3, the last history bar
-    assert_eq!(sma.out_range().count, 3);
-
-    // A bar that has not closed yet: ask without committing it.
-    assert_eq!(sma.peek(16.0)?, 15.0);
-    assert_eq!(sma.out_range().count, 3);
-
-    // Once it closes, commit it — same value, and the range advances.
-    assert_eq!(sma.update(16.0)?, 15.0);
-    assert_eq!(sma.out_range().count, 4);
-
-    // A non-finite bar is rejected, and still counted: the handle's output for
-    // it is the previous one, held, and its state is untouched.
-    assert!(sma.update(f64::NAN).is_err());
-    assert_eq!(sma.out_range().count, 5);
-    Ok(())
-}
-```
+$EX_LIVE_DATA_MD
 
 `out_range()` carries the same `OutRange` the batch tier returns — the bars the
 handle has an output for — and every bar handed to `update` advances it by one,
