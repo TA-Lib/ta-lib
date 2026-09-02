@@ -22,6 +22,10 @@ the SYNTH family:
        fixture that computes the wrong thing in all four backends passes both;
        this is the only leg that knows what the numbers should be.
 
+NOT a leg: the generator's own `cargo test`. Its static sweeps read emitted
+text for structural properties and run against the shipped corpus only, so they
+have never seen a fixture — six of them fail on an injected tree today (#327).
+
 Anti-vacuity: the script asserts from the gate output that EXACTLY the
 expected number of SYNTH functions were exercised by each leg in each
 language. A refactor that silently stops enumerating them fails the gate

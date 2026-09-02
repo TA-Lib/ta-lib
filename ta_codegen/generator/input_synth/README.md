@@ -25,6 +25,19 @@ ever appearing in the shipped API. The gate runs nightly in CI
 (`dev-nightly-tests.yml`, job `synth-gate`) and locally via
 `python3 scripts/synth_gate.py` (no flags; snapshots your dirty tree).
 
+**What it does NOT cover: the generator's own `cargo test`.** The three legs
+above are value and parity gates. The static sweeps in
+`ta_codegen/generator/tests/` — the ones that read emitted TEXT for structural
+properties, which is the class of defect no value gate can see — run only
+against the shipped corpus, on the PR gate and in the nightly, never against an
+input/ these fixtures have been injected into. So a sweep that says "over the
+whole corpus" has never seen a fixture. Pointing `cargo test` at an injected
+tree today fails six of them: one is a shipped-corpus inventory a fixture
+legitimately changes, two are a peek fallback SYNTH3 is the only thing that
+reaches, and three are helpers or metadata that do not model a construct only
+the fixtures use. Issue #327 carries the classification; do not add the leg
+before those are resolved, or it lands with an allowlist and proves nothing.
+
 Two mechanics worth knowing before touching the script:
 
 - **Post-generate C rebuild.** `regtest.py` builds the C library *before*
