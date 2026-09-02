@@ -510,6 +510,20 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
         if !func.streaming {
             continue;
         }
+        // Shipped functions only, and here for a sharper reason than the other
+        // fixture filters: SYNTH13 asserts the OPPOSITE property on purpose. Its
+        // Leg C puts a read of the code variable between the sub-call and its
+        // guard ("the scan must stop there, so the guard survives everywhere"),
+        // so the fold cannot drop it and the arm is emitted. It is dead — the
+        // line above it assigns `Success` unconditionally, so the condition is
+        // statically false and no `Err(Success)` can escape — but this sweep
+        // reads text and cannot tell a dead arm from a live one. Teaching the
+        // fold to drop a guard its own assignment disproves would fix it at the
+        // source, buys nothing shipped, and would make the fixture assert
+        // something it was written to deny.
+        if name.starts_with("synth") {
+            continue;
+        }
         let sources = [
             backends::rust_lang::generate(&func, &enums, &registry, &helpers),
             backends::java::generate(&func, &enums, &registry, &helpers),
@@ -1185,6 +1199,8 @@ fn no_csharp_peek_copies_the_handle() {
     let (mut swept, mut frames, mut writes) = (0usize, 0usize, 0usize);
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
+    let mut bounded: BTreeSet<String> = BTreeSet::new();
+    let mut fixtures = 0usize;
 
     for name in discover_indicators() {
         let (func, enums) = load_indicator(&name);
@@ -1208,6 +1224,15 @@ fn no_csharp_peek_copies_the_handle() {
                 frames += 1;
             }
             let fields = handle_fields(&s);
+            // Hoisted: the copy check consults it per line, and the
+            // non-vacuity counter below still uses the same set.
+            let accs = csharp_accumulator_fields(&s, &batch);
+            // A `synth<n>` fixture is a construct probe copied into input/ by
+            // scripts/synth_gate.py, never a shipped function.
+            let fixture = name.starts_with("synth");
+            if fixture {
+                fixtures += 1;
+            }
             let mut locals: BTreeSet<&str> = BTreeSet::new();
             for line in peek.lines() {
                 let l = line.trim();
@@ -1236,11 +1261,36 @@ fn no_csharp_peek_copies_the_handle() {
                 {
                     continue;
                 }
+                // The one copy the doc comment above has always allowed, now
+                // implemented rather than only described: a FIXED-SIZE
+                // accumulator, sized off its own field
+                // (`new int[sp.ring.Length]`) because the batch declared it
+                // with a literal dimension. A period-sized buffer is never in
+                // `accs`, so it cannot qualify.
+                //
+                // Still an offender for a SHIPPED function: the emitter reaches
+                // the copy only where it cannot shadow the write in place, and
+                // nothing shipped is in that position, so a shipped one that
+                // started copying is a regression into the fallback.
+                let copied = l
+                    .split_once("new ")
+                    .and_then(|(_, r)| r.split_once("[sp."))
+                    .and_then(|(_, r)| r.strip_suffix(".Length];"));
+                if let Some(f) = copied.filter(|f| accs.contains(*f)) {
+                    if fixture {
+                        bounded.insert(format!("{name}.{f}"));
+                    } else {
+                        offenders.push(format!(
+                            "{name}: a SHIPPED Peek copies the accumulator {f} instead of \
+                             shadowing the write: {l}"
+                        ));
+                    }
+                    continue;
+                }
                 offenders.push(format!("{name}: {l}"));
             }
             // The frame must READ an accumulator: a field it never names is
             // no evidence about the copy either way.
-            let accs = csharp_accumulator_fields(&s, &batch);
             if accs.iter().any(|f| peek.contains(&format!("{f}["))) {
                 fully_shadowed.insert(name.clone());
             }
@@ -1257,6 +1307,17 @@ fn no_csharp_peek_copies_the_handle() {
     );
     assert!(writes >= 500, "only {writes} local writes seen — the store sweep found nothing");
     assert!(offenders.is_empty(), "a Peek copies:\n{}", offenders.join("\n"));
+
+    // Non-vacuity for the exemption, asserted only where it can be: on the
+    // shipped corpus the set is EMPTY and must be. The fixtures are the only
+    // thing that reaches the fallback.
+    if fixtures > 0 {
+        assert!(
+            !bounded.is_empty(),
+            "{fixtures} fixture(s) swept and none reached the bounded-accumulator \
+             copy — the exemption is dead code and proves nothing"
+        );
+    }
 }
 
 /// The crate front page's category index (#179 D6) must list every indicator in

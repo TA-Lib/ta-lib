@@ -357,21 +357,20 @@ fn each_backend_carries_the_guards_it_can_express() {
     assert!(rd.contains("inLow.len() != inHigh.len()"), "Rust: ragged inputs:\n{rd}");
 }
 
-/// Java's `updateAndFill` refreshes the multi-output `Value` cache in a
-/// `finally`, so `value()` names the last COMMITTED bar on every exit — the
-/// throwing ones included. That is only sound if a throw out of the middle of a
-/// bar leaves `cur_*` on the PREVIOUS bar, which holds because a step writes its
-/// `sp.cur_<out>` fields last, after every sub-stream call.
+/// `value(out)` must name the last COMMITTED bar on every exit, the throwing
+/// ones included. Since #310 it reads `cur_*` straight through to the caller's
+/// sink, so the fields ARE the answer — which is only sound if a throw out of
+/// the middle of a bar leaves them on the PREVIOUS bar, and that holds because
+/// a step writes its `sp.cur_<out>` fields last, after every sub-stream call.
 ///
 /// The one thing that can throw mid-bar is a sub-stream rejecting a computed
 /// intermediate (the composed tier's documented hole), so the property to pin is
-/// exactly: no sub call after the first `cur_*` write. Without it the `finally`
-/// would publish a half-written bar, which is worse than the stale value it
-/// replaced — and C# would still be right, because its `Value` is a record
-/// struct built fresh from the same fields.
+/// exactly: no sub call after the first `cur_*` write. Without it a rejection
+/// leaves the fields a mix of two bars and the next `value(out)` hands that
+/// mixture out as a reading.
 #[test]
 fn no_throwing_sub_call_follows_the_cur_capture_in_a_java_step() {
-    let mut with_subs = 0usize;
+    let mut with_subs: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     for name in streaming_funcs() {
         let base = backends::common::camel_words(&name.to_uppercase());
         let s = section(&name, "java");
@@ -391,7 +390,7 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_java_step() {
             .filter_map(|p| body.rfind(p))
             .max();
         if let Some(last_sub) = last_sub {
-            with_subs += 1;
+            with_subs.insert(name.to_string());
             assert!(
                 last_sub < first_cur,
                 "{name}: a sub-stream call runs after the first cur_* write, so a \
@@ -401,10 +400,23 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_java_step() {
         }
     }
     // The property is only load-bearing where a sub exists to throw, so the
-    // sweep has to have found some.
-    assert!(
-        with_subs == 6,
-        "{with_subs} multi-output handles drive a sub-stream, expected 6 \
-         (BBANDS, KC, MACDEXT, STOCH, STOCHF, STOCHRSI) — the pin has moved or gone vacuous"
+    // sweep has to have found some — pinned as an exact SET, not a count, so a
+    // function leaving it is as loud as one joining.
+    //
+    // Over the SHIPPED corpus only. `scripts/synth_gate.py` copies its fixtures
+    // into input/, and one of them (SYNTH14) is multi-output, composed and
+    // streamable, so it legitimately joins this set there. A literal that
+    // counted it would turn a correct tree red with a message naming six
+    // shipped functions and nothing to do with the change under test — the
+    // failure mode `StreamSmokeTest` records against corpus literals, and the
+    // reason this one is filtered rather than widened.
+    let shipped: std::collections::BTreeSet<&str> =
+        with_subs.iter().map(String::as_str).filter(|n| !n.starts_with("synth")).collect();
+    let expected: std::collections::BTreeSet<&str> =
+        ["bbands", "kc", "macdext", "stoch", "stochf", "stochrsi"].into_iter().collect();
+    assert_eq!(
+        shipped, expected,
+        "the set of multi-output handles driving a sub-stream moved — the pin is \
+         stale or the sweep has gone vacuous"
     );
 }

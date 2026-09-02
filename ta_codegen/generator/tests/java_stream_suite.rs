@@ -833,6 +833,8 @@ fn no_java_peek_copies_the_handle() {
     let mut frames = 0usize;
     let mut writes = 0usize;
     let mut sink_sites: BTreeSet<String> = BTreeSet::new();
+    let mut bounded: BTreeSet<String> = BTreeSet::new();
+    let mut fixtures = 0usize;
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
@@ -850,6 +852,18 @@ fn no_java_peek_copies_the_handle() {
             frames += 1;
         }
         let fields = handle_fields(&s);
+        // Hoisted: the copy check below consults it per line, and the
+        // non-vacuity counter after the loop still uses the same set.
+        let accs = accumulator_fields(&s, &batch);
+        // A `synth<n>` fixture is a construct probe copied into input/ by
+        // scripts/synth_gate.py, never a shipped function — the same family
+        // `--function=SYNTH` selects. It is the discriminator because the
+        // fixtures live in input/ exactly as shipped functions do once
+        // injected, and nothing else tells them apart.
+        let fixture = name.starts_with("synth");
+        if fixture {
+            fixtures += 1;
+        }
         let mut locals: BTreeSet<&str> = BTreeSet::new();
         for line in peek.lines() {
             let l = line.trim();
@@ -889,20 +903,46 @@ fn no_java_peek_copies_the_handle() {
                 && !composed_sink;
             // `.clone()` is the OTHER way to allocate here, and matching only
             // `new ` missed it: a frame clones a written array field because a
-            // Java array is a reference. No frame may.
+            // Java array is a reference.
+            //
+            // ONE copy is contract-legal, and only one: a FIXED-SIZE
+            // accumulator, an array the batch body declares with a literal
+            // dimension. The frame's job is that its cost not grow with the
+            // period, and such a copy cannot -- which is what `peek`'s own
+            // javadoc already promises the caller ("a small bounded amount per
+            // call, a size fixed by the indicator, never by the period"), and
+            // what the C# twin's doc comment has always claimed. Read off the
+            // emitted declaration, never a name list, so a period-sized buffer
+            // can never qualify.
+            //
+            // It stays an offender for a SHIPPED function even so. The emitter
+            // reaches the copy only where it cannot shadow the write in place
+            // (SMA's peek shadows a ring write with a pending `(slot, value)`
+            // pair; that needs ONE known write slot, and an arbitrary computed
+            // index has none). No shipped function is in that position today,
+            // so a shipped one that started copying is a regression from the
+            // shadow into the fallback, and this is the only thing that would
+            // say so.
             let cloned = (!code)
                 .then(|| l.split_once(" = sp."))
                 .flatten()
                 .and_then(|(_, rhs)| rhs.strip_suffix(".clone();"));
             if let Some(f) = cloned {
-                offenders.push(format!("{name}: clones the handle's {f}: {l}"));
+                if fixture && accs.contains(f) {
+                    bounded.insert(format!("{name}.{f}"));
+                } else if accs.contains(f) {
+                    offenders.push(format!(
+                        "{name}: a SHIPPED peek copies the accumulator {f} rather than shadowing the write: {l}"
+                    ));
+                } else {
+                    offenders.push(format!("{name}: clones the handle's {f}: {l}"));
+                }
             } else if allocates_handle || l.contains("copyFrom") || l.contains("PEEK_SCRATCH") {
                 offenders.push(format!("{name}: {l}"));
             }
         }
         // The frame must READ an accumulator: a field it never names is
         // no evidence about the copy either way.
-        let accs = accumulator_fields(&s, &batch);
         if accs.iter().any(|f| peek.contains(&format!("{f}["))) {
             fully_shadowed.insert(name.clone());
         }
@@ -917,6 +957,19 @@ fn no_java_peek_copies_the_handle() {
         fully_shadowed.len()
     );
     assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));
+
+    // Non-vacuity for the exemption, asserted only where it can be: on the
+    // shipped corpus the set is EMPTY and must be, so there is nothing to
+    // prove. The fixtures are the only thing that reaches the fallback, so
+    // when they are in the tree at least one copy must appear — otherwise the
+    // branch above is dead and would pass whatever the emitter did with it.
+    if fixtures > 0 {
+        assert!(
+            !bounded.is_empty(),
+            "{fixtures} fixture(s) swept and none reached the bounded-accumulator \
+             copy — the exemption is dead code and proves nothing"
+        );
+    }
 
     // EXACTLY these two, not "at most". Both are composed peeks whose callee is
     // far over C2's inline budget, so the sink is allocated whatever shape it

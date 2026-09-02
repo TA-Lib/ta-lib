@@ -1091,6 +1091,16 @@ fn every_integer_output_carries_an_example_claim() {
         if !dir.join(format!("{name}.c")).is_file() || !dir.join(format!("{name}.yaml")).is_file() {
             continue;
         }
+        // Shipped functions only. `scripts/synth_gate.py` copies its fixtures
+        // into input/, and this claim is a curated per-function table feeding
+        // the rustdoc EXAMPLE -- documentation for the published crate, which a
+        // fixture never reaches. Requiring one would put a `("SYNTH3", _)` arm
+        // in the shipped doc emitter forever, to document a function no reader
+        // can call. The `checked` count below is a shipped-corpus count for the
+        // same reason.
+        if name.starts_with("synth") {
+            continue;
+        }
         let (func, enums) = load_indicator(&name);
         let ints = func
             .outputs

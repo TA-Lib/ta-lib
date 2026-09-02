@@ -22,9 +22,10 @@ the SYNTH family:
        fixture that computes the wrong thing in all four backends passes both;
        this is the only leg that knows what the numbers should be.
 
-NOT a leg: the generator's own `cargo test`. Its static sweeps read emitted
-text for structural properties and run against the shipped corpus only, so they
-have never seen a fixture — six of them fail on an injected tree today (#327).
+Leg 0 is the generator's own `cargo test` on the injected tree — the static
+sweeps that read emitted text for structural properties, the class no value leg
+below can see. Added in #327; before it, every sweep claiming to hold "over the
+whole corpus" had only ever seen the 177 shipped functions.
 
 Anti-vacuity: the script asserts from the gate output that EXACTLY the
 expected number of SYNTH functions were exercised by each leg in each
@@ -193,6 +194,40 @@ def main():
                     cwd=wt, capture=True)
         if rc != 0:
             sys.exit(f"synth_gate: FAIL — worktree build exited {rc}")
+
+        # Leg 0: the generator's OWN test suite, against the injected tree.
+        #
+        # Placed here rather than at the end because it needs nothing the
+        # build above has not already produced -- just the generate -- so a
+        # break skips the post-generate C rebuild and all three value legs
+        # below. It cannot come earlier: the build IS what generates.
+        #
+        # These are the STATIC sweeps: they read emitted text for structural
+        # properties, which is the class of defect no value gate below can see
+        # (a peek that copies the handle and then writes the copy still answers
+        # correctly). They ran only against the shipped corpus until #327, so
+        # every sweep claiming to hold "over the whole corpus" had never seen a
+        # fixture.
+        rc, out0 = run(["cargo", "test", "--no-fail-fast",
+                        "--manifest-path",
+                        os.path.join(wt, "ta_codegen", "generator", "Cargo.toml")],
+                       cwd=wt, capture=True)
+        if rc != 0:
+            sys.exit(f"synth_gate: FAIL — the generator's test suite exited {rc} "
+                     f"on the injected tree")
+
+        # Anti-vacuity for this leg, in the same spirit as the per-leg sweep
+        # counts below: a suite that compiled and ran nothing would exit 0. The
+        # floor is on tests EXECUTED, not on fixtures, because the sweeps that
+        # care about fixtures carry their own conditional assertions (the
+        # bounded-accumulator copy is asserted non-empty only when fixtures are
+        # present, so it is those sweeps that prove the corpus was seen).
+        ran = sum(int(m) for m in re.findall(r"^test result: ok\. (\d+) passed",
+                                             out0, re.M))
+        if ran < 500:
+            sys.exit(f"synth_gate: VACUOUS — the generator suite ran {ran} test(s), "
+                     f"expected at least 500; it did not sweep the injected tree")
+        print(f"synth_gate: generator suite OK ({ran} tests on the injected tree)")
 
         # regtest.py builds the C library BEFORE generating (the generated C is
         # normally committed, so that order is fine for real functions). The

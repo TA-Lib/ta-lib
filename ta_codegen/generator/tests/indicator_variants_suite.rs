@@ -387,6 +387,16 @@ fn rust_alias_guard(func: &ir::FuncDef) -> String {
     for i in 0..func.outputs.len() {
         for j in (i + 1)..func.outputs.len() {
             let (a, b) = (&func.outputs[i], &func.outputs[j]);
+            // Same element type only. Rust's outputs are `&mut [f64]` and
+            // `&mut [i32]`, and two slices of different types cannot alias --
+            // there is no call the guard would reject, and `as_ptr() ==` across
+            // them would not even typecheck. So the emitter pairs within a type
+            // and this has to as well: no shipped function mixes them, which is
+            // why the omission held, and SYNTH12 (f64, i32, f64) is the only
+            // thing that has ever asked.
+            if a.param_type != b.param_type {
+                continue;
+            }
             pairs.push(match (a.is_nullable(), b.is_nullable()) {
                 (false, false) => format!(
                     "(!{0}.is_empty() && !{1}.is_empty() && {0}.as_ptr() == {1}.as_ptr())",
