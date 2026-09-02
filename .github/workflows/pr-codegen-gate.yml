@@ -175,8 +175,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # The runner image's SDK predates the library's net10.0 TFM, so this
-      # download — not the ~30s of compiling — is the job's bill.
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
         with:
