@@ -52,6 +52,8 @@
 //! let core = Core::builder()
 //!     .unstable_period(FuncUnstId::EMA, 10)
 //!     .build()?;
+//!
+//! assert_eq!(core.get_unstable_period(FuncUnstId::EMA)?, 10);
 //! # Ok::<(), ta_lib::RetCode>(())
 //! ```
 //!
@@ -66,7 +68,11 @@
 //! points of indicators built on fused multiply-adds are compiled twice and the
 //! hardware-FMA clone is selected at runtime (the same dispatch the C library
 //! performs via `target_clones`); both paths are correctly rounded, so results
-//! are bit-identical either way. The streaming tier stays single-path.
+//! are bit-identical either way. Calling that clone is the one `unsafe` in the
+//! crate's shipped dependency graph: it lives in `ta-lib-dispatch`, inside the
+//! `is_x86_feature_detected!("fma")` test that has just proved it sound, and
+//! `forbid` here does not see it because it expands from another crate's macro.
+//! The streaming tier stays single-path.
 //!
 //! # Live data
 //!
