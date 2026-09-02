@@ -1092,6 +1092,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -1163,18 +1165,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -1271,7 +1274,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ACCBANDS(JsonElement req) {
@@ -1299,6 +1302,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -1417,26 +1422,27 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.RealMiddleBand, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 if (SvXtierNe(v0.RealLowerBand, b2[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.AccbandsValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.AccbandsValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.AccbandsValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk.RealUpperBand, up.RealUpperBand)) peekAll = false;
-                        if (SvBne(pk.RealMiddleBand, up.RealMiddleBand)) peekAll = false;
-                        if (SvBne(pk.RealLowerBand, up.RealLowerBand)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        Core.AccbandsValue vc = st.Value;
-                        if (SvBne(vc.RealUpperBand, up.RealUpperBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.RealMiddleBand, up.RealMiddleBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.RealLowerBand, up.RealLowerBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
-                    } else {
-                        Core.AccbandsValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
+                        Core.AccbandsValue rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.RealUpperBand, pk.RealUpperBand)) peekRepAll = false;
+                        if (SvBne(rp.RealMiddleBand, pk.RealMiddleBand)) peekRepAll = false;
+                        if (SvBne(rp.RealLowerBand, pk.RealLowerBand)) peekRepAll = false;
                     }
+                    Core.AccbandsValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk.RealUpperBand, up.RealUpperBand)) peekAll = false;
+                    if (SvBne(pk.RealMiddleBand, up.RealMiddleBand)) peekAll = false;
+                    if (SvBne(pk.RealLowerBand, up.RealLowerBand)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    Core.AccbandsValue vc = st.Value;
+                    if (SvBne(vc.RealUpperBand, up.RealUpperBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.RealMiddleBand, up.RealMiddleBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.RealLowerBand, up.RealLowerBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -1545,7 +1551,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ACOS(JsonElement req) {
@@ -1570,6 +1576,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -1639,18 +1647,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -1740,7 +1749,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_AD(JsonElement req) {
@@ -1765,6 +1774,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -1840,18 +1851,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -1941,7 +1953,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ADD(JsonElement req) {
@@ -1966,6 +1978,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -2037,18 +2051,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -2138,7 +2153,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ADOSC(JsonElement req) {
@@ -2165,6 +2180,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -2241,18 +2258,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -2349,7 +2367,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ADX(JsonElement req) {
@@ -2375,6 +2393,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -2449,18 +2469,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -2557,7 +2578,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ADXR(JsonElement req) {
@@ -2583,6 +2604,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -2657,18 +2680,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -2765,7 +2789,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_AO(JsonElement req) {
@@ -2792,6 +2816,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -2863,18 +2889,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -2971,7 +2998,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_APO(JsonElement req) {
@@ -3000,6 +3027,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -3085,18 +3114,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -3193,7 +3223,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_AROON(JsonElement req) {
@@ -3220,6 +3250,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -3309,22 +3341,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.AroonDown, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.AroonUp, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.AroonValue pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        Core.AroonValue pk = st.Peek(fz_h[t], fz_l[t]);
-                        Core.AroonValue up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk.AroonDown, up.AroonDown)) peekAll = false;
-                        if (SvBne(pk.AroonUp, up.AroonUp)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        Core.AroonValue vc = st.Value;
-                        if (SvBne(vc.AroonDown, up.AroonDown)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.AroonUp, up.AroonUp)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.AroonDown, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.AroonDown).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.AroonUp, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.AroonUp).ToString("x16") + "\""; }
-                    } else {
-                        Core.AroonValue up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up.AroonDown, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.AroonDown).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.AroonUp, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.AroonUp).ToString("x16") + "\""; }
+                        Core.AroonValue rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp.AroonDown, pk.AroonDown)) peekRepAll = false;
+                        if (SvBne(rp.AroonUp, pk.AroonUp)) peekRepAll = false;
                     }
+                    Core.AroonValue up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk.AroonDown, up.AroonDown)) peekAll = false;
+                    if (SvBne(pk.AroonUp, up.AroonUp)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    Core.AroonValue vc = st.Value;
+                    if (SvBne(vc.AroonDown, up.AroonDown)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.AroonUp, up.AroonUp)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.AroonDown, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.AroonDown).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.AroonUp, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.AroonUp).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -3427,7 +3460,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_AROONOSC(JsonElement req) {
@@ -3453,6 +3486,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -3524,18 +3559,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -3632,7 +3668,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ASIN(JsonElement req) {
@@ -3657,6 +3693,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -3726,18 +3764,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -3827,7 +3866,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ATAN(JsonElement req) {
@@ -3852,6 +3891,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -3921,18 +3962,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -4022,7 +4064,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ATR(JsonElement req) {
@@ -4048,6 +4090,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -4122,18 +4166,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -4230,7 +4275,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_AVGDEV(JsonElement req) {
@@ -4256,6 +4301,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -4325,18 +4372,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -4433,7 +4481,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_AVGPRICE(JsonElement req) {
@@ -4458,6 +4506,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -4533,18 +4583,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -4634,7 +4685,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_BBANDS(JsonElement req) {
@@ -4666,6 +4717,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -4792,26 +4845,27 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.RealMiddleBand, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 if (SvXtierNe(v0.RealLowerBand, b2[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.BbandsValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.BbandsValue pk = st.Peek(fz_c[t]);
-                        Core.BbandsValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.RealUpperBand, up.RealUpperBand)) peekAll = false;
-                        if (SvBne(pk.RealMiddleBand, up.RealMiddleBand)) peekAll = false;
-                        if (SvBne(pk.RealLowerBand, up.RealLowerBand)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.BbandsValue vc = st.Value;
-                        if (SvBne(vc.RealUpperBand, up.RealUpperBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.RealMiddleBand, up.RealMiddleBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.RealLowerBand, up.RealLowerBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
-                    } else {
-                        Core.BbandsValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
+                        Core.BbandsValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.RealUpperBand, pk.RealUpperBand)) peekRepAll = false;
+                        if (SvBne(rp.RealMiddleBand, pk.RealMiddleBand)) peekRepAll = false;
+                        if (SvBne(rp.RealLowerBand, pk.RealLowerBand)) peekRepAll = false;
                     }
+                    Core.BbandsValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.RealUpperBand, up.RealUpperBand)) peekAll = false;
+                    if (SvBne(pk.RealMiddleBand, up.RealMiddleBand)) peekAll = false;
+                    if (SvBne(pk.RealLowerBand, up.RealLowerBand)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.BbandsValue vc = st.Value;
+                    if (SvBne(vc.RealUpperBand, up.RealUpperBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.RealMiddleBand, up.RealMiddleBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.RealLowerBand, up.RealLowerBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -4920,7 +4974,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_BETA(JsonElement req) {
@@ -4946,6 +5000,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -5017,18 +5073,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -5125,7 +5182,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_BOP(JsonElement req) {
@@ -5150,6 +5207,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -5225,18 +5284,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -5326,7 +5386,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CCI(JsonElement req) {
@@ -5352,6 +5412,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -5425,18 +5487,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -5533,7 +5596,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDL2CROWS(JsonElement req) {
@@ -5559,6 +5622,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -5593,7 +5658,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -5628,18 +5693,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -5755,7 +5821,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDL3BLACKCROWS(JsonElement req) {
@@ -5781,6 +5847,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -5815,7 +5883,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -5850,18 +5918,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -5977,7 +6046,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDL3INSIDE(JsonElement req) {
@@ -6003,6 +6072,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -6037,7 +6108,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -6072,18 +6143,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -6199,7 +6271,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDL3LINESTRIKE(JsonElement req) {
@@ -6225,6 +6297,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -6259,7 +6333,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -6294,18 +6368,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -6421,7 +6496,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDL3OUTSIDE(JsonElement req) {
@@ -6447,6 +6522,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -6481,7 +6558,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -6516,18 +6593,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -6643,7 +6721,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDL3STARSINSOUTH(JsonElement req) {
@@ -6669,6 +6747,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -6703,7 +6783,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -6738,18 +6818,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -6865,7 +6946,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDL3WHITESOLDIERS(JsonElement req) {
@@ -6891,6 +6972,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -6925,7 +7008,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -6960,18 +7043,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -7087,7 +7171,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLABANDONEDBABY(JsonElement req) {
@@ -7114,6 +7198,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -7148,7 +7234,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -7183,18 +7269,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -7310,7 +7397,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLADVANCEBLOCK(JsonElement req) {
@@ -7336,6 +7423,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -7370,7 +7459,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -7405,18 +7494,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -7532,7 +7622,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLBELTHOLD(JsonElement req) {
@@ -7558,6 +7648,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -7592,7 +7684,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -7627,18 +7719,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -7754,7 +7847,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLBREAKAWAY(JsonElement req) {
@@ -7780,6 +7873,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -7814,7 +7909,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -7849,18 +7944,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -7976,7 +8072,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLCLOSINGMARUBOZU(JsonElement req) {
@@ -8002,6 +8098,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -8036,7 +8134,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -8071,18 +8169,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -8198,7 +8297,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLCONCEALBABYSWALL(JsonElement req) {
@@ -8224,6 +8323,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -8258,7 +8359,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -8293,18 +8394,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -8420,7 +8522,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLCOUNTERATTACK(JsonElement req) {
@@ -8446,6 +8548,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -8480,7 +8584,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -8515,18 +8619,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -8642,7 +8747,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLDARKCLOUDCOVER(JsonElement req) {
@@ -8669,6 +8774,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -8703,7 +8810,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -8738,18 +8845,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -8865,7 +8973,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLDOJI(JsonElement req) {
@@ -8891,6 +8999,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -8925,7 +9035,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -8960,18 +9070,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -9087,7 +9198,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLDOJISTAR(JsonElement req) {
@@ -9113,6 +9224,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -9147,7 +9260,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -9182,18 +9295,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -9309,7 +9423,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLDRAGONFLYDOJI(JsonElement req) {
@@ -9335,6 +9449,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -9369,7 +9485,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -9404,18 +9520,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -9531,7 +9648,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLENGULFING(JsonElement req) {
@@ -9557,6 +9674,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -9591,7 +9710,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -9626,18 +9745,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -9753,7 +9873,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLEVENINGDOJISTAR(JsonElement req) {
@@ -9780,6 +9900,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -9814,7 +9936,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -9849,18 +9971,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -9976,7 +10099,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLEVENINGSTAR(JsonElement req) {
@@ -10003,6 +10126,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -10037,7 +10162,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -10072,18 +10197,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -10199,7 +10325,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLGAPSIDESIDEWHITE(JsonElement req) {
@@ -10225,6 +10351,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -10259,7 +10387,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -10294,18 +10422,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -10421,7 +10550,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLGRAVESTONEDOJI(JsonElement req) {
@@ -10447,6 +10576,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -10481,7 +10612,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -10516,18 +10647,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -10643,7 +10775,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLHAMMER(JsonElement req) {
@@ -10669,6 +10801,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -10703,7 +10837,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -10738,18 +10872,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -10865,7 +11000,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLHANGINGMAN(JsonElement req) {
@@ -10891,6 +11026,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -10925,7 +11062,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -10960,18 +11097,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -11087,7 +11225,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLHARAMI(JsonElement req) {
@@ -11113,6 +11251,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -11147,7 +11287,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -11182,18 +11322,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -11309,7 +11450,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLHARAMICROSS(JsonElement req) {
@@ -11335,6 +11476,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -11369,7 +11512,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -11404,18 +11547,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -11531,7 +11675,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLHIGHWAVE(JsonElement req) {
@@ -11557,6 +11701,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -11591,7 +11737,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -11626,18 +11772,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -11753,7 +11900,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLHIKKAKE(JsonElement req) {
@@ -11779,6 +11926,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -11813,7 +11962,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -11848,18 +11997,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -11975,7 +12125,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLHIKKAKEMOD(JsonElement req) {
@@ -12001,6 +12151,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -12035,7 +12187,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -12070,18 +12222,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -12197,7 +12350,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLHOMINGPIGEON(JsonElement req) {
@@ -12223,6 +12376,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -12257,7 +12412,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -12292,18 +12447,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -12419,7 +12575,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLIDENTICAL3CROWS(JsonElement req) {
@@ -12445,6 +12601,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -12479,7 +12637,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -12514,18 +12672,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -12641,7 +12800,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLINNECK(JsonElement req) {
@@ -12667,6 +12826,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -12701,7 +12862,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -12736,18 +12897,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -12863,7 +13025,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLINVERTEDHAMMER(JsonElement req) {
@@ -12889,6 +13051,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -12923,7 +13087,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -12958,18 +13122,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -13085,7 +13250,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLKICKING(JsonElement req) {
@@ -13111,6 +13276,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -13145,7 +13312,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -13180,18 +13347,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -13307,7 +13475,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLKICKINGBYLENGTH(JsonElement req) {
@@ -13333,6 +13501,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -13367,7 +13537,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -13402,18 +13572,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -13529,7 +13700,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLLADDERBOTTOM(JsonElement req) {
@@ -13555,6 +13726,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -13589,7 +13762,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -13624,18 +13797,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -13751,7 +13925,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLLONGLEGGEDDOJI(JsonElement req) {
@@ -13777,6 +13951,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -13811,7 +13987,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -13846,18 +14022,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -13973,7 +14150,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLLONGLINE(JsonElement req) {
@@ -13999,6 +14176,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -14033,7 +14212,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -14068,18 +14247,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -14195,7 +14375,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLMARUBOZU(JsonElement req) {
@@ -14221,6 +14401,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -14255,7 +14437,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -14290,18 +14472,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -14417,7 +14600,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLMATCHINGLOW(JsonElement req) {
@@ -14443,6 +14626,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -14477,7 +14662,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -14512,18 +14697,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -14639,7 +14825,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLMATHOLD(JsonElement req) {
@@ -14666,6 +14852,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -14700,7 +14888,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -14735,18 +14923,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -14862,7 +15051,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLMORNINGDOJISTAR(JsonElement req) {
@@ -14889,6 +15078,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -14923,7 +15114,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -14958,18 +15149,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -15085,7 +15277,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLMORNINGSTAR(JsonElement req) {
@@ -15112,6 +15304,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -15146,7 +15340,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -15181,18 +15375,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -15308,7 +15503,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLONNECK(JsonElement req) {
@@ -15334,6 +15529,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -15368,7 +15565,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -15403,18 +15600,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -15530,7 +15728,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLPIERCING(JsonElement req) {
@@ -15556,6 +15754,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -15590,7 +15790,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -15625,18 +15825,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -15752,7 +15953,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLRICKSHAWMAN(JsonElement req) {
@@ -15778,6 +15979,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -15812,7 +16015,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -15847,18 +16050,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -15974,7 +16178,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLRISEFALL3METHODS(JsonElement req) {
@@ -16000,6 +16204,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -16034,7 +16240,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -16069,18 +16275,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -16196,7 +16403,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLSEPARATINGLINES(JsonElement req) {
@@ -16222,6 +16429,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -16256,7 +16465,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -16291,18 +16500,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -16418,7 +16628,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLSHOOTINGSTAR(JsonElement req) {
@@ -16444,6 +16654,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -16478,7 +16690,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -16513,18 +16725,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -16640,7 +16853,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLSHORTLINE(JsonElement req) {
@@ -16666,6 +16879,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -16700,7 +16915,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -16735,18 +16950,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -16862,7 +17078,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLSPINNINGTOP(JsonElement req) {
@@ -16888,6 +17104,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -16922,7 +17140,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -16957,18 +17175,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -17084,7 +17303,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLSTALLEDPATTERN(JsonElement req) {
@@ -17110,6 +17329,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -17144,7 +17365,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -17179,18 +17400,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -17306,7 +17528,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLSTICKSANDWICH(JsonElement req) {
@@ -17332,6 +17554,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -17366,7 +17590,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -17401,18 +17625,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -17528,7 +17753,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLTAKURI(JsonElement req) {
@@ -17554,6 +17779,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -17588,7 +17815,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -17623,18 +17850,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -17750,7 +17978,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLTASUKIGAP(JsonElement req) {
@@ -17776,6 +18004,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -17810,7 +18040,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -17845,18 +18075,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -17972,7 +18203,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLTHRUSTING(JsonElement req) {
@@ -17998,6 +18229,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -18032,7 +18265,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -18067,18 +18300,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -18194,7 +18428,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLTRISTAR(JsonElement req) {
@@ -18220,6 +18454,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -18254,7 +18490,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -18289,18 +18525,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -18416,7 +18653,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLUNIQUE3RIVER(JsonElement req) {
@@ -18442,6 +18679,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -18476,7 +18715,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -18511,18 +18750,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -18638,7 +18878,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLUPSIDEGAP2CROWS(JsonElement req) {
@@ -18664,6 +18904,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -18698,7 +18940,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -18733,18 +18975,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -18860,7 +19103,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CDLXSIDEGAP3METHODS(JsonElement req) {
@@ -18886,6 +19129,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -18920,7 +19165,7 @@ public class TaCodegenServe {
                 catch (ArgumentException) { openRejects = true; }
                 if (!openRejects) allOk = false;
                 if (rd + 1 < rounds) continue;
-                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
+                return "{\"retCode\":" + (int)rc + ",\"legs\":" + legs + ",\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (allOk ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + "}";
             }
             fillChecked = 1;
             try {
@@ -18955,18 +19200,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -19082,7 +19328,7 @@ public class TaCodegenServe {
         }
         string extra = ",\"updAlloc\":" + updAlloc;
         extra += ",\"candleMut\":" + candleMutRan + ",\"candleMutMoved\":" + candleMutMoved + ",\"benignMut\":" + zsignMut;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CEIL(JsonElement req) {
@@ -19107,6 +19353,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -19176,18 +19424,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -19277,7 +19526,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CMF(JsonElement req) {
@@ -19303,6 +19552,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -19378,18 +19629,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -19486,7 +19738,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CMO(JsonElement req) {
@@ -19512,6 +19764,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -19582,18 +19836,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -19690,7 +19945,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CMOU(JsonElement req) {
@@ -19716,6 +19971,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -19785,18 +20042,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -19893,7 +20151,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_CORREL(JsonElement req) {
@@ -19919,6 +20177,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -19990,18 +20250,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -20098,7 +20359,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_COS(JsonElement req) {
@@ -20123,6 +20384,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -20192,18 +20455,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -20293,7 +20557,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_COSH(JsonElement req) {
@@ -20318,6 +20582,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -20387,18 +20653,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -20488,7 +20755,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_DEMA(JsonElement req) {
@@ -20514,6 +20781,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -20584,18 +20853,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -20692,7 +20962,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_DIV(JsonElement req) {
@@ -20717,6 +20987,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -20788,18 +21060,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -20889,7 +21162,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_DX(JsonElement req) {
@@ -20915,6 +21188,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -20989,18 +21264,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -21097,7 +21373,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_EFI(JsonElement req) {
@@ -21123,6 +21399,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -21194,18 +21472,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -21302,7 +21581,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_EMA(JsonElement req) {
@@ -21328,6 +21607,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -21398,18 +21679,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -21506,7 +21788,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_EXP(JsonElement req) {
@@ -21531,6 +21813,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -21600,18 +21884,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -21701,7 +21986,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_FLOOR(JsonElement req) {
@@ -21726,6 +22011,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -21795,18 +22082,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -21896,7 +22184,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_HMA(JsonElement req) {
@@ -21922,6 +22210,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -21991,18 +22281,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -22099,7 +22390,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_HT_DCPERIOD(JsonElement req) {
@@ -22124,6 +22415,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -22194,18 +22487,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -22295,7 +22589,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_HT_DCPHASE(JsonElement req) {
@@ -22320,6 +22614,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -22390,18 +22686,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -22491,7 +22788,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_HT_PHASOR(JsonElement req) {
@@ -22517,6 +22814,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -22603,22 +22902,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.InPhase, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.Quadrature, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.HtPhasorValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.HtPhasorValue pk = st.Peek(fz_c[t]);
-                        Core.HtPhasorValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.InPhase, up.InPhase)) peekAll = false;
-                        if (SvBne(pk.Quadrature, up.Quadrature)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.HtPhasorValue vc = st.Value;
-                        if (SvBne(vc.InPhase, up.InPhase)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.Quadrature, up.Quadrature)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.InPhase, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.InPhase).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.Quadrature, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Quadrature).ToString("x16") + "\""; }
-                    } else {
-                        Core.HtPhasorValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.InPhase, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.InPhase).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.Quadrature, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Quadrature).ToString("x16") + "\""; }
+                        Core.HtPhasorValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.InPhase, pk.InPhase)) peekRepAll = false;
+                        if (SvBne(rp.Quadrature, pk.Quadrature)) peekRepAll = false;
                     }
+                    Core.HtPhasorValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.InPhase, up.InPhase)) peekAll = false;
+                    if (SvBne(pk.Quadrature, up.Quadrature)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.HtPhasorValue vc = st.Value;
+                    if (SvBne(vc.InPhase, up.InPhase)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.Quadrature, up.Quadrature)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.InPhase, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.InPhase).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.Quadrature, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Quadrature).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -22713,7 +23013,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_HT_SINE(JsonElement req) {
@@ -22739,6 +23039,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -22825,22 +23127,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.Sine, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.LeadSine, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.HtSineValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.HtSineValue pk = st.Peek(fz_c[t]);
-                        Core.HtSineValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.Sine, up.Sine)) peekAll = false;
-                        if (SvBne(pk.LeadSine, up.LeadSine)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.HtSineValue vc = st.Value;
-                        if (SvBne(vc.Sine, up.Sine)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.LeadSine, up.LeadSine)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.Sine, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Sine).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.LeadSine, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.LeadSine).ToString("x16") + "\""; }
-                    } else {
-                        Core.HtSineValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.Sine, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Sine).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.LeadSine, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.LeadSine).ToString("x16") + "\""; }
+                        Core.HtSineValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.Sine, pk.Sine)) peekRepAll = false;
+                        if (SvBne(rp.LeadSine, pk.LeadSine)) peekRepAll = false;
                     }
+                    Core.HtSineValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.Sine, up.Sine)) peekAll = false;
+                    if (SvBne(pk.LeadSine, up.LeadSine)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.HtSineValue vc = st.Value;
+                    if (SvBne(vc.Sine, up.Sine)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.LeadSine, up.LeadSine)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.Sine, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Sine).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.LeadSine, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.LeadSine).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -22935,7 +23238,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_HT_TRENDLINE(JsonElement req) {
@@ -22960,6 +23263,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -23030,18 +23335,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -23131,7 +23437,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_HT_TRENDMODE(JsonElement req) {
@@ -23156,6 +23462,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -23220,18 +23528,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_c[t]);
-                        int up = st.Update(fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -23320,7 +23629,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_IMI(JsonElement req) {
@@ -23346,6 +23655,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -23417,18 +23728,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_o[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_o[t], fz_c[t]);
-                        double up = st.Update(fz_o[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_o[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_o[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_o[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -23525,7 +23837,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_KAMA(JsonElement req) {
@@ -23551,6 +23863,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -23621,18 +23935,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -23729,7 +24044,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_KC(JsonElement req) {
@@ -23759,6 +24074,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -23879,26 +24196,27 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.RealMiddleBand, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 if (SvXtierNe(v0.RealLowerBand, b2[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.KcValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.KcValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.KcValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk.RealUpperBand, up.RealUpperBand)) peekAll = false;
-                        if (SvBne(pk.RealMiddleBand, up.RealMiddleBand)) peekAll = false;
-                        if (SvBne(pk.RealLowerBand, up.RealLowerBand)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        Core.KcValue vc = st.Value;
-                        if (SvBne(vc.RealUpperBand, up.RealUpperBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.RealMiddleBand, up.RealMiddleBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.RealLowerBand, up.RealLowerBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
-                    } else {
-                        Core.KcValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
+                        Core.KcValue rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.RealUpperBand, pk.RealUpperBand)) peekRepAll = false;
+                        if (SvBne(rp.RealMiddleBand, pk.RealMiddleBand)) peekRepAll = false;
+                        if (SvBne(rp.RealLowerBand, pk.RealLowerBand)) peekRepAll = false;
                     }
+                    Core.KcValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk.RealUpperBand, up.RealUpperBand)) peekAll = false;
+                    if (SvBne(pk.RealMiddleBand, up.RealMiddleBand)) peekAll = false;
+                    if (SvBne(pk.RealLowerBand, up.RealLowerBand)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    Core.KcValue vc = st.Value;
+                    if (SvBne(vc.RealUpperBand, up.RealUpperBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.RealMiddleBand, up.RealMiddleBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.RealLowerBand, up.RealLowerBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.RealUpperBand, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealUpperBand).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.RealMiddleBand, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealMiddleBand).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.RealLowerBand, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.RealLowerBand).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -24007,7 +24325,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_LINEARREG(JsonElement req) {
@@ -24033,6 +24351,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -24102,18 +24422,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -24210,7 +24531,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_LINEARREG_ANGLE(JsonElement req) {
@@ -24236,6 +24557,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -24305,18 +24628,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -24413,7 +24737,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_LINEARREG_INTERCEPT(JsonElement req) {
@@ -24439,6 +24763,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -24508,18 +24834,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -24616,7 +24943,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_LINEARREG_SLOPE(JsonElement req) {
@@ -24642,6 +24969,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -24711,18 +25040,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -24819,7 +25149,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_LN(JsonElement req) {
@@ -24844,6 +25174,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -24913,18 +25245,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -25014,7 +25347,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_LOG10(JsonElement req) {
@@ -25039,6 +25372,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -25108,18 +25443,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -25209,7 +25545,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MA(JsonElement req) {
@@ -25237,6 +25573,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -25322,18 +25660,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -25430,7 +25769,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MACD(JsonElement req) {
@@ -25460,6 +25799,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -25567,26 +25908,27 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.MACDSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 if (SvXtierNe(v0.MACDHist, b2[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.MacdValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.MacdValue pk = st.Peek(fz_c[t]);
-                        Core.MacdValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.MACD, up.MACD)) peekAll = false;
-                        if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
-                        if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.MacdValue vc = st.Value;
-                        if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.MACDHist, up.MACDHist)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
-                    } else {
-                        Core.MacdValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
+                        Core.MacdValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.MACD, pk.MACD)) peekRepAll = false;
+                        if (SvBne(rp.MACDSignal, pk.MACDSignal)) peekRepAll = false;
+                        if (SvBne(rp.MACDHist, pk.MACDHist)) peekRepAll = false;
                     }
+                    Core.MacdValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.MACD, up.MACD)) peekAll = false;
+                    if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
+                    if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.MacdValue vc = st.Value;
+                    if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.MACDHist, up.MACDHist)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -25695,7 +26037,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MACDEXT(JsonElement req) {
@@ -25731,6 +26073,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -25857,26 +26201,27 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.MACDSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 if (SvXtierNe(v0.MACDHist, b2[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.MacdextValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.MacdextValue pk = st.Peek(fz_c[t]);
-                        Core.MacdextValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.MACD, up.MACD)) peekAll = false;
-                        if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
-                        if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.MacdextValue vc = st.Value;
-                        if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.MACDHist, up.MACDHist)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
-                    } else {
-                        Core.MacdextValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
+                        Core.MacdextValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.MACD, pk.MACD)) peekRepAll = false;
+                        if (SvBne(rp.MACDSignal, pk.MACDSignal)) peekRepAll = false;
+                        if (SvBne(rp.MACDHist, pk.MACDHist)) peekRepAll = false;
                     }
+                    Core.MacdextValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.MACD, up.MACD)) peekAll = false;
+                    if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
+                    if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.MacdextValue vc = st.Value;
+                    if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.MACDHist, up.MACDHist)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -25985,7 +26330,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MACDFIX(JsonElement req) {
@@ -26013,6 +26358,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -26120,26 +26467,27 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.MACDSignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 if (SvXtierNe(v0.MACDHist, b2[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.MacdfixValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.MacdfixValue pk = st.Peek(fz_c[t]);
-                        Core.MacdfixValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.MACD, up.MACD)) peekAll = false;
-                        if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
-                        if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.MacdfixValue vc = st.Value;
-                        if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.MACDHist, up.MACDHist)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
-                    } else {
-                        Core.MacdfixValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
+                        Core.MacdfixValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.MACD, pk.MACD)) peekRepAll = false;
+                        if (SvBne(rp.MACDSignal, pk.MACDSignal)) peekRepAll = false;
+                        if (SvBne(rp.MACDHist, pk.MACDHist)) peekRepAll = false;
                     }
+                    Core.MacdfixValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.MACD, up.MACD)) peekAll = false;
+                    if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
+                    if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.MacdfixValue vc = st.Value;
+                    if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.MACDHist, up.MACDHist)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.MACD, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACD).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.MACDSignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDSignal).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.MACDHist, b2[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b2[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MACDHist).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -26248,7 +26596,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MAMA(JsonElement req) {
@@ -26276,6 +26624,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -26362,22 +26712,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.MAMA, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.FAMA, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.MamaValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.MamaValue pk = st.Peek(fz_c[t]);
-                        Core.MamaValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.MAMA, up.MAMA)) peekAll = false;
-                        if (SvBne(pk.FAMA, up.FAMA)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.MamaValue vc = st.Value;
-                        if (SvBne(vc.MAMA, up.MAMA)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.FAMA, up.FAMA)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.MAMA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MAMA).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.FAMA, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FAMA).ToString("x16") + "\""; }
-                    } else {
-                        Core.MamaValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.MAMA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MAMA).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.FAMA, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FAMA).ToString("x16") + "\""; }
+                        Core.MamaValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.MAMA, pk.MAMA)) peekRepAll = false;
+                        if (SvBne(rp.FAMA, pk.FAMA)) peekRepAll = false;
                     }
+                    Core.MamaValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.MAMA, up.MAMA)) peekAll = false;
+                    if (SvBne(pk.FAMA, up.FAMA)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.MamaValue vc = st.Value;
+                    if (SvBne(vc.MAMA, up.MAMA)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.FAMA, up.FAMA)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.MAMA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.MAMA).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.FAMA, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FAMA).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -26472,7 +26823,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MARKETFI(JsonElement req) {
@@ -26497,6 +26848,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -26570,18 +26923,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_v[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -26671,7 +27025,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MAVP(JsonElement req) {
@@ -26701,6 +27055,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -26788,18 +27144,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -26896,7 +27253,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MAX(JsonElement req) {
@@ -26922,6 +27279,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -26991,18 +27350,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -27099,7 +27459,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MAXINDEX(JsonElement req) {
@@ -27125,6 +27485,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -27188,18 +27550,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_c[t]);
-                        int up = st.Update(fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -27295,7 +27658,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MEDPRICE(JsonElement req) {
@@ -27320,6 +27683,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -27391,18 +27756,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -27492,7 +27858,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MFI(JsonElement req) {
@@ -27518,6 +27884,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -27593,18 +27961,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -27701,7 +28070,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MIDPOINT(JsonElement req) {
@@ -27727,6 +28096,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -27796,18 +28167,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -27904,7 +28276,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MIDPRICE(JsonElement req) {
@@ -27930,6 +28302,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -28001,18 +28375,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -28109,7 +28484,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MIN(JsonElement req) {
@@ -28135,6 +28510,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -28204,18 +28581,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -28312,7 +28690,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MININDEX(JsonElement req) {
@@ -28338,6 +28716,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -28401,18 +28781,19 @@ public class TaCodegenServe {
                 int v0 = st.Value;
                 if (v0 != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    int pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        int pk = st.Peek(fz_c[t]);
-                        int up = st.Update(fz_c[t]);
-                        if (pk != up) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        int vc = st.Value;
-                        if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
-                    } else {
-                        int up = st.Update(fz_c[t]);
-                        if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
+                        int rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (rp != pk) peekRepAll = false;
                     }
+                    int up = st.Update(fz_c[t]);
+                    if (pk != up) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    int vc = st.Value;
+                    if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -28508,7 +28889,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MINMAX(JsonElement req) {
@@ -28535,6 +28916,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -28620,22 +29003,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.Min, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.Max, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.MinmaxValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.MinmaxValue pk = st.Peek(fz_c[t]);
-                        Core.MinmaxValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.Min, up.Min)) peekAll = false;
-                        if (SvBne(pk.Max, up.Max)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.MinmaxValue vc = st.Value;
-                        if (SvBne(vc.Min, up.Min)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.Max, up.Max)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.Min, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Min).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.Max, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Max).ToString("x16") + "\""; }
-                    } else {
-                        Core.MinmaxValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.Min, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Min).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.Max, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Max).ToString("x16") + "\""; }
+                        Core.MinmaxValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.Min, pk.Min)) peekRepAll = false;
+                        if (SvBne(rp.Max, pk.Max)) peekRepAll = false;
                     }
+                    Core.MinmaxValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.Min, up.Min)) peekAll = false;
+                    if (SvBne(pk.Max, up.Max)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.MinmaxValue vc = st.Value;
+                    if (SvBne(vc.Min, up.Min)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.Max, up.Max)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.Min, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Min).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.Max, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Max).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -28738,7 +29122,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MINMAXINDEX(JsonElement req) {
@@ -28765,6 +29149,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -28840,22 +29226,23 @@ public class TaCodegenServe {
                 if (v0.MinIdx != b0[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (v0.MaxIdx != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.MinmaxindexValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.MinmaxindexValue pk = st.Peek(fz_c[t]);
-                        Core.MinmaxindexValue up = st.Update(fz_c[t]);
-                        if (pk.MinIdx != up.MinIdx) peekAll = false;
-                        if (pk.MaxIdx != up.MaxIdx) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.MinmaxindexValue vc = st.Value;
-                        if (vc.MinIdx != up.MinIdx) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (vc.MaxIdx != up.MaxIdx) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (up.MinIdx != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up.MinIdx + "\""; }
-                        if (up.MaxIdx != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg] + "\",\"streamv\":\"" + up.MaxIdx + "\""; }
-                    } else {
-                        Core.MinmaxindexValue up = st.Update(fz_c[t]);
-                        if (up.MinIdx != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up.MinIdx + "\""; }
-                        if (up.MaxIdx != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg] + "\",\"streamv\":\"" + up.MaxIdx + "\""; }
+                        Core.MinmaxindexValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (rp.MinIdx != pk.MinIdx) peekRepAll = false;
+                        if (rp.MaxIdx != pk.MaxIdx) peekRepAll = false;
                     }
+                    Core.MinmaxindexValue up = st.Update(fz_c[t]);
+                    if (pk.MinIdx != up.MinIdx) peekAll = false;
+                    if (pk.MaxIdx != up.MaxIdx) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.MinmaxindexValue vc = st.Value;
+                    if (vc.MinIdx != up.MinIdx) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (vc.MaxIdx != up.MaxIdx) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (up.MinIdx != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up.MinIdx + "\""; }
+                    if (up.MaxIdx != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg] + "\",\"streamv\":\"" + up.MaxIdx + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -28957,7 +29344,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MINUS_DI(JsonElement req) {
@@ -28983,6 +29370,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -29057,18 +29446,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -29165,7 +29555,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MINUS_DM(JsonElement req) {
@@ -29191,6 +29581,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -29263,18 +29655,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -29371,7 +29764,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MOM(JsonElement req) {
@@ -29397,6 +29790,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -29466,18 +29861,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -29574,7 +29970,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_MULT(JsonElement req) {
@@ -29599,6 +29995,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -29670,18 +30068,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -29771,7 +30170,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_NATR(JsonElement req) {
@@ -29797,6 +30196,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -29871,18 +30272,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -29979,7 +30381,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_NVI(JsonElement req) {
@@ -30004,6 +30406,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -30075,18 +30479,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -30176,7 +30581,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_OBV(JsonElement req) {
@@ -30201,6 +30606,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -30272,18 +30679,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -30373,7 +30781,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_PLUS_DI(JsonElement req) {
@@ -30399,6 +30807,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -30473,18 +30883,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -30581,7 +30992,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_PLUS_DM(JsonElement req) {
@@ -30607,6 +31018,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -30679,18 +31092,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -30787,7 +31201,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_PPO(JsonElement req) {
@@ -30816,6 +31230,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -30901,18 +31317,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -31009,7 +31426,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_PVI(JsonElement req) {
@@ -31034,6 +31451,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -31105,18 +31524,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -31206,7 +31626,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_PVO(JsonElement req) {
@@ -31235,6 +31655,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -31320,18 +31742,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_v[t]);
-                        double up = st.Update(fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -31428,7 +31851,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_QSTICK(JsonElement req) {
@@ -31454,6 +31877,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -31525,18 +31950,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_o[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_o[t], fz_c[t]);
-                        double up = st.Update(fz_o[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_o[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_o[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_o[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_o[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_o[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -31633,7 +32059,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ROC(JsonElement req) {
@@ -31659,6 +32085,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -31728,18 +32156,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -31836,7 +32265,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ROCP(JsonElement req) {
@@ -31862,6 +32291,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -31931,18 +32362,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -32039,7 +32471,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ROCR(JsonElement req) {
@@ -32065,6 +32497,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -32134,18 +32568,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -32242,7 +32677,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ROCR100(JsonElement req) {
@@ -32268,6 +32703,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -32337,18 +32774,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -32445,7 +32883,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_RSI(JsonElement req) {
@@ -32471,6 +32909,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -32541,18 +32981,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -32649,7 +33090,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SAR(JsonElement req) {
@@ -32676,6 +33117,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -32747,18 +33190,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -32848,7 +33292,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SAREXT(JsonElement req) {
@@ -32881,6 +33325,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -32952,18 +33398,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t]);
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -33053,7 +33500,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SIN(JsonElement req) {
@@ -33078,6 +33525,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -33147,18 +33596,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -33248,7 +33698,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SINH(JsonElement req) {
@@ -33273,6 +33723,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -33342,18 +33794,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -33443,7 +33896,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SMA(JsonElement req) {
@@ -33469,6 +33922,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -33538,18 +33993,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -33646,7 +34102,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SMI(JsonElement req) {
@@ -33676,6 +34132,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -33770,22 +34228,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.SMI, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.SMISignal, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.SmiValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.SmiValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.SmiValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk.SMI, up.SMI)) peekAll = false;
-                        if (SvBne(pk.SMISignal, up.SMISignal)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        Core.SmiValue vc = st.Value;
-                        if (SvBne(vc.SMI, up.SMI)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.SMISignal, up.SMISignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.SMI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SMI).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.SMISignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SMISignal).ToString("x16") + "\""; }
-                    } else {
-                        Core.SmiValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up.SMI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SMI).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.SMISignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SMISignal).ToString("x16") + "\""; }
+                        Core.SmiValue rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.SMI, pk.SMI)) peekRepAll = false;
+                        if (SvBne(rp.SMISignal, pk.SMISignal)) peekRepAll = false;
                     }
+                    Core.SmiValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk.SMI, up.SMI)) peekAll = false;
+                    if (SvBne(pk.SMISignal, up.SMISignal)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    Core.SmiValue vc = st.Value;
+                    if (SvBne(vc.SMI, up.SMI)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.SMISignal, up.SMISignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.SMI, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SMI).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.SMISignal, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SMISignal).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -33888,7 +34347,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SQRT(JsonElement req) {
@@ -33913,6 +34372,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -33982,18 +34443,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -34083,7 +34545,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_STDDEV(JsonElement req) {
@@ -34110,6 +34572,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -34179,18 +34643,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -34287,7 +34752,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_STOCH(JsonElement req) {
@@ -34320,6 +34785,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -34431,22 +34898,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.SlowK, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.SlowD, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.StochValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.StochValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.StochValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk.SlowK, up.SlowK)) peekAll = false;
-                        if (SvBne(pk.SlowD, up.SlowD)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        Core.StochValue vc = st.Value;
-                        if (SvBne(vc.SlowK, up.SlowK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.SlowD, up.SlowD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.SlowK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SlowK).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.SlowD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SlowD).ToString("x16") + "\""; }
-                    } else {
-                        Core.StochValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up.SlowK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SlowK).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.SlowD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SlowD).ToString("x16") + "\""; }
+                        Core.StochValue rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.SlowK, pk.SlowK)) peekRepAll = false;
+                        if (SvBne(rp.SlowD, pk.SlowD)) peekRepAll = false;
                     }
+                    Core.StochValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk.SlowK, up.SlowK)) peekAll = false;
+                    if (SvBne(pk.SlowD, up.SlowD)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    Core.StochValue vc = st.Value;
+                    if (SvBne(vc.SlowK, up.SlowK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.SlowD, up.SlowD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.SlowK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SlowK).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.SlowD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.SlowD).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -34549,7 +35017,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_STOCHF(JsonElement req) {
@@ -34579,6 +35047,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -34690,22 +35160,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.FastK, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.FastD, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.StochfValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.StochfValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.StochfValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk.FastK, up.FastK)) peekAll = false;
-                        if (SvBne(pk.FastD, up.FastD)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        Core.StochfValue vc = st.Value;
-                        if (SvBne(vc.FastK, up.FastK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.FastD, up.FastD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastK).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastD).ToString("x16") + "\""; }
-                    } else {
-                        Core.StochfValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastK).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastD).ToString("x16") + "\""; }
+                        Core.StochfValue rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.FastK, pk.FastK)) peekRepAll = false;
+                        if (SvBne(rp.FastD, pk.FastD)) peekRepAll = false;
                     }
+                    Core.StochfValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk.FastK, up.FastK)) peekAll = false;
+                    if (SvBne(pk.FastD, up.FastD)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    Core.StochfValue vc = st.Value;
+                    if (SvBne(vc.FastK, up.FastK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.FastD, up.FastD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastK).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastD).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -34808,7 +35279,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_STOCHRSI(JsonElement req) {
@@ -34839,6 +35310,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -34943,22 +35416,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.FastK, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (SvXtierNe(v0.FastD, b1[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.StochrsiValue pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.StochrsiValue pk = st.Peek(fz_c[t]);
-                        Core.StochrsiValue up = st.Update(fz_c[t]);
-                        if (SvBne(pk.FastK, up.FastK)) peekAll = false;
-                        if (SvBne(pk.FastD, up.FastD)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        Core.StochrsiValue vc = st.Value;
-                        if (SvBne(vc.FastK, up.FastK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvBne(vc.FastD, up.FastD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastK).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastD).ToString("x16") + "\""; }
-                    } else {
-                        Core.StochrsiValue up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastK).ToString("x16") + "\""; }
-                        if (SvXtierNe(up.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastD).ToString("x16") + "\""; }
+                        Core.StochrsiValue rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.FastK, pk.FastK)) peekRepAll = false;
+                        if (SvBne(rp.FastD, pk.FastD)) peekRepAll = false;
                     }
+                    Core.StochrsiValue up = st.Update(fz_c[t]);
+                    if (SvBne(pk.FastK, up.FastK)) peekAll = false;
+                    if (SvBne(pk.FastD, up.FastD)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    Core.StochrsiValue vc = st.Value;
+                    if (SvBne(vc.FastK, up.FastK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvBne(vc.FastD, up.FastD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.FastK, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastK).ToString("x16") + "\""; }
+                    if (SvXtierNe(up.FastD, b1[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b1[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.FastD).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -35061,7 +35535,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SUB(JsonElement req) {
@@ -35086,6 +35560,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -35157,18 +35633,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -35258,7 +35735,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SUM(JsonElement req) {
@@ -35284,6 +35761,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -35353,18 +35832,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -35461,7 +35941,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_SUPERTREND(JsonElement req) {
@@ -35489,6 +35969,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -35568,22 +36050,23 @@ public class TaCodegenServe {
                 if (SvXtierNe(v0.Real, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 if (v0.Integer != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    Core.SupertrendValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        Core.SupertrendValue pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        Core.SupertrendValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk.Real, up.Real)) peekAll = false;
-                        if (pk.Integer != up.Integer) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        Core.SupertrendValue vc = st.Value;
-                        if (SvBne(vc.Real, up.Real)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (vc.Integer != up.Integer) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up.Real, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Real).ToString("x16") + "\""; }
-                        if (up.Integer != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg] + "\",\"streamv\":\"" + up.Integer + "\""; }
-                    } else {
-                        Core.SupertrendValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up.Real, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Real).ToString("x16") + "\""; }
-                        if (up.Integer != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg] + "\",\"streamv\":\"" + up.Integer + "\""; }
+                        Core.SupertrendValue rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp.Real, pk.Real)) peekRepAll = false;
+                        if (rp.Integer != pk.Integer) peekRepAll = false;
                     }
+                    Core.SupertrendValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk.Real, up.Real)) peekAll = false;
+                    if (pk.Integer != up.Integer) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    Core.SupertrendValue vc = st.Value;
+                    if (SvBne(vc.Real, up.Real)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (vc.Integer != up.Integer) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.Real, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Real).ToString("x16") + "\""; }
+                    if (up.Integer != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg] + "\",\"streamv\":\"" + up.Integer + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -35686,7 +36169,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_T3(JsonElement req) {
@@ -35713,6 +36196,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -35783,18 +36268,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -35891,7 +36377,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_TAN(JsonElement req) {
@@ -35916,6 +36402,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -35985,18 +36473,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -36086,7 +36575,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_TANH(JsonElement req) {
@@ -36111,6 +36600,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -36180,18 +36671,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -36281,7 +36773,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_TEMA(JsonElement req) {
@@ -36307,6 +36799,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -36377,18 +36871,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -36485,7 +36980,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_TRANGE(JsonElement req) {
@@ -36510,6 +37005,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -36583,18 +37080,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -36684,7 +37182,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_TRIMA(JsonElement req) {
@@ -36710,6 +37208,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -36779,18 +37279,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -36887,7 +37388,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_TRIX(JsonElement req) {
@@ -36913,6 +37414,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -36983,18 +37486,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -37091,7 +37595,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_TSF(JsonElement req) {
@@ -37117,6 +37621,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -37186,18 +37692,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -37294,7 +37801,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_TYPPRICE(JsonElement req) {
@@ -37319,6 +37826,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -37392,18 +37901,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -37493,7 +38003,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_ULTOSC(JsonElement req) {
@@ -37521,6 +38031,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -37594,18 +38106,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -37702,7 +38215,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_VAR(JsonElement req) {
@@ -37729,6 +38242,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -37798,18 +38313,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -37906,7 +38422,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_VWAP(JsonElement req) {
@@ -37931,6 +38447,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -38006,18 +38524,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -38107,7 +38626,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_VWMA(JsonElement req) {
@@ -38133,6 +38652,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -38204,18 +38725,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t], fz_v[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t], fz_v[t]);
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t], fz_v[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t], fz_v[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t], fz_v[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -38312,7 +38834,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_WAD(JsonElement req) {
@@ -38337,6 +38859,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -38410,18 +38934,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -38511,7 +39036,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_WCLPRICE(JsonElement req) {
@@ -38536,6 +39061,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -38609,18 +39136,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -38710,7 +39238,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_WILLR(JsonElement req) {
@@ -38736,6 +39264,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -38809,18 +39339,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -38917,7 +39448,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string Sv_WMA(JsonElement req) {
@@ -38943,6 +39474,8 @@ public class TaCodegenServe {
         long legs = 0;
         bool allOk = true;
         bool peekAll = true;
+        long peekReps = 0;
+        bool peekRepAll = true;
         int fillChecked = 0;
         bool fillOk = true;
         int beg = 0, nb = 0;
@@ -39012,18 +39545,19 @@ public class TaCodegenServe {
                 double v0 = st.Value;
                 if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
+                    double pk = st.Peek(fz_c[t]);
                     if (t % 7 == 0) {
-                        double pk = st.Peek(fz_c[t]);
-                        double up = st.Update(fz_c[t]);
-                        if (SvBne(pk, up)) peekAll = false;
                         _ = st.Peek(fz_c[t - 1]);
-                        double vc = st.Value;
-                        if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                    } else {
-                        double up = st.Update(fz_c[t]);
-                        if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                        double rp = st.Peek(fz_c[t]);
+                        peekReps++;
+                        if (SvBne(rp, pk)) peekRepAll = false;
                     }
+                    double up = st.Update(fz_c[t]);
+                    if (SvBne(pk, up)) peekAll = false;
+                    _ = st.Peek(fz_c[t - 1]);
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -39120,7 +39654,7 @@ public class TaCodegenServe {
             }
         }
         string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
     static string HandleFuzzInHash(JsonElement req) {
