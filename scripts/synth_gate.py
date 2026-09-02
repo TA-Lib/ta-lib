@@ -269,22 +269,37 @@ def main():
             sys.exit(f"synth_gate: FAIL — synth_values exited {rc}")
 
         # Anti-vacuity: prove the SYNTH functions were actually exercised.
-        # Stream leg: one "Stream verify: N functions, M legs ..." line per
-        # language server; every one must have swept exactly the fixtures.
-        stream = re.findall(r"Stream verify: (\d+) functions, (\d+) legs", out1)
-        notsup = len(re.findall(r"Stream verify: not supported", out1))
-        # Every server must either sweep the fixtures or say so explicitly.
-        # All four now stream, so the floor is 4: at 3 a C# server that
-        # silently lost stream support still satisfied `3 + 1 == LANGS`, which
-        # is exactly the hole this floor exists to close.
-        if len(stream) + notsup != LANGS or len(stream) < 4:
-            sys.exit(f"synth_gate: VACUOUS — {len(stream)} stream-verify "
-                     f"summaries + {notsup} not-supported, expected "
-                     f"{LANGS} total with at least 4 summaries")
-        for n, legs in stream:
-            if int(n) != nfix or int(legs) == 0:
-                sys.exit(f"synth_gate: VACUOUS — stream leg swept {n} function(s) "
-                         f"({legs} legs), expected {nfix} with legs > 0")
+        #
+        # Read off the per-language tally, one line per server:
+        #   `  Java: 0 passed, 0 failed, 14 skipped`
+        # Their sum is what the --function filter admitted, so a filter that
+        # matched nothing reads 0 and fails here. That matters more than it
+        # sounds: a `--function=` naming nothing exits 0 (the filter matches a
+        # GROUP TAG as well as a name), so the exit code alone is no evidence.
+        #
+        # `skipped` is expected, not a problem: the SYNTH functions are absent
+        # from the frozen pre-cutover oracle, so their VALUE comparison has no
+        # reference and is skipped by design (the subset gate). The stream and
+        # OpenAndFill legs are current-vs-current and run regardless.
+        #
+        # This replaces a parse of "Stream verify: N functions, M legs", which
+        # `d8af8b5d9` removed when ta_regtest stopped printing its coverage and
+        # started asserting it internally. The old parse could no longer match,
+        # so this leg would have failed VACUOUS on every run from that commit
+        # on -- the first nightly after it had not run yet when this was found.
+        # The internal assertion is why a per-language tally is enough now:
+        # ta_regtest fails itself if a leg goes uncovered.
+        tally = re.findall(
+            r"^  (C|Rust|Java|C#): (\d+) passed, (\d+) failed, (\d+) skipped",
+            out1, re.M)
+        if len(tally) != LANGS:
+            sys.exit(f"synth_gate: VACUOUS — {len(tally)} per-language tally "
+                     f"line(s) in the --codegen output, expected {LANGS}")
+        for lang, passed, failed, skipped in tally:
+            seen = int(passed) + int(failed) + int(skipped)
+            if seen != nfix:
+                sys.exit(f"synth_gate: VACUOUS — {lang} saw {seen} SYNTH "
+                         f"function(s), expected {nfix}")
 
         # Hash leg: the PASS line prints the number of functions actually
         # swept past the --function filter (funcsSwept in test_codegen.c).
