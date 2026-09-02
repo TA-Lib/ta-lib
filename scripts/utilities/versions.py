@@ -1,6 +1,7 @@
 import hashlib
 import os
 import re
+import subprocess
 import sys
 from typing import Tuple
 
@@ -360,6 +361,68 @@ def set_version_string_cargo(root_dir: str, new_version: str):
         with open(cargo_file_path, 'w') as cargo_file:
             cargo_file.writelines(lines)
 
+# The workspace members whose version tracks the repo VERSION. ta-lib-dispatch is
+# deliberately absent: it versions on its own cadence, independent of a release.
+_CARGO_LOCK_MEMBERS = ("ta-lib", "ta-lib-tools")
+
+def get_version_string_cargo_lock(root_dir: str) -> str:
+    """
+    Parse ta_codegen/output/rust/Cargo.lock for the version it records against
+    the members that track VERSION. Example:
+      [[package]]
+      name = "ta-lib"
+      version = "0.8.1"
+
+    The LOWEST of them is returned, so a lock lagging on any one member reads as
+    stale. A missing entry exits rather than returning None: this value decides
+    whether the lock gets refreshed at all, so failing soft here would put the
+    stale lock back in a release, which is the whole reason it is read.
+    """
+    lock_path = path_join(root_dir, "ta_codegen/output", "rust", "Cargo.lock")
+
+    if not os.path.exists(lock_path):
+        print(f"Error: Cargo.lock not found at {lock_path}")
+        sys.exit(1)
+
+    with open(lock_path, 'r') as lock_file:
+        lock_text = lock_file.read()
+
+    lowest = None
+    for member in _CARGO_LOCK_MEMBERS:
+        match = re.search(r'name = "%s"\nversion = "(\d+\.\d+\.\d+)"' % re.escape(member),
+                          lock_text)
+        if not match:
+            print(f"Error: no [[package]] entry for '{member}' in {lock_path}")
+            sys.exit(1)
+        if lowest is None or compare_version(lowest, match.group(1)) > 0:
+            lowest = match.group(1)
+
+    return lowest
+
+def refresh_cargo_lock(root_dir: str):
+    """
+    Bring ta_codegen/output/rust/Cargo.lock back in step with its manifests.
+
+    RESOLVES, never edits. `cargo metadata` rewrites only what the manifests now
+    demand -- here, the members' own version lines -- and leaves every dependency
+    on the version the lock already pinned. Editing the file by hand would forge
+    a generated artifact, and `cargo update` would float the whole dependency set
+    off the versions the release is meant to freeze.
+    """
+    manifest = path_join(root_dir, "ta_codegen/output", "rust", "Cargo.toml")
+    try:
+        returncode = subprocess.run(
+            ["cargo", "metadata", "--format-version", "1", "--manifest-path", manifest],
+            stdout=subprocess.DEVNULL).returncode
+    except FileNotFoundError:
+        print("Error: cargo is required to refresh Cargo.lock after a version bump.")
+        sys.exit(1)
+
+    if returncode != 0:
+        print(f"Error: could not refresh Cargo.lock from {manifest} "
+              f"(cargo's own message is above).")
+        sys.exit(1)
+
 def get_version_string_pom(root_dir: str) -> str:
     """
     Parse the shipped Java library manifest
@@ -512,6 +575,7 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
     Synchronize the version between:
           src/ta_common/ta_version.c
           ta_codegen/output/rust/library/Cargo.toml
+          ta_codegen/output/rust/Cargo.lock (refreshed by cargo, not edited)
           ta_codegen/output/java/library/pom.xml
           CMakeLists.txt (root of repos)
           VERSION file (root of repos)
@@ -593,6 +657,17 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
         set_version_string_conanfile(root_dir, highest_version)
         is_updated = True
 
+    # Last, because cargo derives the lock from the manifests set_version_string_cargo()
+    # has just written. The lock carries each member's own version, so a bump strands it
+    # a release behind, and cargo repairs it silently on the next unrelated cargo call --
+    # so nothing surfaces the drift until someone clones the tag and builds --locked.
+    # Not part of the highest_version election above: the lock is derived, never a source.
+    version_cargo_lock = get_version_string_cargo_lock(root_dir)
+    if compare_version(highest_version, version_cargo_lock) > 0:
+        print(f"Refreshing Cargo.lock to [{highest_version}]")
+        refresh_cargo_lock(root_dir)
+        is_updated = True
+
     # NOTE: website/src/install/c/README.md (the website install page) is
     # intentionally NOT synced here. It must advertise the latest *published*
     # release, not this in-development VERSION, so rewriting it from
@@ -601,7 +676,10 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
     # scripts/sync-website.py (GitHub-API driven) and runs only where CI commits
     # back to the repo (dev-nightly-tests.yml).
 
-    return is_updated, version_c
+    # highest_version, not version_c: that was read before the updates above, so a
+    # run that DID bump handed its caller the version it had just replaced --
+    # package.py builds the release artifacts from this value.
+    return is_updated, highest_version
 
 def check_versions(root_dir: str) -> str:
     # Similar to sync_versions() but only checks if the versions are in sync, do not modify anything.
@@ -615,6 +693,10 @@ def check_versions(root_dir: str) -> str:
     # version published from a stale manifest cannot be withdrawn.
     version_cargo = get_version_string_cargo(root_dir)
     version_pom = get_version_string_pom(root_dir)
+    # The lock is not published -- `cargo package` synthesises a fresh one into the
+    # tarball -- but it is what the git tag carries, so a stale one is a tagged tree
+    # that fails `cargo build --locked` for anyone who clones it.
+    version_cargo_lock = get_version_string_cargo_lock(root_dir)
 
     if version_file != version_c:
         print(f"Error: VERSION [{version_file}] does not match ta_version.c [{version_c}]")
@@ -638,6 +720,11 @@ def check_versions(root_dir: str) -> str:
 
     if version_file != version_pom:
         print(f"Error: VERSION [{version_file}] does not match pom.xml [{version_pom}]")
+        return None
+
+    if version_file != version_cargo_lock:
+        print(f"Error: VERSION [{version_file}] does not match Cargo.lock "
+              f"[{version_cargo_lock}]. Did you forget to run scripts/sync.py?")
         return None
 
     return version_file
