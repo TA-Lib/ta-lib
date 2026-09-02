@@ -6,12 +6,12 @@
 # output is broken on arrival. Until now the only thing checking that was the
 # 5AM regen-check on dev — i.e. after merge, one branch too late (#211).
 #
-# Cargo + Python for the regen and Rust halves, plus a JDK for the Java compile
-# job. WRITING a .java is text emission from the IR — but the text has to
-# compile, and until #326 nothing on the PR path checked that; see the
-# java-compiles job for what that cost. RUNNING the cross-language suites, and
-# the whole .NET side, still need more toolchain than this gate carries and stay
-# in the nightly.
+# Cargo + Python for the regen and Rust halves, plus a JDK and a .NET SDK for the
+# two compile jobs. WRITING a .java or a .cs is text emission from the IR — but
+# the text has to compile, and until #326 nothing on the PR path checked that;
+# see the java-compiles job for what that cost. RUNNING the cross-language
+# suites still needs more toolchain than this gate carries and stays in the
+# nightly.
 #
 # `scripts/build.py regen-check` is the first half of the gate, so the same
 # command reproduces that failure locally, exactly.
@@ -109,11 +109,6 @@ jobs:
   # `--release 17` everywhere, the same JAVA_RELEASE the generator pins, so this
   # job cannot accept a source the shipped build would reject. The JDK is 21 to
   # match the nightly; any JDK >= 17 satisfies --release.
-  #
-  # C# has the identical hole and is NOT covered here. Adding it means a .NET
-  # SDK on every PR, which is a bigger bill than a JDK for a smaller surface —
-  # the C# stream emitter has no server-side twin to disagree with. Left for
-  # whoever wants to argue that cost.
   java-compiles:
     name: Generated Java compiles
     runs-on: ubuntu-latest
@@ -160,6 +155,59 @@ jobs:
           if ! javac --release 17 -nowarn --source-path library/src/main/java \
                -d /tmp/ta-java-serve tools/TaCodegenServe.java; then
             echo "::error::The generated Java server does not compile against the generated library. The two come from different emitters — server_gen.rs writes the server, java_stream.rs writes the library — so this is where they disagree about an API. Fix server_gen.rs; reproduce with scripts/build.py servers --language=java."
+            exit 1
+          fi
+
+  # The same hole for C#: the whole managed tree reaches dev on generation alone.
+  #
+  # None of the three units is redundant — each is the only one that fails for
+  # its own class of defect. Only the library project sets
+  # GenerateDocumentationFile, so only it makes CS1591 (a public member with no
+  # XML doc) an error — C#'s -Xdoclint. The suites are hand-written, so an API
+  # change reaches them only if someone carries it. The server is a different
+  # emitter (server_gen.rs, not csharp*.rs), so a defect in its own output is
+  # invisible to the other two. Compile only; running them stays in the nightly.
+  csharp-compiles:
+    name: Generated C# compiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # The runner image's SDK predates the library's net10.0 TFM, so this
+      # download — not the ~30s of compiling — is the job's bill.
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      # The committed sources, not a fresh `generate` — regen-check already
+      # proves they match, so this job needs no cargo.
+      - name: Build the shipped library, with the csproj's doc gate
+        shell: bash
+        run: |
+          if ! dotnet build ta_codegen/output/csharp/library/TALib.csproj \
+               -c Release --nologo; then
+            echo "::error::The generated C# library does not compile. Fix the emitter (ta_codegen/generator/src/backends/csharp*.rs), never the generated file. CS1591 is the doc gate, not a warning to silence: the csproj pairs TreatWarningsAsErrors with GenerateDocumentationFile, so a public member with no XML doc fails the shipped build too."
+            exit 1
+          fi
+
+      - name: Build the hand-written C# suites against it
+        shell: bash
+        run: |
+          if ! dotnet build ta_codegen/output/csharp/library/test/TALib.Test.csproj \
+               -c Release --nologo; then
+            echo "::error::The hand-written C# suites no longer compile against the generated library. These are NOT generated (ta_codegen/output/csharp/library/test/) — an API change has to be carried into them by hand."
+            exit 1
+          fi
+
+      - name: Build the JSON-RPC server
+        shell: bash
+        run: |
+          if ! dotnet build ta_codegen/output/csharp/tools/TaCodegenServe.csproj \
+               -c Release --nologo; then
+            echo "::error::The generated C# server does not compile against the generated library. The two come from different emitters — server_gen.rs writes the server, csharp.rs and csharp_stream.rs write the library — so this is where they disagree about an API. Fix server_gen.rs; reproduce with scripts/build.py servers --language=csharp."
             exit 1
           fi
 
