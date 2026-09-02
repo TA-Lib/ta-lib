@@ -103,6 +103,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [SAR](/functions/sar.md) — Parabolic SAR
 - [SAREXT](/functions/sarext.md) — Parabolic SAR - Extended
 - [SMA](/functions/sma.md) — Simple Moving Average
+- [SUPERTREND](/functions/supertrend.md) — SuperTrend
 - [T3](/functions/t3.md) — Triple Exponential Moving Average (T3)
 - [TEMA](/functions/tema.md) — Triple Exponential Moving Average
 - [TRIMA](/functions/trima.md) — Triangular Moving Average

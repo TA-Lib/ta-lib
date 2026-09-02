@@ -184,6 +184,7 @@ struct TA_STOCHF_Stream;
 struct TA_STOCHRSI_Stream;
 struct TA_SUB_Stream;
 struct TA_SUM_Stream;
+struct TA_SUPERTREND_Stream;
 struct TA_T3_Stream;
 struct TA_TAN_Stream;
 struct TA_TANH_Stream;
@@ -361,6 +362,7 @@ TA_RetCode TA_STOCHF_OpenInternal( struct TA_STOCHF_Stream **stream, const doubl
 TA_RetCode TA_STOCHRSI_OpenInternal( struct TA_STOCHRSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, double *outFastK, double *outFastD );
 TA_RetCode TA_SUB_OpenInternal( struct TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_SUM_OpenInternal( struct TA_SUM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_SUPERTREND_OpenInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, double *outReal, int *outInteger );
 TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, double *outReal );
 TA_RetCode TA_TAN_OpenInternal( struct TA_TAN_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_TANH_OpenInternal( struct TA_TANH_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
@@ -539,6 +541,7 @@ TA_RetCode TA_STOCHF_OpenAndFillInternal( struct TA_STOCHF_Stream **stream, cons
 TA_RetCode TA_STOCHRSI_OpenAndFillInternal( struct TA_STOCHRSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[] );
 TA_RetCode TA_SUB_OpenAndFillInternal( struct TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_SUM_OpenAndFillInternal( struct TA_SUM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_SUPERTREND_OpenAndFillInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outReal[], int outInteger[] );
 TA_RetCode TA_T3_OpenAndFillInternal( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_TAN_OpenAndFillInternal( struct TA_TAN_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_TANH_OpenAndFillInternal( struct TA_TANH_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );

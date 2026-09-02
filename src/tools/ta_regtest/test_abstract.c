@@ -2655,6 +2655,7 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
    TA_RetCode retCode;
    unsigned int i, oa, ob;
    int outBegIdx, outNbElement;
+   int crossTyped;
    const int size = 252;
 
    if( funcInfo->nbOutput < 2 )
@@ -2664,11 +2665,19 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
    {
       for( ob = oa + 1; ob < funcInfo->nbOutput; ob++ )
       {
-         /* Two outputs can only share one buffer if they are the same type. */
+         /* A CROSS-TYPED pair shares a buffer too. It used to be skipped here on
+          * the grounds that two outputs "can only share one buffer if they are
+          * the same type", which was never true of C -- a caller casts -- and is
+          * no longer true of the corpus either, now that SUPERTREND (#272) ships
+          * a real output beside an integer one. C's guard compares the pair
+          * through `const void *`; this is what proves it does. Only C can be
+          * asked: Java and Rust cannot express the comparison and C# has no
+          * `Overlaps` across element types, so the rule they are held to is the
+          * same-typed one (Appendix E).
+          */
          TA_GetOutputParameterInfo( handle, oa, &outInfoA );
          TA_GetOutputParameterInfo( handle, ob, &outInfoB );
-         if( outInfoA->type != outInfoB->type )
-            continue;
+         crossTyped = ( outInfoA->type != outInfoB->type );
 
          retCode = TA_ParamHolderAlloc( handle, &paramHolder );
          if( retCode != TA_SUCCESS )
@@ -2697,15 +2706,30 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
             }
          }
 
-         /* Outputs: distinct buffers, except output ob is aliased onto output oa. */
+         /* Outputs: distinct buffers, except output ob is aliased onto output oa.
+          * For a cross-typed pair both are bound onto the SAME storage --
+          * output[oa] -- which is the only way to express the case, and is what
+          * a C caller who reuses one allocation writes. output[] is 2000 doubles,
+          * so it holds 2000 ints with room to spare.
+          */
          for( i = 0; i < funcInfo->nbOutput; i++ )
          {
             unsigned int slot = (i == ob) ? oa : i;
             TA_GetOutputParameterInfo( handle, i, &outInfo );
             if( outInfo->type == TA_Output_Integer )
-               TA_SetOutputParamIntegerPtr( paramHolder, i, &output_int[slot][0] );
+            {
+               if( crossTyped && i == ob )
+                  TA_SetOutputParamIntegerPtr( paramHolder, i, (int *)&output[slot][0] );
+               else
+                  TA_SetOutputParamIntegerPtr( paramHolder, i, &output_int[slot][0] );
+            }
             else
-               TA_SetOutputParamRealPtr( paramHolder, i, &output[slot][0] );
+            {
+               if( crossTyped && i == ob )
+                  TA_SetOutputParamRealPtr( paramHolder, i, (double *)&output_int[slot][0] );
+               else
+                  TA_SetOutputParamRealPtr( paramHolder, i, &output[slot][0] );
+            }
          }
 
          retCode = TA_CallFunc( paramHolder, 0, size - 1, &outBegIdx, &outNbElement );
@@ -2713,9 +2737,10 @@ static ErrorNumber checkOutputAliasRejected( const TA_FuncInfo *funcInfo )
 
          if( retCode != TA_BAD_PARAM )
          {
-            printf( "  OUTPUT ALIAS [%s]: outputs %u and %u aliased to one buffer but "
-                    "not rejected (rc=%d, expected TA_BAD_PARAM)\n",
-                    funcInfo->name, oa, ob, retCode );
+            printf( "  OUTPUT ALIAS [%s]: outputs %u and %u (%s) aliased to one buffer "
+                    "but not rejected (rc=%d, expected TA_BAD_PARAM)\n",
+                    funcInfo->name, oa, ob,
+                    crossTyped ? "cross-typed" : "same-typed", retCode );
             return TA_ABS_TST_FAIL_OUTPUT_ALIAS;
          }
       }

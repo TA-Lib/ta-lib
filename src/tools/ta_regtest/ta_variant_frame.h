@@ -6791,6 +6791,52 @@ static const TA_VOptSpec TA_VOpt_SUM[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
+static TA_RetCode TA_SUPERTREND_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_SUPERTREND(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */,
+               outInteger[1] /* outInteger */
+               );
+}
+static TA_RetCode TA_SUPERTREND_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_S_SUPERTREND(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */,
+               outInteger[1] /* outInteger */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SUPERTREND[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_SUPERTREND[] = { 0, 1 };
+static const TA_VOptSpec TA_VOpt_SUPERTREND[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
+   { "optInMultiplier", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 3.0 },
+};
+
 static TA_RetCode TA_T3_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7798,6 +7844,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      2, TA_VIn_SUB, 0, NULL, 1, TA_VOutIsInt_SUB, 0 },
    { "SUM", TA_SUM_VFrameD, TA_SUM_VFrameS,
      1, TA_VIn_SUM, 1, TA_VOpt_SUM, 1, TA_VOutIsInt_SUM, 0 },
+   { "SUPERTREND", TA_SUPERTREND_VFrameD, TA_SUPERTREND_VFrameS,
+     3, TA_VIn_SUPERTREND, 2, TA_VOpt_SUPERTREND, 2, TA_VOutIsInt_SUPERTREND, 0 },
    { "T3", TA_T3_VFrameD, TA_T3_VFrameS,
      1, TA_VIn_T3, 2, TA_VOpt_T3, 1, TA_VOutIsInt_T3, 0 },
    { "TAN", TA_TAN_VFrameD, TA_TAN_VFrameS,
@@ -7834,6 +7882,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 177
+#define TA_VARIANT_TABLE_SIZE 178
 
 #endif /* TA_VARIANT_FRAME_H */

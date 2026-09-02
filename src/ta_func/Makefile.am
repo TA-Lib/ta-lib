@@ -163,6 +163,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_STOCHRSI.c \
 	ta_SUB.c \
 	ta_SUM.c \
+	ta_SUPERTREND.c \
 	ta_T3.c \
 	ta_TAN.c \
 	ta_TANH.c \

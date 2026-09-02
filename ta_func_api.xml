@@ -7114,6 +7114,78 @@
 	</FinancialFunction>
 
 
+	<!-- SUPERTREND -->
+	<FinancialFunction>
+		<Abbreviation>SUPERTREND</Abbreviation>
+		<ShortDescription>SuperTrend</ShortDescription>
+		<GroupId>Overlap Studies</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
+			<Flag>Path Dependent</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period for the Average True Range</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Multiplier</Name>
+				<ShortDescription>ATR multiplier for band width</ShortDescription>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>0.000000e+0</Minimum>
+					<Maximum>3.000000e+37</Maximum>
+					<Precision>1</Precision>
+					<SuggestedStart>1.000000e+0</SuggestedStart>
+					<SuggestedEnd>4.000000e+0</SuggestedEnd>
+					<SuggestedIncrement>5.000000e-1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>3.000000e+0</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Integer Array</Type>
+				<Name>outInteger</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- T3 -->
 	<FinancialFunction>
 		<Abbreviation>T3</Abbreviation>

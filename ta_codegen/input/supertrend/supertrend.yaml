@@ -1,0 +1,31 @@
+name: SUPERTREND
+group: Overlap Studies
+hint: SuperTrend
+flags: [overlap, stream, path_dependent]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Time period for the Average True Range
+    range: [2, 100000]
+    default: 10
+    suggested: [4, 200, 1]
+  - name: optInMultiplier
+    type: real
+    display_name: Multiplier
+    hint: ATR multiplier for band width
+    range: [0, TA_REAL_MAX]
+    default: 3.0
+    precision: 1
+    suggested: [1, 4, 0.5]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]
+  - name: outInteger
+    type: integer
+    flags: [line]

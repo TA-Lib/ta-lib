@@ -14017,6 +14017,102 @@ fn legs_SUM(r: &mut Report) {
     r.legs_done("SUM", 1);
 }
 
+const V_SUPERTREND: &[(&str, i32, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT),
+    ("minimums", 2i32, 0.0f64),
+];
+
+fn sub_SUPERTREND(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInMultiplier) in V_SUPERTREND {
+        let Ok(lb) = core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier) else { continue; };
+        r.control("SUPERTREND", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outInteger: Vec<i32> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.SUPERTREND_Impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SUPERTREND", label); continue; }
+        r.quiet("SUPERTREND", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outInteger: Vec<i32> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.SUPERTREND_Impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SUPERTREND(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInMultiplier = Core::REAL_DEFAULT;
+    let Ok(lb) = core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier) else { r.no_legs("SUPERTREND"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("SUPERTREND", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.leg("SUPERTREND", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.leg("SUPERTREND", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        r.leg("SUPERTREND", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SUPERTREND", 3);
+}
+
 const V_T3: &[(&str, i32, f64)] = &[
     ("defaults", i32::MIN, Core::REAL_DEFAULT),
     ("minimums", 1i32, 0.0f64),
@@ -15398,6 +15494,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("STOCHRSI", sub_STOCHRSI, legs_STOCHRSI),
     ("SUB", sub_SUB, legs_SUB),
     ("SUM", sub_SUM, legs_SUM),
+    ("SUPERTREND", sub_SUPERTREND, legs_SUPERTREND),
     ("T3", sub_T3, legs_T3),
     ("TAN", sub_TAN, legs_TAN),
     ("TANH", sub_TANH, legs_TANH),
@@ -15453,7 +15550,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 177, "probe count");
+    assert_eq!(PROBES.len(), 178, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

@@ -200,6 +200,7 @@ extern const TA_FuncDef TA_DEF_STOCHF;
 extern const TA_FuncDef TA_DEF_STOCHRSI;
 extern const TA_FuncDef TA_DEF_SUB;
 extern const TA_FuncDef TA_DEF_SUM;
+extern const TA_FuncDef TA_DEF_SUPERTREND;
 extern const TA_FuncDef TA_DEF_T3;
 extern const TA_FuncDef TA_DEF_TAN;
 extern const TA_FuncDef TA_DEF_TANH;
@@ -269,6 +270,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_SAR,
 &TA_DEF_SAREXT,
 &TA_DEF_SMA,
+&TA_DEF_SUPERTREND,
 &TA_DEF_T3,
 &TA_DEF_TEMA,
 &TA_DEF_TRIMA,

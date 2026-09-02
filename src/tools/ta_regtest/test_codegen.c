@@ -765,6 +765,15 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * via their internal ADX/RSI, like the EMA-derived set above. */
     {"ADXR",         TA_FUNC_UNST_ADX},
     {"STOCHRSI",     TA_FUNC_UNST_RSI},
+    /* SUPERTREND is listed for the SECOND consumer of this map, not the first.
+     * It carries `path_dependent`, so stability_class() answers SKIP before it
+     * ever asks about an unstable id and the range envelope is not what this row
+     * buys. What it buys is the stream K-leg: `isUnstable` is this map OR the
+     * function's own flag, and SUPERTREND declares neither, so without a row
+     * here stream_verify runs every language at K == 0 only -- and the ATR
+     * warm-up loop the body carries for exactly that setting is never entered on
+     * the streaming path in any of the four. */
+    {"SUPERTREND",   TA_FUNC_UNST_ATR},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))
 
