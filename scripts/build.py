@@ -134,6 +134,10 @@ def show_help():
                         regen-check.
     check-source-lists  Verify the CMake and autotools ta_regtest source
                         lists agree (no build; pure text check)
+    check-cargo-lock    Verify both committed Cargo.lock files still satisfy
+                        their manifests (resolve only, no build). Also the
+                        first thing regen-check does, because any later cargo
+                        call repairs a stale lock silently.
     check-mcdc          Verify each MC/DC builder's pb_conditions(N) matches the
                         conjunct count of the indicator it tests (no build; pure
                         text check). Catches a builder that under-declares, and
@@ -294,6 +298,42 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
     if lang_filter:
         cmd.append(f"--language={backends}")
     return subprocess.run(cmd, cwd=os.path.join(root_dir, "bin")).returncode
+
+# The two cargo workspaces with a committed Cargo.lock. Both manifests are
+# themselves generated (the generator writes ta_codegen/output/rust/**), so a
+# dependency edit in the generator lands as a manifest change with no lock to
+# match it.
+CARGO_LOCK_MANIFESTS = (
+    os.path.join('ta_codegen', 'generator', 'Cargo.toml'),
+    os.path.join('ta_codegen', 'output', 'rust', 'Cargo.toml'),
+)
+
+def check_cargo_locks(root_dir: str) -> bool:
+    """Verify each committed Cargo.lock still satisfies its manifests.
+
+    Must run BEFORE any other cargo command: cargo repairs a stale lock in
+    place and says nothing, so once `format --check` or a `cargo test` has run
+    the drift is gone from the tree and the answer is always yes. That is why
+    the drift survived every gate until now -- regen-check's own baseline is
+    taken after its first cargo call, so a repaired lock lands in the
+    "already modified" set and is excluded from the comparison.
+
+    `cargo metadata` only resolves; it compiles nothing.
+    """
+    ok = True
+    for rel in CARGO_LOCK_MANIFESTS:
+        print(f"  {rel}", flush=True)
+        if subprocess.run(
+                ['cargo', 'metadata', '--locked', '--format-version', '1',
+                 '--manifest-path', os.path.join(root_dir, rel)],
+                stdout=subprocess.DEVNULL).returncode != 0:
+            lock = os.path.join(os.path.dirname(rel), 'Cargo.lock')
+            print(f"Error: {lock} does not match {rel} (cargo's own message is "
+                  f"above). Refresh it with 'cargo metadata --manifest-path "
+                  f"{rel} >/dev/null' -- which updates nothing but what the "
+                  f"manifests now demand -- and commit the result.")
+            ok = False
+    return ok
 
 def check_regtest_source_lists(root_dir: str) -> bool:
     """Verify the two hand-maintained ta_regtest source lists agree.
@@ -481,6 +521,11 @@ def regen_check(root_dir: str) -> int:
     stays out of the comparison, so a dirty tree does not make it useless (CI
     checks out clean, where the baseline is empty and every path is gated).
     """
+    # First, and before any cargo call -- see check_cargo_locks' docstring.
+    print("=== Committed Cargo.lock files ===")
+    if not check_cargo_locks(root_dir):
+        return 1
+
     if not check_regtest_source_lists(root_dir):
         return 1
 
@@ -662,6 +707,10 @@ def main():
     # Pure text check — no build prerequisites.
     if args.target == 'check-source-lists':
         sys.exit(0 if check_regtest_source_lists(root_dir) else 1)
+
+    if args.target == 'check-cargo-lock':
+        check_prerequisites([PREREQS_CARGO])
+        sys.exit(0 if check_cargo_locks(root_dir) else 1)
 
     if args.target == 'check-stream-retcodes':
         sys.exit(0 if check_stream_retcodes(root_dir) else 1)
