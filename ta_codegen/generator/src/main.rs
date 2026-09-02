@@ -2317,14 +2317,6 @@ fn sync_pom_indicator_count(root: &Path, n_funcs: usize) {
 
 /// A Rust sample that both crate front pages carry -- the `lib.rs` crate docs
 /// and `README.md`.
-///
-/// The two pages render differently and always will: one is rustdoc with
-/// intra-doc links, the other is Markdown that has to stand on crates.io. What
-/// they have no business differing on is the CODE, which is the same claim
-/// about the same API made twice, compiled on two separate paths (`cargo test
-/// --doc` for the module docs, `ReadmeExamples` for the README). Two copies of
-/// a claim is one copy that can go quietly wrong, so the body is authored once
-/// here and the wrapper each page needs is added on the way out (#179 D5).
 struct FrontPageExample {
     /// The crate items the body names. The README rendering appends `RetCode`
     /// for its `fn main` signature, so leave it out unless the body itself
@@ -2345,9 +2337,7 @@ impl FrontPageExample {
         }
     }
 
-    /// The `//!`-prefixed doctest for `lib.rs`. Runs the body bare and closes
-    /// with the type-annotated `Ok` that gives `?` something to return to --
-    /// hidden with `#`, so the reader sees only the call.
+    /// The `//!`-prefixed doctest for `lib.rs`.
     fn as_doc(&self) -> String {
         let mut out = String::from("//! ```\n");
         for line in [Self::use_line(self.uses), String::new()]
@@ -2391,7 +2381,6 @@ impl FrontPageExample {
     }
 }
 
-/// The batch call: the first thing either page shows.
 const EXAMPLE_QUICK_START: FrontPageExample = FrontPageExample {
     uses: &["Core", "RetCode"],
     body: r#"let close = [11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0];
