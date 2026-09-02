@@ -1227,8 +1227,6 @@ TA_LIB_API TA_RetCode TA_DX_Peek( const TA_DX_Stream *stream, double inHigh, dou
    {
       *outReal= sp->lastOut_outReal;
    }
-   sp->lastOut_outReal = *outReal;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

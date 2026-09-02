@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_CEIL_Peek( const TA_CEIL_Stream *stream, double inReal,
    scratch = *stream;
    (void)sp;
    *outReal= ceil(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

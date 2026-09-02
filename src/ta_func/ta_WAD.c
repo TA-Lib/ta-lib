@@ -471,8 +471,6 @@ TA_LIB_API TA_RetCode TA_WAD_Peek( const TA_WAD_Stream *stream, double inHigh, d
       sp->sum += close - trueExtreme;
    }
    *outReal= sp->sum;
-   sp->prevClose = close;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

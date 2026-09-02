@@ -686,9 +686,7 @@ impl QstickStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut periodTotal = sp.periodTotal;
-            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             if sp.ringCap_trailingIdx == 0 {
@@ -697,13 +695,8 @@ impl QstickStream {
             }
             periodTotal += (inClose - inOpen) as f64;
             tempReal = periodTotal;
-            periodTotal -= (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_derived[ringPos_trailingIdx] } else { pkVal0 });
+            periodTotal -= (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] } else { pkVal0 });
             (*outReal) = tempReal / (sp.optInTimePeriod as f64);
-            cur_outReal = (*outReal);
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                ringPos_trailingIdx = 0;
-            }
         }
         Ok(outReal)
     }

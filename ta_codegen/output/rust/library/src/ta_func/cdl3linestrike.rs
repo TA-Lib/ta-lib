@@ -903,55 +903,24 @@ impl Cdl3linestrikeStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut lag2_inClose = sp.lag2_inClose;
-            let mut lag2_inHigh = sp.lag2_inHigh;
-            let mut lag2_inLow = sp.lag2_inLow;
-            let mut lag2_inOpen = sp.lag2_inOpen;
-            let mut lag3_inClose = sp.lag3_inClose;
-            let mut lag3_inHigh = sp.lag3_inHigh;
-            let mut lag3_inLow = sp.lag3_inLow;
-            let mut lag3_inOpen = sp.lag3_inOpen;
-            let mut ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
             #[allow(non_snake_case)]
             let Near_rangeType: i32 = self.cs_near.range_type as i32;
             #[allow(non_snake_case)]
             let Near_avgPeriod: i32 = self.cs_near.avg_period;
             #[allow(non_snake_case)]
             let Near_factor: f64 = self.cs_near.factor;
-            if (if lag3_inClose >= lag3_inOpen { 1 } else { 0 - 1 }) == (if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 }) && // three with same color
-               (if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 }) == (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) &&
-               (if inClose >= inOpen { 1 } else { 0 - 1 }) == 0 - (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) && // 4th opposite color
-               lag2_inOpen >= (lag3_inOpen).min(lag3_inClose) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[3]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((lag3_inClose) - (lag3_inOpen)).abs(), 1 => (lag3_inHigh) - (lag3_inLow), 2 => ((lag3_inHigh) - (if (lag3_inClose) >= (lag3_inOpen) { (lag3_inClose) } else { (lag3_inOpen) })) + ((if (lag3_inClose) >= (lag3_inOpen) { (lag3_inOpen) } else { (lag3_inClose) }) - (lag3_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd opens within/near 1st rb
-               lag2_inOpen <= (lag3_inOpen).max(lag3_inClose) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[3]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((lag3_inClose) - (lag3_inOpen)).abs(), 1 => (lag3_inHigh) - (lag3_inLow), 2 => ((lag3_inHigh) - (if (lag3_inClose) >= (lag3_inOpen) { (lag3_inClose) } else { (lag3_inOpen) })) + ((if (lag3_inClose) >= (lag3_inOpen) { (lag3_inOpen) } else { (lag3_inClose) }) - (lag3_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               lag1_inOpen >= (lag2_inOpen).min(lag2_inClose) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd opens within/near 2nd rb
-               lag1_inOpen <= (lag2_inOpen).max(lag2_inClose) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               ((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 1 && lag1_inClose > lag2_inClose && lag2_inClose > lag3_inClose && inOpen > lag1_inClose && inClose < lag3_inOpen || (((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && lag1_inClose < lag2_inClose && lag2_inClose < lag3_inClose && inOpen < lag1_inClose && inClose > lag3_inOpen) // if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open
+            if (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 }) == (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) && // three with same color
+               (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) &&
+               (if inClose >= inOpen { 1 } else { 0 - 1 }) == 0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) && // 4th opposite color
+               sp.lag2_inOpen >= (sp.lag3_inOpen).min(sp.lag3_inClose) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[3]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd opens within/near 1st rb
+               sp.lag2_inOpen <= (sp.lag3_inOpen).max(sp.lag3_inClose) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[3]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
+               sp.lag1_inOpen >= (sp.lag2_inOpen).min(sp.lag2_inClose) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd opens within/near 2nd rb
+               sp.lag1_inOpen <= (sp.lag2_inOpen).max(sp.lag2_inClose) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
+               ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && sp.lag1_inClose > sp.lag2_inClose && sp.lag2_inClose > sp.lag3_inClose && inOpen > sp.lag1_inClose && inClose < sp.lag3_inOpen || (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && sp.lag1_inClose < sp.lag2_inClose && sp.lag2_inClose < sp.lag3_inClose && inOpen < sp.lag1_inClose && inClose > sp.lag3_inOpen) // if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open
             {
-                (*outInteger) = ((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+                (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
                 (*outInteger) = 0;
-            }
-            cur_outInteger = (*outInteger);
-            lag3_inOpen = lag2_inOpen;
-            lag2_inOpen = lag1_inOpen;
-            lag1_inOpen = inOpen;
-            lag3_inHigh = lag2_inHigh;
-            lag2_inHigh = lag1_inHigh;
-            lag1_inHigh = inHigh;
-            lag3_inLow = lag2_inLow;
-            lag2_inLow = lag1_inLow;
-            lag1_inLow = inLow;
-            lag3_inClose = lag2_inClose;
-            lag2_inClose = lag1_inClose;
-            lag1_inClose = inClose;
-            ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
-            if ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
-                ringPos_NearTrailingIdx = 0;
             }
         }
         Ok(outInteger)

@@ -1209,17 +1209,6 @@ TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inRea
       /* Step (4) */
       sp->tempReal = (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal1;
       *outReal= sp->numerator * sp->factor;
-      sp->cur_outReal = *outReal;
-      sp->ringPos_middleIdx = sp->ringPos_middleIdx + 1;
-      if( sp->ringPos_middleIdx >= sp->ringCap_middleIdx )
-      {
-         sp->ringPos_middleIdx = 0;
-      }
-      sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-      if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-      {
-         sp->ringPos_trailingIdx = 0;
-      }
    }
    else
    {
@@ -1253,17 +1242,6 @@ TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inRea
       /* Step (4) */
       sp->tempReal = (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal1;
       *outReal= sp->numerator * sp->factor;
-      sp->cur_outReal = *outReal;
-      sp->ringPos_middleIdx = sp->ringPos_middleIdx + 1;
-      if( sp->ringPos_middleIdx >= sp->ringCap_middleIdx )
-      {
-         sp->ringPos_middleIdx = 0;
-      }
-      sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-      if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-      {
-         sp->ringPos_trailingIdx = 0;
-      }
    }
    return TA_SUCCESS;
 }

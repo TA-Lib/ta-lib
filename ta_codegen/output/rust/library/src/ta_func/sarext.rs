@@ -1400,7 +1400,6 @@ impl SarextStream {
             let mut prevLow: f64 = 0.0_f64;
             let mut afLong = sp.afLong;
             let mut afShort = sp.afShort;
-            let mut cur_outReal = sp.cur_outReal;
             let mut ep = sp.ep;
             let mut isLong = sp.isLong;
             let mut newHigh = sp.newHigh;
@@ -1519,7 +1518,6 @@ impl SarextStream {
                     sar = newHigh;
                 }
             }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

@@ -927,8 +927,6 @@
          int j = sp.j;
          double last_price_x = sp.last_price_x;
          double last_price_y = sp.last_price_y;
-         double leaving_xx = sp.leaving_xx;
-         double leaving_yy = sp.leaving_yy;
          double shift_x = sp.shift_x;
          double shift_y = sp.shift_y;
          int trailingIdx = sp.trailingIdx;
@@ -1017,7 +1015,7 @@
           * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
           */
          barsSinceReseed -= 1;
-         if( denom < 0.000001 * denom_scale || leaving_xx > 1000.0 * S_xx || leaving_yy > 1000.0 * S_yy || barsSinceReseed <= 0 ) {
+         if( denom < 0.000001 * denom_scale || sp.leaving_xx > 1000.0 * S_xx || sp.leaving_yy > 1000.0 * S_yy || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * sp.optInTimePeriod;
             windowStart = trailingIdx;
             /* Walk the window forward from the price the trailing cursor already
@@ -1114,14 +1112,6 @@
          } else {
             cur_outReal = 0.0;
          }
-         /* Remove the calculation starting with the trailingIdx. */
-         leaving_xx = x * x;
-         leaving_yy = y * y;
-         S_xx -= x * x;
-         S_yy -= y * y;
-         S_xy -= x * y;
-         S_x -= x;
-         S_y -= y;
          return cur_outReal;
       }
 

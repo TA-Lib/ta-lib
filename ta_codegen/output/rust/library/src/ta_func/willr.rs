@@ -930,7 +930,6 @@ impl WillrStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tmp: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut diff = sp.diff;
             let mut highest = sp.highest;
             let mut highestIdx = sp.highestIdx;
@@ -1002,9 +1001,6 @@ impl WillrStream {
             } else {
                 (*outReal) = 0.0;
             }
-            trailingIdx += 1;
-            today += 1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

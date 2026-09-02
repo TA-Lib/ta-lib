@@ -973,7 +973,6 @@ impl LinearregInterceptStream {
             let mut SumXY = sp.SumXY;
             let mut SumY = sp.SumY;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut cur_outReal = sp.cur_outReal;
             let mut j = sp.j;
             let mut sumAbs = sp.sumAbs;
             let mut today = sp.today;
@@ -1074,8 +1073,6 @@ impl LinearregInterceptStream {
             trailingValue = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
             trailingIdx += 1;
             (*outReal) = (SumY - m * sp.SumX) / (sp.optInTimePeriod as f64);
-            today += 1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

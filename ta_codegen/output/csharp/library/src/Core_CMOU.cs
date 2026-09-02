@@ -618,7 +618,6 @@ public partial class Core
          double downSum = sp.downSum;
          int nullRun = sp.nullRun;
          double prevValue = sp.prevValue;
-         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
          double trailingValue = sp.trailingValue;
          double upSum = sp.upSum;
          int pkSlot0 = -1;
@@ -632,7 +631,7 @@ public partial class Core
           * outReal == inReal); inReal[trailingIdx] is read here, before this
           * iteration writes outReal[outIdx], so it is still the original price.
           */
-         tempReal = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         tempReal = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
          diff = tempReal - trailingValue;
          trailingValue = tempReal;
          if( diff > 0.0 ) {
@@ -668,10 +667,6 @@ public partial class Core
             cur_outReal = 100.0 * (upSum - downSum) / sum;
          } else {
             cur_outReal = 0.0;
-         }
-         ringPos_trailingIdx = ringPos_trailingIdx + 1;
-         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-            ringPos_trailingIdx = 0;
          }
          return cur_outReal;
       }

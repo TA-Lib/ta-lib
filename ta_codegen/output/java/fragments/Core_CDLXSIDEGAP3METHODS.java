@@ -406,29 +406,18 @@
             throw new TaLibArgumentException("CDLXSIDEGAP3METHODS peek: BadParam", RetCode.BadParam);
          Cdlxsidegap3methodsStream sp = this;
          int cur_outInteger = sp.cur_outInteger;
-         double lag1_inClose = sp.lag1_inClose;
-         double lag1_inOpen = sp.lag1_inOpen;
-         double lag2_inClose = sp.lag2_inClose;
-         double lag2_inOpen = sp.lag2_inOpen;
-         if( ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
-             ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen < Math.max(lag1_inClose, lag1_inOpen) &&  /* 3rd opens within 2nd rb */
-             inOpen > Math.min(lag1_inClose, lag1_inOpen) &&
-             inClose < Math.max(lag2_inClose, lag2_inOpen) && /* 3rd closes within 1st rb */
-             inClose > Math.min(lag2_inClose, lag2_inOpen) &&
-             (((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(lag1_inOpen, lag1_inClose) > Math.max(lag2_inOpen, lag2_inClose)) || ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(lag1_inOpen, lag1_inClose) < Math.min(lag2_inOpen, lag2_inClose))) ) /* when 1st is white upside gap when 1st is black downside gap */
+         if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
+             ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
+             inOpen < Math.max(sp.lag1_inClose, sp.lag1_inOpen) &&  /* 3rd opens within 2nd rb */
+             inOpen > Math.min(sp.lag1_inClose, sp.lag1_inOpen) &&
+             inClose < Math.max(sp.lag2_inClose, sp.lag2_inOpen) && /* 3rd closes within 1st rb */
+             inClose > Math.min(sp.lag2_inClose, sp.lag2_inOpen) &&
+             (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(sp.lag1_inOpen, sp.lag1_inClose) > Math.max(sp.lag2_inOpen, sp.lag2_inClose)) || ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(sp.lag1_inOpen, sp.lag1_inClose) < Math.min(sp.lag2_inOpen, sp.lag2_inClose))) ) /* when 1st is white upside gap when 1st is black downside gap */
          {
-            cur_outInteger = ((lag2_inClose >= lag2_inOpen) ? 1 : 0 - 1) * 100;
+            cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) * 100;
          } else {
             cur_outInteger = 0;
          }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         lag2_inOpen = lag1_inOpen;
-         lag1_inOpen = inOpen;
-         lag2_inClose = lag1_inClose;
-         lag1_inClose = inClose;
          return cur_outInteger;
       }
 

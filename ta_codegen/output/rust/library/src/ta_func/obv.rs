@@ -528,18 +528,14 @@ impl ObvStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut prevOBV = sp.prevOBV;
-            let mut prevReal = sp.prevReal;
             tempReal = inReal;
-            if tempReal > prevReal {
+            if tempReal > sp.prevReal {
                 prevOBV += inVolume;
-            } else if tempReal < prevReal {
+            } else if tempReal < sp.prevReal {
                 prevOBV -= inVolume;
             }
             (*outReal) = prevOBV;
-            prevReal = tempReal;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

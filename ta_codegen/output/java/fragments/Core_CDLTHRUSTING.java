@@ -501,56 +501,23 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTHRUSTING peek: BadParam", RetCode.BadParam);
          CdlthrustingStream sp = this;
-         double BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
-         double EqualPeriodTotal = sp.EqualPeriodTotal;
          int cur_outInteger = sp.cur_outInteger;
-         double lag1_inClose = sp.lag1_inClose;
-         double lag1_inHigh = sp.lag1_inHigh;
-         double lag1_inLow = sp.lag1_inLow;
-         double lag1_inOpen = sp.lag1_inOpen;
-         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-         int ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
-         int pkSlot1 = -1;
-         double pkVal1 = 0.0;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
          int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
          double BodyLong_factor = sp.cs_BodyLong_factor;
          int Equal_rangeType = sp.cs_Equal_rangeType;
          int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
          double Equal_factor = sp.cs_Equal_factor;
-         pkSlot0 = ringPos_BodyLongTrailingIdx;
-         pkVal0 = ((BodyLong_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-         pkSlot1 = ringPos_EqualTrailingIdx;
-         pkVal1 = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-         if( ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
-             Math.abs(lag1_inClose - lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
-             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&               /* 2nd: white */
-             inOpen < lag1_inLow &&                                  /* open below prior low */
-             inClose > lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* close into prior body */
-             inClose <= Math.fma(Math.abs(lag1_inClose - lag1_inOpen), 0.5, lag1_inClose) ) /* under the midpoint */
+         if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
+             Math.abs(sp.lag1_inClose - sp.lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* long */
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                     /* 2nd: white */
+             inOpen < sp.lag1_inLow &&                                     /* open below prior low */
+             inClose > sp.lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (sp.EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Equal_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Equal_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* close into prior body */
+             inClose <= Math.fma(Math.abs(sp.lag1_inClose - sp.lag1_inOpen), 0.5, sp.lag1_inClose) ) /* under the midpoint */
          {
             cur_outInteger = 0 - 100;
          } else {
             cur_outInteger = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((Equal_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Equal_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx != pkSlot1) ? sp.ring_EqualTrailingIdx_derived[(ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] : pkVal1);
-         BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.abs(lag1_inClose - lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyLong_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx != pkSlot0) ? sp.ring_BodyLongTrailingIdx_derived[(ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx] : pkVal0);
-         lag1_inOpen = inOpen;
-         lag1_inHigh = inHigh;
-         lag1_inLow = inLow;
-         lag1_inClose = inClose;
-         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
-         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
-            ringPos_BodyLongTrailingIdx = 0;
-         }
-         ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
-         if( ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
-            ringPos_EqualTrailingIdx = 0;
          }
          return cur_outInteger;
       }

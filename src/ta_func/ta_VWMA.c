@@ -634,12 +634,6 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
    sp->sumPV -= tempReal;
    sp->sumV -= (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1;
    *outReal= tempPV / (double)sp->optInTimePeriod / (tempV / (double)sp->optInTimePeriod);
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-   {
-      sp->ringPos_trailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

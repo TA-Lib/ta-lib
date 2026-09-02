@@ -490,9 +490,7 @@ impl DivStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = inReal0 / inReal1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

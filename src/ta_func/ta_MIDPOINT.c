@@ -928,9 +928,6 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_Peek( const TA_MIDPOINT_Stream *stream, double
       sp->lowest = tmpLow;
    }
    *outReal= (sp->highest + sp->lowest) / 2.0;
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

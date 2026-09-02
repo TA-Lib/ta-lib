@@ -950,8 +950,6 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Peek( const TA_LINEARREG_Stream *stream, doub
    sp->trailingValue = ((sp->trailingIdx & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->trailingIdx & sp->xMask] : pkVal0;
    sp->trailingIdx += 1;
    *outReal= fma(m, (double)(sp->optInTimePeriod - 1), b);
-   sp->today += 1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

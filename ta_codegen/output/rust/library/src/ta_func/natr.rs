@@ -940,13 +940,11 @@ impl NatrStream {
             let mut tempCY: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
             let mut tempHT: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut lag1_inClose = sp.lag1_inClose;
             let mut prevATR = sp.prevATR;
             // Find the greatest of the 3 values.
             tempLT = inLow;
             tempHT = inHigh;
-            tempCY = lag1_inClose;
+            tempCY = sp.lag1_inClose;
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
@@ -971,8 +969,6 @@ impl NatrStream {
                     (*outReal) = 0.0;
                 }
             }
-            cur_outReal = (*outReal);
-            lag1_inClose = inClose;
         }
         Ok(outReal)
     }

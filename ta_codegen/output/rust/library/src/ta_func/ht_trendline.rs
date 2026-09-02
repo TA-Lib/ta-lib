@@ -1542,7 +1542,6 @@ impl HtTrendlineStream {
             let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
             let mut Im = sp.Im;
             let mut Re = sp.Re;
-            let mut cur_outReal = sp.cur_outReal;
             let mut hilbertIdx = sp.hilbertIdx;
             let mut iTrend1 = sp.iTrend1;
             let mut iTrend2 = sp.iTrend2;
@@ -1568,11 +1567,8 @@ impl HtTrendlineStream {
             let mut prev_jQ_Odd = sp.prev_jQ_Odd;
             let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
             let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-            let mut ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
             let mut smoothPeriod = sp.smoothPeriod;
-            let mut streamParity = sp.streamParity;
             let mut trailingWMAValue = sp.trailingWMAValue;
-            let mut winPos_i = sp.winPos_i;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
@@ -1581,17 +1577,17 @@ impl HtTrendlineStream {
                 pkSlot0 = 0;
                 pkVal0 = inReal;
             }
-            pkSlot1 = winPos_i as usize;
+            pkSlot1 = sp.winPos_i as usize;
             pkVal1 = inReal;
             adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
             todayValue = inReal;
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = (if (ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] } else { pkVal0 });
+            trailingWMAValue = (if (sp.ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] } else { pkVal0 });
             smoothedValue = periodWMASum * 0.1;
             periodWMASum -= periodWMASub;
-            if streamParity == 0 {
+            if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
                 detrender = 0_f64 - sp.detrender_Even[hilbertIdx];
@@ -1723,7 +1719,7 @@ impl HtTrendlineStream {
             i = 0;
             while i < 50 {
                 if ((i) as i32) < DCPeriodInt {
-                    tempReal += (if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inReal[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
+                    tempReal += (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
                 }
                 i += 1;
             }
@@ -1735,17 +1731,6 @@ impl HtTrendlineStream {
             iTrend2 = iTrend1;
             iTrend1 = tempReal;
             (*outReal) = tempReal2;
-            // Ooof... let's do the next price bar now!
-            cur_outReal = (*outReal);
-            ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
-            if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
-                ringPos_trailingWMAIdx = 0;
-            }
-            winPos_i = winPos_i + 1;
-            if winPos_i >= sp.winCap_i {
-                winPos_i = 0;
-            }
-            streamParity = 1 - streamParity;
         }
         Ok(outReal)
     }

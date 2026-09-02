@@ -636,9 +636,7 @@ public partial class Core
          double cur_outReal = sp.cur_outReal;
          double periodSub = sp.periodSub;
          double periodSum = sp.periodSum;
-         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
          double trailingValue = sp.trailingValue;
-         int winPos_j = sp.winPos_j;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          int pkSlot1 = -1;
@@ -651,7 +649,7 @@ public partial class Core
             pkSlot0 = 0;
             pkVal0 = inReal;
          }
-         pkSlot1 = winPos_j;
+         pkSlot1 = sp.winPos_j;
          pkVal1 = inReal;
          /* Add the current price bar to the sum
           * who are carried through the iterations.
@@ -710,7 +708,7 @@ public partial class Core
             periodSum = (double)0.0;
             rw = 1;
             for( j = sp.lookbackWin; j >= 0; j -= 1 ) {
-               tempReal = (((winPos_j + sp.winCap_j - j >= sp.winCap_j) ? winPos_j + sp.winCap_j - j - sp.winCap_j : winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(winPos_j + sp.winCap_j - j >= sp.winCap_j) ? winPos_j + sp.winCap_j - j - sp.winCap_j : winPos_j + sp.winCap_j - j] : pkVal1;
+               tempReal = (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
                periodSub += tempReal;
                periodSum += tempReal * rw;
                rw += 1;
@@ -721,19 +719,9 @@ public partial class Core
           * (must be saved here just in case outReal and
           *  inReal are the same buffer).
           */
-         trailingValue = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         trailingValue = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
          /* Calculate the WMA for this price bar. */
          cur_outReal = periodSum / sp.divider;
-         /* Prepare the periodSum for the next iteration. */
-         periodSum -= periodSub;
-         ringPos_trailingIdx = ringPos_trailingIdx + 1;
-         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-            ringPos_trailingIdx = 0;
-         }
-         winPos_j = winPos_j + 1;
-         if( winPos_j >= sp.winCap_j ) {
-            winPos_j = 0;
-         }
          return cur_outReal;
       }
 

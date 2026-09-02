@@ -536,9 +536,7 @@ impl WclpriceStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = ((inClose as f64).mul_add(2.0, inHigh + inLow)) / 4.0;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

@@ -1256,7 +1256,6 @@ TA_LIB_API TA_RetCode TA_SAR_Peek( const TA_SAR_Stream *stream, double inHigh, d
          sar = newHigh;
       }
    }
-   sp->cur_outReal = *outReal;
    sp->newHigh = newHigh;
    sp->newLow = newLow;
    sp->sar = sar;

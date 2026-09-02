@@ -860,7 +860,6 @@ impl AdoscStream {
             let mut close: f64 = 0.0_f64;
             let mut tmp: f64 = 0.0_f64;
             let mut ad = sp.ad;
-            let mut cur_outReal = sp.cur_outReal;
             let mut fastEMA = sp.fastEMA;
             let mut slowEMA = sp.slowEMA;
             high = inHigh;
@@ -873,7 +872,6 @@ impl AdoscStream {
             fastEMA = (sp.one_minus_fastk as f64).mul_add(fastEMA, sp.fastk * ad);
             slowEMA = (sp.one_minus_slowk as f64).mul_add(slowEMA, sp.slowk * ad);
             (*outReal) = fastEMA - slowEMA;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

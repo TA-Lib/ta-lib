@@ -498,23 +498,11 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTASUKIGAP", "peek", RetCode.BadParam);
          CdltasukigapStream sp = this;
-         double NearPeriodTotal = sp.NearPeriodTotal;
          int cur_outInteger = sp.cur_outInteger;
-         double lag1_inClose = sp.lag1_inClose;
-         double lag1_inHigh = sp.lag1_inHigh;
-         double lag1_inLow = sp.lag1_inLow;
-         double lag1_inOpen = sp.lag1_inOpen;
-         double lag2_inClose = sp.lag2_inClose;
-         double lag2_inOpen = sp.lag2_inOpen;
-         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
          int Near_rangeType = sp.cs_Near_rangeType;
          int Near_avgPeriod = sp.cs_Near_avgPeriod;
          double Near_factor = sp.cs_Near_factor;
-         pkSlot0 = ringPos_NearTrailingIdx;
-         pkVal0 = ((Near_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-         if( (Math.Min(lag1_inOpen, lag1_inClose) > Math.Max(lag2_inOpen, lag2_inClose)) && ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inOpen < lag1_inClose && inOpen > lag1_inOpen && inClose < lag1_inOpen && inClose > Math.Max(lag2_inClose, lag2_inOpen) && Math.Abs(Math.Abs(lag1_inClose - lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (Math.Max(lag1_inOpen, lag1_inClose) < Math.Min(lag2_inOpen, lag2_inClose)) && ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inOpen < lag1_inOpen && inOpen > lag1_inClose && inClose > lag1_inOpen && inClose < Math.Min(lag2_inClose, lag2_inOpen) && Math.Abs(Math.Abs(lag1_inClose - lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         if( (Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > Math.Max(sp.lag2_inOpen, sp.lag2_inClose)) && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > Math.Max(sp.lag2_inClose, sp.lag2_inOpen) && Math.Abs(Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (Math.Max(sp.lag1_inOpen, sp.lag1_inClose) < Math.Min(sp.lag2_inOpen, sp.lag2_inClose)) && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < Math.Min(sp.lag2_inClose, sp.lag2_inOpen) && Math.Abs(Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) {
             /* upside gap */
             /* 1st: white */
             /* 2nd: black */
@@ -529,23 +517,9 @@ public partial class Core
             /* and closes above the black rb */
             /* inside the gap */
             /* size of 2 rb near the same */
-            cur_outInteger = ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) * 100;
+            cur_outInteger = ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) * 100;
          } else {
             cur_outInteger = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((Near_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((Near_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0))) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx != pkSlot0) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx] : pkVal0);
-         lag2_inOpen = lag1_inOpen;
-         lag1_inOpen = inOpen;
-         lag1_inHigh = inHigh;
-         lag1_inLow = inLow;
-         lag2_inClose = lag1_inClose;
-         lag1_inClose = inClose;
-         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
-         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
-            ringPos_NearTrailingIdx = 0;
          }
          return cur_outInteger;
       }

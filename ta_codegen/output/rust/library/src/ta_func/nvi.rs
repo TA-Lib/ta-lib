@@ -603,16 +603,13 @@ impl NviStream {
             let mut tempClose: f64 = 0.0_f64;
             let mut tempVolume: f64 = 0.0_f64;
             let mut tempNVI: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut prevClose = sp.prevClose;
             let mut prevNVI = sp.prevNVI;
-            let mut prevVolume = sp.prevVolume;
             tempClose = inClose;
             tempVolume = inVolume;
             // prevClose != 0 guards the percentage-change division: a zero previous
             // close is a degenerate input that would otherwise emit NaN/Inf; carry
             // the index forward unchanged instead. Never triggers on real prices.
-            if tempVolume < prevVolume && prevClose != 0.0 {
+            if tempVolume < sp.prevVolume && sp.prevClose != 0.0 {
                 // The index is a running product, so it has no upper bound: enough
                 // compounding gains push it past the largest double. Keep the last
                 // representable value instead of writing +/-Inf, which no caller can
@@ -624,15 +621,12 @@ impl NviStream {
                 // fusion detector and silently re-round every bar, not just the
                 // overflowing one.
                 tempNVI = prevNVI;
-                tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
+                tempNVI += (tempClose - sp.prevClose) / sp.prevClose * tempNVI;
                 if (tempNVI).is_finite() {
                     prevNVI = tempNVI;
                 }
             }
             (*outReal) = prevNVI;
-            prevClose = tempClose;
-            prevVolume = tempVolume;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

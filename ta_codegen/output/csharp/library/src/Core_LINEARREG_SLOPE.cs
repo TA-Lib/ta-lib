@@ -732,7 +732,6 @@ public partial class Core
          trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
          trailingIdx += 1;
          cur_outReal = (sp.optInTimePeriod * SumXY - sp.SumX * SumY) / sp.Divisor;
-         today += 1;
          return cur_outReal;
       }
 

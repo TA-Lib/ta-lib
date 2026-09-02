@@ -450,33 +450,16 @@ TA_LIB_API TA_RetCode TA_CDLDOJI_Peek( const TA_CDLDOJI_Stream *stream, double i
 {
    struct TA_CDLDOJI_Stream scratch;
    struct TA_CDLDOJI_Stream *sp = &scratch;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   if( sp->ringCap_BodyDojiTrailingIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
-   }
    if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
    {
       *outInteger= 100;
    } else 
    {
       *outInteger= 0;
-   }
-   /* add the current range and subtract the first range: this is done after the pattern recognition
-    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-    */
-   sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] : pkVal0);
-   sp->cur_outInteger = *outInteger;
-   sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
-   if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
-   {
-      sp->ringPos_BodyDojiTrailingIdx = 0;
    }
    return TA_SUCCESS;
 }

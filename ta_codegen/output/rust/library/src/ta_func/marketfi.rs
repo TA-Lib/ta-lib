@@ -581,7 +581,6 @@ impl MarketfiStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             // A zero-volume bar would divide by zero. Neither reference guards
             // it -- they emit +/-Inf, or NaN when the range is zero too -- but
             // issue #112 settled that a successful call never emits NaN or Inf,
@@ -596,7 +595,6 @@ impl MarketfiStream {
             } else {
                 (*outReal) = 0.0;
             }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

@@ -1890,43 +1890,6 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    if( outFAMA != NULL )
       *outFAMA= fama;
    *outMAMA= mama;
-   /* Adjust the period for next price bar */
-   sp->Re = fma(0.8, sp->Re, 0.2 * (fma(I2, sp->prevI2, Q2 * sp->prevQ2)));
-   sp->Im = fma(0.8, sp->Im, 0.2 * (I2 * sp->prevQ2 - Q2 * sp->prevI2));
-   sp->prevQ2 = Q2;
-   sp->prevI2 = I2;
-   tempReal = sp->period;
-   if( sp->Im != 0.0 && sp->Re != 0.0 )
-   {
-      sp->period = 360.0 / (atan(sp->Im / sp->Re) * sp->rad2Deg);
-   }
-   tempReal2 = 1.5 * tempReal;
-   if( sp->period > tempReal2 )
-   {
-      sp->period = tempReal2;
-   }
-   tempReal2 = 0.67 * tempReal;
-   if( sp->period < tempReal2 )
-   {
-      sp->period = tempReal2;
-   }
-   if( sp->period < 6 )
-   {
-      sp->period = 6;
-   } else if( sp->period > 50 )
-   {
-      sp->period = 50;
-   }
-   sp->period = fma(0.2, sp->period, 0.8 * tempReal);
-   /* Ooof... let's do the next price bar now! */
-   sp->cur_outMAMA = *outMAMA;
-   sp->cur_outFAMA = fama;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
-   {
-      sp->ringPos_trailingWMAIdx = 0;
-   }
-   sp->streamParity = 1 - sp->streamParity;
    sp->mama = mama;
    sp->fama = fama;
    return TA_SUCCESS;

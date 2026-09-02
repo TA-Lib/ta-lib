@@ -840,83 +840,22 @@ impl CdlsticksandwichStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut EqualPeriodTotal = sp.EqualPeriodTotal;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut lag2_inClose = sp.lag2_inClose;
-            let mut lag2_inHigh = sp.lag2_inHigh;
-            let mut lag2_inLow = sp.lag2_inLow;
-            let mut lag2_inOpen = sp.lag2_inOpen;
-            let mut ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             #[allow(non_snake_case)]
             let Equal_rangeType: i32 = self.cs_equal.range_type as i32;
             #[allow(non_snake_case)]
             let Equal_avgPeriod: i32 = self.cs_equal.avg_period;
             #[allow(non_snake_case)]
             let Equal_factor: f64 = self.cs_equal.factor;
-            pkSlot0 = ringPos_EqualTrailingIdx as usize;
-            let mut _candlerange_5: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_5 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_5 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_5 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_5 = 0.0;
-                }
-            }
-            pkVal0 = _candlerange_5;
-            if (((if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // first black
-               (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 1 &&      // second white
-               (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // third black
-               lag1_inLow > lag2_inClose &&                                       // 2nd low > prior close
-               inClose <= lag2_inClose + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st and 3rd same close
-               inClose >= lag2_inClose - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 }))
+            if (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // first black
+               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // second white
+               (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&  // third black
+               sp.lag1_inLow > sp.lag2_inClose &&                                  // 2nd low > prior close
+               inClose <= sp.lag2_inClose + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (sp.EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st and 3rd same close
+               inClose >= sp.lag2_inClose - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (sp.EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 }))
             {
                 (*outInteger) = 100;
             } else {
                 (*outInteger) = 0;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_6: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_6 = (lag2_inClose - lag2_inOpen).abs();
-                }
-                1 => {
-                    _candlerange_6 = lag2_inHigh - lag2_inLow;
-                }
-                2 => {
-                    _candlerange_6 = (lag2_inHigh - (if lag2_inClose >= lag2_inOpen { lag2_inClose } else { lag2_inOpen })) + ((if lag2_inClose >= lag2_inOpen { lag2_inOpen } else { lag2_inClose }) - lag2_inLow);
-                }
-                _ => {
-                    _candlerange_6 = 0.0;
-                }
-            }
-            EqualPeriodTotal += _candlerange_6 - (if (((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx) as usize) != pkSlot0 { sp.ring_EqualTrailingIdx_derived[((ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx) as usize] } else { pkVal0 });
-            cur_outInteger = (*outInteger);
-            lag2_inOpen = lag1_inOpen;
-            lag1_inOpen = inOpen;
-            lag2_inHigh = lag1_inHigh;
-            lag1_inHigh = inHigh;
-            lag2_inLow = lag1_inLow;
-            lag1_inLow = inLow;
-            lag2_inClose = lag1_inClose;
-            lag1_inClose = inClose;
-            ringPos_EqualTrailingIdx = ringPos_EqualTrailingIdx + 1;
-            if ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx {
-                ringPos_EqualTrailingIdx = 0;
             }
         }
         Ok(outInteger)

@@ -1699,15 +1699,6 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
    {
       *outReal= 0.0;
    }
-   /* Remove the calculation starting with the trailingIdx. */
-   sp->leaving_xx = x * x;
-   sp->leaving_yy = y * y;
-   S_xx -= x * x;
-   S_yy -= y * y;
-   S_xy -= x * y;
-   S_x -= x;
-   S_y -= y;
-   sp->cur_outReal = *outReal;
    sp->S_xx = S_xx;
    sp->S_xy = S_xy;
    sp->S_x = S_x;

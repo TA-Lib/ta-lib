@@ -879,13 +879,9 @@ impl AccbandsStream {
             let mut tempMiddle: f64 = 0.0_f64;
             let mut tempLower: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outRealLowerBand = sp.cur_outRealLowerBand;
-            let mut cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
-            let mut cur_outRealUpperBand = sp.cur_outRealUpperBand;
             let mut periodTotalLower = sp.periodTotalLower;
             let mut periodTotalMiddle = sp.periodTotalMiddle;
             let mut periodTotalUpper = sp.periodTotalUpper;
-            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
@@ -916,27 +912,20 @@ impl AccbandsStream {
             tempMiddle = periodTotalMiddle;
             tempLower = periodTotalLower;
             // Remove the trailing bar from each running sum.
-            tempReal = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] } else { pkVal0 }) + (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[ringPos_trailingIdx] } else { pkVal1 });
-            if !(((tempReal).abs() <= 1e-14 * (((if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] } else { pkVal0 })).abs() + ((if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[ringPos_trailingIdx] } else { pkVal1 })).abs()))) {
-                tempReal = 4_f64 * ((if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] } else { pkVal0 }) - (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[ringPos_trailingIdx] } else { pkVal1 })) / tempReal;
-                periodTotalUpper -= (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] } else { pkVal0 }) * (1_f64 + tempReal);
-                periodTotalLower -= (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[ringPos_trailingIdx] } else { pkVal1 }) * (1_f64 - tempReal);
+            tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] } else { pkVal0 }) + (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] } else { pkVal1 });
+            if !(((tempReal).abs() <= 1e-14 * (((if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] } else { pkVal0 })).abs() + ((if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] } else { pkVal1 })).abs()))) {
+                tempReal = 4_f64 * ((if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] } else { pkVal0 }) - (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] } else { pkVal1 })) / tempReal;
+                periodTotalUpper -= (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] } else { pkVal0 }) * (1_f64 + tempReal);
+                periodTotalLower -= (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] } else { pkVal1 }) * (1_f64 - tempReal);
             } else {
-                periodTotalUpper -= (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[ringPos_trailingIdx] } else { pkVal0 });
-                periodTotalLower -= (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[ringPos_trailingIdx] } else { pkVal1 });
+                periodTotalUpper -= (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] } else { pkVal0 });
+                periodTotalLower -= (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] } else { pkVal1 });
             }
-            periodTotalMiddle -= (if (ringPos_trailingIdx as usize) != pkSlot2 { sp.ring_trailingIdx_inClose[ringPos_trailingIdx] } else { pkVal2 });
+            periodTotalMiddle -= (if (sp.ringPos_trailingIdx as usize) != pkSlot2 { sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] } else { pkVal2 });
             // Write the three bands.
             (*outRealUpperBand) = tempUpper / (sp.optInTimePeriod as f64);
             (*outRealMiddleBand) = tempMiddle / (sp.optInTimePeriod as f64);
             (*outRealLowerBand) = tempLower / (sp.optInTimePeriod as f64);
-            cur_outRealUpperBand = (*outRealUpperBand);
-            cur_outRealMiddleBand = (*outRealMiddleBand);
-            cur_outRealLowerBand = (*outRealLowerBand);
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                ringPos_trailingIdx = 0;
-            }
         }
         Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
     }

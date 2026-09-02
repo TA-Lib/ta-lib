@@ -710,9 +710,6 @@ TA_LIB_API TA_RetCode TA_MIN_Peek( const TA_MIN_Stream *stream, double inReal, d
       sp->lowest = tmp;
    }
    *outReal= sp->lowest;
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

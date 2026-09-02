@@ -1205,10 +1205,7 @@ public partial class Core
          double prev_jQ_Odd = sp.prev_jQ_Odd;
          double prev_jQ_input_Even = sp.prev_jQ_input_Even;
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
          double smoothPeriod = sp.smoothPeriod;
-         int smoothPrice_Idx = sp.smoothPrice_Idx;
-         int streamParity = sp.streamParity;
          double trailingWMAValue = sp.trailingWMAValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
@@ -1223,15 +1220,15 @@ public partial class Core
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          /* Remember the smoothedValue into the smoothPrice
           * circular buffer.
           */
-         pkSlot1 = smoothPrice_Idx;
+         pkSlot1 = sp.smoothPrice_Idx;
          pkVal1 = smoothedValue;
-         if( streamParity == 0 ) {
+         if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
             detrender = 0 - sp.detrender_Even[hilbertIdx];
@@ -1355,7 +1352,7 @@ public partial class Core
          /* idx is used to iterate for up to 50 of the last
           * value of smoothPrice.
           */
-         idx = smoothPrice_Idx;
+         idx = sp.smoothPrice_Idx;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
             tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
             tempReal2 = (idx != pkSlot1) ? sp.cb_smoothPrice[idx] : pkVal1;
@@ -1387,16 +1384,6 @@ public partial class Core
             DCPhase -= 360.0;
          }
          cur_outReal = DCPhase;
-         /* Ooof... let's do the next price bar now! */
-         smoothPrice_Idx = smoothPrice_Idx + 1;
-         if( smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
-            smoothPrice_Idx = 0;
-         }
-         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
-         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
-            ringPos_trailingWMAIdx = 0;
-         }
-         streamParity = 1 - streamParity;
          return cur_outReal;
       }
 

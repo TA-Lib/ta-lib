@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_SINH_Peek( const TA_SINH_Stream *stream, double inReal,
    scratch = *stream;
    (void)sp;
    *outReal= sinh(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

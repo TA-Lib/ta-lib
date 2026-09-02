@@ -1268,8 +1268,6 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
    {
       cur_tempBuffer = 0.0;
    }
-   sp->trailingIdx += 1;
-   sp->today += 1;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {

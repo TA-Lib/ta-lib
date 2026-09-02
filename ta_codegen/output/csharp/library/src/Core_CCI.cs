@@ -559,12 +559,11 @@ public partial class Core
          double theAverage = 0.0;
          double lastValue = 0.0;
          int j = 0;
-         int circBuffer_Idx = sp.circBuffer_Idx;
          double cur_outReal = sp.cur_outReal;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          lastValue = (inHigh + inLow + inClose) / 3;
-         pkSlot0 = circBuffer_Idx;
+         pkSlot0 = sp.circBuffer_Idx;
          pkVal0 = lastValue;
          /* Calculate the average for the whole period. */
          theAverage = 0;
@@ -596,11 +595,6 @@ public partial class Core
             cur_outReal = tempReal / (0.015 * tempReal2);
          } else {
             cur_outReal = 0.0;
-         }
-         /* Move forward the circular buffer indexes. */
-         circBuffer_Idx = circBuffer_Idx + 1;
-         if( circBuffer_Idx > sp.maxIdx_circBuffer ) {
-            circBuffer_Idx = 0;
          }
          return cur_outReal;
       }

@@ -472,9 +472,7 @@ impl CosStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = (inReal).cos();
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

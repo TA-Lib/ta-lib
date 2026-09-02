@@ -995,17 +995,13 @@ impl SupertrendStream {
             let mut basicUpper: f64 = 0.0_f64;
             let mut basicLower: f64 = 0.0_f64;
             let mut closeToday: f64 = 0.0_f64;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut cur_outReal = sp.cur_outReal;
             let mut finalLower = sp.finalLower;
             let mut finalUpper = sp.finalUpper;
             let mut isUptrend = sp.isUptrend;
-            let mut lag1_inClose = sp.lag1_inClose;
             let mut prevATR = sp.prevATR;
-            let mut prevClose = sp.prevClose;
             tempLT = inLow;
             tempHT = inHigh;
-            tempCY = lag1_inClose;
+            tempCY = sp.lag1_inClose;
             greatest = tempHT - tempLT;
             // val1
             val2 = (tempCY - tempHT).abs();
@@ -1030,10 +1026,10 @@ impl SupertrendStream {
             // The line is therefore NOT monotone within a trend, and the flag does not
             // always say which side of the line price is on; both read as invariants
             // and neither is one.
-            if basicUpper < finalUpper || prevClose > finalUpper {
+            if basicUpper < finalUpper || sp.prevClose > finalUpper {
                 finalUpper = basicUpper;
             }
-            if basicLower > finalLower || prevClose < finalLower {
+            if basicLower > finalLower || sp.prevClose < finalLower {
                 finalLower = basicLower;
             }
             closeToday = inClose;
@@ -1057,10 +1053,6 @@ impl SupertrendStream {
                 (*outReal) = finalUpper;
                 (*outInteger) = (0 - 1) as i32;
             }
-            prevClose = closeToday;
-            cur_outReal = (*outReal);
-            cur_outInteger = (*outInteger);
-            lag1_inClose = inClose;
         }
         Ok((outReal, outInteger))
     }

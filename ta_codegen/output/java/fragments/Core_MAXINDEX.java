@@ -477,8 +477,6 @@
             highest = tmp;
          }
          cur_outInteger = highestIdx;
-         trailingIdx += 1;
-         today += 1;
          return cur_outInteger;
       }
 

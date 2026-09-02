@@ -1123,7 +1123,6 @@ impl SarStream {
             let mut prevHigh: f64 = 0.0_f64;
             let mut prevLow: f64 = 0.0_f64;
             let mut af = sp.af;
-            let mut cur_outReal = sp.cur_outReal;
             let mut ep = sp.ep;
             let mut isLong = sp.isLong;
             let mut newHigh = sp.newHigh;
@@ -1236,7 +1235,6 @@ impl SarStream {
                     sar = newHigh;
                 }
             }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

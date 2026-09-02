@@ -1013,8 +1013,6 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("HT_PHASOR peek: BadParam", RetCode.BadParam);
          HtPhasorStream sp = this;
-         double tempReal = 0.0;
-         double tempReal2 = 0.0;
          double adjustedPrevPeriod = 0.0;
          double smoothedValue = 0.0;
          double hilbertTempReal = 0.0;
@@ -1029,16 +1027,11 @@
          double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
          double I1ForOddPrev2 = sp.I1ForOddPrev2;
          double I1ForOddPrev3 = sp.I1ForOddPrev3;
-         double Im = sp.Im;
-         double Re = sp.Re;
          double cur_outInPhase = sp.cur_outInPhase;
          double cur_outQuadrature = sp.cur_outQuadrature;
          int hilbertIdx = sp.hilbertIdx;
-         double period = sp.period;
          double periodWMASub = sp.periodWMASub;
          double periodWMASum = sp.periodWMASum;
-         double prevI2 = sp.prevI2;
-         double prevQ2 = sp.prevQ2;
          double prev_Q1_Even = sp.prev_Q1_Even;
          double prev_Q1_Odd = sp.prev_Q1_Odd;
          double prev_Q1_input_Even = sp.prev_Q1_input_Even;
@@ -1055,8 +1048,6 @@
          double prev_jQ_Odd = sp.prev_jQ_Odd;
          double prev_jQ_input_Even = sp.prev_jQ_input_Even;
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
-         int streamParity = sp.streamParity;
          double trailingWMAValue = sp.trailingWMAValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
@@ -1064,15 +1055,15 @@
             pkSlot0 = 0;
             pkVal0 = inReal;
          }
-         adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
+         adjustedPrevPeriod = Math.fma(0.075, sp.period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
-         if( streamParity == 0 ) {
+         if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
             detrender = 0 - sp.detrender_Even[hilbertIdx];
@@ -1111,8 +1102,8 @@
             if( ++hilbertIdx == 3 ) {
                hilbertIdx = 0;
             }
-            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
-            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+            I2 = Math.fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
             /* The variable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -1157,8 +1148,8 @@
             jQ += prev_jQ_Odd;
             prev_jQ_input_Odd = Q1;
             jQ *= adjustedPrevPeriod;
-            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * prevQ2);
-            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            Q2 = Math.fma(0.2, Q1 + jI, 0.8 * sp.prevQ2);
+            I2 = Math.fma(0.2, I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
             /* The varaiable I1 is the detrender delayed for
              * 3 price bars.
              *
@@ -1168,35 +1159,6 @@
             I1ForEvenPrev3 = I1ForEvenPrev2;
             I1ForEvenPrev2 = detrender;
          }
-         /* Adjust the period for next price bar */
-         Re = Math.fma(0.8, Re, 0.2 * (Math.fma(I2, prevI2, Q2 * prevQ2)));
-         Im = Math.fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
-         prevQ2 = Q2;
-         prevI2 = I2;
-         tempReal = period;
-         if( Im != 0.0 && Re != 0.0 ) {
-            period = 360.0 / (Math.atan(Im / Re) * sp.rad2Deg);
-         }
-         tempReal2 = 1.5 * tempReal;
-         if( period > tempReal2 ) {
-            period = tempReal2;
-         }
-         tempReal2 = 0.67 * tempReal;
-         if( period < tempReal2 ) {
-            period = tempReal2;
-         }
-         if( period < 6 ) {
-            period = 6;
-         } else if( period > 50 ) {
-            period = 50;
-         }
-         period = Math.fma(0.2, period, 0.8 * tempReal);
-         /* Ooof... let's do the next price bar now! */
-         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
-         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
-            ringPos_trailingWMAIdx = 0;
-         }
-         streamParity = 1 - streamParity;
          out.inPhase = cur_outInPhase;
          out.quadrature = cur_outQuadrature;
       }

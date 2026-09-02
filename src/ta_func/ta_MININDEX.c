@@ -538,9 +538,6 @@ TA_LIB_API TA_RetCode TA_MININDEX_Peek( const TA_MININDEX_Stream *stream, double
       sp->lowest = tmp;
    }
    *outInteger= sp->lowestIdx;
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outInteger = *outInteger;
    return TA_SUCCESS;
 }
 

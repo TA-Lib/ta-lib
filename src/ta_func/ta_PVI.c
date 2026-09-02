@@ -431,9 +431,6 @@ TA_LIB_API TA_RetCode TA_PVI_Peek( const TA_PVI_Stream *stream, double inClose, 
       }
    }
    *outReal= sp->prevPVI;
-   sp->prevClose = tempClose;
-   sp->prevVolume = tempVolume;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

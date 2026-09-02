@@ -816,9 +816,6 @@ impl AoStream {
             let outReal = &mut outReal;
             let mut medianPrice: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
-            let mut ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
             let mut sumFast = sp.sumFast;
             let mut sumSlow = sp.sumSlow;
             let mut pkSlot0: usize = usize::MAX;
@@ -844,18 +841,9 @@ impl AoStream {
             // outIdx exactly, so a store hoisted above this would read back the
             // value it had just overwritten whenever the caller aliases outReal
             // over inHigh or inLow.
-            sumFast -= (if (ringPos_trailingFastIdx as usize) != pkSlot0 { sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] } else { pkVal0 });
-            sumSlow -= (if (ringPos_trailingSlowIdx as usize) != pkSlot1 { sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] } else { pkVal1 });
+            sumFast -= (if (sp.ringPos_trailingFastIdx as usize) != pkSlot0 { sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] } else { pkVal0 });
+            sumSlow -= (if (sp.ringPos_trailingSlowIdx as usize) != pkSlot1 { sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] } else { pkVal1 });
             (*outReal) = tempReal;
-            cur_outReal = (*outReal);
-            ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
-            if ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
-                ringPos_trailingFastIdx = 0;
-            }
-            ringPos_trailingSlowIdx = ringPos_trailingSlowIdx + 1;
-            if ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx {
-                ringPos_trailingSlowIdx = 0;
-            }
         }
         Ok(outReal)
     }

@@ -902,8 +902,6 @@ TA_LIB_API TA_RetCode TA_NATR_Peek( const TA_NATR_Stream *stream, double inHigh,
          *outReal= 0.0;
       }
    }
-   sp->cur_outReal = *outReal;
-   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

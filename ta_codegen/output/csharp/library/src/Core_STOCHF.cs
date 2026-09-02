@@ -878,8 +878,6 @@ public partial class Core
          } else {
             cur_tempBuffer = 0.0;
          }
-         trailingIdx += 1;
-         today += 1;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_outFastD = sp.sub0.Peek(cur_tempBuffer);
          cur_outFastK = cur_tempBuffer;

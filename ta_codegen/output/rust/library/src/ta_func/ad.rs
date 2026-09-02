@@ -600,7 +600,6 @@ impl AdStream {
             let mut close: f64 = 0.0_f64;
             let mut tmp: f64 = 0.0_f64;
             let mut ad = sp.ad;
-            let mut cur_outReal = sp.cur_outReal;
             high = inHigh;
             low = inLow;
             tmp = high - low;
@@ -609,7 +608,6 @@ impl AdStream {
                 ad += (close - low - (high - close)) / tmp * (inVolume as f64);
             }
             (*outReal) = ad;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

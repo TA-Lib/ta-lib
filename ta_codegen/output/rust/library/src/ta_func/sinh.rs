@@ -471,9 +471,7 @@ impl SinhStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = (inReal).sinh();
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

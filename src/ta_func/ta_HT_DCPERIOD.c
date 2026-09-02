@@ -1610,14 +1610,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, 
    sp->period = fma(0.2, sp->period, 0.8 * tempReal);
    sp->smoothPeriod = fma(0.67, sp->smoothPeriod, 0.33 * sp->period);
    *outReal= sp->smoothPeriod;
-   /* Ooof... let's do the next price bar now! */
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
-   {
-      sp->ringPos_trailingWMAIdx = 0;
-   }
-   sp->streamParity = 1 - sp->streamParity;
    return TA_SUCCESS;
 }
 

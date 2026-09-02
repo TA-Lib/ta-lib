@@ -800,7 +800,6 @@ impl AroonoscStream {
             let outReal = &mut outReal;
             let mut tmp: f64 = 0.0_f64;
             let mut aroon: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut highest = sp.highest;
             let mut highestIdx = sp.highestIdx;
             let mut i = sp.i;
@@ -869,9 +868,6 @@ impl AroonoscStream {
             // Note: Do not forget that input and output buffer can be the same,
             //       so writing to the output is the last thing being done here.
             (*outReal) = aroon;
-            trailingIdx += 1;
-            today += 1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

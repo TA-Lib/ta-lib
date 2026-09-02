@@ -279,7 +279,6 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Peek( const TA_AVGPRICE_Stream *stream, double
    scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow + inClose + inOpen) / 4;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

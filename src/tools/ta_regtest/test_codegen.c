@@ -2057,8 +2057,10 @@ typedef struct {
     int               streamSkipped;
     int               streamRejectArms;
     int               streamFillFunctions; /* funcs whose OpenAndFill == batch(0,n-1) bitwise */
-    int               streamPeekFunctions; /* funcs that ran the peek-idempotence probe */
-    long long         streamPeekProbes;    /* probes run (peek, other bar, peek again) */
+    int               streamPeekFunctions; /* funcs that ran the peek non-commit leg */
+    long long         streamPeekProbes;    /* peeks run by that leg */
+    int               streamPeekRepFunctions; /* funcs that ran the repeat probe */
+    long long         streamPeekRepProbes;    /* triples run (peek t, peek t-1, peek t) */
     int               streamUFillFunctions;/* funcs whose UpdateAndFill == batch over the same bars (#246) */
     int               streamFillBars;      /* bars the OpenAndFill leg actually value-compared */
     int               streamUFillBars;     /* bars the UpdateAndFill leg actually value-compared */
@@ -3585,7 +3587,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     int stateLegs = 0;     /* how many legs actually compared handle state */
     int stateOfLegs = 0;   /* value legs in the requests that reported it */
     int rangeChecked = 0;  /* set once any leg reports the OutRange compare (#241) */
-    int peekProbes = 0;    /* peek-idempotence probes this request ran */
+    int peekProbes = 0;    /* peeks the non-commit leg ran */
+    int peekReps = 0;      /* repeat probes this request ran */
     int rangeLegs = 0;     /* how many legs actually compared a handle's OutRange */
     int rangeSites = 0;    /* OR of the range-compare sites that fired */
     int rangeSitesAll = 0; /* the set the server says it has */
@@ -3849,6 +3852,28 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 int pc = stream_flag(ctx->responseBuf, "\"peek_checked\":");
                 if( pc > 0 ) peekProbes += pc;
             }
+            /* Repeat probe: peek(t), peek(t-1), peek(t) with no update in
+             * between must answer the same bits twice. Its own flag so a
+             * failure names the property, and its own counter because
+             * `peek_rep_ok` reads the same whether the probe ran or was
+             * dropped. Every server answers it — this is the cross-language
+             * observer of a committing peek, the non-commit leg above being
+             * C-only. */
+            {
+                int pr = stream_flag(ctx->responseBuf, "\"peek_reps\":");
+                if( pr > 0 ) peekReps += pr;
+                if( stream_flag(ctx->responseBuf, "\"peek_rep_ok\":") == 0 )
+                {
+                    printf("STREAM PEEK REPEAT MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                           "  peek(t), peek(t-1), peek(t) did not answer the same bits twice\n"
+                           "  request:  %s\n  response: %s\n",
+                           funcInfo->name, v, K, compat,
+                           ctx->requestBuf, ctx->responseBuf);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+            }
             /* Fork leg (#287). Its own counter: `ok` already folds `clone_ok`
              * in, so this is not about catching a failure — it is about
              * catching the leg going ABSENT, which no pass/fail flag can say. */
@@ -3939,6 +3964,8 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     if( rangeChecked ) ctx->streamRangeFunctions++;
     if( peekProbes > 0 ) ctx->streamPeekFunctions++;
     ctx->streamPeekProbes += peekProbes;
+    if( peekReps > 0 ) ctx->streamPeekRepFunctions++;
+    ctx->streamPeekRepProbes += peekReps;
     ctx->streamRangeLegs += rangeLegs;
     ctx->streamRangeSites |= rangeSites;
     ctx->streamRangeSitesAll |= rangeSitesAll;
@@ -4775,6 +4802,8 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamFillFunctions = 0;
             ctx.streamPeekFunctions = 0;
             ctx.streamPeekProbes = 0;
+            ctx.streamPeekRepFunctions = 0;
+            ctx.streamPeekRepProbes = 0;
             ctx.streamUFillFunctions = 0;
             ctx.streamFillBars = -1;
             ctx.streamUFillBars = -1;
@@ -4900,6 +4929,27 @@ static ErrorNumber test_codegen_for_language(
                 printf("STREAM PEEK VACUOUS: only %d of %d streaming functions ran "
                        "the peek non-commit leg\n",
                        ctx.streamPeekFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            /* The repeat probe's floor, and it is UNCONDITIONAL: every server
+             * answers it, so a language reporting none is one whose emitter was
+             * missed — which is exactly how the peek probe went unwatched
+             * outside C for as long as it did. A probe count floor rides along
+             * because the per-function one survives a probe that fired once. */
+            if( ctx.error == TA_TEST_PASS && ctx.streamFunctions != 0 &&
+                ctx.streamPeekRepFunctions != ctx.streamFunctions )
+            {
+                printf("STREAM PEEK REPEAT VACUOUS: only %d of %d streaming functions "
+                       "ran the repeat probe\n",
+                       ctx.streamPeekRepFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            if( ctx.error == TA_TEST_PASS && ctx.streamFunctions != 0 &&
+                ctx.streamPeekRepProbes < (long long)ctx.streamFunctions * 4 )
+            {
+                printf("STREAM PEEK REPEAT THIN: %lld repeat probe(s) over %d "
+                       "streaming functions\n",
+                       ctx.streamPeekRepProbes, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* The range leg's ratchet (#241). Unlike the state leg this one is

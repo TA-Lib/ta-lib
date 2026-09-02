@@ -752,8 +752,6 @@ public partial class Core
             double numerator = sp.numerator;
             double numeratorAdd = sp.numeratorAdd;
             double numeratorSub = sp.numeratorSub;
-            int ringPos_middleIdx = sp.ringPos_middleIdx;
-            int ringPos_trailingIdx = sp.ringPos_trailingIdx;
             double tempReal = sp.tempReal;
             int pkSlot0 = -1;
             double pkVal0 = 0.0;
@@ -770,7 +768,7 @@ public partial class Core
             /* Step (1) */
             numerator -= numeratorSub;
             numeratorSub -= tempReal;
-            tempReal = (ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[ringPos_middleIdx] : pkVal0;
+            tempReal = (sp.ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] : pkVal0;
             numeratorSub += tempReal;
             /* Step (2) */
             numerator += numeratorAdd;
@@ -780,22 +778,12 @@ public partial class Core
             /* Step (3) */
             numerator += tempReal;
             /* Step (4) */
-            tempReal = (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal1;
+            tempReal = (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal1;
             cur_outReal = numerator * sp.factor;
-            ringPos_middleIdx = ringPos_middleIdx + 1;
-            if( ringPos_middleIdx >= sp.ringCap_middleIdx ) {
-               ringPos_middleIdx = 0;
-            }
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-               ringPos_trailingIdx = 0;
-            }
          } else {
             double numerator = sp.numerator;
             double numeratorAdd = sp.numeratorAdd;
             double numeratorSub = sp.numeratorSub;
-            int ringPos_middleIdx = sp.ringPos_middleIdx;
-            int ringPos_trailingIdx = sp.ringPos_trailingIdx;
             double tempReal = sp.tempReal;
             int pkSlot0 = -1;
             double pkVal0 = 0.0;
@@ -812,7 +800,7 @@ public partial class Core
             /* Step (1) */
             numerator -= numeratorSub;
             numeratorSub -= tempReal;
-            tempReal = (ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[ringPos_middleIdx] : pkVal0;
+            tempReal = (sp.ringPos_middleIdx != pkSlot0) ? sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] : pkVal0;
             numeratorSub += tempReal;
             /* Step (2) */
             numeratorAdd -= tempReal;
@@ -822,16 +810,8 @@ public partial class Core
             /* Step (3) */
             numerator += tempReal;
             /* Step (4) */
-            tempReal = (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal1;
+            tempReal = (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal1;
             cur_outReal = numerator * sp.factor;
-            ringPos_middleIdx = ringPos_middleIdx + 1;
-            if( ringPos_middleIdx >= sp.ringCap_middleIdx ) {
-               ringPos_middleIdx = 0;
-            }
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-               ringPos_trailingIdx = 0;
-            }
          }
          return cur_outReal;
       }

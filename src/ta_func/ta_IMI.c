@@ -466,12 +466,6 @@ TA_LIB_API TA_RetCode TA_IMI_Peek( const TA_IMI_Stream *stream, double inOpen, d
        */
       *outReal= (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
    }
-   sp->cur_outReal = *outReal;
-   sp->winPos_i = sp->winPos_i + 1;
-   if( sp->winPos_i >= sp->winCap_i )
-   {
-      sp->winPos_i = 0;
-   }
    return TA_SUCCESS;
 }
 

@@ -741,8 +741,6 @@
          int barsSinceReseed = sp.barsSinceReseed;
          double cur_outReal = sp.cur_outReal;
          int j = sp.j;
-         double leavingX = sp.leavingX;
-         double leavingY = sp.leavingY;
          double shiftX = sp.shiftX;
          double shiftY = sp.shiftY;
          double sumX = sp.sumX;
@@ -804,7 +802,7 @@
           * startIdx-lookbackTotal+outIdx, which is >= outIdx.
           */
          barsSinceReseed -= 1;
-         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
+         if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || sp.leavingX > 1000000.0 * sumX2 || sp.leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * sp.optInTimePeriod;
             windowStart = today - sp.lookbackTotal;
             /* Both means in one pass over the window: the rebuild below is the
@@ -904,15 +902,6 @@
          } else {
             cur_outReal = 0.0;
          }
-         /* Remove the trailing values (prepares the next window). */
-         leavingX = trailingX * trailingX;
-         leavingY = trailingY * trailingY;
-         sumX -= trailingX;
-         sumX2 -= leavingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= leavingY;
-         today += 1;
          return cur_outReal;
       }
 

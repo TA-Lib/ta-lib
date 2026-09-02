@@ -746,7 +746,6 @@
             periodTotal2 -= tempReal;
          }
          cur_outReal = variance;
-         i += 1;
          return cur_outReal;
       }
 

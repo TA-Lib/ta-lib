@@ -432,9 +432,6 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream
    {
       *outInteger= 0;
    }
-   sp->cur_outInteger = *outInteger;
-   sp->lag1_inOpen = inOpen;
-   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

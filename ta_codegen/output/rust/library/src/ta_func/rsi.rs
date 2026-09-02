@@ -978,7 +978,6 @@ impl RsiStream {
             } else {
                 (*outReal) = 0.0;
             }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

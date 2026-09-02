@@ -729,10 +729,6 @@ TA_LIB_API TA_RetCode TA_AROON_Peek( const TA_AROON_Stream *stream, double inHig
     */
    *outAroonUp= sp->factor * (sp->optInTimePeriod - (sp->today - sp->highestIdx));
    *outAroonDown= sp->factor * (sp->optInTimePeriod - (sp->today - sp->lowestIdx));
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outAroonDown = *outAroonDown;
-   sp->cur_outAroonUp = *outAroonUp;
    return TA_SUCCESS;
 }
 

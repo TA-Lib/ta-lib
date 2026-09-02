@@ -430,12 +430,6 @@ TA_LIB_API TA_RetCode TA_MOM_Peek( const TA_MOM_Stream *stream, double inReal, d
       pkVal0 = inReal;
    }
    *outReal= inReal - ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0);
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-   {
-      sp->ringPos_trailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

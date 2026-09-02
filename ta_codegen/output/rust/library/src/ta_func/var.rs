@@ -1000,7 +1000,6 @@ impl VarStream {
             let mut meanValue1: f64 = 0.0_f64;
             let mut variance: f64 = 0.0_f64;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut cur_outReal = sp.cur_outReal;
             let mut i = sp.i;
             let mut j = sp.j;
             let mut periodTotal1 = sp.periodTotal1;
@@ -1128,8 +1127,6 @@ impl VarStream {
                 periodTotal2 -= tempReal;
             }
             (*outReal) = variance;
-            i += 1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

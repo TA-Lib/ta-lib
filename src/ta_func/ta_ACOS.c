@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_ACOS_Peek( const TA_ACOS_Stream *stream, double inReal,
    scratch = *stream;
    (void)sp;
    *outReal= acos(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

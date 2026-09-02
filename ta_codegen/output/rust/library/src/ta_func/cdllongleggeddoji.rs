@@ -1020,15 +1020,6 @@ impl CdllongleggeddojiStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
-            let mut ShadowLongPeriodTotal = sp.ShadowLongPeriodTotal;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
-            let mut ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
             #[allow(non_snake_case)]
             let BodyDoji_rangeType: i32 = self.cs_body_doji.range_type as i32;
             #[allow(non_snake_case)]
@@ -1041,91 +1032,10 @@ impl CdllongleggeddojiStream {
             let ShadowLong_avgPeriod: i32 = self.cs_shadow_long.avg_period;
             #[allow(non_snake_case)]
             let ShadowLong_factor: f64 = self.cs_shadow_long.factor;
-            if sp.ringCap_BodyDojiTrailingIdx == 0 {
-                pkSlot0 = 0;
-                let mut _candlerange_12: f64;
-                match BodyDoji_rangeType {
-                    0 => {
-                        _candlerange_12 = (inClose - inOpen).abs();
-                    }
-                    1 => {
-                        _candlerange_12 = inHigh - inLow;
-                    }
-                    2 => {
-                        _candlerange_12 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                    }
-                    _ => {
-                        _candlerange_12 = 0.0;
-                    }
-                }
-                pkVal0 = _candlerange_12;
-            }
-            if sp.ringCap_ShadowLongTrailingIdx == 0 {
-                pkSlot1 = 0;
-                let mut _candlerange_13: f64;
-                match ShadowLong_rangeType {
-                    0 => {
-                        _candlerange_13 = (inClose - inOpen).abs();
-                    }
-                    1 => {
-                        _candlerange_13 = inHigh - inLow;
-                    }
-                    2 => {
-                        _candlerange_13 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                    }
-                    _ => {
-                        _candlerange_13 = 0.0;
-                    }
-                }
-                pkVal1 = _candlerange_13;
-            }
-            if (inClose - inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) && (((if inClose >= inOpen { inOpen } else { inClose }) - inLow) > ((ShadowLong_factor) * (if (ShadowLong_avgPeriod) != 0 { (ShadowLongPeriodTotal) / (ShadowLong_avgPeriod as f64) } else { match ShadowLong_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (ShadowLong_rangeType) == 2 { 2.0 } else { 1.0 })) || (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) > ((ShadowLong_factor) * (if (ShadowLong_avgPeriod) != 0 { (ShadowLongPeriodTotal) / (ShadowLong_avgPeriod as f64) } else { match ShadowLong_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (ShadowLong_rangeType) == 2 { 2.0 } else { 1.0 }))) {
+            if (inClose - inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (sp.BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) && (((if inClose >= inOpen { inOpen } else { inClose }) - inLow) > ((ShadowLong_factor) * (if (ShadowLong_avgPeriod) != 0 { (sp.ShadowLongPeriodTotal) / (ShadowLong_avgPeriod as f64) } else { match ShadowLong_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (ShadowLong_rangeType) == 2 { 2.0 } else { 1.0 })) || (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) > ((ShadowLong_factor) * (if (ShadowLong_avgPeriod) != 0 { (sp.ShadowLongPeriodTotal) / (ShadowLong_avgPeriod as f64) } else { match ShadowLong_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (ShadowLong_rangeType) == 2 { 2.0 } else { 1.0 }))) {
                 (*outInteger) = 100;
             } else {
                 (*outInteger) = 0;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_14: f64;
-            match BodyDoji_rangeType {
-                0 => {
-                    _candlerange_14 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_14 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_14 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_14 = 0.0;
-                }
-            }
-            BodyDojiPeriodTotal += _candlerange_14 - (if (ringPos_BodyDojiTrailingIdx as usize) != pkSlot0 { sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] } else { pkVal0 });
-            let mut _candlerange_15: f64;
-            match ShadowLong_rangeType {
-                0 => {
-                    _candlerange_15 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_15 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_15 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_15 = 0.0;
-                }
-            }
-            ShadowLongPeriodTotal += _candlerange_15 - (if (ringPos_ShadowLongTrailingIdx as usize) != pkSlot1 { sp.ring_ShadowLongTrailingIdx_derived[ringPos_ShadowLongTrailingIdx] } else { pkVal1 });
-            cur_outInteger = (*outInteger);
-            ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
-            if ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
-                ringPos_BodyDojiTrailingIdx = 0;
-            }
-            ringPos_ShadowLongTrailingIdx = ringPos_ShadowLongTrailingIdx + 1;
-            if ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx {
-                ringPos_ShadowLongTrailingIdx = 0;
             }
         }
         Ok(outInteger)

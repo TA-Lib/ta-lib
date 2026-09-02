@@ -687,13 +687,12 @@ public partial class Core
          double negFlow = 0.0;
          double posClamped = 0.0;
          double cur_outReal = sp.cur_outReal;
-         int mflow_Idx = sp.mflow_Idx;
          double negSumMF = sp.negSumMF;
          int nullRun = sp.nullRun;
          double posSumMF = sp.posSumMF;
          double prevValue = sp.prevValue;
-         posSumMF -= sp.cb_mflow_positive[mflow_Idx];
-         negSumMF -= sp.cb_mflow_negative[mflow_Idx];
+         posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
+         negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];
          tempValue1 = (inHigh + inLow + inClose) / 3.0;
          tempValue2 = tempValue1 - prevValue;
          /* Dead-zone scaled to the two typical prices being compared (issue #107).
@@ -719,10 +718,6 @@ public partial class Core
             cur_outReal = 0.0;
          } else {
             cur_outReal = 100.0 * (posClamped / tempValue1);
-         }
-         mflow_Idx = mflow_Idx + 1;
-         if( mflow_Idx > sp.maxIdx_mflow ) {
-            mflow_Idx = 0;
          }
          return cur_outReal;
       }

@@ -756,7 +756,6 @@ impl VwmaStream {
             let mut tempV: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
             let mut cur_outReal = sp.cur_outReal;
-            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut sumPV = sp.sumPV;
             let mut sumV = sp.sumV;
             let mut pkSlot0: usize = usize::MAX;
@@ -784,15 +783,10 @@ impl VwmaStream {
             tempV = sumV;
             // Read the trailing values before writing the output, since the caller
             // may pass the same buffer for an input and the output.
-            tempReal = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 }) * (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] } else { pkVal1 });
+            tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) * (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] } else { pkVal1 });
             sumPV -= tempReal;
-            sumV -= (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] } else { pkVal1 });
+            sumV -= (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] } else { pkVal1 });
             (*outReal) = tempPV / (sp.optInTimePeriod as f64) / (tempV / (sp.optInTimePeriod as f64));
-            cur_outReal = (*outReal);
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                ringPos_trailingIdx = 0;
-            }
         }
         Ok(outReal)
     }

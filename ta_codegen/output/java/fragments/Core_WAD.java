@@ -454,24 +454,22 @@
          double close = 0.0;
          double trueExtreme = 0.0;
          double cur_outReal = sp.cur_outReal;
-         double prevClose = sp.prevClose;
          double sum = sp.sum;
          close = inClose;
-         if( close > prevClose ) {
+         if( close > sp.prevClose ) {
             trueExtreme = inLow;
-            if( prevClose < trueExtreme ) {
-               trueExtreme = prevClose;
+            if( sp.prevClose < trueExtreme ) {
+               trueExtreme = sp.prevClose;
             }
             sum += close - trueExtreme;
-         } else if( close < prevClose ) {
+         } else if( close < sp.prevClose ) {
             trueExtreme = inHigh;
-            if( prevClose > trueExtreme ) {
-               trueExtreme = prevClose;
+            if( sp.prevClose > trueExtreme ) {
+               trueExtreme = sp.prevClose;
             }
             sum += close - trueExtreme;
          }
          cur_outReal = sum;
-         prevClose = close;
          return cur_outReal;
       }
 

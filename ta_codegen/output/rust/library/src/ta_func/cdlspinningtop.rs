@@ -805,63 +805,16 @@ impl CdlspinningtopStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut BodyPeriodTotal = sp.BodyPeriodTotal;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             #[allow(non_snake_case)]
             let BodyShort_rangeType: i32 = self.cs_body_short.range_type as i32;
             #[allow(non_snake_case)]
             let BodyShort_avgPeriod: i32 = self.cs_body_short.avg_period;
             #[allow(non_snake_case)]
             let BodyShort_factor: f64 = self.cs_body_short.factor;
-            if sp.ringCap_BodyTrailingIdx == 0 {
-                pkSlot0 = 0;
-                let mut _candlerange_6: f64;
-                match BodyShort_rangeType {
-                    0 => {
-                        _candlerange_6 = (inClose - inOpen).abs();
-                    }
-                    1 => {
-                        _candlerange_6 = inHigh - inLow;
-                    }
-                    2 => {
-                        _candlerange_6 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                    }
-                    _ => {
-                        _candlerange_6 = 0.0;
-                    }
-                }
-                pkVal0 = _candlerange_6;
-            }
-            if (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) > (inClose - inOpen).abs() && ((if inClose >= inOpen { inOpen } else { inClose }) - inLow) > (inClose - inOpen).abs() && (inClose - inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
+            if (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) > (inClose - inOpen).abs() && ((if inClose >= inOpen { inOpen } else { inClose }) - inLow) > (inClose - inOpen).abs() && (inClose - inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
                 (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
                 (*outInteger) = 0;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_7: f64;
-            match BodyShort_rangeType {
-                0 => {
-                    _candlerange_7 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_7 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_7 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_7 = 0.0;
-                }
-            }
-            BodyPeriodTotal += _candlerange_7 - (if (ringPos_BodyTrailingIdx as usize) != pkSlot0 { sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] } else { pkVal0 });
-            cur_outInteger = (*outInteger);
-            ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
-            if ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
-                ringPos_BodyTrailingIdx = 0;
             }
         }
         Ok(outInteger)

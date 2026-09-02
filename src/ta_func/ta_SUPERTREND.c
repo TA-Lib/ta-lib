@@ -976,10 +976,6 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
       *outReal= sp->finalUpper;
       *outInteger= 0 - 1;
    }
-   sp->prevClose = closeToday;
-   sp->cur_outReal = *outReal;
-   sp->cur_outInteger = *outInteger;
-   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

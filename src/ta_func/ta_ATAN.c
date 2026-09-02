@@ -254,7 +254,6 @@ TA_LIB_API TA_RetCode TA_ATAN_Peek( const TA_ATAN_Stream *stream, double inReal,
    scratch = *stream;
    (void)sp;
    *outReal= atan(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

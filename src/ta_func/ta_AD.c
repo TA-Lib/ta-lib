@@ -389,7 +389,6 @@ TA_LIB_API TA_RetCode TA_AD_Peek( const TA_AD_Stream *stream, double inHigh, dou
       sp->ad += (close - low - (high - close)) / tmp * (double)inVolume;
    }
    *outReal= sp->ad;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

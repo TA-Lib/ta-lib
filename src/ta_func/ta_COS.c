@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_COS_Peek( const TA_COS_Stream *stream, double inReal, d
    scratch = *stream;
    (void)sp;
    *outReal= cos(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

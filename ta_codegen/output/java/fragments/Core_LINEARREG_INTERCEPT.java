@@ -704,7 +704,6 @@
          trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
          trailingIdx += 1;
          cur_outReal = (SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
-         today += 1;
          return cur_outReal;
       }
 

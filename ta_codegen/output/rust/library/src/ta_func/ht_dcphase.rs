@@ -1614,7 +1614,6 @@ impl HtDcphaseStream {
             let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
             let mut Im = sp.Im;
             let mut Re = sp.Re;
-            let mut cur_outReal = sp.cur_outReal;
             let mut hilbertIdx = sp.hilbertIdx;
             let mut period = sp.period;
             let mut periodWMASub = sp.periodWMASub;
@@ -1637,10 +1636,7 @@ impl HtDcphaseStream {
             let mut prev_jQ_Odd = sp.prev_jQ_Odd;
             let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
             let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-            let mut ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
             let mut smoothPeriod = sp.smoothPeriod;
-            let mut smoothPrice_Idx = sp.smoothPrice_Idx;
-            let mut streamParity = sp.streamParity;
             let mut trailingWMAValue = sp.trailingWMAValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -1655,14 +1651,14 @@ impl HtDcphaseStream {
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = (if (ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] } else { pkVal0 });
+            trailingWMAValue = (if (sp.ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] } else { pkVal0 });
             smoothedValue = periodWMASum * 0.1;
             periodWMASum -= periodWMASub;
             // Remember the smoothedValue into the smoothPrice
             // circular buffer.
-            pkSlot1 = smoothPrice_Idx as usize;
+            pkSlot1 = sp.smoothPrice_Idx as usize;
             pkVal1 = smoothedValue;
-            if streamParity == 0 {
+            if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
                 detrender = 0_f64 - sp.detrender_Even[hilbertIdx];
@@ -1783,7 +1779,7 @@ impl HtDcphaseStream {
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
             // value of smoothPrice.
-            idx = smoothPrice_Idx;
+            idx = sp.smoothPrice_Idx;
             // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
             while ((i) as i32) < DCPeriodInt {
@@ -1818,17 +1814,6 @@ impl HtDcphaseStream {
                 DCPhase -= 360.0;
             }
             (*outReal) = DCPhase;
-            // Ooof... let's do the next price bar now!
-            smoothPrice_Idx = smoothPrice_Idx + 1;
-            if smoothPrice_Idx > sp.maxIdx_smoothPrice {
-                smoothPrice_Idx = 0;
-            }
-            cur_outReal = (*outReal);
-            ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
-            if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
-                ringPos_trailingWMAIdx = 0;
-            }
-            streamParity = 1 - streamParity;
         }
         Ok(outReal)
     }

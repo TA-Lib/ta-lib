@@ -1408,8 +1408,6 @@ impl HtPhasorStream {
             let sp = &self.state;
             let outInPhase = &mut outInPhase;
             let outQuadrature = &mut outQuadrature;
-            let mut tempReal: f64 = 0.0_f64;
-            let mut tempReal2: f64 = 0.0_f64;
             let mut adjustedPrevPeriod: f64 = 0.0_f64;
             let mut smoothedValue: f64 = 0.0_f64;
             let mut hilbertTempReal: f64 = 0.0_f64;
@@ -1424,16 +1422,9 @@ impl HtPhasorStream {
             let mut I1ForEvenPrev3 = sp.I1ForEvenPrev3;
             let mut I1ForOddPrev2 = sp.I1ForOddPrev2;
             let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
-            let mut Im = sp.Im;
-            let mut Re = sp.Re;
-            let mut cur_outInPhase = sp.cur_outInPhase;
-            let mut cur_outQuadrature = sp.cur_outQuadrature;
             let mut hilbertIdx = sp.hilbertIdx;
-            let mut period = sp.period;
             let mut periodWMASub = sp.periodWMASub;
             let mut periodWMASum = sp.periodWMASum;
-            let mut prevI2 = sp.prevI2;
-            let mut prevQ2 = sp.prevQ2;
             let mut prev_Q1_Even = sp.prev_Q1_Even;
             let mut prev_Q1_Odd = sp.prev_Q1_Odd;
             let mut prev_Q1_input_Even = sp.prev_Q1_input_Even;
@@ -1450,8 +1441,6 @@ impl HtPhasorStream {
             let mut prev_jQ_Odd = sp.prev_jQ_Odd;
             let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
             let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-            let mut ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
-            let mut streamParity = sp.streamParity;
             let mut trailingWMAValue = sp.trailingWMAValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
@@ -1459,15 +1448,15 @@ impl HtPhasorStream {
                 pkSlot0 = 0;
                 pkVal0 = inReal;
             }
-            adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
+            adjustedPrevPeriod = (0.075 as f64).mul_add(sp.period, 0.54);
             todayValue = inReal;
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = (if (ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] } else { pkVal0 });
+            trailingWMAValue = (if (sp.ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] } else { pkVal0 });
             smoothedValue = periodWMASum * 0.1;
             periodWMASum -= periodWMASub;
-            if streamParity == 0 {
+            if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
                 detrender = 0_f64 - sp.detrender_Even[hilbertIdx];
@@ -1506,8 +1495,8 @@ impl HtPhasorStream {
                 if { hilbertIdx += 1; hilbertIdx } == 3 {
                     hilbertIdx = 0;
                 }
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * sp.prevQ2);
+                I2 = (0.2 as f64).mul_add(I1ForEvenPrev3 - jQ, 0.8 * sp.prevI2);
                 // The variable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -1551,8 +1540,8 @@ impl HtPhasorStream {
                 jQ += prev_jQ_Odd;
                 prev_jQ_input_Odd = Q1;
                 jQ *= adjustedPrevPeriod;
-                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * prevQ2);
-                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * prevI2);
+                Q2 = (0.2 as f64).mul_add(Q1 + jI, 0.8 * sp.prevQ2);
+                I2 = (0.2 as f64).mul_add(I1ForOddPrev3 - jQ, 0.8 * sp.prevI2);
                 // The varaiable I1 is the detrender delayed for
                 // 3 price bars.
                 //
@@ -1561,37 +1550,6 @@ impl HtPhasorStream {
                 I1ForEvenPrev3 = I1ForEvenPrev2;
                 I1ForEvenPrev2 = detrender;
             }
-            // Adjust the period for next price bar
-            Re = (0.8 as f64).mul_add(Re, 0.2 * ((I2 as f64).mul_add(prevI2, Q2 * prevQ2)));
-            Im = (0.8 as f64).mul_add(Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
-            prevQ2 = Q2;
-            prevI2 = I2;
-            tempReal = period;
-            if Im != 0.0 && Re != 0.0 {
-                period = 360.0 / ((Im / Re).atan() * sp.rad2Deg);
-            }
-            tempReal2 = 1.5 * tempReal;
-            if period > tempReal2 {
-                period = tempReal2;
-            }
-            tempReal2 = 0.67 * tempReal;
-            if period < tempReal2 {
-                period = tempReal2;
-            }
-            if period < 6_f64 {
-                period = 6.0;
-            } else if period > 50_f64 {
-                period = 50.0;
-            }
-            period = (0.2 as f64).mul_add(period, 0.8 * tempReal);
-            // Ooof... let's do the next price bar now!
-            cur_outInPhase = (*outInPhase);
-            cur_outQuadrature = (*outQuadrature);
-            ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
-            if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
-                ringPos_trailingWMAIdx = 0;
-            }
-            streamParity = 1 - streamParity;
         }
         Ok((outInPhase, outQuadrature))
     }

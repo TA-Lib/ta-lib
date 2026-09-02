@@ -1263,12 +1263,9 @@ impl TrimaStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             if sp.optInTimePeriod % 2 == 1 {
-                let mut cur_outReal = sp.cur_outReal;
                 let mut numerator = sp.numerator;
                 let mut numeratorAdd = sp.numeratorAdd;
                 let mut numeratorSub = sp.numeratorSub;
-                let mut ringPos_middleIdx = sp.ringPos_middleIdx;
-                let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
                 let mut tempReal = sp.tempReal;
                 let mut pkSlot0: usize = usize::MAX;
                 let mut pkVal0: f64 = 0.0_f64;
@@ -1285,7 +1282,7 @@ impl TrimaStream {
                 // Step (1)
                 numerator -= numeratorSub;
                 numeratorSub -= tempReal;
-                tempReal = (if (ringPos_middleIdx as usize) != pkSlot0 { sp.ring_middleIdx_inReal[ringPos_middleIdx] } else { pkVal0 });
+                tempReal = (if (sp.ringPos_middleIdx as usize) != pkSlot0 { sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] } else { pkVal0 });
                 numeratorSub += tempReal;
                 // Step (2)
                 numerator += numeratorAdd;
@@ -1295,24 +1292,12 @@ impl TrimaStream {
                 // Step (3)
                 numerator += tempReal;
                 // Step (4)
-                tempReal = (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal1 });
+                tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal1 });
                 (*outReal) = numerator * sp.factor;
-                cur_outReal = (*outReal);
-                ringPos_middleIdx = ringPos_middleIdx + 1;
-                if ringPos_middleIdx >= sp.ringCap_middleIdx {
-                    ringPos_middleIdx = 0;
-                }
-                ringPos_trailingIdx = ringPos_trailingIdx + 1;
-                if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                    ringPos_trailingIdx = 0;
-                }
             } else {
-                let mut cur_outReal = sp.cur_outReal;
                 let mut numerator = sp.numerator;
                 let mut numeratorAdd = sp.numeratorAdd;
                 let mut numeratorSub = sp.numeratorSub;
-                let mut ringPos_middleIdx = sp.ringPos_middleIdx;
-                let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
                 let mut tempReal = sp.tempReal;
                 let mut pkSlot0: usize = usize::MAX;
                 let mut pkVal0: f64 = 0.0_f64;
@@ -1329,7 +1314,7 @@ impl TrimaStream {
                 // Step (1)
                 numerator -= numeratorSub;
                 numeratorSub -= tempReal;
-                tempReal = (if (ringPos_middleIdx as usize) != pkSlot0 { sp.ring_middleIdx_inReal[ringPos_middleIdx] } else { pkVal0 });
+                tempReal = (if (sp.ringPos_middleIdx as usize) != pkSlot0 { sp.ring_middleIdx_inReal[sp.ringPos_middleIdx] } else { pkVal0 });
                 numeratorSub += tempReal;
                 // Step (2)
                 numeratorAdd -= tempReal;
@@ -1339,17 +1324,8 @@ impl TrimaStream {
                 // Step (3)
                 numerator += tempReal;
                 // Step (4)
-                tempReal = (if (ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal1 });
+                tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot1 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal1 });
                 (*outReal) = numerator * sp.factor;
-                cur_outReal = (*outReal);
-                ringPos_middleIdx = ringPos_middleIdx + 1;
-                if ringPos_middleIdx >= sp.ringCap_middleIdx {
-                    ringPos_middleIdx = 0;
-                }
-                ringPos_trailingIdx = ringPos_trailingIdx + 1;
-                if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                    ringPos_trailingIdx = 0;
-                }
             }
         }
         Ok(outReal)

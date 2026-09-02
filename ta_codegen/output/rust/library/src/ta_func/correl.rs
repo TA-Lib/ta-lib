@@ -1194,10 +1194,7 @@ impl CorrelStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut windowStart: usize = 0_usize;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut cur_outReal = sp.cur_outReal;
             let mut j = sp.j;
-            let mut leavingX = sp.leavingX;
-            let mut leavingY = sp.leavingY;
             let mut shiftX = sp.shiftX;
             let mut shiftY = sp.shiftY;
             let mut sumX = sp.sumX;
@@ -1258,7 +1255,7 @@ impl CorrelStream {
             // outputs written so far occupy [0, outIdx-1] while windowStart is
             // startIdx-lookbackTotal+outIdx, which is >= outIdx.
             barsSinceReseed -= 1;
-            if ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || leavingX > 1000000.0 * sumX2 || leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 {
+            if ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || sp.leavingX > 1000000.0 * sumX2 || sp.leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
                 windowStart = (today - ((sp.lookbackTotal) as i32)) as usize;
                 // Both means in one pass over the window: the rebuild below is the
@@ -1359,16 +1356,6 @@ impl CorrelStream {
             } else {
                 (*outReal) = 0.0;
             }
-            // Remove the trailing values (prepares the next window).
-            leavingX = trailingX * trailingX;
-            leavingY = trailingY * trailingY;
-            sumX -= trailingX;
-            sumX2 -= leavingX;
-            sumXY -= trailingX * trailingY;
-            sumY -= trailingY;
-            sumY2 -= leavingY;
-            today += 1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

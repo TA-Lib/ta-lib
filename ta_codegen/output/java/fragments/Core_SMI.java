@@ -1077,8 +1077,6 @@
          prevSignal = Math.fma(smiValue - prevSignal, sp.kSignal, prevSignal);
          cur_outSMI = smiValue;
          cur_outSMISignal = prevSignal;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
          out.smi = cur_outSMI;
          out.smiSignal = cur_outSMISignal;
       }

@@ -908,17 +908,6 @@ TA_LIB_API TA_RetCode TA_AC_Peek( const TA_AC_Stream *stream, double inHigh, dou
     * the collision ao.c has to guard against.
     */
    *outReal= tempReal;
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx + 1;
-   if( sp->ringPos_trailingFastIdx >= sp->ringCap_trailingFastIdx )
-   {
-      sp->ringPos_trailingFastIdx = 0;
-   }
-   sp->ringPos_trailingSlowIdx = sp->ringPos_trailingSlowIdx + 1;
-   if( sp->ringPos_trailingSlowIdx >= sp->ringCap_trailingSlowIdx )
-   {
-      sp->ringPos_trailingSlowIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

@@ -730,8 +730,6 @@ TA_LIB_API TA_RetCode TA_ATR_Peek( const TA_ATR_Stream *stream, double inHigh, d
    sp->prevATR += greatest;
    sp->prevATR /= sp->optInTimePeriod;
    *outReal= sp->prevATR;
-   sp->cur_outReal = *outReal;
-   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

@@ -1987,19 +1987,6 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
       sp->DCPhase -= 360.0;
    }
    *outReal= sp->DCPhase;
-   /* Ooof... let's do the next price bar now! */
-   sp->smoothPrice_Idx = sp->smoothPrice_Idx + 1;
-   if( sp->smoothPrice_Idx > sp->maxIdx_smoothPrice )
-   {
-      sp->smoothPrice_Idx = 0;
-   }
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
-   {
-      sp->ringPos_trailingWMAIdx = 0;
-   }
-   sp->streamParity = 1 - sp->streamParity;
    return TA_SUCCESS;
 }
 

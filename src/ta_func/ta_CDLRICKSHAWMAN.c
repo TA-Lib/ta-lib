@@ -597,31 +597,10 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Peek( const TA_CDLRICKSHAWMAN_Stream *st
 {
    struct TA_CDLRICKSHAWMAN_Stream scratch;
    struct TA_CDLRICKSHAWMAN_Stream *sp = &scratch;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
-   int pkSlot2 = -1;
-   double pkVal2 = 0.0;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   if( sp->ringCap_BodyDojiTrailingIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose);
-   }
-   if( sp->ringCap_NearTrailingIdx == 0 )
-   {
-      pkSlot1 = 0;
-      pkVal1 = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
-   }
-   if( sp->ringCap_ShadowLongTrailingIdx == 0 )
-   {
-      pkSlot2 = 0;
-      pkVal2 = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
-   }
    if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) && /* doji */
        (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
@@ -631,28 +610,6 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Peek( const TA_CDLRICKSHAWMAN_Stream *st
    } else 
    {
       *outInteger= 0;
-   }
-   /* add the current range and subtract the first range: this is done after the pattern recognition
-    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-    */
-   sp->BodyDojiPeriodTotal += TA_STREAM_CANDLERANGE(BodyDoji,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyDojiTrailingIdx != pkSlot0) ? sp->ring_BodyDojiTrailingIdx_derived[sp->ringPos_BodyDojiTrailingIdx] : pkVal0);
-   sp->ShadowLongPeriodTotal += TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_ShadowLongTrailingIdx != pkSlot2) ? sp->ring_ShadowLongTrailingIdx_derived[sp->ringPos_ShadowLongTrailingIdx] : pkVal2);
-   sp->NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_NearTrailingIdx != pkSlot1) ? sp->ring_NearTrailingIdx_derived[sp->ringPos_NearTrailingIdx] : pkVal1);
-   sp->cur_outInteger = *outInteger;
-   sp->ringPos_BodyDojiTrailingIdx = sp->ringPos_BodyDojiTrailingIdx + 1;
-   if( sp->ringPos_BodyDojiTrailingIdx >= sp->ringCap_BodyDojiTrailingIdx )
-   {
-      sp->ringPos_BodyDojiTrailingIdx = 0;
-   }
-   sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
-   if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
-   {
-      sp->ringPos_NearTrailingIdx = 0;
-   }
-   sp->ringPos_ShadowLongTrailingIdx = sp->ringPos_ShadowLongTrailingIdx + 1;
-   if( sp->ringPos_ShadowLongTrailingIdx >= sp->ringCap_ShadowLongTrailingIdx )
-   {
-      sp->ringPos_ShadowLongTrailingIdx = 0;
    }
    return TA_SUCCESS;
 }

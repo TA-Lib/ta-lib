@@ -597,32 +597,25 @@ impl AvgdevStream {
             let mut todaySum: f64 = 0.0_f64;
             let mut todayDev: f64 = 0.0_f64;
             let mut i: usize = 0_usize;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut winPos_i = sp.winPos_i;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            pkSlot0 = winPos_i as usize;
+            pkSlot0 = sp.winPos_i as usize;
             pkVal0 = inReal;
             todaySum = 0.0;
             // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
             i = 0;
             while i < ((sp.optInTimePeriod) as usize) {
-                todaySum += (if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
+                todaySum += (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
                 i += 1;
             }
             todayDev = 0.0;
             // for( i = 0; i < ((sp.optInTimePeriod) as usize); i += 1 )
             i = 0;
             while i < ((sp.optInTimePeriod) as usize) {
-                todayDev += ((if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 }) - todaySum / ((sp.optInTimePeriod) as f64)).abs();
+                todayDev += ((if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inReal[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 }) - todaySum / ((sp.optInTimePeriod) as f64)).abs();
                 i += 1;
             }
             (*outReal) = todayDev / ((sp.optInTimePeriod) as f64);
-            cur_outReal = (*outReal);
-            winPos_i = winPos_i + 1;
-            if winPos_i >= sp.winCap_i {
-                winPos_i = 0;
-            }
         }
         Ok(outReal)
     }

@@ -597,21 +597,6 @@ TA_LIB_API TA_RetCode TA_CDLKICKING_Peek( const TA_CDLKICKING_Stream *stream, do
    {
       *outInteger= 0;
    }
-   sp->cur_outInteger = *outInteger;
-   sp->lag1_inOpen = inOpen;
-   sp->lag1_inHigh = inHigh;
-   sp->lag1_inLow = inLow;
-   sp->lag1_inClose = inClose;
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
-   {
-      sp->ringPos_BodyLongTrailingIdx = 0;
-   }
-   sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
-   {
-      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

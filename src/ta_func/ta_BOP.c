@@ -344,7 +344,6 @@ TA_LIB_API TA_RetCode TA_BOP_Peek( const TA_BOP_Stream *stream, double inOpen, d
    {
       *outReal= (inClose - inOpen) / tempReal;
    }
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

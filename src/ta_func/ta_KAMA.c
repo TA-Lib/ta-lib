@@ -1066,13 +1066,6 @@ TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal,
     */
    sp->prevKAMA = fma(inReal - sp->prevKAMA, tempReal, sp->prevKAMA);
    *outReal= sp->prevKAMA;
-   sp->cur_outReal = *outReal;
-   sp->lag1_inReal = inReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-   {
-      sp->ringPos_trailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

@@ -782,7 +782,6 @@ TA_LIB_API TA_RetCode TA_T3_Peek( const TA_T3_Stream *stream, double inReal, dou
    sp->e5 = fma(sp->one_minus_k, sp->e5, sp->k * sp->e4);
    sp->e6 = fma(sp->one_minus_k, sp->e6, sp->k * sp->e5);
    *outReal= fma(sp->c4, sp->e3, fma(sp->c3, sp->e4, fma(sp->c1, sp->e6, sp->c2 * sp->e5)));
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

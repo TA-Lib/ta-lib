@@ -1321,8 +1321,6 @@ impl SmiStream {
             let mut den: f64 = 0.0_f64;
             let mut halfDen: f64 = 0.0_f64;
             let mut smiValue: f64 = 0.0_f64;
-            let mut cur_outSMI = sp.cur_outSMI;
-            let mut cur_outSMISignal = sp.cur_outSMISignal;
             let mut emaFastDen = sp.emaFastDen;
             let mut emaFastNum = sp.emaFastNum;
             let mut emaSlowDen = sp.emaSlowDen;
@@ -1414,10 +1412,6 @@ impl SmiStream {
             prevSignal = (smiValue - prevSignal as f64).mul_add(sp.kSignal, prevSignal);
             (*outSMI) = smiValue;
             (*outSMISignal) = prevSignal;
-            trailingIdx = trailingIdx + 1;
-            today = today + 1;
-            cur_outSMI = (*outSMI);
-            cur_outSMISignal = (*outSMISignal);
         }
         Ok((outSMI, outSMISignal))
     }

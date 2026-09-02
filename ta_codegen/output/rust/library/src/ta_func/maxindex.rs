@@ -658,7 +658,6 @@ impl MaxindexStream {
             let sp = &self.state;
             let outInteger = &mut outInteger;
             let mut tmp: f64 = 0.0_f64;
-            let mut cur_outInteger = sp.cur_outInteger;
             let mut highest = sp.highest;
             let mut highestIdx = sp.highestIdx;
             let mut i = sp.i;
@@ -692,9 +691,6 @@ impl MaxindexStream {
                 highest = tmp;
             }
             (*outInteger) = (highestIdx) as i32;
-            trailingIdx += 1;
-            today += 1;
-            cur_outInteger = (*outInteger);
         }
         Ok(outInteger)
     }

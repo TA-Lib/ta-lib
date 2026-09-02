@@ -472,9 +472,7 @@ impl CeilStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = (inReal).ceil();
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

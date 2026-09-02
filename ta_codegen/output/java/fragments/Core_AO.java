@@ -552,8 +552,6 @@
          double medianPrice = 0.0;
          double tempReal = 0.0;
          double cur_outReal = sp.cur_outReal;
-         int ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
-         int ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
          double sumFast = sp.sumFast;
          double sumSlow = sp.sumSlow;
          int pkSlot0 = -1;
@@ -581,17 +579,9 @@
           * value it had just overwritten whenever the caller aliases outReal
           * over inHigh or inLow.
           */
-         sumFast -= (ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] : pkVal0;
-         sumSlow -= (ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] : pkVal1;
+         sumFast -= (sp.ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] : pkVal0;
+         sumSlow -= (sp.ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] : pkVal1;
          cur_outReal = tempReal;
-         ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
-         if( ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
-            ringPos_trailingFastIdx = 0;
-         }
-         ringPos_trailingSlowIdx = ringPos_trailingSlowIdx + 1;
-         if( ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
-            ringPos_trailingSlowIdx = 0;
-         }
          return cur_outReal;
       }
 

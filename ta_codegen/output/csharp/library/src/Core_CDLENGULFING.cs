@@ -439,12 +439,10 @@ public partial class Core
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLENGULFING", "peek", RetCode.BadParam);
          CdlengulfingStream sp = this;
          int cur_outInteger = sp.cur_outInteger;
-         double lag1_inClose = sp.lag1_inClose;
-         double lag1_inOpen = sp.lag1_inOpen;
-         if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= lag1_inOpen && inOpen < lag1_inClose || inClose > lag1_inOpen && inOpen <= lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((lag1_inClose >= lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= lag1_inClose && inClose < lag1_inOpen || inOpen > lag1_inClose && inClose <= lag1_inOpen) ) {
+         if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) ) {
             /* white engulfs black */
             /* black engulfs white */
-            if( inOpen != lag1_inClose && inClose != lag1_inOpen ) {
+            if( inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen ) {
                cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
             } else {
                cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 80;
@@ -452,8 +450,6 @@ public partial class Core
          } else {
             cur_outInteger = 0;
          }
-         lag1_inOpen = inOpen;
-         lag1_inClose = inClose;
          return cur_outInteger;
       }
 

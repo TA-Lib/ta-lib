@@ -557,39 +557,23 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
          CdlhikkakemodStream sp = this;
-         double NearPeriodTotal = sp.NearPeriodTotal;
          int cur_outInteger = sp.cur_outInteger;
-         double lag1_inClose = sp.lag1_inClose;
-         double lag1_inHigh = sp.lag1_inHigh;
-         double lag1_inLow = sp.lag1_inLow;
-         double lag1_inOpen = sp.lag1_inOpen;
-         double lag2_inClose = sp.lag2_inClose;
-         double lag2_inHigh = sp.lag2_inHigh;
-         double lag2_inLow = sp.lag2_inLow;
-         double lag2_inOpen = sp.lag2_inOpen;
-         double lag3_inHigh = sp.lag3_inHigh;
-         double lag3_inLow = sp.lag3_inLow;
          int patternCount = sp.patternCount;
          double patternHigh = sp.patternHigh;
          double patternLow = sp.patternLow;
          int patternResult = sp.patternResult;
-         int ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
          int Near_rangeType = sp.cs_Near_rangeType;
          int Near_avgPeriod = sp.cs_Near_avgPeriod;
          double Near_factor = sp.cs_Near_factor;
-         pkSlot0 = ringPos_NearTrailingIdx;
-         pkVal0 = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-         if( lag2_inHigh < lag3_inHigh &&
-             lag2_inLow > lag3_inLow &&   /* 2nd: lower high and higher low than 1st */
-             lag1_inHigh < lag2_inHigh &&
-             lag1_inLow > lag2_inLow &&   /* 3rd: lower high and higher low than 2nd */
-             (inHigh < lag1_inHigh && inLow < lag1_inLow && lag2_inClose <= lag2_inLow + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || inHigh > lag1_inHigh && inLow > lag1_inLow && lag2_inClose >= lag2_inHigh - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top */
+         if( sp.lag2_inHigh < sp.lag3_inHigh &&
+             sp.lag2_inLow > sp.lag3_inLow &&   /* 2nd: lower high and higher low than 1st */
+             sp.lag1_inHigh < sp.lag2_inHigh &&
+             sp.lag1_inLow > sp.lag2_inLow &&   /* 3rd: lower high and higher low than 2nd */
+             (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow && sp.lag2_inClose <= sp.lag2_inLow + ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((Near_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((Near_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow && sp.lag2_inClose >= sp.lag2_inHigh - ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((Near_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((Near_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0))))) ) /* (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top */
          {
-            patternResult = 100 * ((inHigh < lag1_inHigh) ? 1 : 0 - 1);
-            patternHigh = lag1_inHigh;
-            patternLow = lag1_inLow;
+            patternResult = 100 * ((inHigh < sp.lag1_inHigh) ? 1 : 0 - 1);
+            patternHigh = sp.lag1_inHigh;
+            patternLow = sp.lag1_inLow;
             patternCount = 4;
             cur_outInteger = patternResult;
          } else if( patternCount > 0 &&
@@ -599,24 +583,6 @@
             patternCount = 0;
          } else {
             cur_outInteger = 0;
-         }
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(lag2_inClose - lag2_inOpen)) : ((Near_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((Near_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx != pkSlot0) ? sp.ring_NearTrailingIdx_derived[(ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx] : pkVal0);
-         if( patternCount > 0 ) {
-            patternCount -= 1;
-         }
-         lag2_inOpen = lag1_inOpen;
-         lag1_inOpen = inOpen;
-         lag3_inHigh = lag2_inHigh;
-         lag2_inHigh = lag1_inHigh;
-         lag1_inHigh = inHigh;
-         lag3_inLow = lag2_inLow;
-         lag2_inLow = lag1_inLow;
-         lag1_inLow = inLow;
-         lag2_inClose = lag1_inClose;
-         lag1_inClose = inClose;
-         ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
-         if( ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx ) {
-            ringPos_NearTrailingIdx = 0;
          }
          return cur_outInteger;
       }

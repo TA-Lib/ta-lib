@@ -1027,10 +1027,8 @@ impl KamaStream {
             let mut tempReal2: f64 = 0.0_f64;
             let mut periodROC: f64 = 0.0_f64;
             let mut cur_outReal = sp.cur_outReal;
-            let mut lag1_inReal = sp.lag1_inReal;
             let mut nullRun = sp.nullRun;
             let mut prevKAMA = sp.prevKAMA;
-            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut sumROC1 = sp.sumROC1;
             let mut trailingValue = sp.trailingValue;
             let mut pkSlot0: usize = usize::MAX;
@@ -1045,19 +1043,19 @@ impl KamaStream {
                 pkVal0 = inReal;
             }
             tempReal = inReal;
-            tempReal2 = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 });
+            tempReal2 = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 });
             periodROC = tempReal - tempReal2;
             // Adjust sumROC1:
             //  - Remove trailing ROC1
             //  - Add new ROC1
             sumROC1 -= (trailingValue - tempReal2).abs();
-            sumROC1 += (tempReal - lag1_inReal).abs();
+            sumROC1 += (tempReal - sp.lag1_inReal).abs();
             // Once a whole window of flat bars has gone by, every 1-day change it
             // spans is exactly zero, so the sum is known to be exactly zero and the
             // residue can be dropped. That is what lets the efficiency ratio be
             // decided by `sumROC1 <= periodROC` alone: a window that flat has
             // periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
-            if tempReal - lag1_inReal == 0.0 {
+            if tempReal - sp.lag1_inReal == 0.0 {
                 nullRun += 1;
             } else {
                 nullRun = 0;
@@ -1082,12 +1080,6 @@ impl KamaStream {
             // smoothing constant as the adaptive factor.
             prevKAMA = (inReal - prevKAMA as f64).mul_add(tempReal, prevKAMA);
             (*outReal) = prevKAMA;
-            cur_outReal = (*outReal);
-            lag1_inReal = inReal;
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                ringPos_trailingIdx = 0;
-            }
         }
         Ok(outReal)
     }

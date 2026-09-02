@@ -902,38 +902,23 @@ impl CdlpiercingStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
             #[allow(non_snake_case)]
             let BodyLong_rangeType: i32 = self.cs_body_long.range_type as i32;
             #[allow(non_snake_case)]
             let BodyLong_avgPeriod: i32 = self.cs_body_long.avg_period;
             #[allow(non_snake_case)]
             let BodyLong_factor: f64 = self.cs_body_long.factor;
-            if (((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st: black
-               (lag1_inClose - lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal[1]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
+            if (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st: black
+               (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal[1]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
                (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && // 2nd: white
                (inClose - inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal[0]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-               inOpen < lag1_inLow &&                              // open below prior low
-               inClose < lag1_inOpen &&                            // close within prior body
-               inClose > ((lag1_inClose - lag1_inOpen).abs() as f64).mul_add(0.5, lag1_inClose) // above midpoint
+               inOpen < sp.lag1_inLow &&                           // open below prior low
+               inClose < sp.lag1_inOpen &&                         // close within prior body
+               inClose > ((sp.lag1_inClose - sp.lag1_inOpen).abs() as f64).mul_add(0.5, sp.lag1_inClose) // above midpoint
             {
                 (*outInteger) = 100;
             } else {
                 (*outInteger) = 0;
-            }
-            cur_outInteger = (*outInteger);
-            lag1_inOpen = inOpen;
-            lag1_inHigh = inHigh;
-            lag1_inLow = inLow;
-            lag1_inClose = inClose;
-            ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
-            if ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-                ringPos_BodyLongTrailingIdx = 0;
             }
         }
         Ok(outInteger)

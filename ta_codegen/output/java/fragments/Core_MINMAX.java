@@ -703,8 +703,6 @@
          }
          cur_outMax = highest;
          cur_outMin = lowest;
-         trailingIdx += 1;
-         today += 1;
          out.min = cur_outMin;
          out.max = cur_outMax;
       }

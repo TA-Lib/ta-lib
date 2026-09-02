@@ -613,25 +613,15 @@ impl Cdl3outsideStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut lag2_inClose = sp.lag2_inClose;
-            let mut lag2_inOpen = sp.lag2_inOpen;
-            if (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (((if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && lag1_inClose > lag2_inOpen && lag1_inOpen < lag2_inClose && inClose > lag1_inClose || (((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 }) == 1 && lag1_inOpen > lag2_inClose && lag1_inClose < lag2_inOpen && inClose < lag1_inClose {
+            if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose {
                 // white engulfs black
                 // third candle higher
                 // black engulfs white
                 // third candle lower
-                (*outInteger) = ((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
+                (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
                 (*outInteger) = 0;
             }
-            cur_outInteger = (*outInteger);
-            lag2_inOpen = lag1_inOpen;
-            lag1_inOpen = inOpen;
-            lag2_inClose = lag1_inClose;
-            lag1_inClose = inClose;
         }
         Ok(outInteger)
     }

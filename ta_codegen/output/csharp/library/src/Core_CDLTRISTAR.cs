@@ -500,60 +500,28 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTRISTAR", "peek", RetCode.BadParam);
          CdltristarStream sp = this;
-         double BodyPeriodTotal = sp.BodyPeriodTotal;
          int cur_outInteger = sp.cur_outInteger;
-         double lag1_inClose = sp.lag1_inClose;
-         double lag1_inHigh = sp.lag1_inHigh;
-         double lag1_inLow = sp.lag1_inLow;
-         double lag1_inOpen = sp.lag1_inOpen;
-         double lag2_inClose = sp.lag2_inClose;
-         double lag2_inHigh = sp.lag2_inHigh;
-         double lag2_inLow = sp.lag2_inLow;
-         double lag2_inOpen = sp.lag2_inOpen;
-         int ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx;
-         int pkSlot0 = -1;
-         double pkVal0 = 0.0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
          int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
          double BodyDoji_factor = sp.cs_BodyDoji_factor;
-         if( sp.ringCap_BodyTrailingIdx == 0 ) {
-            pkSlot0 = 0;
-            pkVal0 = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-         }
-         if( Math.Abs(lag2_inClose - lag2_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: doji */
-             Math.Abs(lag1_inClose - lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
-             Math.Abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) )
+         if( Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: doji */
+             Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             Math.Abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) )
          {
             /* 3rd: doji */
             cur_outInteger = 0;
-            if( (Math.Min(lag1_inOpen, lag1_inClose) > Math.Max(lag2_inOpen, lag2_inClose)) && /* 2nd gaps up */
-                Math.Max(inOpen, inClose) < Math.Max(lag1_inOpen, lag1_inClose) ) /* 3rd is not higher than 2nd */
+            if( (Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > Math.Max(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps up */
+                Math.Max(inOpen, inClose) < Math.Max(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not higher than 2nd */
             {
                cur_outInteger = 0 - 100;
             }
-            if( (Math.Max(lag1_inOpen, lag1_inClose) < Math.Min(lag2_inOpen, lag2_inClose)) && /* 2nd gaps down */
-                Math.Min(inOpen, inClose) > Math.Min(lag1_inOpen, lag1_inClose) ) /* 3rd is not lower than 2nd */
+            if( (Math.Max(sp.lag1_inOpen, sp.lag1_inClose) < Math.Min(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps down */
+                Math.Min(inOpen, inClose) > Math.Min(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not lower than 2nd */
             {
                cur_outInteger = 100;
             }
          } else {
             cur_outInteger = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         BodyPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0))) - ((ringPos_BodyTrailingIdx != pkSlot0) ? sp.ring_BodyTrailingIdx_derived[ringPos_BodyTrailingIdx] : pkVal0);
-         lag2_inOpen = lag1_inOpen;
-         lag1_inOpen = inOpen;
-         lag2_inHigh = lag1_inHigh;
-         lag1_inHigh = inHigh;
-         lag2_inLow = lag1_inLow;
-         lag1_inLow = inLow;
-         lag2_inClose = lag1_inClose;
-         lag1_inClose = inClose;
-         ringPos_BodyTrailingIdx = ringPos_BodyTrailingIdx + 1;
-         if( ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
-            ringPos_BodyTrailingIdx = 0;
          }
          return cur_outInteger;
       }

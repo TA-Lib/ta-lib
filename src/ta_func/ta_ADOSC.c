@@ -669,7 +669,6 @@ TA_LIB_API TA_RetCode TA_ADOSC_Peek( const TA_ADOSC_Stream *stream, double inHig
    sp->fastEMA = fma(sp->one_minus_fastk, sp->fastEMA, sp->fastk * sp->ad);
    sp->slowEMA = fma(sp->one_minus_slowk, sp->slowEMA, sp->slowk * sp->ad);
    *outReal= sp->fastEMA - sp->slowEMA;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

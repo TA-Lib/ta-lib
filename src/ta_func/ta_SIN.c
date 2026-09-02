@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_SIN_Peek( const TA_SIN_Stream *stream, double inReal, d
    scratch = *stream;
    (void)sp;
    *outReal= sin(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

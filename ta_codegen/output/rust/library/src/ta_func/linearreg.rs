@@ -1016,7 +1016,6 @@ impl LinearregStream {
             let mut SumXY = sp.SumXY;
             let mut SumY = sp.SumY;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut cur_outReal = sp.cur_outReal;
             let mut j = sp.j;
             let mut sumAbs = sp.sumAbs;
             let mut today = sp.today;
@@ -1118,8 +1117,6 @@ impl LinearregStream {
             trailingValue = (if ((trailingIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(trailingIdx & sp.xMask) as usize] } else { pkVal0 });
             trailingIdx += 1;
             (*outReal) = (m as f64).mul_add((sp.optInTimePeriod - 1) as f64, b);
-            today += 1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

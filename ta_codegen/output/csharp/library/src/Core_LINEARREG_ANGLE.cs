@@ -739,7 +739,6 @@ public partial class Core
          trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
          trailingIdx += 1;
          cur_outReal = Math.Atan(m) * (180.0 / 3.141592653589793);
-         today += 1;
          return cur_outReal;
       }
 

@@ -938,9 +938,6 @@ impl MacdfixStream {
             let outMACDHist = &mut outMACDHist;
             let mut macdValue: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outMACD = sp.cur_outMACD;
-            let mut cur_outMACDHist = sp.cur_outMACDHist;
-            let mut cur_outMACDSignal = sp.cur_outMACDSignal;
             let mut prevFast = sp.prevFast;
             let mut prevSignal = sp.prevSignal;
             let mut prevSlow = sp.prevSlow;
@@ -956,9 +953,6 @@ impl MacdfixStream {
             (*outMACD) = macdValue;
             (*outMACDSignal) = prevSignal;
             (*outMACDHist) = macdValue - prevSignal;
-            cur_outMACD = (*outMACD);
-            cur_outMACDSignal = (*outMACDSignal);
-            cur_outMACDHist = (*outMACDHist);
         }
         Ok((outMACD, outMACDSignal, outMACDHist))
     }

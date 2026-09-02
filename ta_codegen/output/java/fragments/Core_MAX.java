@@ -577,8 +577,6 @@
             highest = tmp;
          }
          cur_outReal = highest;
-         trailingIdx += 1;
-         today += 1;
          return cur_outReal;
       }
 

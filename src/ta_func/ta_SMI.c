@@ -1418,10 +1418,6 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
    prevSignal = fma(smiValue - prevSignal, sp->kSignal, prevSignal);
    *outSMI= smiValue;
    *outSMISignal= prevSignal;
-   sp->trailingIdx = sp->trailingIdx + 1;
-   sp->today = sp->today + 1;
-   sp->cur_outSMI = *outSMI;
-   sp->cur_outSMISignal = *outSMISignal;
    sp->prevSignal = prevSignal;
    return TA_SUCCESS;
 }

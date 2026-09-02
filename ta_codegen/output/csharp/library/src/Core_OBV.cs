@@ -379,15 +379,13 @@ public partial class Core
          double tempReal = 0.0;
          double cur_outReal = sp.cur_outReal;
          double prevOBV = sp.prevOBV;
-         double prevReal = sp.prevReal;
          tempReal = inReal;
-         if( tempReal > prevReal ) {
+         if( tempReal > sp.prevReal ) {
             prevOBV += inVolume;
-         } else if( tempReal < prevReal ) {
+         } else if( tempReal < sp.prevReal ) {
             prevOBV -= inVolume;
          }
          cur_outReal = prevOBV;
-         prevReal = tempReal;
          return cur_outReal;
       }
 

@@ -662,26 +662,22 @@ impl WadStream {
             let outReal = &mut outReal;
             let mut close: f64 = 0.0_f64;
             let mut trueExtreme: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut prevClose = sp.prevClose;
             let mut sum = sp.sum;
             close = inClose;
-            if close > prevClose {
+            if close > sp.prevClose {
                 trueExtreme = inLow;
-                if prevClose < trueExtreme {
-                    trueExtreme = prevClose;
+                if sp.prevClose < trueExtreme {
+                    trueExtreme = sp.prevClose;
                 }
                 sum += close - trueExtreme;
-            } else if close < prevClose {
+            } else if close < sp.prevClose {
                 trueExtreme = inHigh;
-                if prevClose > trueExtreme {
-                    trueExtreme = prevClose;
+                if sp.prevClose > trueExtreme {
+                    trueExtreme = sp.prevClose;
                 }
                 sum += close - trueExtreme;
             }
             (*outReal) = sum;
-            prevClose = close;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

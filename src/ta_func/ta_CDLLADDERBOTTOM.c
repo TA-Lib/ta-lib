@@ -519,14 +519,10 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Peek( const TA_CDLLADDERBOTTOM_Stream *
 {
    struct TA_CDLLADDERBOTTOM_Stream scratch;
    struct TA_CDLLADDERBOTTOM_Stream *sp = &scratch;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   pkSlot0 = sp->ringPos_ShadowVeryShortTrailingIdx;
-   pkVal0 = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
        ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
@@ -544,26 +540,6 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Peek( const TA_CDLLADDERBOTTOM_Stream *
    } else 
    {
       *outInteger= 0;
-   }
-   /* add the current range and subtract the first range: this is done after the pattern recognition
-    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-    */
-   sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - (((sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - 1) % sp->ringCap_ShadowVeryShortTrailingIdx != pkSlot0) ? sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - 1) % sp->ringCap_ShadowVeryShortTrailingIdx] : pkVal0);
-   sp->cur_outInteger = *outInteger;
-   sp->lag4_inOpen = sp->lag3_inOpen;
-   sp->lag3_inOpen = sp->lag2_inOpen;
-   sp->lag2_inOpen = sp->lag1_inOpen;
-   sp->lag1_inOpen = inOpen;
-   sp->lag1_inHigh = inHigh;
-   sp->lag1_inLow = inLow;
-   sp->lag4_inClose = sp->lag3_inClose;
-   sp->lag3_inClose = sp->lag2_inClose;
-   sp->lag2_inClose = sp->lag1_inClose;
-   sp->lag1_inClose = inClose;
-   sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
-   {
-      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
    }
    return TA_SUCCESS;
 }

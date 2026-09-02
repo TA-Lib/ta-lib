@@ -902,7 +902,6 @@
          double b2Total = sp.b2Total;
          double b3Total = sp.b3Total;
          double cur_outReal = sp.cur_outReal;
-         double lag1_inClose = sp.lag1_inClose;
          int nullRun = sp.nullRun;
          int term_Idx = sp.term_Idx;
          int trailingPos1 = sp.trailingPos1;
@@ -914,7 +913,7 @@
          /* Add on today's terms */
          tempLT = inLow;
          tempHT = inHigh;
-         tempCY = lag1_inClose;
+         tempCY = sp.lag1_inClose;
          trueLow = Math.min(tempLT, tempCY);
          closeMinusTrueLow = inClose - trueLow;
          trueRange = tempHT - tempLT;
@@ -1002,8 +1001,6 @@
           * array.
           */
          cur_outReal = 100.0 * (output / 7.0);
-         /* Increment indexes */
-         lag1_inClose = inClose;
          return cur_outReal;
       }
 

@@ -5544,6 +5544,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -5627,7 +5628,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_AC_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_AC_Open(&st, sv_h, sv_l, P, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -5639,10 +5640,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_AC_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_AC_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_AC_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_AC_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_AC_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -5809,7 +5816,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_ACCBANDS", 11) == 0 ) {
@@ -5817,6 +5824,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -5915,9 +5923,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ACCBANDS_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
-            double v2 = 0.0, pk2 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
+            double v2 = 0.0, pk2 = 0.0, rp2 = 0.0;
             rc = TA_ACCBANDS_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -5933,10 +5941,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq2, v2) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ACCBANDS_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1, &pk2);
+                TA_ACCBANDS_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1, &pk2);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ACCBANDS_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0, &rp1, &rp2);
+                   TA_ACCBANDS_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0, &rp1, &rp2);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) || sv_bitne(rp2, pk2) ) peekRepAll = 0;
+                }
                 TA_ACCBANDS_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1, &v2);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
@@ -6129,13 +6143,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ACOS", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -6219,7 +6234,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ACOS_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ACOS_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -6231,10 +6246,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ACOS_Peek(st, sv_c[t], &pk0);
+                TA_ACOS_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ACOS_Peek(st, sv_c[t - 1], &rp0);
+                   TA_ACOS_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ACOS_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -6401,13 +6422,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_AD", 5) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -6491,7 +6513,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_AD_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_AD_Open(&st, sv_h, sv_l, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -6503,10 +6525,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_AD_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                TA_AD_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_AD_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_AD_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_AD_Update(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -6673,13 +6701,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ADD", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -6763,7 +6792,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ADD_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ADD_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -6775,10 +6804,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ADD_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_ADD_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ADD_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_ADD_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ADD_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -6945,7 +6980,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_ADOSC", 8) == 0 ) {
@@ -6954,6 +6989,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -7039,7 +7075,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ADOSC_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ADOSC_Open(&st, sv_h, sv_l, sv_c, sv_v, P, optInFastPeriod, optInSlowPeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -7051,10 +7087,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ADOSC_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                TA_ADOSC_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ADOSC_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_ADOSC_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ADOSC_Update(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -7222,7 +7264,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ADX", 6) == 0 ) {
@@ -7230,6 +7272,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -7315,7 +7358,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ADX_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ADX_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -7327,10 +7370,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ADX_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_ADX_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ADX_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_ADX_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ADX_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -7498,7 +7547,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ADXR", 7) == 0 ) {
@@ -7506,6 +7555,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -7591,7 +7641,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ADXR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ADXR_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -7603,10 +7653,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ADXR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_ADXR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ADXR_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_ADXR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ADXR_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -7774,7 +7830,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_AO", 5) == 0 ) {
@@ -7783,6 +7839,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -7866,7 +7923,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_AO_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_AO_Open(&st, sv_h, sv_l, P, optInFastPeriod, optInSlowPeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -7878,10 +7935,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_AO_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_AO_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_AO_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_AO_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_AO_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -8048,7 +8111,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_APO", 6) == 0 ) {
@@ -8058,6 +8121,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -8149,7 +8213,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_APO_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_APO_Open(&st, sv_c, P, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -8161,10 +8225,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_APO_Peek(st, sv_c[t], &pk0);
+                TA_APO_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_APO_Peek(st, sv_c[t - 1], &rp0);
+                   TA_APO_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_APO_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -8335,7 +8405,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_AROON", 8) == 0 ) {
@@ -8343,6 +8413,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -8437,8 +8508,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_AROON_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_AROON_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -8452,10 +8523,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_AROON_Peek(st, sv_h[t], sv_l[t], &pk0, &pk1);
+                TA_AROON_Peek(st, sv_h[t], sv_l[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_AROON_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0, &rp1);
+                   TA_AROON_Peek(st, sv_h[t], sv_l[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_AROON_Update(st, sv_h[t], sv_l[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -8635,7 +8712,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_AROONOSC", 11) == 0 ) {
@@ -8643,6 +8720,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -8726,7 +8804,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_AROONOSC_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_AROONOSC_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -8738,10 +8816,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_AROONOSC_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_AROONOSC_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_AROONOSC_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_AROONOSC_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_AROONOSC_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -8908,13 +8992,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ASIN", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -8998,7 +9083,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ASIN_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ASIN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -9010,10 +9095,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ASIN_Peek(st, sv_c[t], &pk0);
+                TA_ASIN_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ASIN_Peek(st, sv_c[t - 1], &rp0);
+                   TA_ASIN_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ASIN_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -9180,13 +9271,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ATAN", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -9270,7 +9362,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ATAN_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ATAN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -9282,10 +9374,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ATAN_Peek(st, sv_c[t], &pk0);
+                TA_ATAN_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ATAN_Peek(st, sv_c[t - 1], &rp0);
+                   TA_ATAN_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ATAN_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -9452,7 +9550,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ATR", 6) == 0 ) {
@@ -9460,6 +9558,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -9545,7 +9644,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ATR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ATR_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -9557,10 +9656,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ATR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_ATR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ATR_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_ATR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ATR_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -9728,7 +9833,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_AVGDEV", 9) == 0 ) {
@@ -9736,6 +9841,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -9819,7 +9925,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_AVGDEV_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_AVGDEV_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -9831,10 +9937,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_AVGDEV_Peek(st, sv_c[t], &pk0);
+                TA_AVGDEV_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_AVGDEV_Peek(st, sv_c[t - 1], &rp0);
+                   TA_AVGDEV_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_AVGDEV_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -10001,13 +10113,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_AVGPRICE", 11) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -10091,7 +10204,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_AVGPRICE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_AVGPRICE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -10103,10 +10216,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_AVGPRICE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_AVGPRICE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_AVGPRICE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_AVGPRICE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_AVGPRICE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -10273,7 +10392,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_BBANDS", 9) == 0 ) {
@@ -10284,6 +10403,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -10390,9 +10510,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_BBANDS_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
-            double v2 = 0.0, pk2 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
+            double v2 = 0.0, pk2 = 0.0, rp2 = 0.0;
             rc = TA_BBANDS_Open(&st, sv_c, P, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -10408,10 +10528,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq2, v2) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_BBANDS_Peek(st, sv_c[t], &pk0, &pk1, &pk2);
+                TA_BBANDS_Peek(st, sv_c[t], &pk0, &pk1, &pk2);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_BBANDS_Peek(st, sv_c[t - 1], &rp0, &rp1, &rp2);
+                   TA_BBANDS_Peek(st, sv_c[t], &rp0, &rp1, &rp2);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) || sv_bitne(rp2, pk2) ) peekRepAll = 0;
+                }
                 TA_BBANDS_Update(st, sv_c[t], &v0, &v1, &v2);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
@@ -10608,7 +10734,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_BETA", 7) == 0 ) {
@@ -10616,6 +10742,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -10699,7 +10826,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_BETA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_BETA_Open(&st, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -10711,10 +10838,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_BETA_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_BETA_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_BETA_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_BETA_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_BETA_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -10881,13 +11014,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_BOP", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -10971,7 +11105,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_BOP_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_BOP_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -10983,10 +11117,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_BOP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_BOP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_BOP_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_BOP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_BOP_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -11153,7 +11293,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CCI", 6) == 0 ) {
@@ -11161,6 +11301,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -11244,7 +11385,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CCI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_CCI_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -11256,10 +11397,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CCI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CCI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CCI_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CCI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_CCI_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -11426,13 +11573,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDL2CROWS", 12) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -11462,7 +11610,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -11516,7 +11664,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDL2CROWS_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDL2CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -11528,10 +11676,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDL2CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDL2CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDL2CROWS_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDL2CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDL2CROWS_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -11700,13 +11854,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDL3BLACKCROWS", 17) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -11736,7 +11891,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -11790,7 +11945,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDL3BLACKCROWS_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDL3BLACKCROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -11802,10 +11957,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDL3BLACKCROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDL3BLACKCROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDL3BLACKCROWS_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDL3BLACKCROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDL3BLACKCROWS_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -11974,13 +12135,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDL3INSIDE", 13) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -12010,7 +12172,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -12064,7 +12226,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDL3INSIDE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDL3INSIDE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -12076,10 +12238,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDL3INSIDE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDL3INSIDE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDL3INSIDE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDL3INSIDE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDL3INSIDE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -12248,13 +12416,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDL3LINESTRIKE", 17) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -12284,7 +12453,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -12338,7 +12507,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDL3LINESTRIKE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDL3LINESTRIKE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -12350,10 +12519,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDL3LINESTRIKE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDL3LINESTRIKE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDL3LINESTRIKE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDL3LINESTRIKE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDL3LINESTRIKE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -12522,13 +12697,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDL3OUTSIDE", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -12558,7 +12734,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -12612,7 +12788,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDL3OUTSIDE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDL3OUTSIDE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -12624,10 +12800,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDL3OUTSIDE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDL3OUTSIDE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDL3OUTSIDE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDL3OUTSIDE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDL3OUTSIDE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -12796,13 +12978,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDL3STARSINSOUTH", 19) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -12832,7 +13015,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -12886,7 +13069,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDL3STARSINSOUTH_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDL3STARSINSOUTH_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -12898,10 +13081,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDL3STARSINSOUTH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDL3STARSINSOUTH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDL3STARSINSOUTH_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDL3STARSINSOUTH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDL3STARSINSOUTH_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -13070,13 +13259,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDL3WHITESOLDIERS", 20) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -13106,7 +13296,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -13160,7 +13350,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDL3WHITESOLDIERS_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDL3WHITESOLDIERS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -13172,10 +13362,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDL3WHITESOLDIERS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDL3WHITESOLDIERS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDL3WHITESOLDIERS_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDL3WHITESOLDIERS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDL3WHITESOLDIERS_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -13344,7 +13540,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLABANDONEDBABY", 19) == 0 ) {
@@ -13352,6 +13548,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -13381,7 +13578,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -13435,7 +13632,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLABANDONEDBABY_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLABANDONEDBABY_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -13447,10 +13644,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLABANDONEDBABY_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLABANDONEDBABY_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLABANDONEDBABY_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLABANDONEDBABY_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLABANDONEDBABY_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -13619,13 +13822,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLADVANCEBLOCK", 18) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -13655,7 +13859,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -13709,7 +13913,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLADVANCEBLOCK_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLADVANCEBLOCK_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -13721,10 +13925,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLADVANCEBLOCK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLADVANCEBLOCK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLADVANCEBLOCK_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLADVANCEBLOCK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLADVANCEBLOCK_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -13893,13 +14103,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLBELTHOLD", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -13929,7 +14140,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -13983,7 +14194,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLBELTHOLD_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLBELTHOLD_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -13995,10 +14206,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLBELTHOLD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLBELTHOLD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLBELTHOLD_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLBELTHOLD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLBELTHOLD_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -14167,13 +14384,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLBREAKAWAY", 15) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -14203,7 +14421,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -14257,7 +14475,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLBREAKAWAY_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLBREAKAWAY_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -14269,10 +14487,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLBREAKAWAY_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLBREAKAWAY_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLBREAKAWAY_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLBREAKAWAY_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLBREAKAWAY_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -14441,13 +14665,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLCLOSINGMARUBOZU", 21) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -14477,7 +14702,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -14531,7 +14756,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLCLOSINGMARUBOZU_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLCLOSINGMARUBOZU_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -14543,10 +14768,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLCLOSINGMARUBOZU_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLCLOSINGMARUBOZU_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLCLOSINGMARUBOZU_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLCLOSINGMARUBOZU_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLCLOSINGMARUBOZU_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -14715,13 +14946,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLCONCEALBABYSWALL", 22) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -14751,7 +14983,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -14805,7 +15037,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLCONCEALBABYSWALL_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLCONCEALBABYSWALL_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -14817,10 +15049,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLCONCEALBABYSWALL_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLCONCEALBABYSWALL_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLCONCEALBABYSWALL_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLCONCEALBABYSWALL_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLCONCEALBABYSWALL_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -14989,13 +15227,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLCOUNTERATTACK", 19) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -15025,7 +15264,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -15079,7 +15318,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLCOUNTERATTACK_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLCOUNTERATTACK_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -15091,10 +15330,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLCOUNTERATTACK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLCOUNTERATTACK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLCOUNTERATTACK_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLCOUNTERATTACK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLCOUNTERATTACK_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -15263,7 +15508,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLDARKCLOUDCOVER", 20) == 0 ) {
@@ -15271,6 +15516,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -15300,7 +15546,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -15354,7 +15600,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLDARKCLOUDCOVER_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLDARKCLOUDCOVER_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -15366,10 +15612,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLDARKCLOUDCOVER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLDARKCLOUDCOVER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLDARKCLOUDCOVER_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLDARKCLOUDCOVER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLDARKCLOUDCOVER_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -15538,13 +15790,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_CDLDOJI", 10) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -15574,7 +15827,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -15628,7 +15881,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLDOJI_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -15640,10 +15893,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLDOJI_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLDOJI_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -15812,13 +16071,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLDOJISTAR", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -15848,7 +16108,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -15902,7 +16162,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLDOJISTAR_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -15914,10 +16174,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLDOJISTAR_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLDOJISTAR_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -16086,13 +16352,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLDRAGONFLYDOJI", 19) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -16122,7 +16389,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -16176,7 +16443,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLDRAGONFLYDOJI_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLDRAGONFLYDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -16188,10 +16455,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLDRAGONFLYDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLDRAGONFLYDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLDRAGONFLYDOJI_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLDRAGONFLYDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLDRAGONFLYDOJI_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -16360,13 +16633,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLENGULFING", 15) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -16396,7 +16670,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -16450,7 +16724,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLENGULFING_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLENGULFING_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -16462,10 +16736,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLENGULFING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLENGULFING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLENGULFING_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLENGULFING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLENGULFING_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -16634,7 +16914,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLEVENINGDOJISTAR", 21) == 0 ) {
@@ -16642,6 +16922,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -16671,7 +16952,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -16725,7 +17006,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLEVENINGDOJISTAR_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLEVENINGDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -16737,10 +17018,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLEVENINGDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLEVENINGDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLEVENINGDOJISTAR_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLEVENINGDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLEVENINGDOJISTAR_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -16909,7 +17196,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLEVENINGSTAR", 17) == 0 ) {
@@ -16917,6 +17204,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -16946,7 +17234,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -17000,7 +17288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLEVENINGSTAR_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLEVENINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -17012,10 +17300,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLEVENINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLEVENINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLEVENINGSTAR_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLEVENINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLEVENINGSTAR_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -17184,13 +17478,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLGAPSIDESIDEWHITE", 22) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -17220,7 +17515,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -17274,7 +17569,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLGAPSIDESIDEWHITE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLGAPSIDESIDEWHITE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -17286,10 +17581,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLGAPSIDESIDEWHITE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLGAPSIDESIDEWHITE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLGAPSIDESIDEWHITE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLGAPSIDESIDEWHITE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLGAPSIDESIDEWHITE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -17458,13 +17759,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLGRAVESTONEDOJI", 20) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -17494,7 +17796,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -17548,7 +17850,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLGRAVESTONEDOJI_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLGRAVESTONEDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -17560,10 +17862,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLGRAVESTONEDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLGRAVESTONEDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLGRAVESTONEDOJI_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLGRAVESTONEDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLGRAVESTONEDOJI_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -17732,13 +18040,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLHAMMER", 12) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -17768,7 +18077,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -17822,7 +18131,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLHAMMER_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLHAMMER_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -17834,10 +18143,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLHAMMER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHAMMER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLHAMMER_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLHAMMER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLHAMMER_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -18006,13 +18321,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 16 && strncmp(fn, "TA_CDLHANGINGMAN", 16) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -18042,7 +18358,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -18096,7 +18412,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLHANGINGMAN_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLHANGINGMAN_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -18108,10 +18424,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLHANGINGMAN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHANGINGMAN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLHANGINGMAN_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLHANGINGMAN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLHANGINGMAN_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -18280,13 +18602,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLHARAMI", 12) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -18316,7 +18639,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -18370,7 +18693,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLHARAMI_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLHARAMI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -18382,10 +18705,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLHARAMI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHARAMI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLHARAMI_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLHARAMI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLHARAMI_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -18554,13 +18883,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLHARAMICROSS", 17) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -18590,7 +18920,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -18644,7 +18974,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLHARAMICROSS_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLHARAMICROSS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -18656,10 +18986,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLHARAMICROSS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHARAMICROSS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLHARAMICROSS_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLHARAMICROSS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLHARAMICROSS_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -18828,13 +19164,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLHIGHWAVE", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -18864,7 +19201,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -18918,7 +19255,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLHIGHWAVE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLHIGHWAVE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -18930,10 +19267,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLHIGHWAVE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHIGHWAVE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLHIGHWAVE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLHIGHWAVE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLHIGHWAVE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -19102,13 +19445,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLHIKKAKE", 13) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -19138,7 +19482,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -19192,7 +19536,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLHIKKAKE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLHIKKAKE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -19204,10 +19548,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLHIKKAKE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHIKKAKE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLHIKKAKE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLHIKKAKE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLHIKKAKE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -19376,13 +19726,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 16 && strncmp(fn, "TA_CDLHIKKAKEMOD", 16) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -19412,7 +19763,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -19466,7 +19817,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLHIKKAKEMOD_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLHIKKAKEMOD_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -19478,10 +19829,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLHIKKAKEMOD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHIKKAKEMOD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLHIKKAKEMOD_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLHIKKAKEMOD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLHIKKAKEMOD_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -19650,13 +20007,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLHOMINGPIGEON", 18) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -19686,7 +20044,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -19740,7 +20098,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLHOMINGPIGEON_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLHOMINGPIGEON_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -19752,10 +20110,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLHOMINGPIGEON_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLHOMINGPIGEON_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLHOMINGPIGEON_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLHOMINGPIGEON_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLHOMINGPIGEON_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -19924,13 +20288,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLIDENTICAL3CROWS", 21) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -19960,7 +20325,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -20014,7 +20379,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLIDENTICAL3CROWS_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLIDENTICAL3CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -20026,10 +20391,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLIDENTICAL3CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLIDENTICAL3CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLIDENTICAL3CROWS_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLIDENTICAL3CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLIDENTICAL3CROWS_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -20198,13 +20569,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLINNECK", 12) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -20234,7 +20606,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -20288,7 +20660,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLINNECK_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLINNECK_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -20300,10 +20672,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLINNECK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLINNECK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLINNECK_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLINNECK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLINNECK_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -20472,13 +20850,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLINVERTEDHAMMER", 20) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -20508,7 +20887,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -20562,7 +20941,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLINVERTEDHAMMER_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLINVERTEDHAMMER_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -20574,10 +20953,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLINVERTEDHAMMER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLINVERTEDHAMMER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLINVERTEDHAMMER_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLINVERTEDHAMMER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLINVERTEDHAMMER_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -20746,13 +21131,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLKICKING", 13) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -20782,7 +21168,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -20836,7 +21222,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLKICKING_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLKICKING_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -20848,10 +21234,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLKICKING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLKICKING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLKICKING_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLKICKING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLKICKING_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -21020,13 +21412,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLKICKINGBYLENGTH", 21) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -21056,7 +21449,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -21110,7 +21503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLKICKINGBYLENGTH_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLKICKINGBYLENGTH_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -21122,10 +21515,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLKICKINGBYLENGTH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLKICKINGBYLENGTH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLKICKINGBYLENGTH_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLKICKINGBYLENGTH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLKICKINGBYLENGTH_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -21294,13 +21693,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLLADDERBOTTOM", 18) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -21330,7 +21730,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -21384,7 +21784,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLLADDERBOTTOM_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLLADDERBOTTOM_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -21396,10 +21796,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLLADDERBOTTOM_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLLADDERBOTTOM_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLLADDERBOTTOM_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLLADDERBOTTOM_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLLADDERBOTTOM_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -21568,13 +21974,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLLONGLEGGEDDOJI", 20) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -21604,7 +22011,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -21658,7 +22065,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLLONGLEGGEDDOJI_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLLONGLEGGEDDOJI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -21670,10 +22077,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLLONGLEGGEDDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLLONGLEGGEDDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLLONGLEGGEDDOJI_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLLONGLEGGEDDOJI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLLONGLEGGEDDOJI_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -21842,13 +22255,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLLONGLINE", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -21878,7 +22292,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -21932,7 +22346,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLLONGLINE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLLONGLINE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -21944,10 +22358,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLLONGLINE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLLONGLINE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLLONGLINE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLLONGLINE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLLONGLINE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -22116,13 +22536,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLMARUBOZU", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -22152,7 +22573,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -22206,7 +22627,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLMARUBOZU_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLMARUBOZU_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -22218,10 +22639,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLMARUBOZU_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLMARUBOZU_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLMARUBOZU_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLMARUBOZU_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLMARUBOZU_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -22390,13 +22817,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLMATCHINGLOW", 17) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -22426,7 +22854,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -22480,7 +22908,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLMATCHINGLOW_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLMATCHINGLOW_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -22492,10 +22920,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLMATCHINGLOW_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLMATCHINGLOW_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLMATCHINGLOW_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLMATCHINGLOW_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLMATCHINGLOW_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -22664,7 +23098,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLMATHOLD", 13) == 0 ) {
@@ -22672,6 +23106,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -22701,7 +23136,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -22755,7 +23190,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLMATHOLD_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLMATHOLD_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -22767,10 +23202,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLMATHOLD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLMATHOLD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLMATHOLD_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLMATHOLD_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLMATHOLD_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -22939,7 +23380,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLMORNINGDOJISTAR", 21) == 0 ) {
@@ -22947,6 +23388,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -22976,7 +23418,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -23030,7 +23472,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLMORNINGDOJISTAR_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLMORNINGDOJISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -23042,10 +23484,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLMORNINGDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLMORNINGDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLMORNINGDOJISTAR_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLMORNINGDOJISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLMORNINGDOJISTAR_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -23214,7 +23662,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLMORNINGSTAR", 17) == 0 ) {
@@ -23222,6 +23670,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -23251,7 +23700,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -23305,7 +23754,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLMORNINGSTAR_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLMORNINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, optInPenetration, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -23317,10 +23766,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLMORNINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLMORNINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLMORNINGSTAR_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLMORNINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLMORNINGSTAR_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -23489,13 +23944,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLONNECK", 12) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -23525,7 +23981,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -23579,7 +24035,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLONNECK_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLONNECK_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -23591,10 +24047,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLONNECK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLONNECK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLONNECK_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLONNECK_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLONNECK_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -23763,13 +24225,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLPIERCING", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -23799,7 +24262,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -23853,7 +24316,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLPIERCING_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLPIERCING_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -23865,10 +24328,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLPIERCING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLPIERCING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLPIERCING_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLPIERCING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLPIERCING_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -24037,13 +24506,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLRICKSHAWMAN", 17) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -24073,7 +24543,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -24127,7 +24597,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLRICKSHAWMAN_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLRICKSHAWMAN_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -24139,10 +24609,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLRICKSHAWMAN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLRICKSHAWMAN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLRICKSHAWMAN_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLRICKSHAWMAN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLRICKSHAWMAN_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -24311,13 +24787,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLRISEFALL3METHODS", 22) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -24347,7 +24824,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -24401,7 +24878,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLRISEFALL3METHODS_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLRISEFALL3METHODS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -24413,10 +24890,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLRISEFALL3METHODS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLRISEFALL3METHODS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLRISEFALL3METHODS_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLRISEFALL3METHODS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLRISEFALL3METHODS_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -24585,13 +25068,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLSEPARATINGLINES", 21) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -24621,7 +25105,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -24675,7 +25159,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLSEPARATINGLINES_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLSEPARATINGLINES_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -24687,10 +25171,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLSEPARATINGLINES_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLSEPARATINGLINES_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLSEPARATINGLINES_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLSEPARATINGLINES_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLSEPARATINGLINES_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -24859,13 +25349,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLSHOOTINGSTAR", 18) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -24895,7 +25386,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -24949,7 +25440,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLSHOOTINGSTAR_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLSHOOTINGSTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -24961,10 +25452,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLSHOOTINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLSHOOTINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLSHOOTINGSTAR_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLSHOOTINGSTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLSHOOTINGSTAR_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -25133,13 +25630,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLSHORTLINE", 15) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -25169,7 +25667,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -25223,7 +25721,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLSHORTLINE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLSHORTLINE_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -25235,10 +25733,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLSHORTLINE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLSHORTLINE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLSHORTLINE_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLSHORTLINE_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLSHORTLINE_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -25407,13 +25911,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLSPINNINGTOP", 17) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -25443,7 +25948,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -25497,7 +26002,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLSPINNINGTOP_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLSPINNINGTOP_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -25509,10 +26014,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLSPINNINGTOP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLSPINNINGTOP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLSPINNINGTOP_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLSPINNINGTOP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLSPINNINGTOP_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -25681,13 +26192,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLSTALLEDPATTERN", 20) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -25717,7 +26229,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -25771,7 +26283,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLSTALLEDPATTERN_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLSTALLEDPATTERN_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -25783,10 +26295,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLSTALLEDPATTERN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLSTALLEDPATTERN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLSTALLEDPATTERN_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLSTALLEDPATTERN_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLSTALLEDPATTERN_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -25955,13 +26473,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLSTICKSANDWICH", 19) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -25991,7 +26510,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -26045,7 +26564,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLSTICKSANDWICH_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLSTICKSANDWICH_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -26057,10 +26576,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLSTICKSANDWICH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLSTICKSANDWICH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLSTICKSANDWICH_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLSTICKSANDWICH_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLSTICKSANDWICH_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -26229,13 +26754,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLTAKURI", 12) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -26265,7 +26791,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -26319,7 +26845,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLTAKURI_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLTAKURI_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -26331,10 +26857,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLTAKURI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLTAKURI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLTAKURI_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLTAKURI_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLTAKURI_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -26503,13 +27035,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLTASUKIGAP", 15) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -26539,7 +27072,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -26593,7 +27126,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLTASUKIGAP_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLTASUKIGAP_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -26605,10 +27138,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLTASUKIGAP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLTASUKIGAP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLTASUKIGAP_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLTASUKIGAP_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLTASUKIGAP_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -26777,13 +27316,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLTHRUSTING", 15) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -26813,7 +27353,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -26867,7 +27407,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLTHRUSTING_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLTHRUSTING_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -26879,10 +27419,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLTHRUSTING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLTHRUSTING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLTHRUSTING_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLTHRUSTING_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLTHRUSTING_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -27051,13 +27597,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLTRISTAR", 13) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -27087,7 +27634,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -27141,7 +27688,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLTRISTAR_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLTRISTAR_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -27153,10 +27700,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLTRISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLTRISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLTRISTAR_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLTRISTAR_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLTRISTAR_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -27325,13 +27878,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLUNIQUE3RIVER", 18) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -27361,7 +27915,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -27415,7 +27969,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLUNIQUE3RIVER_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLUNIQUE3RIVER_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -27427,10 +27981,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLUNIQUE3RIVER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLUNIQUE3RIVER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLUNIQUE3RIVER_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLUNIQUE3RIVER_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLUNIQUE3RIVER_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -27599,13 +28159,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLUPSIDEGAP2CROWS", 21) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -27635,7 +28196,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -27689,7 +28250,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLUPSIDEGAP2CROWS_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLUPSIDEGAP2CROWS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -27701,10 +28262,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLUPSIDEGAP2CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLUPSIDEGAP2CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLUPSIDEGAP2CROWS_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLUPSIDEGAP2CROWS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLUPSIDEGAP2CROWS_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -27873,13 +28440,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLXSIDEGAP3METHODS", 22) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -27909,7 +28477,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             if( rd + 1 < rounds ) continue;
             TA_SetCompatibility((TA_Compatibility)savedCompat);
             TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
-            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, svZsign);
+            pos = json_appendf(resp, resp_size, pos, ",\"rrc\":%d,\"legs\":%d,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"benign\":%d}", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, svZsign);
             return;
         }
         {
@@ -27963,7 +28531,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CDLXSIDEGAP3METHODS_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_CDLXSIDEGAP3METHODS_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -27975,10 +28543,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CDLXSIDEGAP3METHODS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_CDLXSIDEGAP3METHODS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CDLXSIDEGAP3METHODS_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_CDLXSIDEGAP3METHODS_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_CDLXSIDEGAP3METHODS_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -28147,13 +28721,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_CEIL", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -28237,7 +28812,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CEIL_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_CEIL_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -28249,10 +28824,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CEIL_Peek(st, sv_c[t], &pk0);
+                TA_CEIL_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CEIL_Peek(st, sv_c[t - 1], &rp0);
+                   TA_CEIL_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_CEIL_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -28419,7 +29000,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CMF", 6) == 0 ) {
@@ -28427,6 +29008,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -28510,7 +29092,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CMF_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_CMF_Open(&st, sv_h, sv_l, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -28522,10 +29104,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CMF_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                TA_CMF_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CMF_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_CMF_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_CMF_Update(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -28692,7 +29280,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CMO", 6) == 0 ) {
@@ -28700,6 +29288,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -28785,7 +29374,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CMO_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_CMO_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -28797,10 +29386,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CMO_Peek(st, sv_c[t], &pk0);
+                TA_CMO_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CMO_Peek(st, sv_c[t - 1], &rp0);
+                   TA_CMO_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_CMO_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -28968,7 +29563,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_CMOU", 7) == 0 ) {
@@ -28976,6 +29571,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -29059,7 +29655,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CMOU_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_CMOU_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -29071,10 +29667,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CMOU_Peek(st, sv_c[t], &pk0);
+                TA_CMOU_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CMOU_Peek(st, sv_c[t - 1], &rp0);
+                   TA_CMOU_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_CMOU_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -29241,7 +29843,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_CORREL", 9) == 0 ) {
@@ -29249,6 +29851,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -29332,7 +29935,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_CORREL_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_CORREL_Open(&st, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -29344,10 +29947,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_CORREL_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_CORREL_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_CORREL_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_CORREL_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_CORREL_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -29514,13 +30123,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_COS", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -29604,7 +30214,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_COS_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_COS_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -29616,10 +30226,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_COS_Peek(st, sv_c[t], &pk0);
+                TA_COS_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_COS_Peek(st, sv_c[t - 1], &rp0);
+                   TA_COS_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_COS_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -29786,13 +30402,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_COSH", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -29876,7 +30493,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_COSH_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_COSH_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -29888,10 +30505,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_COSH_Peek(st, sv_c[t], &pk0);
+                TA_COSH_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_COSH_Peek(st, sv_c[t - 1], &rp0);
+                   TA_COSH_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_COSH_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -30058,7 +30681,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_DEMA", 7) == 0 ) {
@@ -30066,6 +30689,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -30151,7 +30775,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_DEMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_DEMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -30163,10 +30787,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_DEMA_Peek(st, sv_c[t], &pk0);
+                TA_DEMA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_DEMA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_DEMA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_DEMA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -30334,13 +30964,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_DIV", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -30424,7 +31055,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_DIV_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_DIV_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -30436,10 +31067,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_DIV_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_DIV_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_DIV_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_DIV_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_DIV_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -30606,7 +31243,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_DX", 5) == 0 ) {
@@ -30614,6 +31251,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -30699,7 +31337,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_DX_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_DX_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -30711,10 +31349,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_DX_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_DX_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_DX_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_DX_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_DX_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -30882,7 +31526,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_EFI", 6) == 0 ) {
@@ -30890,6 +31534,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -30973,7 +31618,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_EFI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_EFI_Open(&st, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -30985,10 +31630,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_EFI_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_EFI_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_EFI_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_EFI_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_EFI_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -31155,7 +31806,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_EMA", 6) == 0 ) {
@@ -31163,6 +31814,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -31248,7 +31900,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_EMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_EMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -31260,10 +31912,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_EMA_Peek(st, sv_c[t], &pk0);
+                TA_EMA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_EMA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_EMA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_EMA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -31431,13 +32089,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_EXP", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -31521,7 +32180,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_EXP_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_EXP_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -31533,10 +32192,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_EXP_Peek(st, sv_c[t], &pk0);
+                TA_EXP_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_EXP_Peek(st, sv_c[t - 1], &rp0);
+                   TA_EXP_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_EXP_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -31703,13 +32368,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_FLOOR", 8) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -31793,7 +32459,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_FLOOR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_FLOOR_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -31805,10 +32471,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_FLOOR_Peek(st, sv_c[t], &pk0);
+                TA_FLOOR_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_FLOOR_Peek(st, sv_c[t - 1], &rp0);
+                   TA_FLOOR_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_FLOOR_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -31975,7 +32647,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_HMA", 6) == 0 ) {
@@ -31983,6 +32655,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -32066,7 +32739,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_HMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_HMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -32078,10 +32751,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_HMA_Peek(st, sv_c[t], &pk0);
+                TA_HMA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_HMA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_HMA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_HMA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -32248,13 +32927,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_HT_DCPERIOD", 14) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -32340,7 +33020,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_HT_DCPERIOD_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_HT_DCPERIOD_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -32352,10 +33032,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_HT_DCPERIOD_Peek(st, sv_c[t], &pk0);
+                TA_HT_DCPERIOD_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_HT_DCPERIOD_Peek(st, sv_c[t - 1], &rp0);
+                   TA_HT_DCPERIOD_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_HT_DCPERIOD_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -32523,13 +33209,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_HT_DCPHASE", 13) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -32615,7 +33302,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_HT_DCPHASE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_HT_DCPHASE_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -32627,10 +33314,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_HT_DCPHASE_Peek(st, sv_c[t], &pk0);
+                TA_HT_DCPHASE_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_HT_DCPHASE_Peek(st, sv_c[t - 1], &rp0);
+                   TA_HT_DCPHASE_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_HT_DCPHASE_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -32798,13 +33491,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_HT_PHASOR", 12) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -32901,8 +33595,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_HT_PHASOR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_HT_PHASOR_Open(&st, sv_c, P, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -32916,10 +33610,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_HT_PHASOR_Peek(st, sv_c[t], &pk0, &pk1);
+                TA_HT_PHASOR_Peek(st, sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_HT_PHASOR_Peek(st, sv_c[t - 1], &rp0, &rp1);
+                   TA_HT_PHASOR_Peek(st, sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_HT_PHASOR_Update(st, sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -33100,13 +33800,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_HT_SINE", 10) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -33203,8 +33904,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_HT_SINE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_HT_SINE_Open(&st, sv_c, P, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -33218,10 +33919,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_HT_SINE_Peek(st, sv_c[t], &pk0, &pk1);
+                TA_HT_SINE_Peek(st, sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_HT_SINE_Peek(st, sv_c[t - 1], &rp0, &rp1);
+                   TA_HT_SINE_Peek(st, sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_HT_SINE_Update(st, sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -33402,13 +34109,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_HT_TRENDLINE", 15) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -33494,7 +34202,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_HT_TRENDLINE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_HT_TRENDLINE_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -33506,10 +34214,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_HT_TRENDLINE_Peek(st, sv_c[t], &pk0);
+                TA_HT_TRENDLINE_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_HT_TRENDLINE_Peek(st, sv_c[t - 1], &rp0);
+                   TA_HT_TRENDLINE_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_HT_TRENDLINE_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -33677,13 +34391,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_HT_TRENDMODE", 15) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -33762,7 +34477,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_HT_TRENDMODE_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_HT_TRENDMODE_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -33774,10 +34489,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_HT_TRENDMODE_Peek(st, sv_c[t], &pk0);
+                TA_HT_TRENDMODE_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_HT_TRENDMODE_Peek(st, sv_c[t - 1], &rp0);
+                   TA_HT_TRENDMODE_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_HT_TRENDMODE_Update(st, sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -33944,7 +34665,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_IMI", 6) == 0 ) {
@@ -33952,6 +34673,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -34035,7 +34757,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_IMI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_IMI_Open(&st, sv_o, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -34047,10 +34769,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_IMI_Peek(st, sv_o[t], sv_c[t], &pk0);
+                TA_IMI_Peek(st, sv_o[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_IMI_Peek(st, sv_o[t - 1], sv_c[t - 1], &rp0);
+                   TA_IMI_Peek(st, sv_o[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_IMI_Update(st, sv_o[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -34217,7 +34945,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_KAMA", 7) == 0 ) {
@@ -34225,6 +34953,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -34310,7 +35039,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_KAMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_KAMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -34322,10 +35051,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_KAMA_Peek(st, sv_c[t], &pk0);
+                TA_KAMA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_KAMA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_KAMA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_KAMA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -34493,7 +35228,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_KC", 5) == 0 ) {
@@ -34503,6 +35238,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -34605,9 +35341,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_KC_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
-            double v2 = 0.0, pk2 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
+            double v2 = 0.0, pk2 = 0.0, rp2 = 0.0;
             rc = TA_KC_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, optInATRPeriod, optInNbDev, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -34623,10 +35359,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq2, v2) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_KC_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1, &pk2);
+                TA_KC_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1, &pk2);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_KC_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0, &rp1, &rp2);
+                   TA_KC_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0, &rp1, &rp2);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) || sv_bitne(rp2, pk2) ) peekRepAll = 0;
+                }
                 TA_KC_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1, &v2);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
@@ -34821,7 +35563,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_LINEARREG", 12) == 0 ) {
@@ -34829,6 +35571,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -34912,7 +35655,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_LINEARREG_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_LINEARREG_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -34924,10 +35667,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_LINEARREG_Peek(st, sv_c[t], &pk0);
+                TA_LINEARREG_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_LINEARREG_Peek(st, sv_c[t - 1], &rp0);
+                   TA_LINEARREG_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_LINEARREG_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -35094,7 +35843,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_LINEARREG_ANGLE", 18) == 0 ) {
@@ -35102,6 +35851,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -35185,7 +35935,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_LINEARREG_ANGLE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_LINEARREG_ANGLE_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -35197,10 +35947,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_LINEARREG_ANGLE_Peek(st, sv_c[t], &pk0);
+                TA_LINEARREG_ANGLE_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_LINEARREG_ANGLE_Peek(st, sv_c[t - 1], &rp0);
+                   TA_LINEARREG_ANGLE_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_LINEARREG_ANGLE_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -35367,7 +36123,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_LINEARREG_INTERCEPT", 22) == 0 ) {
@@ -35375,6 +36131,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -35458,7 +36215,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_LINEARREG_INTERCEPT_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_LINEARREG_INTERCEPT_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -35470,10 +36227,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_LINEARREG_INTERCEPT_Peek(st, sv_c[t], &pk0);
+                TA_LINEARREG_INTERCEPT_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_LINEARREG_INTERCEPT_Peek(st, sv_c[t - 1], &rp0);
+                   TA_LINEARREG_INTERCEPT_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_LINEARREG_INTERCEPT_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -35640,7 +36403,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_LINEARREG_SLOPE", 18) == 0 ) {
@@ -35648,6 +36411,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -35731,7 +36495,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_LINEARREG_SLOPE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_LINEARREG_SLOPE_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -35743,10 +36507,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_LINEARREG_SLOPE_Peek(st, sv_c[t], &pk0);
+                TA_LINEARREG_SLOPE_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_LINEARREG_SLOPE_Peek(st, sv_c[t - 1], &rp0);
+                   TA_LINEARREG_SLOPE_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_LINEARREG_SLOPE_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -35913,13 +36683,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_LN", 5) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -36003,7 +36774,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_LN_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_LN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -36015,10 +36786,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_LN_Peek(st, sv_c[t], &pk0);
+                TA_LN_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_LN_Peek(st, sv_c[t - 1], &rp0);
+                   TA_LN_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_LN_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -36185,13 +36962,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_LOG10", 8) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -36275,7 +37053,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_LOG10_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_LOG10_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -36287,10 +37065,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_LOG10_Peek(st, sv_c[t], &pk0);
+                TA_LOG10_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_LOG10_Peek(st, sv_c[t - 1], &rp0);
+                   TA_LOG10_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_LOG10_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -36457,7 +37241,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_MA", 5) == 0 ) {
@@ -36466,6 +37250,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -36557,7 +37342,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MA_Open(&st, sv_c, P, optInTimePeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -36569,10 +37354,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MA_Peek(st, sv_c[t], &pk0);
+                TA_MA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_MA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -36743,7 +37534,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MACD", 7) == 0 ) {
@@ -36753,6 +37544,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -36853,9 +37645,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MACD_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
-            double v2 = 0.0, pk2 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
+            double v2 = 0.0, pk2 = 0.0, rp2 = 0.0;
             rc = TA_MACD_Open(&st, sv_c, P, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -36871,10 +37663,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq2, v2) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MACD_Peek(st, sv_c[t], &pk0, &pk1, &pk2);
+                TA_MACD_Peek(st, sv_c[t], &pk0, &pk1, &pk2);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MACD_Peek(st, sv_c[t - 1], &rp0, &rp1, &rp2);
+                   TA_MACD_Peek(st, sv_c[t], &rp0, &rp1, &rp2);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) || sv_bitne(rp2, pk2) ) peekRepAll = 0;
+                }
                 TA_MACD_Update(st, sv_c[t], &v0, &v1, &v2);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
@@ -37068,7 +37866,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_MACDEXT", 10) == 0 ) {
@@ -37081,6 +37879,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -37187,9 +37986,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MACDEXT_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
-            double v2 = 0.0, pk2 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
+            double v2 = 0.0, pk2 = 0.0, rp2 = 0.0;
             rc = TA_MACDEXT_Open(&st, sv_c, P, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -37205,10 +38004,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq2, v2) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MACDEXT_Peek(st, sv_c[t], &pk0, &pk1, &pk2);
+                TA_MACDEXT_Peek(st, sv_c[t], &pk0, &pk1, &pk2);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MACDEXT_Peek(st, sv_c[t - 1], &rp0, &rp1, &rp2);
+                   TA_MACDEXT_Peek(st, sv_c[t], &rp0, &rp1, &rp2);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) || sv_bitne(rp2, pk2) ) peekRepAll = 0;
+                }
                 TA_MACDEXT_Update(st, sv_c[t], &v0, &v1, &v2);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
@@ -37405,7 +38210,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_MACDFIX", 10) == 0 ) {
@@ -37413,6 +38218,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -37513,9 +38319,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MACDFIX_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
-            double v2 = 0.0, pk2 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
+            double v2 = 0.0, pk2 = 0.0, rp2 = 0.0;
             rc = TA_MACDFIX_Open(&st, sv_c, P, optInSignalPeriod, &v0, &v1, &v2);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -37531,10 +38337,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq2, v2) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MACDFIX_Peek(st, sv_c[t], &pk0, &pk1, &pk2);
+                TA_MACDFIX_Peek(st, sv_c[t], &pk0, &pk1, &pk2);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MACDFIX_Peek(st, sv_c[t - 1], &rp0, &rp1, &rp2);
+                   TA_MACDFIX_Peek(st, sv_c[t], &rp0, &rp1, &rp2);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) || sv_bitne(rp2, pk2) ) peekRepAll = 0;
+                }
                 TA_MACDFIX_Update(st, sv_c[t], &v0, &v1, &v2);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
@@ -37728,7 +38540,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MAMA", 7) == 0 ) {
@@ -37737,6 +38549,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -37833,8 +38646,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MAMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_MAMA_Open(&st, sv_c, P, optInFastLimit, optInSlowLimit, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -37848,10 +38661,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MAMA_Peek(st, sv_c[t], &pk0, &pk1);
+                TA_MAMA_Peek(st, sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MAMA_Peek(st, sv_c[t - 1], &rp0, &rp1);
+                   TA_MAMA_Peek(st, sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_MAMA_Update(st, sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -38032,13 +38851,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MARKETFI", 11) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -38122,7 +38942,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MARKETFI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MARKETFI_Open(&st, sv_h, sv_l, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -38134,10 +38954,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MARKETFI_Peek(st, sv_h[t], sv_l[t], sv_v[t], &pk0);
+                TA_MARKETFI_Peek(st, sv_h[t], sv_l[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MARKETFI_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_v[t - 1], &rp0);
+                   TA_MARKETFI_Peek(st, sv_h[t], sv_l[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MARKETFI_Update(st, sv_h[t], sv_l[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -38304,7 +39130,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MAVP", 7) == 0 ) {
@@ -38315,6 +39141,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -38406,7 +39233,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MAVP_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MAVP_Open(&st, sv_c, sv_v, P, optInMinPeriod, optInMaxPeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -38418,10 +39245,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MAVP_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_MAVP_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MAVP_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_MAVP_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MAVP_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -38592,7 +39425,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MAX", 6) == 0 ) {
@@ -38600,6 +39433,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -38683,7 +39517,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MAX_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MAX_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -38695,10 +39529,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MAX_Peek(st, sv_c[t], &pk0);
+                TA_MAX_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MAX_Peek(st, sv_c[t - 1], &rp0);
+                   TA_MAX_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MAX_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -38865,7 +39705,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MAXINDEX", 11) == 0 ) {
@@ -38873,6 +39713,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -38949,7 +39790,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MAXINDEX_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_MAXINDEX_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -38961,10 +39802,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MAXINDEX_Peek(st, sv_c[t], &pk0);
+                TA_MAXINDEX_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MAXINDEX_Peek(st, sv_c[t - 1], &rp0);
+                   TA_MAXINDEX_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_MAXINDEX_Update(st, sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -39130,13 +39977,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MEDPRICE", 11) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -39220,7 +40068,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MEDPRICE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MEDPRICE_Open(&st, sv_h, sv_l, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -39232,10 +40080,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MEDPRICE_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_MEDPRICE_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MEDPRICE_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_MEDPRICE_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MEDPRICE_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -39402,7 +40256,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MFI", 6) == 0 ) {
@@ -39410,6 +40264,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -39493,7 +40348,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MFI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MFI_Open(&st, sv_h, sv_l, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -39505,10 +40360,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MFI_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                TA_MFI_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MFI_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_MFI_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MFI_Update(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -39675,7 +40536,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MIDPOINT", 11) == 0 ) {
@@ -39683,6 +40544,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -39766,7 +40628,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MIDPOINT_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MIDPOINT_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -39778,10 +40640,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MIDPOINT_Peek(st, sv_c[t], &pk0);
+                TA_MIDPOINT_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MIDPOINT_Peek(st, sv_c[t - 1], &rp0);
+                   TA_MIDPOINT_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MIDPOINT_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -39948,7 +40816,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MIDPRICE", 11) == 0 ) {
@@ -39956,6 +40824,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -40039,7 +40908,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MIDPRICE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MIDPRICE_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -40051,10 +40920,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MIDPRICE_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_MIDPRICE_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MIDPRICE_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_MIDPRICE_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MIDPRICE_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -40221,7 +41096,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MIN", 6) == 0 ) {
@@ -40229,6 +41104,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -40312,7 +41188,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MIN_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MIN_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -40324,10 +41200,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MIN_Peek(st, sv_c[t], &pk0);
+                TA_MIN_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MIN_Peek(st, sv_c[t - 1], &rp0);
+                   TA_MIN_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MIN_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -40494,7 +41376,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MININDEX", 11) == 0 ) {
@@ -40502,6 +41384,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -40578,7 +41461,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MININDEX_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
             rc = TA_MININDEX_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -40590,10 +41473,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MININDEX_Peek(st, sv_c[t], &pk0);
+                TA_MININDEX_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MININDEX_Peek(st, sv_c[t - 1], &rp0);
+                   TA_MININDEX_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( (rp0 != pk0) ) peekRepAll = 0;
+                }
                 TA_MININDEX_Update(st, sv_c[t], &v0);
-                if( doPeek && ((pk0 != v0)) ) pkOk = 0;
+                if( (pk0 != v0) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if( ok )
                 {
@@ -40759,7 +41648,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_MINMAX", 9) == 0 ) {
@@ -40767,6 +41656,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -40861,8 +41751,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MINMAX_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_MINMAX_Open(&st, sv_c, P, optInTimePeriod, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -40876,10 +41766,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MINMAX_Peek(st, sv_c[t], &pk0, &pk1);
+                TA_MINMAX_Peek(st, sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MINMAX_Peek(st, sv_c[t - 1], &rp0, &rp1);
+                   TA_MINMAX_Peek(st, sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_MINMAX_Update(st, sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -41059,7 +41955,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_MINMAXINDEX", 14) == 0 ) {
@@ -41067,6 +41963,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -41154,8 +42051,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MINMAXINDEX_Stream *st = NULL;
-            int v0 = 0, pk0 = 0;
-            int v1 = 0, pk1 = 0;
+            int v0 = 0, pk0 = 0, rp0 = 0;
+            int v1 = 0, pk1 = 0, rp1 = 0;
             rc = TA_MINMAXINDEX_Open(&st, sv_c, P, optInTimePeriod, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
@@ -41169,10 +42066,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq1 != v1 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MINMAXINDEX_Peek(st, sv_c[t], &pk0, &pk1);
+                TA_MINMAXINDEX_Peek(st, sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MINMAXINDEX_Peek(st, sv_c[t - 1], &rp0, &rp1);
+                   TA_MINMAXINDEX_Peek(st, sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( (rp0 != pk0) || (rp1 != pk1) ) peekRepAll = 0;
+                }
                 TA_MINMAXINDEX_Update(st, sv_c[t], &v0, &v1);
-                if( doPeek && ((pk0 != v0) || (pk1 != v1)) ) pkOk = 0;
+                if( (pk0 != v0) || (pk1 != v1) ) pkOk = 0;
                 if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
                 if(  v1 != sv_ib1[t - svBeg] ) { ok = 0; badBar = t; badOut = 1; bv = (double)sv_ib1[t - svBeg]; sv = (double)v1; }
                 if( ok )
@@ -41351,7 +42254,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MINUS_DI", 11) == 0 ) {
@@ -41359,6 +42262,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -41444,7 +42348,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MINUS_DI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MINUS_DI_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -41456,10 +42360,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MINUS_DI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_MINUS_DI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MINUS_DI_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_MINUS_DI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MINUS_DI_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -41627,7 +42537,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MINUS_DM", 11) == 0 ) {
@@ -41635,6 +42545,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -41720,7 +42631,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MINUS_DM_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MINUS_DM_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -41732,10 +42643,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MINUS_DM_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_MINUS_DM_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MINUS_DM_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_MINUS_DM_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MINUS_DM_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -41903,7 +42820,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MOM", 6) == 0 ) {
@@ -41911,6 +42828,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -41994,7 +42912,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MOM_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MOM_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -42006,10 +42924,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MOM_Peek(st, sv_c[t], &pk0);
+                TA_MOM_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MOM_Peek(st, sv_c[t - 1], &rp0);
+                   TA_MOM_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MOM_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -42176,13 +43100,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MULT", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -42266,7 +43191,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_MULT_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_MULT_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -42278,10 +43203,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_MULT_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_MULT_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_MULT_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_MULT_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_MULT_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -42448,7 +43379,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_NATR", 7) == 0 ) {
@@ -42456,6 +43387,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -42541,7 +43473,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_NATR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_NATR_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -42553,10 +43485,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_NATR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_NATR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_NATR_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_NATR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_NATR_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -42724,13 +43662,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_NVI", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -42814,7 +43753,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_NVI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_NVI_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -42826,10 +43765,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_NVI_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_NVI_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_NVI_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_NVI_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_NVI_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -42996,13 +43941,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_OBV", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -43086,7 +44032,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_OBV_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_OBV_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -43098,10 +44044,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_OBV_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_OBV_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_OBV_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_OBV_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_OBV_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -43268,7 +44220,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_PLUS_DI", 10) == 0 ) {
@@ -43276,6 +44228,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -43361,7 +44314,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_PLUS_DI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_PLUS_DI_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -43373,10 +44326,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_PLUS_DI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_PLUS_DI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_PLUS_DI_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_PLUS_DI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_PLUS_DI_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -43544,7 +44503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_PLUS_DM", 10) == 0 ) {
@@ -43552,6 +44511,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -43637,7 +44597,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_PLUS_DM_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_PLUS_DM_Open(&st, sv_h, sv_l, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -43649,10 +44609,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_PLUS_DM_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_PLUS_DM_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_PLUS_DM_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_PLUS_DM_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_PLUS_DM_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -43820,7 +44786,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PPO", 6) == 0 ) {
@@ -43830,6 +44796,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -43921,7 +44888,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_PPO_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_PPO_Open(&st, sv_c, P, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -43933,10 +44900,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_PPO_Peek(st, sv_c[t], &pk0);
+                TA_PPO_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_PPO_Peek(st, sv_c[t - 1], &rp0);
+                   TA_PPO_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_PPO_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -44107,13 +45080,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PVI", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -44197,7 +45171,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_PVI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_PVI_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -44209,10 +45183,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_PVI_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_PVI_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_PVI_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_PVI_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_PVI_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -44379,7 +45359,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PVO", 6) == 0 ) {
@@ -44389,6 +45369,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -44480,7 +45461,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_PVO_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_PVO_Open(&st, sv_v, P, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -44492,10 +45473,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_PVO_Peek(st, sv_v[t], &pk0);
+                TA_PVO_Peek(st, sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_PVO_Peek(st, sv_v[t - 1], &rp0);
+                   TA_PVO_Peek(st, sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_PVO_Update(st, sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -44666,7 +45653,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_QSTICK", 9) == 0 ) {
@@ -44674,6 +45661,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -44757,7 +45745,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_QSTICK_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_QSTICK_Open(&st, sv_o, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -44769,10 +45757,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_QSTICK_Peek(st, sv_o[t], sv_c[t], &pk0);
+                TA_QSTICK_Peek(st, sv_o[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_QSTICK_Peek(st, sv_o[t - 1], sv_c[t - 1], &rp0);
+                   TA_QSTICK_Peek(st, sv_o[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_QSTICK_Update(st, sv_o[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -44939,7 +45933,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ROC", 6) == 0 ) {
@@ -44947,6 +45941,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -45030,7 +46025,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ROC_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ROC_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -45042,10 +46037,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ROC_Peek(st, sv_c[t], &pk0);
+                TA_ROC_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ROC_Peek(st, sv_c[t - 1], &rp0);
+                   TA_ROC_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ROC_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -45212,7 +46213,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ROCP", 7) == 0 ) {
@@ -45220,6 +46221,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -45303,7 +46305,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ROCP_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ROCP_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -45315,10 +46317,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ROCP_Peek(st, sv_c[t], &pk0);
+                TA_ROCP_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ROCP_Peek(st, sv_c[t - 1], &rp0);
+                   TA_ROCP_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ROCP_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -45485,7 +46493,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ROCR", 7) == 0 ) {
@@ -45493,6 +46501,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -45576,7 +46585,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ROCR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ROCR_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -45588,10 +46597,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ROCR_Peek(st, sv_c[t], &pk0);
+                TA_ROCR_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ROCR_Peek(st, sv_c[t - 1], &rp0);
+                   TA_ROCR_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ROCR_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -45758,7 +46773,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_ROCR100", 10) == 0 ) {
@@ -45766,6 +46781,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -45849,7 +46865,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ROCR100_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ROCR100_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -45861,10 +46877,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ROCR100_Peek(st, sv_c[t], &pk0);
+                TA_ROCR100_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ROCR100_Peek(st, sv_c[t - 1], &rp0);
+                   TA_ROCR100_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ROCR100_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -46031,7 +47053,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_RSI", 6) == 0 ) {
@@ -46039,6 +47061,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -46124,7 +47147,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_RSI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_RSI_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -46136,10 +47159,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_RSI_Peek(st, sv_c[t], &pk0);
+                TA_RSI_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_RSI_Peek(st, sv_c[t - 1], &rp0);
+                   TA_RSI_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_RSI_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -46307,7 +47336,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SAR", 6) == 0 ) {
@@ -46316,6 +47345,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -46399,7 +47429,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SAR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_SAR_Open(&st, sv_h, sv_l, P, optInAcceleration, optInMaximum, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -46411,10 +47441,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SAR_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_SAR_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SAR_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_SAR_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_SAR_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -46581,7 +47617,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_SAREXT", 9) == 0 ) {
@@ -46596,6 +47632,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -46679,7 +47716,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SAREXT_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_SAREXT_Open(&st, sv_h, sv_l, P, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -46691,10 +47728,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SAREXT_Peek(st, sv_h[t], sv_l[t], &pk0);
+                TA_SAREXT_Peek(st, sv_h[t], sv_l[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SAREXT_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0);
+                   TA_SAREXT_Peek(st, sv_h[t], sv_l[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_SAREXT_Update(st, sv_h[t], sv_l[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -46861,13 +47904,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SIN", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -46951,7 +47995,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SIN_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_SIN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -46963,10 +48007,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SIN_Peek(st, sv_c[t], &pk0);
+                TA_SIN_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SIN_Peek(st, sv_c[t - 1], &rp0);
+                   TA_SIN_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_SIN_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -47133,13 +48183,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_SINH", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -47223,7 +48274,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SINH_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_SINH_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -47235,10 +48286,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SINH_Peek(st, sv_c[t], &pk0);
+                TA_SINH_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SINH_Peek(st, sv_c[t - 1], &rp0);
+                   TA_SINH_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_SINH_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -47405,7 +48462,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SMA", 6) == 0 ) {
@@ -47413,6 +48470,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -47496,7 +48554,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_SMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -47508,10 +48566,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SMA_Peek(st, sv_c[t], &pk0);
+                TA_SMA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SMA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_SMA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_SMA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -47678,7 +48742,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SMI", 6) == 0 ) {
@@ -47689,6 +48753,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -47785,8 +48850,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SMI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_SMI_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -47800,10 +48865,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SMI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                TA_SMI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SMI_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0, &rp1);
+                   TA_SMI_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_SMI_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -47984,13 +49055,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_SQRT", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -48074,7 +49146,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SQRT_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_SQRT_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -48086,10 +49158,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SQRT_Peek(st, sv_c[t], &pk0);
+                TA_SQRT_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SQRT_Peek(st, sv_c[t - 1], &rp0);
+                   TA_SQRT_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_SQRT_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -48256,7 +49334,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_STDDEV", 9) == 0 ) {
@@ -48265,6 +49343,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -48348,7 +49427,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_STDDEV_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_STDDEV_Open(&st, sv_c, P, optInTimePeriod, optInNbDev, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -48360,10 +49439,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_STDDEV_Peek(st, sv_c[t], &pk0);
+                TA_STDDEV_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_STDDEV_Peek(st, sv_c[t - 1], &rp0);
+                   TA_STDDEV_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_STDDEV_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -48530,7 +49615,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_STOCH", 8) == 0 ) {
@@ -48542,6 +49627,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -48644,8 +49730,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_STOCH_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_STOCH_Open(&st, sv_h, sv_l, sv_c, P, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -48659,10 +49745,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_STOCH_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                TA_STOCH_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_STOCH_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0, &rp1);
+                   TA_STOCH_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_STOCH_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -48846,7 +49938,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_STOCHF", 9) == 0 ) {
@@ -48856,6 +49948,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -48958,8 +50051,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_STOCHF_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_STOCHF_Open(&st, sv_h, sv_l, sv_c, P, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -48973,10 +50066,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_STOCHF_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                TA_STOCHF_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_STOCHF_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0, &rp1);
+                   TA_STOCHF_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_STOCHF_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -49160,7 +50259,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_STOCHRSI", 11) == 0 ) {
@@ -49171,6 +50270,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -49275,8 +50375,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_STOCHRSI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            double v1 = 0.0, pk1 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
             rc = TA_STOCHRSI_Open(&st, sv_c, P, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -49290,10 +50390,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_STOCHRSI_Peek(st, sv_c[t], &pk0, &pk1);
+                TA_STOCHRSI_Peek(st, sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_STOCHRSI_Peek(st, sv_c[t - 1], &rp0, &rp1);
+                   TA_STOCHRSI_Peek(st, sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) ) peekRepAll = 0;
+                }
                 TA_STOCHRSI_Update(st, sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || sv_bitne(pk1, v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
                 if( ok )
@@ -49478,13 +50584,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SUB", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -49568,7 +50675,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SUB_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_SUB_Open(&st, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -49580,10 +50687,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SUB_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_SUB_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SUB_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_SUB_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_SUB_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -49750,7 +50863,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SUM", 6) == 0 ) {
@@ -49758,6 +50871,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -49841,7 +50955,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SUM_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_SUM_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -49853,10 +50967,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SUM_Peek(st, sv_c[t], &pk0);
+                TA_SUM_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SUM_Peek(st, sv_c[t - 1], &rp0);
+                   TA_SUM_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_SUM_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -50023,7 +51143,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_SUPERTREND", 13) == 0 ) {
@@ -50032,6 +51152,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -50121,8 +51242,8 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_SUPERTREND_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
-            int v1 = 0, pk1 = 0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            int v1 = 0, pk1 = 0, rp1 = 0;
             rc = TA_SUPERTREND_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, optInMultiplier, &v0, &v1);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -50136,10 +51257,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq1 != v1 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_SUPERTREND_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                TA_SUPERTREND_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_SUPERTREND_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0, &rp1);
+                   TA_SUPERTREND_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0, &rp1);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) || (rp1 != pk1) ) peekRepAll = 0;
+                }
                 TA_SUPERTREND_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0, &v1);
-                if( doPeek && (sv_bitne(pk0, v0) || (pk1 != v1)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) || (pk1 != v1) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if(  v1 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 1; bv = (double)sv_ib0[t - svBeg]; sv = (double)v1; }
                 if( ok )
@@ -50320,7 +51447,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_T3", 5) == 0 ) {
@@ -50329,6 +51456,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -50414,7 +51542,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_T3_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_T3_Open(&st, sv_c, P, optInTimePeriod, optInVFactor, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -50426,10 +51554,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_T3_Peek(st, sv_c[t], &pk0);
+                TA_T3_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_T3_Peek(st, sv_c[t - 1], &rp0);
+                   TA_T3_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_T3_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -50597,13 +51731,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_TAN", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -50687,7 +51822,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_TAN_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_TAN_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -50699,10 +51834,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_TAN_Peek(st, sv_c[t], &pk0);
+                TA_TAN_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_TAN_Peek(st, sv_c[t - 1], &rp0);
+                   TA_TAN_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_TAN_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -50869,13 +52010,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TANH", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -50959,7 +52101,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_TANH_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_TANH_Open(&st, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -50971,10 +52113,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_TANH_Peek(st, sv_c[t], &pk0);
+                TA_TANH_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_TANH_Peek(st, sv_c[t - 1], &rp0);
+                   TA_TANH_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_TANH_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -51141,7 +52289,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TEMA", 7) == 0 ) {
@@ -51149,6 +52297,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -51234,7 +52383,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_TEMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_TEMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -51246,10 +52395,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_TEMA_Peek(st, sv_c[t], &pk0);
+                TA_TEMA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_TEMA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_TEMA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_TEMA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -51417,13 +52572,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_TRANGE", 9) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -51507,7 +52663,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_TRANGE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_TRANGE_Open(&st, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -51519,10 +52675,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_TRANGE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_TRANGE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_TRANGE_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_TRANGE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_TRANGE_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -51689,7 +52851,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_TRIMA", 8) == 0 ) {
@@ -51697,6 +52859,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -51780,7 +52943,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_TRIMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_TRIMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -51792,10 +52955,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_TRIMA_Peek(st, sv_c[t], &pk0);
+                TA_TRIMA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_TRIMA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_TRIMA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_TRIMA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -51962,7 +53131,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TRIX", 7) == 0 ) {
@@ -51970,6 +53139,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -52055,7 +53225,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_TRIX_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_TRIX_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -52067,10 +53237,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_TRIX_Peek(st, sv_c[t], &pk0);
+                TA_TRIX_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_TRIX_Peek(st, sv_c[t - 1], &rp0);
+                   TA_TRIX_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_TRIX_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -52238,7 +53414,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_TSF", 6) == 0 ) {
@@ -52246,6 +53422,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -52329,7 +53506,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_TSF_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_TSF_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -52341,10 +53518,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_TSF_Peek(st, sv_c[t], &pk0);
+                TA_TSF_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_TSF_Peek(st, sv_c[t - 1], &rp0);
+                   TA_TSF_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_TSF_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -52511,13 +53694,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_TYPPRICE", 11) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -52601,7 +53785,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_TYPPRICE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_TYPPRICE_Open(&st, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -52613,10 +53797,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_TYPPRICE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_TYPPRICE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_TYPPRICE_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_TYPPRICE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_TYPPRICE_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -52783,7 +53973,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_ULTOSC", 9) == 0 ) {
@@ -52793,6 +53983,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -52876,7 +54067,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_ULTOSC_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_ULTOSC_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -52888,10 +54079,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_ULTOSC_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_ULTOSC_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_ULTOSC_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_ULTOSC_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_ULTOSC_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -53058,7 +54255,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_VAR", 6) == 0 ) {
@@ -53067,6 +54264,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -53150,7 +54348,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_VAR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_VAR_Open(&st, sv_c, P, optInTimePeriod, optInNbDev, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -53162,10 +54360,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_VAR_Peek(st, sv_c[t], &pk0);
+                TA_VAR_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_VAR_Peek(st, sv_c[t - 1], &rp0);
+                   TA_VAR_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_VAR_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -53332,13 +54536,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_VWAP", 7) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -53422,7 +54627,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_VWAP_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_VWAP_Open(&st, sv_h, sv_l, sv_c, sv_v, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -53434,10 +54639,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_VWAP_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                TA_VWAP_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_VWAP_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_VWAP_Peek(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_VWAP_Update(st, sv_h[t], sv_l[t], sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -53604,7 +54815,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_VWMA", 7) == 0 ) {
@@ -53612,6 +54823,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -53695,7 +54907,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_VWMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_VWMA_Open(&st, sv_c, sv_v, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -53707,10 +54919,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_VWMA_Peek(st, sv_c[t], sv_v[t], &pk0);
+                TA_VWMA_Peek(st, sv_c[t], sv_v[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_VWMA_Peek(st, sv_c[t - 1], sv_v[t - 1], &rp0);
+                   TA_VWMA_Peek(st, sv_c[t], sv_v[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_VWMA_Update(st, sv_c[t], sv_v[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -53877,13 +55095,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_WAD", 6) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -53967,7 +55186,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_WAD_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_WAD_Open(&st, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -53979,10 +55198,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_WAD_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_WAD_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_WAD_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_WAD_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_WAD_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -54149,13 +55374,14 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_WCLPRICE", 11) == 0 ) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -54239,7 +55465,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_WCLPRICE_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_WCLPRICE_Open(&st, sv_h, sv_l, sv_c, P, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -54251,10 +55477,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_WCLPRICE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_WCLPRICE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_WCLPRICE_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_WCLPRICE_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_WCLPRICE_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -54421,7 +55653,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_WILLR", 8) == 0 ) {
@@ -54429,6 +55661,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -54512,7 +55745,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_WILLR_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_WILLR_Open(&st, sv_h, sv_l, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -54524,10 +55757,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_WILLR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                TA_WILLR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_WILLR_Peek(st, sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0);
+                   TA_WILLR_Peek(st, sv_h[t], sv_l[t], sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_WILLR_Update(st, sv_h[t], sv_l[t], sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -54694,7 +55933,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_WMA", 6) == 0 ) {
@@ -54702,6 +55941,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         TA_RetCode rc;
         int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
         int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
         int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
         int valueChecked = 0, valueOk = 1, valueLegs = 0;
         const char *valueBad = "-";
@@ -54785,7 +56025,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
             double bv = 0.0, sv = 0.0;
             TA_WMA_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
             rc = TA_WMA_Open(&st, sv_c, P, optInTimePeriod, &v0);
             if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
             if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
@@ -54797,10 +56037,16 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
             }
             for( t = P; ok && t < svN; t++ ) {
-                int doPeek = ((t % SV_PEEK_EVERY) == 0);
-                if( doPeek ) TA_WMA_Peek(st, sv_c[t], &pk0);
+                TA_WMA_Peek(st, sv_c[t], &pk0);
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   TA_WMA_Peek(st, sv_c[t - 1], &rp0);
+                   TA_WMA_Peek(st, sv_c[t], &rp0);
+                   peekReps++;
+                   if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                }
                 TA_WMA_Update(st, sv_c[t], &v0);
-                if( doPeek && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if( sv_bitne(pk0, v0) ) pkOk = 0;
                 if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
                 if( ok )
                 {
@@ -54967,7 +56213,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     TA_SetCompatibility((TA_Compatibility)savedCompat);

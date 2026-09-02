@@ -436,16 +436,14 @@ public partial class Core
          double tempVolume = 0.0;
          double tempNVI = 0.0;
          double cur_outReal = sp.cur_outReal;
-         double prevClose = sp.prevClose;
          double prevNVI = sp.prevNVI;
-         double prevVolume = sp.prevVolume;
          tempClose = inClose;
          tempVolume = inVolume;
          /* prevClose != 0 guards the percentage-change division: a zero previous
           * close is a degenerate input that would otherwise emit NaN/Inf; carry
           * the index forward unchanged instead. Never triggers on real prices.
           */
-         if( tempVolume < prevVolume && prevClose != 0.0 ) {
+         if( tempVolume < sp.prevVolume && sp.prevClose != 0.0 ) {
             /* The index is a running product, so it has no upper bound: enough
              * compounding gains push it past the largest double. Keep the last
              * representable value instead of writing +/-Inf, which no caller can
@@ -458,14 +456,12 @@ public partial class Core
              * overflowing one.
              */
             tempNVI = prevNVI;
-            tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
+            tempNVI += (tempClose - sp.prevClose) / sp.prevClose * tempNVI;
             if( (double.IsFinite(tempNVI)) ) {
                prevNVI = tempNVI;
             }
          }
          cur_outReal = prevNVI;
-         prevClose = tempClose;
-         prevVolume = tempVolume;
          return cur_outReal;
       }
 
