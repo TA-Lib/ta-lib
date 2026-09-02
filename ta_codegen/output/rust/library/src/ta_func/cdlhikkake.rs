@@ -729,21 +729,16 @@ impl CdlhikkakeStream {
             let sp = &self.state;
             let outInteger = &mut outInteger;
             let mut cd = sp.cd;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag2_inHigh = sp.lag2_inHigh;
-            let mut lag2_inLow = sp.lag2_inLow;
             let mut patternResult = sp.patternResult;
             let mut savedHigh = sp.savedHigh;
             let mut savedLow = sp.savedLow;
-            if lag1_inHigh < lag2_inHigh &&
-               lag1_inLow > lag2_inLow &&   // 1st + 2nd: lower high and higher low
-               (inHigh < lag1_inHigh && inLow < lag1_inLow || inHigh > lag1_inHigh && inLow > lag1_inLow) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+            if sp.lag1_inHigh < sp.lag2_inHigh &&
+               sp.lag1_inLow > sp.lag2_inLow &&   // 1st + 2nd: lower high and higher low
+               (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
             {
-                patternResult = 100 * (if inHigh < lag1_inHigh { 1 } else { 0 - 1 });
-                savedHigh = lag1_inHigh;
-                savedLow = lag1_inLow;
+                patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
+                savedHigh = sp.lag1_inHigh;
+                savedLow = sp.lag1_inLow;
                 cd = 4;
                 (*outInteger) = (patternResult) as i32;
             } else if cd > 0 &&
@@ -754,14 +749,6 @@ impl CdlhikkakeStream {
             } else {
                 (*outInteger) = 0;
             }
-            if cd > 0 {
-                cd -= 1;
-            }
-            cur_outInteger = (*outInteger);
-            lag2_inHigh = lag1_inHigh;
-            lag1_inHigh = inHigh;
-            lag2_inLow = lag1_inLow;
-            lag1_inLow = inLow;
         }
         Ok(outInteger)
     }

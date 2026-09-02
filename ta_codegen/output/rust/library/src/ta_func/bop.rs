@@ -551,7 +551,6 @@ impl BopStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             // BOP is a fraction of the bar's own range, so it is scale-free and the
             // divisor only has to be positive. An exact test, not the fixed
             // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
@@ -563,7 +562,6 @@ impl BopStream {
             } else {
                 (*outReal) = (inClose - inOpen) / tempReal;
             }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

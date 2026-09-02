@@ -538,9 +538,6 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Peek( const TA_MAXINDEX_Stream *stream, double
       sp->highest = tmp;
    }
    *outInteger= sp->highestIdx;
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outInteger = *outInteger;
    return TA_SUCCESS;
 }
 

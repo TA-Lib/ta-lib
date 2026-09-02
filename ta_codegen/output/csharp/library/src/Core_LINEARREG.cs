@@ -733,7 +733,6 @@ public partial class Core
          trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
          trailingIdx += 1;
          cur_outReal = Math.FusedMultiplyAdd(m, (double)(sp.optInTimePeriod - 1), b);
-         today += 1;
          return cur_outReal;
       }
 

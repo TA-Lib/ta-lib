@@ -981,7 +981,6 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
       {
          *outReal= 0;
       }
-      sp->cur_outReal = *outReal;
    }
    else
    {
@@ -1007,7 +1006,6 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
          sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod;
       }
       *outReal= sp->prevPlusDM;
-      sp->cur_outReal = *outReal;
    }
    return TA_SUCCESS;
 }

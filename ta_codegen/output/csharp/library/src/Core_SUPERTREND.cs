@@ -777,12 +777,10 @@ public partial class Core
          double finalLower = sp.finalLower;
          double finalUpper = sp.finalUpper;
          int isUptrend = sp.isUptrend;
-         double lag1_inClose = sp.lag1_inClose;
          double prevATR = sp.prevATR;
-         double prevClose = sp.prevClose;
          tempLT = inLow;
          tempHT = inHigh;
-         tempCY = lag1_inClose;
+         tempCY = sp.lag1_inClose;
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.Abs(tempCY - tempHT);
@@ -808,10 +806,10 @@ public partial class Core
           * always say which side of the line price is on; both read as invariants
           * and neither is one.
           */
-         if( basicUpper < finalUpper || prevClose > finalUpper ) {
+         if( basicUpper < finalUpper || sp.prevClose > finalUpper ) {
             finalUpper = basicUpper;
          }
-         if( basicLower > finalLower || prevClose < finalLower ) {
+         if( basicLower > finalLower || sp.prevClose < finalLower ) {
             finalLower = basicLower;
          }
          closeToday = inClose;
@@ -836,8 +834,6 @@ public partial class Core
             cur_outReal = finalUpper;
             cur_outInteger = 0 - 1;
          }
-         prevClose = closeToday;
-         lag1_inClose = inClose;
          return new SupertrendValue(cur_outReal, cur_outInteger);
       }
 

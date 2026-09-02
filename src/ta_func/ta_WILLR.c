@@ -1025,9 +1025,6 @@ TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHig
    {
       *outReal= 0.0;
    }
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

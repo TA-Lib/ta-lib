@@ -1114,8 +1114,6 @@ public partial class Core
          prevSignal = Math.FusedMultiplyAdd(smiValue - prevSignal, sp.kSignal, prevSignal);
          cur_outSMI = smiValue;
          cur_outSMISignal = prevSignal;
-         trailingIdx = trailingIdx + 1;
-         today = today + 1;
          return new SmiValue(cur_outSMI, cur_outSMISignal);
       }
 

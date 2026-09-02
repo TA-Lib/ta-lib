@@ -802,12 +802,10 @@ impl CciStream {
             let mut theAverage: f64 = 0.0_f64;
             let mut lastValue: f64 = 0.0_f64;
             let mut j: usize = 0_usize;
-            let mut circBuffer_Idx = sp.circBuffer_Idx;
-            let mut cur_outReal = sp.cur_outReal;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             lastValue = (inHigh + inLow + inClose) / 3_f64;
-            pkSlot0 = circBuffer_Idx as usize;
+            pkSlot0 = sp.circBuffer_Idx as usize;
             pkVal0 = lastValue;
             // Calculate the average for the whole period.
             theAverage = 0.0;
@@ -844,12 +842,6 @@ impl CciStream {
             } else {
                 (*outReal) = 0.0;
             }
-            // Move forward the circular buffer indexes.
-            circBuffer_Idx = circBuffer_Idx + 1;
-            if circBuffer_Idx > sp.maxIdx_circBuffer {
-                circBuffer_Idx = 0;
-            }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

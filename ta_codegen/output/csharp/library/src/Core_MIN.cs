@@ -609,8 +609,6 @@ public partial class Core
             lowest = tmp;
          }
          cur_outReal = lowest;
-         trailingIdx += 1;
-         today += 1;
          return cur_outReal;
       }
 

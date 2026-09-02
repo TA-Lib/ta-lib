@@ -411,11 +411,10 @@
          double tempLT = 0.0;
          double tempHT = 0.0;
          double cur_outReal = sp.cur_outReal;
-         double lag1_inClose = sp.lag1_inClose;
          /* Find the greatest of the 3 values. */
          tempLT = inLow;
          tempHT = inHigh;
-         tempCY = lag1_inClose;
+         tempCY = sp.lag1_inClose;
          greatest = tempHT - tempLT;
          /* val1 */
          val2 = Math.abs(tempCY - tempHT);
@@ -427,7 +426,6 @@
             greatest = val3;
          }
          cur_outReal = greatest;
-         lag1_inClose = inClose;
          return cur_outReal;
       }
 

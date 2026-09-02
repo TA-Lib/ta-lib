@@ -753,21 +753,10 @@ TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_Peek( const TA_CDLSTALLEDPATTERN_Stre
 {
    struct TA_CDLSTALLEDPATTERN_Stream scratch;
    struct TA_CDLSTALLEDPATTERN_Stream *sp = &scratch;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
-   int pkSlot1 = -1;
-   double pkVal1 = 0.0;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   if( sp->ringCap_BodyShortTrailingIdx == 0 )
-   {
-      pkSlot0 = 0;
-      pkVal0 = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
-   }
-   pkSlot1 = sp->ringPos_ShadowVeryShortTrailingIdx;
-   pkVal1 = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && /* 1st white */
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd white */
        ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                   /* 3rd white */
@@ -785,37 +774,6 @@ TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_Peek( const TA_CDLSTALLEDPATTERN_Stre
    } else 
    {
       *outInteger= 0;
-   }
-   sp->BodyShortPeriodTotal += TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose) - ((sp->ringPos_BodyShortTrailingIdx != pkSlot0) ? sp->ring_BodyShortTrailingIdx_derived[sp->ringPos_BodyShortTrailingIdx] : pkVal0);
-   sp->ShadowVeryShortPeriodTotal += TA_STREAM_CANDLERANGE(ShadowVeryShort,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - (((sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - 1) % sp->ringCap_ShadowVeryShortTrailingIdx != pkSlot1) ? sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - 1) % sp->ringCap_ShadowVeryShortTrailingIdx] : pkVal1);
-   sp->cur_outInteger = *outInteger;
-   sp->lag2_inOpen = sp->lag1_inOpen;
-   sp->lag1_inOpen = inOpen;
-   sp->lag2_inHigh = sp->lag1_inHigh;
-   sp->lag1_inHigh = inHigh;
-   sp->lag2_inLow = sp->lag1_inLow;
-   sp->lag1_inLow = inLow;
-   sp->lag2_inClose = sp->lag1_inClose;
-   sp->lag1_inClose = inClose;
-   sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
-   if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
-   {
-      sp->ringPos_BodyLongTrailingIdx = 0;
-   }
-   sp->ringPos_BodyShortTrailingIdx = sp->ringPos_BodyShortTrailingIdx + 1;
-   if( sp->ringPos_BodyShortTrailingIdx >= sp->ringCap_BodyShortTrailingIdx )
-   {
-      sp->ringPos_BodyShortTrailingIdx = 0;
-   }
-   sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
-   if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
-   {
-      sp->ringPos_NearTrailingIdx = 0;
-   }
-   sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
-   {
-      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
    }
    return TA_SUCCESS;
 }

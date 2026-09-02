@@ -796,8 +796,6 @@ impl AroonStream {
             let outAroonDown = &mut outAroonDown;
             let outAroonUp = &mut outAroonUp;
             let mut tmp: f64 = 0.0_f64;
-            let mut cur_outAroonDown = sp.cur_outAroonDown;
-            let mut cur_outAroonUp = sp.cur_outAroonUp;
             let mut highest = sp.highest;
             let mut highestIdx = sp.highestIdx;
             let mut i = sp.i;
@@ -859,10 +857,6 @@ impl AroonStream {
             //       so writing to the output is the last thing being done here.
             (*outAroonUp) = sp.factor * (((sp.optInTimePeriod - (today - highestIdx))) as f64);
             (*outAroonDown) = sp.factor * (((sp.optInTimePeriod - (today - lowestIdx))) as f64);
-            trailingIdx += 1;
-            today += 1;
-            cur_outAroonDown = (*outAroonDown);
-            cur_outAroonUp = (*outAroonUp);
         }
         Ok((outAroonDown, outAroonUp))
     }

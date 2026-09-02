@@ -884,7 +884,6 @@ public partial class Core
             double tempReal = 0.0;
             double diffP = 0.0;
             double diffM = 0.0;
-            double prevClose = sp.prevClose;
             double prevHigh = sp.prevHigh;
             double prevLow = sp.prevLow;
             tempReal = inHigh;
@@ -899,11 +898,11 @@ public partial class Core
                /* Case 2 and 4: +DM=0,-DM=diffM */
                double _true_range_0 = 0;
                double range_0 = prevHigh - prevLow;
-               double tmp_0 = Math.Abs(prevHigh - prevClose);
+               double tmp_0 = Math.Abs(prevHigh - sp.prevClose);
                if( tmp_0 > range_0 ) {
                   range_0 = tmp_0;
                }
-               tmp_0 = Math.Abs(prevLow - prevClose);
+               tmp_0 = Math.Abs(prevLow - sp.prevClose);
                if( tmp_0 > range_0 ) {
                   range_0 = tmp_0;
                }
@@ -917,7 +916,6 @@ public partial class Core
             } else {
                cur_outReal = (double)0.0;
             }
-            prevClose = inClose;
          } else {
             double tempReal = 0.0;
             double diffP = 0.0;

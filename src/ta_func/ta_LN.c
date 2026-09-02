@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_LN_Peek( const TA_LN_Stream *stream, double inReal, dou
    scratch = *stream;
    (void)sp;
    *outReal= log(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

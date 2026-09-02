@@ -1880,7 +1880,6 @@ impl HtTrendmodeStream {
             let mut I1ForOddPrev3 = sp.I1ForOddPrev3;
             let mut Im = sp.Im;
             let mut Re = sp.Re;
-            let mut cur_outInteger = sp.cur_outInteger;
             let mut daysInTrend = sp.daysInTrend;
             let mut hilbertIdx = sp.hilbertIdx;
             let mut iTrend1 = sp.iTrend1;
@@ -1908,13 +1907,9 @@ impl HtTrendmodeStream {
             let mut prev_jQ_Odd = sp.prev_jQ_Odd;
             let mut prev_jQ_input_Even = sp.prev_jQ_input_Even;
             let mut prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-            let mut ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
             let mut sine = sp.sine;
             let mut smoothPeriod = sp.smoothPeriod;
-            let mut smoothPrice_Idx = sp.smoothPrice_Idx;
-            let mut streamParity = sp.streamParity;
             let mut trailingWMAValue = sp.trailingWMAValue;
-            let mut winPos_j = sp.winPos_j;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
@@ -1925,21 +1920,21 @@ impl HtTrendmodeStream {
                 pkSlot0 = 0;
                 pkVal0 = inReal;
             }
-            pkSlot1 = winPos_j as usize;
+            pkSlot1 = sp.winPos_j as usize;
             pkVal1 = inReal;
             adjustedPrevPeriod = (0.075 as f64).mul_add(period, 0.54);
             todayValue = inReal;
             periodWMASub += todayValue;
             periodWMASub -= trailingWMAValue;
             periodWMASum += todayValue * 4.0;
-            trailingWMAValue = (if (ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] } else { pkVal0 });
+            trailingWMAValue = (if (sp.ringPos_trailingWMAIdx as usize) != pkSlot0 { sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] } else { pkVal0 });
             smoothedValue = periodWMASum * 0.1;
             periodWMASum -= periodWMASub;
             // Remember the smoothedValue into the smoothPrice
             // circular buffer.
-            pkSlot2 = smoothPrice_Idx as usize;
+            pkSlot2 = sp.smoothPrice_Idx as usize;
             pkVal2 = smoothedValue;
-            if streamParity == 0 {
+            if sp.streamParity == 0 {
                 // Do the Hilbert Transforms for even price bar
                 hilbertTempReal = sp.a * smoothedValue;
                 detrender = 0_f64 - sp.detrender_Even[hilbertIdx];
@@ -2061,7 +2056,7 @@ impl HtTrendmodeStream {
             imagPart = 0.0;
             // idx is used to iterate for up to 50 of the last
             // value of smoothPrice.
-            idx = smoothPrice_Idx;
+            idx = sp.smoothPrice_Idx;
             // for( i = 0; ((i) as i32) < DCPeriodInt; i += 1 )
             i = 0;
             while ((i) as i32) < DCPeriodInt {
@@ -2118,7 +2113,7 @@ impl HtTrendmodeStream {
             j = 0;
             while j < 50 {
                 if ((j) as i32) < DCPeriodInt {
-                    tempReal += (if ((if winPos_j + sp.winCap_j - j >= sp.winCap_j { winPos_j + sp.winCap_j - j - sp.winCap_j } else { winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if winPos_j + sp.winCap_j - j >= sp.winCap_j { winPos_j + sp.winCap_j - j - sp.winCap_j } else { winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 });
+                    tempReal += (if ((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j }) as usize) != pkSlot1 { sp.win_j_inReal[((if sp.winPos_j + sp.winCap_j - j >= sp.winCap_j { sp.winPos_j + sp.winCap_j - j - sp.winCap_j } else { sp.winPos_j + sp.winCap_j - j })) as usize] } else { pkVal1 });
                 }
                 j += 1;
             }
@@ -2144,26 +2139,11 @@ impl HtTrendmodeStream {
             if smoothPeriod != 0.0 && (tempReal > 0.67 * 360.0 / smoothPeriod && tempReal < 1.5 * 360.0 / smoothPeriod) {
                 trend = 0;
             }
-            tempReal = (if (smoothPrice_Idx as usize) != pkSlot2 { sp.cb_smoothPrice[smoothPrice_Idx] } else { pkVal2 });
+            tempReal = (if (sp.smoothPrice_Idx as usize) != pkSlot2 { sp.cb_smoothPrice[sp.smoothPrice_Idx] } else { pkVal2 });
             if trendline != 0.0 && ((tempReal - trendline) / trendline).abs() >= 0.015 {
                 trend = 1;
             }
             (*outInteger) = (trend) as i32;
-            // Ooof... let's do the next price bar now!
-            smoothPrice_Idx = smoothPrice_Idx + 1;
-            if smoothPrice_Idx > sp.maxIdx_smoothPrice {
-                smoothPrice_Idx = 0;
-            }
-            cur_outInteger = (*outInteger);
-            ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
-            if ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx {
-                ringPos_trailingWMAIdx = 0;
-            }
-            winPos_j = winPos_j + 1;
-            if winPos_j >= sp.winCap_j {
-                winPos_j = 0;
-            }
-            streamParity = 1 - streamParity;
         }
         Ok(outInteger)
     }

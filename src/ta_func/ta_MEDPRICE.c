@@ -277,7 +277,6 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Peek( const TA_MEDPRICE_Stream *stream, double
    scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow) / 2.0;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

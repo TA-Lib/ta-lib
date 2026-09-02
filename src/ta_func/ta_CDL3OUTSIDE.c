@@ -410,11 +410,6 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Peek( const TA_CDL3OUTSIDE_Stream *stream, 
    {
       *outInteger= 0;
    }
-   sp->cur_outInteger = *outInteger;
-   sp->lag2_inOpen = sp->lag1_inOpen;
-   sp->lag1_inOpen = inOpen;
-   sp->lag2_inClose = sp->lag1_inClose;
-   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

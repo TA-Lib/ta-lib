@@ -773,7 +773,6 @@ impl TrixStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut prevEMA1 = sp.prevEMA1;
             let mut prevEMA2 = sp.prevEMA2;
             let mut prevEMA3 = sp.prevEMA3;
@@ -786,7 +785,6 @@ impl TrixStream {
             } else {
                 (*outReal) = 0.0;
             }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

@@ -741,7 +741,6 @@ impl MinStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tmp: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut i = sp.i;
             let mut lowest = sp.lowest;
             let mut lowestIdx = sp.lowestIdx;
@@ -775,9 +774,6 @@ impl MinStream {
                 lowest = tmp;
             }
             (*outReal) = lowest;
-            trailingIdx += 1;
-            today += 1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

@@ -760,14 +760,6 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Peek( const TA_ACCBANDS_Stream *stream, double
    *outRealUpperBand= tempUpper / (double)sp->optInTimePeriod;
    *outRealMiddleBand= tempMiddle / (double)sp->optInTimePeriod;
    *outRealLowerBand= tempLower / (double)sp->optInTimePeriod;
-   sp->cur_outRealUpperBand = *outRealUpperBand;
-   sp->cur_outRealMiddleBand = *outRealMiddleBand;
-   sp->cur_outRealLowerBand = *outRealLowerBand;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-   {
-      sp->ringPos_trailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

@@ -1313,16 +1313,6 @@ TA_LIB_API TA_RetCode TA_CORREL_Peek( const TA_CORREL_Stream *stream, double inR
    {
       *outReal= 0.0;
    }
-   /* Remove the trailing values (prepares the next window). */
-   sp->leavingX = trailingX * trailingX;
-   sp->leavingY = trailingY * trailingY;
-   sumX -= trailingX;
-   sumX2 -= sp->leavingX;
-   sumXY -= trailingX * trailingY;
-   sumY -= trailingY;
-   sumY2 -= sp->leavingY;
-   sp->today += 1;
-   sp->cur_outReal = *outReal;
    sp->sumXY = sumXY;
    sp->sumX = sumX;
    sp->sumY = sumY;

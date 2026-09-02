@@ -688,8 +688,6 @@
          double tempReal = 0.0;
          double cur_outReal = sp.cur_outReal;
          int oscBuffer_Idx = sp.oscBuffer_Idx;
-         int ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx;
-         int ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx;
          double sumFast = sp.sumFast;
          double sumSignal = sp.sumSignal;
          double sumSlow = sp.sumSlow;
@@ -714,8 +712,8 @@
           * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
           */
          osc = sumFast / (double)sp.optInFastPeriod - sumSlow / (double)sp.optInSlowPeriod;
-         sumFast -= (ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[ringPos_trailingFastIdx] : pkVal0;
-         sumSlow -= (ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[ringPos_trailingSlowIdx] : pkVal1;
+         sumFast -= (sp.ringPos_trailingFastIdx != pkSlot0) ? sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] : pkVal0;
+         sumSlow -= (sp.ringPos_trailingSlowIdx != pkSlot1) ? sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] : pkVal1;
          /* Today's oscillator enters the signal window at its own slot, and the
           * bar leaving that window is read only after the ring has advanced onto
           * it -- writing first is what makes the slot the loop is about to
@@ -739,14 +737,6 @@
           * the collision ao.c has to guard against.
           */
          cur_outReal = tempReal;
-         ringPos_trailingFastIdx = ringPos_trailingFastIdx + 1;
-         if( ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
-            ringPos_trailingFastIdx = 0;
-         }
-         ringPos_trailingSlowIdx = ringPos_trailingSlowIdx + 1;
-         if( ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
-            ringPos_trailingSlowIdx = 0;
-         }
          return cur_outReal;
       }
 

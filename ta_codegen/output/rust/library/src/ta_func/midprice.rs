@@ -881,7 +881,6 @@ impl MidpriceStream {
             let outReal = &mut outReal;
             let mut tmpLow: f64 = 0.0_f64;
             let mut tmpHigh: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut highest = sp.highest;
             let mut highestIdx = sp.highestIdx;
             let mut i = sp.i;
@@ -938,9 +937,6 @@ impl MidpriceStream {
                 lowest = tmpLow;
             }
             (*outReal) = (highest + lowest) / 2.0;
-            trailingIdx += 1;
-            today += 1;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

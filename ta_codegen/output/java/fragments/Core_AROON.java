@@ -598,8 +598,6 @@
           */
          cur_outAroonUp = sp.factor * (sp.optInTimePeriod - (today - highestIdx));
          cur_outAroonDown = sp.factor * (sp.optInTimePeriod - (today - lowestIdx));
-         trailingIdx += 1;
-         today += 1;
          out.aroonDown = cur_outAroonDown;
          out.aroonUp = cur_outAroonUp;
       }

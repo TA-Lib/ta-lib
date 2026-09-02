@@ -641,23 +641,21 @@ impl ImiStream {
             let mut i: usize = 0_usize;
             let mut close: f64 = 0.0_f64;
             let mut open: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut winPos_i = sp.winPos_i;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
             let mut pkVal1: f64 = 0.0_f64;
-            pkSlot0 = winPos_i as usize;
+            pkSlot0 = sp.winPos_i as usize;
             pkVal0 = inOpen;
-            pkSlot1 = winPos_i as usize;
+            pkSlot1 = sp.winPos_i as usize;
             pkVal1 = inClose;
             upsum = 0.0;
             downsum = 0.0;
             // for( i = sp.optInTimePeriod - 1; i >= 0; i -= 1 )
             i = (sp.optInTimePeriod - 1) as usize;
             loop {
-                close = (if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inClose[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
-                open = (if ((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inOpen[((if winPos_i + sp.winCap_i - i >= sp.winCap_i { winPos_i + sp.winCap_i - i - sp.winCap_i } else { winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
+                close = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot1 { sp.win_i_inClose[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal1 });
+                open = (if ((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i }) as usize) != pkSlot0 { sp.win_i_inOpen[((if sp.winPos_i + sp.winCap_i - i >= sp.winCap_i { sp.winPos_i + sp.winCap_i - i - sp.winCap_i } else { sp.winPos_i + sp.winCap_i - i })) as usize] } else { pkVal0 });
                 if close > open {
                     upsum += close - open;
                 } else {
@@ -669,11 +667,6 @@ impl ImiStream {
                 (*outReal) = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
                 if i == 0 { break; }
                 i -= 1;
-            }
-            cur_outReal = (*outReal);
-            winPos_i = winPos_i + 1;
-            if winPos_i >= sp.winCap_i {
-                winPos_i = 0;
             }
         }
         Ok(outReal)

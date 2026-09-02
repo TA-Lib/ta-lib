@@ -664,17 +664,6 @@ TA_LIB_API TA_RetCode TA_AO_Peek( const TA_AO_Stream *stream, double inHigh, dou
    sp->sumFast -= (sp->ringPos_trailingFastIdx != pkSlot0) ? sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] : pkVal0;
    sp->sumSlow -= (sp->ringPos_trailingSlowIdx != pkSlot1) ? sp->ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx] : pkVal1;
    *outReal= tempReal;
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx + 1;
-   if( sp->ringPos_trailingFastIdx >= sp->ringCap_trailingFastIdx )
-   {
-      sp->ringPos_trailingFastIdx = 0;
-   }
-   sp->ringPos_trailingSlowIdx = sp->ringPos_trailingSlowIdx + 1;
-   if( sp->ringPos_trailingSlowIdx >= sp->ringCap_trailingSlowIdx )
-   {
-      sp->ringPos_trailingSlowIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

@@ -637,8 +637,6 @@ public partial class Core
           *       so writing to the output is the last thing being done here.
           */
          cur_outReal = aroon;
-         trailingIdx += 1;
-         today += 1;
          return cur_outReal;
       }
 

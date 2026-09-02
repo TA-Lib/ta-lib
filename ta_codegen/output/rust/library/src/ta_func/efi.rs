@@ -865,22 +865,18 @@ impl EfiStream {
             let outReal = &mut outReal;
             if sp.optInTimePeriod == 1 {
                 let mut force: f64 = 0.0_f64;
-                let mut cur_outReal = sp.cur_outReal;
                 let mut prevClose = sp.prevClose;
                 force = (inClose - prevClose) * inVolume;
                 prevClose = inClose;
                 (*outReal) = force;
-                cur_outReal = (*outReal);
             } else {
                 let mut force: f64 = 0.0_f64;
-                let mut cur_outReal = sp.cur_outReal;
                 let mut prevClose = sp.prevClose;
                 let mut prevMA = sp.prevMA;
                 force = (inClose - prevClose) * inVolume;
                 prevClose = inClose;
                 prevMA = (force - prevMA as f64).mul_add(sp.optInK_1, prevMA);
                 (*outReal) = prevMA;
-                cur_outReal = (*outReal);
             }
         }
         Ok(outReal)

@@ -847,11 +847,9 @@ impl CmouStream {
             let mut sum: f64 = 0.0_f64;
             let mut diff: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut downSum = sp.downSum;
             let mut nullRun = sp.nullRun;
             let mut prevValue = sp.prevValue;
-            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut trailingValue = sp.trailingValue;
             let mut upSum = sp.upSum;
             let mut pkSlot0: usize = usize::MAX;
@@ -864,7 +862,7 @@ impl CmouStream {
             // inReal[trailingIdx-1] comes from the cache (already overwritten when
             // outReal == inReal); inReal[trailingIdx] is read here, before this
             // iteration writes outReal[outIdx], so it is still the original price.
-            tempReal = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 });
+            tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 });
             diff = tempReal - trailingValue;
             trailingValue = tempReal;
             if diff > 0.0 {
@@ -899,11 +897,6 @@ impl CmouStream {
                 (*outReal) = 100.0 * (upSum - downSum) / sum;
             } else {
                 (*outReal) = 0.0;
-            }
-            cur_outReal = (*outReal);
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                ringPos_trailingIdx = 0;
             }
         }
         Ok(outReal)

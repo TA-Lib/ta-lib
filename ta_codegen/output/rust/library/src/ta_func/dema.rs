@@ -826,7 +826,6 @@ impl DemaStream {
             prevEMA1 = (inReal - prevEMA1 as f64).mul_add(sp.optInK_1, prevEMA1);
             prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(sp.optInK_1, prevEMA2);
             (*outReal) = 2.0 * prevEMA1 - prevEMA2;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

@@ -472,9 +472,7 @@ impl ExpStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = (inReal).exp();
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

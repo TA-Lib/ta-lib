@@ -969,19 +969,6 @@ TA_LIB_API TA_RetCode TA_WMA_Peek( const TA_WMA_Stream *stream, double inReal, d
    sp->trailingValue = (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
    /* Calculate the WMA for this price bar. */
    *outReal= periodSum / sp->divider;
-   /* Prepare the periodSum for the next iteration. */
-   periodSum -= periodSub;
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-   {
-      sp->ringPos_trailingIdx = 0;
-   }
-   sp->winPos_j = sp->winPos_j + 1;
-   if( sp->winPos_j >= sp->winCap_j )
-   {
-      sp->winPos_j = 0;
-   }
    sp->periodSum = periodSum;
    sp->periodSub = periodSub;
    return TA_SUCCESS;

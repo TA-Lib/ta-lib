@@ -829,12 +829,10 @@ impl CmfStream {
             let mut close: f64 = 0.0_f64;
             let mut tmp: f64 = 0.0_f64;
             let mut mfv: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut mfv_Idx = sp.mfv_Idx;
             let mut sumMFV = sp.sumMFV;
             let mut sumVol = sp.sumVol;
-            sumMFV -= sp.cb_mfv_flow[mfv_Idx];
-            sumVol -= sp.cb_mfv_volume[mfv_Idx];
+            sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
+            sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
             high = inHigh;
             low = inLow;
             close = inClose;
@@ -851,11 +849,6 @@ impl CmfStream {
             } else {
                 (*outReal) = 0.0;
             }
-            mfv_Idx = mfv_Idx + 1;
-            if mfv_Idx > sp.maxIdx_mfv {
-                mfv_Idx = 0;
-            }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

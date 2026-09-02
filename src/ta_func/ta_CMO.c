@@ -951,7 +951,6 @@ TA_LIB_API TA_RetCode TA_CMO_Peek( const TA_CMO_Stream *stream, double inReal, d
    {
       *outReal= 0.0;
    }
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

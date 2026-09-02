@@ -858,7 +858,6 @@ public partial class Core
          double minusDI = 0.0;
          double plusDI = 0.0;
          double cur_outReal = sp.cur_outReal;
-         double lastOut_outReal = sp.lastOut_outReal;
          double prevClose = sp.prevClose;
          double prevHigh = sp.prevHigh;
          double prevLow = sp.prevLow;
@@ -907,12 +906,11 @@ public partial class Core
             if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
                cur_outReal = (100.0 * (Math.Abs(minusDI - plusDI) / tempReal));
             } else {
-               cur_outReal = lastOut_outReal;
+               cur_outReal = sp.lastOut_outReal;
             }
          } else {
-            cur_outReal = lastOut_outReal;
+            cur_outReal = sp.lastOut_outReal;
          }
-         lastOut_outReal = cur_outReal;
          return cur_outReal;
       }
 

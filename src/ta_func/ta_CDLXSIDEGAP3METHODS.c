@@ -429,14 +429,6 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Peek( const TA_CDLXSIDEGAP3METHODS_
    {
       *outInteger= 0;
    }
-   /* add the current range and subtract the first range: this is done after the pattern recognition
-    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-    */
-   sp->cur_outInteger = *outInteger;
-   sp->lag2_inOpen = sp->lag1_inOpen;
-   sp->lag1_inOpen = inOpen;
-   sp->lag2_inClose = sp->lag1_inClose;
-   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

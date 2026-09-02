@@ -1537,25 +1537,6 @@ impl CdlstalledpatternStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut BodyShortPeriodTotal = sp.BodyShortPeriodTotal;
-            let mut ShadowVeryShortPeriodTotal = sp.ShadowVeryShortPeriodTotal;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut lag2_inClose = sp.lag2_inClose;
-            let mut lag2_inHigh = sp.lag2_inHigh;
-            let mut lag2_inLow = sp.lag2_inLow;
-            let mut lag2_inOpen = sp.lag2_inOpen;
-            let mut ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-            let mut ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
-            let mut ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
-            let mut ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
-            let mut pkSlot1: usize = usize::MAX;
-            let mut pkVal1: f64 = 0.0_f64;
             #[allow(non_snake_case)]
             let BodyLong_rangeType: i32 = self.cs_body_long.range_type as i32;
             #[allow(non_snake_case)]
@@ -1580,115 +1561,22 @@ impl CdlstalledpatternStream {
             let ShadowVeryShort_avgPeriod: i32 = self.cs_shadow_very_short.avg_period;
             #[allow(non_snake_case)]
             let ShadowVeryShort_factor: f64 = self.cs_shadow_very_short.factor;
-            if sp.ringCap_BodyShortTrailingIdx == 0 {
-                pkSlot0 = 0;
-                let mut _candlerange_21: f64;
-                match BodyShort_rangeType {
-                    0 => {
-                        _candlerange_21 = (inClose - inOpen).abs();
-                    }
-                    1 => {
-                        _candlerange_21 = inHigh - inLow;
-                    }
-                    2 => {
-                        _candlerange_21 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                    }
-                    _ => {
-                        _candlerange_21 = 0.0;
-                    }
-                }
-                pkVal0 = _candlerange_21;
-            }
-            pkSlot1 = ringPos_ShadowVeryShortTrailingIdx as usize;
-            let mut _candlerange_22: f64;
-            match ShadowVeryShort_rangeType {
-                0 => {
-                    _candlerange_22 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_22 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_22 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_22 = 0.0;
-                }
-            }
-            pkVal1 = _candlerange_22;
-            if (if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 }) == 1 && // 1st white
-               (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 2nd white
-               (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&           // 3rd white
-               inClose > lag1_inClose &&
-               lag1_inClose > lag2_inClose &&                                // consecutive higher closes
-               (lag2_inClose - lag2_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal[2]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st: long real body
-               (lag1_inClose - lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal[1]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd: long real body
-               (lag1_inHigh - (if lag1_inClose >= lag1_inOpen { lag1_inClose } else { lag1_inOpen })) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short upper shadow
-               lag1_inOpen > lag2_inOpen &&                                  // opens within/near 1st real body
-               lag1_inOpen <= lag2_inClose + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (inClose - inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd: small real body
-               inOpen >= lag1_inClose - (inClose - inOpen).abs() - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[1]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) // rides on the shoulder of 2nd real body
+            if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && // 1st white
+               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 2nd white
+               (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&                 // 3rd white
+               inClose > sp.lag1_inClose &&
+               sp.lag1_inClose > sp.lag2_inClose &&                                // consecutive higher closes
+               (sp.lag2_inClose - sp.lag2_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal[2]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st: long real body
+               (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal[1]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd: long real body
+               (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (sp.ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short upper shadow
+               sp.lag1_inOpen > sp.lag2_inOpen &&                                  // opens within/near 1st real body
+               sp.lag1_inOpen <= sp.lag2_inClose + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
+               (inClose - inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd: small real body
+               inOpen >= sp.lag1_inClose - (inClose - inOpen).abs() - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal[1]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) // rides on the shoulder of 2nd real body
             {
                 (*outInteger) = (0 - 100) as i32;
             } else {
                 (*outInteger) = 0;
-            }
-            let mut _candlerange_23: f64;
-            match BodyShort_rangeType {
-                0 => {
-                    _candlerange_23 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_23 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_23 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_23 = 0.0;
-                }
-            }
-            BodyShortPeriodTotal += _candlerange_23 - (if (ringPos_BodyShortTrailingIdx as usize) != pkSlot0 { sp.ring_BodyShortTrailingIdx_derived[ringPos_BodyShortTrailingIdx] } else { pkVal0 });
-            let mut _candlerange_24: f64;
-            match ShadowVeryShort_rangeType {
-                0 => {
-                    _candlerange_24 = (lag1_inClose - lag1_inOpen).abs();
-                }
-                1 => {
-                    _candlerange_24 = lag1_inHigh - lag1_inLow;
-                }
-                2 => {
-                    _candlerange_24 = (lag1_inHigh - (if lag1_inClose >= lag1_inOpen { lag1_inClose } else { lag1_inOpen })) + ((if lag1_inClose >= lag1_inOpen { lag1_inOpen } else { lag1_inClose }) - lag1_inLow);
-                }
-                _ => {
-                    _candlerange_24 = 0.0;
-                }
-            }
-            ShadowVeryShortPeriodTotal += _candlerange_24 - (if (((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize) != pkSlot1 { sp.ring_ShadowVeryShortTrailingIdx_derived[((ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] } else { pkVal1 });
-            cur_outInteger = (*outInteger);
-            lag2_inOpen = lag1_inOpen;
-            lag1_inOpen = inOpen;
-            lag2_inHigh = lag1_inHigh;
-            lag1_inHigh = inHigh;
-            lag2_inLow = lag1_inLow;
-            lag1_inLow = inLow;
-            lag2_inClose = lag1_inClose;
-            lag1_inClose = inClose;
-            ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
-            if ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-                ringPos_BodyLongTrailingIdx = 0;
-            }
-            ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
-            if ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
-                ringPos_BodyShortTrailingIdx = 0;
-            }
-            ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
-            if ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
-                ringPos_NearTrailingIdx = 0;
-            }
-            ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
-            if ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
-                ringPos_ShadowVeryShortTrailingIdx = 0;
             }
         }
         Ok(outInteger)

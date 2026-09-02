@@ -273,7 +273,6 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_Peek( const TA_TYPPRICE_Stream *stream, double
    scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow + inClose) / 3.0;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

@@ -610,8 +610,6 @@ public partial class Core
          }
          cur_outMaxIdx = highestIdx;
          cur_outMinIdx = lowestIdx;
-         trailingIdx += 1;
-         today += 1;
          return new MinmaxindexValue(cur_outMinIdx, cur_outMaxIdx);
       }
 

@@ -1231,8 +1231,6 @@ impl UltoscStream {
             let mut b1Total = sp.b1Total;
             let mut b2Total = sp.b2Total;
             let mut b3Total = sp.b3Total;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut lag1_inClose = sp.lag1_inClose;
             let mut nullRun = sp.nullRun;
             let mut term_Idx = sp.term_Idx;
             let mut trailingPos1 = sp.trailingPos1;
@@ -1244,7 +1242,7 @@ impl UltoscStream {
             // Add on today's terms
             tempLT = inLow;
             tempHT = inHigh;
-            tempCY = lag1_inClose;
+            tempCY = sp.lag1_inClose;
             trueLow = (tempLT).min(tempCY);
             closeMinusTrueLow = inClose - trueLow;
             trueRange = tempHT - tempLT;
@@ -1328,9 +1326,6 @@ impl UltoscStream {
             // to have the input array to be also the output
             // array.
             (*outReal) = 100.0 * (output / 7.0);
-            // Increment indexes
-            cur_outReal = (*outReal);
-            lag1_inClose = inClose;
         }
         Ok(outReal)
     }

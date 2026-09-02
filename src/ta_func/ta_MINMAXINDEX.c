@@ -689,10 +689,6 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_Peek( const TA_MINMAXINDEX_Stream *stream, 
    }
    *outMaxIdx= sp->highestIdx;
    *outMinIdx= sp->lowestIdx;
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outMinIdx = *outMinIdx;
-   sp->cur_outMaxIdx = *outMaxIdx;
    return TA_SUCCESS;
 }
 

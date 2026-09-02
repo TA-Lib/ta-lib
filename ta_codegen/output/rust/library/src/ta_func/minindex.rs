@@ -658,7 +658,6 @@ impl MinindexStream {
             let sp = &self.state;
             let outInteger = &mut outInteger;
             let mut tmp: f64 = 0.0_f64;
-            let mut cur_outInteger = sp.cur_outInteger;
             let mut i = sp.i;
             let mut lowest = sp.lowest;
             let mut lowestIdx = sp.lowestIdx;
@@ -692,9 +691,6 @@ impl MinindexStream {
                 lowest = tmp;
             }
             (*outInteger) = (lowestIdx) as i32;
-            trailingIdx += 1;
-            today += 1;
-            cur_outInteger = (*outInteger);
         }
         Ok(outInteger)
     }

@@ -672,7 +672,6 @@ TA_LIB_API TA_RetCode TA_TRIX_Peek( const TA_TRIX_Stream *stream, double inReal,
    {
       *outReal= 0.0;
    }
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

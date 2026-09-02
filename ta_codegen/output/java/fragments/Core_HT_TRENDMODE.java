@@ -1343,13 +1343,9 @@
          double prev_jQ_Odd = sp.prev_jQ_Odd;
          double prev_jQ_input_Even = sp.prev_jQ_input_Even;
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
          double sine = sp.sine;
          double smoothPeriod = sp.smoothPeriod;
-         int smoothPrice_Idx = sp.smoothPrice_Idx;
-         int streamParity = sp.streamParity;
          double trailingWMAValue = sp.trailingWMAValue;
-         int winPos_j = sp.winPos_j;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          int pkSlot1 = -1;
@@ -1360,22 +1356,22 @@
             pkSlot0 = 0;
             pkVal0 = inReal;
          }
-         pkSlot1 = winPos_j;
+         pkSlot1 = sp.winPos_j;
          pkVal1 = inReal;
          adjustedPrevPeriod = Math.fma(0.075, period, 0.54);
          todayValue = inReal;
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
          /* Remember the smoothedValue into the smoothPrice
           * circular buffer.
           */
-         pkSlot2 = smoothPrice_Idx;
+         pkSlot2 = sp.smoothPrice_Idx;
          pkVal2 = smoothedValue;
-         if( streamParity == 0 ) {
+         if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
             detrender = 0 - sp.detrender_Even[hilbertIdx];
@@ -1500,7 +1496,7 @@
          /* idx is used to iterate for up to 50 of the last
           * value of smoothPrice.
           */
-         idx = smoothPrice_Idx;
+         idx = sp.smoothPrice_Idx;
          for( i = 0; i < DCPeriodInt; i += 1 ) {
             tempReal = (double)i * sp.constDeg2RadBy360 / (double)DCPeriodInt;
             tempReal2 = (idx != pkSlot2) ? sp.cb_smoothPrice[idx] : pkVal2;
@@ -1554,7 +1550,7 @@
          tempReal = 0.0;
          for( j = 0; j < 50; j += 1 ) {
             if( j < DCPeriodInt ) {
-               tempReal += (((winPos_j + sp.winCap_j - j >= sp.winCap_j) ? winPos_j + sp.winCap_j - j - sp.winCap_j : winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(winPos_j + sp.winCap_j - j >= sp.winCap_j) ? winPos_j + sp.winCap_j - j - sp.winCap_j : winPos_j + sp.winCap_j - j] : pkVal1;
+               tempReal += (((sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j) != pkSlot1) ? sp.win_j_inReal[(sp.winPos_j + sp.winCap_j - j >= sp.winCap_j) ? sp.winPos_j + sp.winCap_j - j - sp.winCap_j : sp.winPos_j + sp.winCap_j - j] : pkVal1;
             }
          }
          if( DCPeriodInt > 0 ) {
@@ -1579,25 +1575,11 @@
          if( smoothPeriod != 0.0 && (tempReal > 0.67 * 360.0 / smoothPeriod && tempReal < 1.5 * 360.0 / smoothPeriod) ) {
             trend = 0;
          }
-         tempReal = (smoothPrice_Idx != pkSlot2) ? sp.cb_smoothPrice[smoothPrice_Idx] : pkVal2;
+         tempReal = (sp.smoothPrice_Idx != pkSlot2) ? sp.cb_smoothPrice[sp.smoothPrice_Idx] : pkVal2;
          if( trendline != 0.0 && Math.abs((tempReal - trendline) / trendline) >= 0.015 ) {
             trend = 1;
          }
          cur_outInteger = trend;
-         /* Ooof... let's do the next price bar now! */
-         smoothPrice_Idx = smoothPrice_Idx + 1;
-         if( smoothPrice_Idx > sp.maxIdx_smoothPrice ) {
-            smoothPrice_Idx = 0;
-         }
-         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
-         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
-            ringPos_trailingWMAIdx = 0;
-         }
-         winPos_j = winPos_j + 1;
-         if( winPos_j >= sp.winCap_j ) {
-            winPos_j = 0;
-         }
-         streamParity = 1 - streamParity;
          return cur_outInteger;
       }
 

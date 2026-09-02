@@ -449,8 +449,6 @@ TA_LIB_API TA_RetCode TA_TRANGE_Peek( const TA_TRANGE_Stream *stream, double inH
       greatest = val3;
    }
    *outReal= greatest;
-   sp->cur_outReal = *outReal;
-   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

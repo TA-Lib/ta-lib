@@ -571,8 +571,6 @@
          }
          cur_outMaxIdx = highestIdx;
          cur_outMinIdx = lowestIdx;
-         trailingIdx += 1;
-         today += 1;
          out.minIdx = cur_outMinIdx;
          out.maxIdx = cur_outMaxIdx;
       }

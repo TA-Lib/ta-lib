@@ -762,12 +762,6 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    {
       *outReal= 0.0;
    }
-   sp->mfv_Idx = sp->mfv_Idx + 1;
-   if( sp->mfv_Idx > sp->maxIdx_mfv )
-   {
-      sp->mfv_Idx = 0;
-   }
-   sp->cur_outReal = *outReal;
    sp->sumMFV = sumMFV;
    sp->sumVol = sumVol;
    return TA_SUCCESS;

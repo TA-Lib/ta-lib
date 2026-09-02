@@ -330,8 +330,6 @@ TA_LIB_API TA_RetCode TA_OBV_Peek( const TA_OBV_Stream *stream, double inReal, d
       sp->prevOBV -= inVolume;
    }
    *outReal= sp->prevOBV;
-   sp->prevReal = tempReal;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

@@ -582,23 +582,6 @@ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Peek( const TA_CDL3BLACKCROWS_Stream *st
    {
       *outInteger= 0;
    }
-   sp->cur_outInteger = *outInteger;
-   sp->lag3_inOpen = sp->lag2_inOpen;
-   sp->lag2_inOpen = sp->lag1_inOpen;
-   sp->lag1_inOpen = inOpen;
-   sp->lag3_inHigh = sp->lag2_inHigh;
-   sp->lag2_inHigh = sp->lag1_inHigh;
-   sp->lag1_inHigh = inHigh;
-   sp->lag2_inLow = sp->lag1_inLow;
-   sp->lag1_inLow = inLow;
-   sp->lag3_inClose = sp->lag2_inClose;
-   sp->lag2_inClose = sp->lag1_inClose;
-   sp->lag1_inClose = inClose;
-   sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
-   {
-      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_COSH_Peek( const TA_COSH_Stream *stream, double inReal,
    scratch = *stream;
    (void)sp;
    *outReal= cosh(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

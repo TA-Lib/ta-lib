@@ -503,9 +503,7 @@ impl TyppriceStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = (inHigh + inLow + inClose) / 3.0;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

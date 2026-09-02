@@ -260,7 +260,6 @@ TA_LIB_API TA_RetCode TA_SUB_Peek( const TA_SUB_Stream *stream, double inReal0, 
    scratch = *stream;
    (void)sp;
    *outReal= inReal0 - inReal1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

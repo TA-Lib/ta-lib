@@ -432,18 +432,13 @@ public partial class Core
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MOM", "peek", RetCode.BadParam);
          MomStream sp = this;
          double cur_outReal = sp.cur_outReal;
-         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          if( sp.ringCap_trailingIdx == 0 ) {
             pkSlot0 = 0;
             pkVal0 = inReal;
          }
-         cur_outReal = inReal - ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0);
-         ringPos_trailingIdx = ringPos_trailingIdx + 1;
-         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-            ringPos_trailingIdx = 0;
-         }
+         cur_outReal = inReal - ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0);
          return cur_outReal;
       }
 

@@ -468,12 +468,6 @@ TA_LIB_API TA_RetCode TA_ROCP_Peek( const TA_ROCP_Stream *stream, double inReal,
    {
       *outReal= 0.0;
    }
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-   {
-      sp->ringPos_trailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

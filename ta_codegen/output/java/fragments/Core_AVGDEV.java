@@ -388,24 +388,19 @@
          double todayDev = 0.0;
          int i = 0;
          double cur_outReal = sp.cur_outReal;
-         int winPos_i = sp.winPos_i;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         pkSlot0 = winPos_i;
+         pkSlot0 = sp.winPos_i;
          pkVal0 = inReal;
          todaySum = 0.0;
          for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
-            todaySum += (((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0;
+            todaySum += (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
          }
          todayDev = 0.0;
          for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
-            todayDev += Math.abs(((((winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(winPos_i + sp.winCap_i - i >= sp.winCap_i) ? winPos_i + sp.winCap_i - i - sp.winCap_i : winPos_i + sp.winCap_i - i] : pkVal0) - todaySum / sp.optInTimePeriod);
+            todayDev += Math.abs(((((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0) - todaySum / sp.optInTimePeriod);
          }
          cur_outReal = todayDev / sp.optInTimePeriod;
-         winPos_i = winPos_i + 1;
-         if( winPos_i >= sp.winCap_i ) {
-            winPos_i = 0;
-         }
          return cur_outReal;
       }
 

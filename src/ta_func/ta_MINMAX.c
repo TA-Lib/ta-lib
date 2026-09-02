@@ -941,10 +941,6 @@ TA_LIB_API TA_RetCode TA_MINMAX_Peek( const TA_MINMAX_Stream *stream, double inR
    }
    *outMax= sp->highest;
    *outMin= lowest;
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outMin = *outMin;
-   sp->cur_outMax = *outMax;
    sp->lowest = lowest;
    return TA_SUCCESS;
 }

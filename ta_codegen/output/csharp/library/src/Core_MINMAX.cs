@@ -742,8 +742,6 @@ public partial class Core
          }
          cur_outMax = highest;
          cur_outMin = lowest;
-         trailingIdx += 1;
-         today += 1;
          return new MinmaxValue(cur_outMin, cur_outMax);
       }
 

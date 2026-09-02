@@ -712,10 +712,8 @@
          double tempReal2 = 0.0;
          double periodROC = 0.0;
          double cur_outReal = sp.cur_outReal;
-         double lag1_inReal = sp.lag1_inReal;
          int nullRun = sp.nullRun;
          double prevKAMA = sp.prevKAMA;
-         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
          double sumROC1 = sp.sumROC1;
          double trailingValue = sp.trailingValue;
          int pkSlot0 = -1;
@@ -729,21 +727,21 @@
             pkVal0 = inReal;
          }
          tempReal = inReal;
-         tempReal2 = (ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0;
+         tempReal2 = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
          periodROC = tempReal - tempReal2;
          /* Adjust sumROC1:
           *  - Remove trailing ROC1
           *  - Add new ROC1
           */
          sumROC1 -= Math.abs(trailingValue - tempReal2);
-         sumROC1 += Math.abs(tempReal - lag1_inReal);
+         sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
          /* Once a whole window of flat bars has gone by, every 1-day change it
           * spans is exactly zero, so the sum is known to be exactly zero and the
           * residue can be dropped. That is what lets the efficiency ratio be
           * decided by `sumROC1 <= periodROC` alone: a window that flat has
           * periodROC == 0 too, so the test is 0 <= 0 and the ratio is 1.
           */
-         if( tempReal - lag1_inReal == 0.0 ) {
+         if( tempReal - sp.lag1_inReal == 0.0 ) {
             nullRun += 1;
          } else {
             nullRun = 0;
@@ -770,11 +768,6 @@
           */
          prevKAMA = Math.fma(inReal - prevKAMA, tempReal, prevKAMA);
          cur_outReal = prevKAMA;
-         lag1_inReal = inReal;
-         ringPos_trailingIdx = ringPos_trailingIdx + 1;
-         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-            ringPos_trailingIdx = 0;
-         }
          return cur_outReal;
       }
 

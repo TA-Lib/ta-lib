@@ -431,9 +431,6 @@ TA_LIB_API TA_RetCode TA_NVI_Peek( const TA_NVI_Stream *stream, double inClose, 
       }
    }
    *outReal= sp->prevNVI;
-   sp->prevClose = tempClose;
-   sp->prevVolume = tempVolume;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

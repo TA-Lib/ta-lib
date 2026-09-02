@@ -836,8 +836,6 @@
          } else {
             cur_tempBuffer = 0.0;
          }
-         trailingIdx += 1;
-         today += 1;
          /* Pipeline the new bar through the sub-streams (batch tail order). */
          cur_outFastD = sp.sub0.peek(cur_tempBuffer);
          cur_outFastK = cur_tempBuffer;

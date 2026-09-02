@@ -759,8 +759,6 @@ impl MinmaxindexStream {
             let outMaxIdx = &mut outMaxIdx;
             let mut tmpHigh: f64 = 0.0_f64;
             let mut tmpLow: f64 = 0.0_f64;
-            let mut cur_outMaxIdx = sp.cur_outMaxIdx;
-            let mut cur_outMinIdx = sp.cur_outMinIdx;
             let mut highest = sp.highest;
             let mut highestIdx = sp.highestIdx;
             let mut i = sp.i;
@@ -814,10 +812,6 @@ impl MinmaxindexStream {
             }
             (*outMaxIdx) = (highestIdx) as i32;
             (*outMinIdx) = (lowestIdx) as i32;
-            trailingIdx += 1;
-            today += 1;
-            cur_outMinIdx = (*outMinIdx);
-            cur_outMaxIdx = (*outMaxIdx);
         }
         Ok((outMinIdx, outMaxIdx))
     }

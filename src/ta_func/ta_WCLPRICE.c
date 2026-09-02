@@ -275,7 +275,6 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Peek( const TA_WCLPRICE_Stream *stream, double
    scratch = *stream;
    (void)sp;
    *outReal= (fma(inClose, 2.0, inHigh + inLow)) / 4.0;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

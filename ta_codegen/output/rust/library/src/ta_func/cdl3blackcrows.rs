@@ -948,59 +948,30 @@ impl Cdl3blackcrowsStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut lag2_inClose = sp.lag2_inClose;
-            let mut lag2_inHigh = sp.lag2_inHigh;
-            let mut lag2_inLow = sp.lag2_inLow;
-            let mut lag2_inOpen = sp.lag2_inOpen;
-            let mut lag3_inClose = sp.lag3_inClose;
-            let mut lag3_inHigh = sp.lag3_inHigh;
-            let mut lag3_inOpen = sp.lag3_inOpen;
-            let mut ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx;
             #[allow(non_snake_case)]
             let ShadowVeryShort_rangeType: i32 = self.cs_shadow_very_short.range_type as i32;
             #[allow(non_snake_case)]
             let ShadowVeryShort_avgPeriod: i32 = self.cs_shadow_very_short.avg_period;
             #[allow(non_snake_case)]
             let ShadowVeryShort_factor: f64 = self.cs_shadow_very_short.factor;
-            if (if lag3_inClose >= lag3_inOpen { 1 } else { 0 - 1 }) == 1 &&      // white
-               (((if lag2_inClose >= lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st black
-               (((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd black
-               (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3rd black
-               lag1_inOpen < lag2_inOpen &&
-               lag1_inOpen > lag2_inClose &&                                      // 2nd black opens within 1st black's rb
-               inOpen < lag1_inOpen &&
-               inOpen > lag1_inClose &&                                           // 3rd black opens within 2nd black's rb
-               lag3_inHigh > lag2_inClose &&                                      // 1st black closes under prior candle's high
-               lag2_inClose > lag1_inClose &&                                     // three declining
-               lag1_inClose > inClose &&                                          // three declining
-               ((if lag2_inClose >= lag2_inOpen { lag2_inOpen } else { lag2_inClose }) - lag2_inLow) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (sp.ShadowVeryShortPeriodTotal[2]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
-               ((if lag1_inClose >= lag1_inOpen { lag1_inOpen } else { lag1_inClose }) - lag1_inLow) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (sp.ShadowVeryShortPeriodTotal[1]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
+            if (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 }) == 1 && // white
+               (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st black
+               (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd black
+               (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&  // 3rd black
+               sp.lag1_inOpen < sp.lag2_inOpen &&
+               sp.lag1_inOpen > sp.lag2_inClose &&                                 // 2nd black opens within 1st black's rb
+               inOpen < sp.lag1_inOpen &&
+               inOpen > sp.lag1_inClose &&                                         // 3rd black opens within 2nd black's rb
+               sp.lag3_inHigh > sp.lag2_inClose &&                                 // 1st black closes under prior candle's high
+               sp.lag2_inClose > sp.lag1_inClose &&                                // three declining
+               sp.lag1_inClose > inClose &&                                        // three declining
+               ((if sp.lag2_inClose >= sp.lag2_inOpen { sp.lag2_inOpen } else { sp.lag2_inClose }) - sp.lag2_inLow) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (sp.ShadowVeryShortPeriodTotal[2]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
+               ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (sp.ShadowVeryShortPeriodTotal[1]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
                ((if inClose >= inOpen { inOpen } else { inClose }) - inLow) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (sp.ShadowVeryShortPeriodTotal[0]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) // very short lower shadow
             {
                 (*outInteger) = (0 - 100) as i32;
             } else {
                 (*outInteger) = 0;
-            }
-            cur_outInteger = (*outInteger);
-            lag3_inOpen = lag2_inOpen;
-            lag2_inOpen = lag1_inOpen;
-            lag1_inOpen = inOpen;
-            lag3_inHigh = lag2_inHigh;
-            lag2_inHigh = lag1_inHigh;
-            lag1_inHigh = inHigh;
-            lag2_inLow = lag1_inLow;
-            lag1_inLow = inLow;
-            lag3_inClose = lag2_inClose;
-            lag2_inClose = lag1_inClose;
-            lag1_inClose = inClose;
-            ringPos_ShadowVeryShortTrailingIdx = ringPos_ShadowVeryShortTrailingIdx + 1;
-            if ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
-                ringPos_ShadowVeryShortTrailingIdx = 0;
             }
         }
         Ok(outInteger)

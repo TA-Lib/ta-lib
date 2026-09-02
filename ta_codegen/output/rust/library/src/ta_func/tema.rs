@@ -888,7 +888,6 @@ impl TemaStream {
             prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(sp.optInK_1, prevEMA2);
             prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(sp.optInK_1, prevEMA3);
             (*outReal) = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

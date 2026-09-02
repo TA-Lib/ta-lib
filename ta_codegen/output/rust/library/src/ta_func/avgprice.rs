@@ -520,9 +520,7 @@ impl AvgpriceStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             (*outReal) = (inHigh + inLow + inClose + inOpen) / 4_f64;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

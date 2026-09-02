@@ -710,13 +710,6 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    {
       *outReal= 0.0;
    }
-   /* Move forward the circular buffer indexes. */
-   sp->circBuffer_Idx = sp->circBuffer_Idx + 1;
-   if( sp->circBuffer_Idx > sp->maxIdx_circBuffer )
-   {
-      sp->circBuffer_Idx = 0;
-   }
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

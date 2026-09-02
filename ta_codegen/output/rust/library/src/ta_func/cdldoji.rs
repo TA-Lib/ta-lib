@@ -802,63 +802,16 @@ impl CdldojiStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut BodyDojiPeriodTotal = sp.BodyDojiPeriodTotal;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             #[allow(non_snake_case)]
             let BodyDoji_rangeType: i32 = self.cs_body_doji.range_type as i32;
             #[allow(non_snake_case)]
             let BodyDoji_avgPeriod: i32 = self.cs_body_doji.avg_period;
             #[allow(non_snake_case)]
             let BodyDoji_factor: f64 = self.cs_body_doji.factor;
-            if sp.ringCap_BodyDojiTrailingIdx == 0 {
-                pkSlot0 = 0;
-                let mut _candlerange_6: f64;
-                match BodyDoji_rangeType {
-                    0 => {
-                        _candlerange_6 = (inClose - inOpen).abs();
-                    }
-                    1 => {
-                        _candlerange_6 = inHigh - inLow;
-                    }
-                    2 => {
-                        _candlerange_6 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                    }
-                    _ => {
-                        _candlerange_6 = 0.0;
-                    }
-                }
-                pkVal0 = _candlerange_6;
-            }
-            if (inClose - inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) {
+            if (inClose - inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (sp.BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) {
                 (*outInteger) = 100;
             } else {
                 (*outInteger) = 0;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_7: f64;
-            match BodyDoji_rangeType {
-                0 => {
-                    _candlerange_7 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_7 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_7 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_7 = 0.0;
-                }
-            }
-            BodyDojiPeriodTotal += _candlerange_7 - (if (ringPos_BodyDojiTrailingIdx as usize) != pkSlot0 { sp.ring_BodyDojiTrailingIdx_derived[ringPos_BodyDojiTrailingIdx] } else { pkVal0 });
-            cur_outInteger = (*outInteger);
-            ringPos_BodyDojiTrailingIdx = ringPos_BodyDojiTrailingIdx + 1;
-            if ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
-                ringPos_BodyDojiTrailingIdx = 0;
             }
         }
         Ok(outInteger)

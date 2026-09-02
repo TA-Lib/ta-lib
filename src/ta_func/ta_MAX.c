@@ -713,9 +713,6 @@ TA_LIB_API TA_RetCode TA_MAX_Peek( const TA_MAX_Stream *stream, double inReal, d
       sp->highest = tmp;
    }
    *outReal= sp->highest;
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

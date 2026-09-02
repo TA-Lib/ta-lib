@@ -604,9 +604,7 @@ impl SmaStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut periodTotal = sp.periodTotal;
-            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             if sp.ringCap_trailingIdx == 0 {
@@ -615,13 +613,8 @@ impl SmaStream {
             }
             periodTotal += inReal as f64;
             tempReal = periodTotal;
-            periodTotal -= (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 }) as f64;
+            periodTotal -= (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 }) as f64;
             (*outReal) = tempReal / (sp.optInTimePeriod as f64);
-            cur_outReal = (*outReal);
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                ringPos_trailingIdx = 0;
-            }
         }
         Ok(outReal)
     }

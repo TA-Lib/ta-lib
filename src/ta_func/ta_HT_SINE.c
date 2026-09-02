@@ -2020,20 +2020,6 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Peek( const TA_HT_SINE_Stream *stream, double i
    }
    *outSine= sin(DCPhase * sp->deg2Rad);
    *outLeadSine= sin((DCPhase + 45) * sp->deg2Rad);
-   /* Ooof... let's do the next price bar now! */
-   sp->smoothPrice_Idx = sp->smoothPrice_Idx + 1;
-   if( sp->smoothPrice_Idx > sp->maxIdx_smoothPrice )
-   {
-      sp->smoothPrice_Idx = 0;
-   }
-   sp->cur_outSine = *outSine;
-   sp->cur_outLeadSine = *outLeadSine;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
-   {
-      sp->ringPos_trailingWMAIdx = 0;
-   }
-   sp->streamParity = 1 - sp->streamParity;
    sp->DCPhase = DCPhase;
    return TA_SUCCESS;
 }

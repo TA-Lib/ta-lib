@@ -937,9 +937,6 @@ TA_LIB_API TA_RetCode TA_MACD_Peek( const TA_MACD_Stream *stream, double inReal,
    *outMACD= macdValue;
    *outMACDSignal= prevSignal;
    *outMACDHist= macdValue - prevSignal;
-   sp->cur_outMACD = *outMACD;
-   sp->cur_outMACDSignal = *outMACDSignal;
-   sp->cur_outMACDHist = *outMACDHist;
    sp->prevSignal = prevSignal;
    return TA_SUCCESS;
 }

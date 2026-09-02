@@ -368,7 +368,6 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Peek( const TA_MARKETFI_Stream *stream, double
    {
       *outReal= 0.0;
    }
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

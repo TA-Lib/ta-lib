@@ -573,15 +573,6 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, do
    {
       *outInteger= 0;
    }
-   if( sp->cd > 0 )
-   {
-      sp->cd -= 1;
-   }
-   sp->cur_outInteger = *outInteger;
-   sp->lag2_inHigh = sp->lag1_inHigh;
-   sp->lag1_inHigh = inHigh;
-   sp->lag2_inLow = sp->lag1_inLow;
-   sp->lag1_inLow = inLow;
    return TA_SUCCESS;
 }
 

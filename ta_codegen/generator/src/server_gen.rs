@@ -7813,12 +7813,16 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
                 let _ = writeln!(s, "                    if (svBne(vc.{f}, up.{f})) allOk = false;");
             }
         }
-    } else if out_is_int[0] {
-        s.push_str("                    if (pk != up) peekAll = false;\n");
-        s.push_str("                    if (st.value() != up) allOk = false;\n");
     } else {
-        s.push_str("                    if (svBne(pk, up)) peekAll = false;\n");
-        s.push_str("                    if (svBne(st.value(), up)) allOk = false;\n");
+        // The same intervening peek the multi arm gets, and for the same
+        // reason: without it `update`'s return and `value`'s read render from
+        // one expression over one field with nothing between, and the compare
+        // cannot fail. C# emits it for every arity; this arm did not.
+        let _ = writeln!(s, "                    if ({}) peekAll = false;",
+            if out_is_int[0] { "pk != up" } else { "svBne(pk, up)" });
+        let _ = writeln!(s, "                    st.peek({});", bar_args("t - 1"));
+        let _ = writeln!(s, "                    if ({}) allOk = false;",
+            if out_is_int[0] { "st.value() != up" } else { "svBne(st.value(), up)" });
     }
     let emit_up_compares = |s: &mut String, pad: &str| {
         if multi {

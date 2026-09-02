@@ -623,13 +623,10 @@ impl CdlengulfingStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            if (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && (((if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (inClose >= lag1_inOpen && inOpen < lag1_inClose || inClose > lag1_inOpen && inOpen <= lag1_inClose) || (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (inOpen >= lag1_inClose && inClose < lag1_inOpen || inOpen > lag1_inClose && inClose <= lag1_inOpen) {
+            if (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) {
                 // white engulfs black
                 // black engulfs white
-                if inOpen != lag1_inClose && inClose != lag1_inOpen {
+                if inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen {
                     (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 100) as i32;
                 } else {
                     (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 80) as i32;
@@ -637,9 +634,6 @@ impl CdlengulfingStream {
             } else {
                 (*outInteger) = 0;
             }
-            cur_outInteger = (*outInteger);
-            lag1_inOpen = inOpen;
-            lag1_inClose = inClose;
         }
         Ok(outInteger)
     }

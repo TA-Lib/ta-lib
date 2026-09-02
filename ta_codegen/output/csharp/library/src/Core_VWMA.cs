@@ -542,7 +542,6 @@ public partial class Core
          double tempV = 0.0;
          double tempReal = 0.0;
          double cur_outReal = sp.cur_outReal;
-         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
          double sumPV = sp.sumPV;
          double sumV = sp.sumV;
          int pkSlot0 = -1;
@@ -571,14 +570,10 @@ public partial class Core
          /* Read the trailing values before writing the output, since the caller
           * may pass the same buffer for an input and the output.
           */
-         tempReal = ((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0) * ((ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] : pkVal1);
+         tempReal = ((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0) * ((sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1);
          sumPV -= tempReal;
-         sumV -= (ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[ringPos_trailingIdx] : pkVal1;
+         sumV -= (sp.ringPos_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inVolume[sp.ringPos_trailingIdx] : pkVal1;
          cur_outReal = tempPV / (double)sp.optInTimePeriod / (tempV / (double)sp.optInTimePeriod);
-         ringPos_trailingIdx = ringPos_trailingIdx + 1;
-         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-            ringPos_trailingIdx = 0;
-         }
          return cur_outReal;
       }
 

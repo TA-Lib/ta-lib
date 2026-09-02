@@ -955,7 +955,6 @@ impl T3Stream {
             e5 = (sp.one_minus_k as f64).mul_add(e5, sp.k * e4);
             e6 = (sp.one_minus_k as f64).mul_add(e6, sp.k * e5);
             (*outReal) = (sp.c4 as f64).mul_add(e3, (sp.c3 as f64).mul_add(e4, (sp.c1 as f64).mul_add(e6, sp.c2 * e5)));
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

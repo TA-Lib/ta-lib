@@ -555,24 +555,6 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Peek( const TA_CDL3LINESTRIKE_Stream *st
    {
       *outInteger= 0;
    }
-   sp->cur_outInteger = *outInteger;
-   sp->lag3_inOpen = sp->lag2_inOpen;
-   sp->lag2_inOpen = sp->lag1_inOpen;
-   sp->lag1_inOpen = inOpen;
-   sp->lag3_inHigh = sp->lag2_inHigh;
-   sp->lag2_inHigh = sp->lag1_inHigh;
-   sp->lag1_inHigh = inHigh;
-   sp->lag3_inLow = sp->lag2_inLow;
-   sp->lag2_inLow = sp->lag1_inLow;
-   sp->lag1_inLow = inLow;
-   sp->lag3_inClose = sp->lag2_inClose;
-   sp->lag2_inClose = sp->lag1_inClose;
-   sp->lag1_inClose = inClose;
-   sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
-   if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
-   {
-      sp->ringPos_NearTrailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

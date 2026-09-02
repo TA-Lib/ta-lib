@@ -784,8 +784,6 @@ public partial class Core
          } else {
             cur_outReal = 0.0;
          }
-         trailingIdx += 1;
-         today += 1;
          return cur_outReal;
       }
 

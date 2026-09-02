@@ -834,7 +834,6 @@ impl VwapStream {
             let mut typPrice: f64 = 0.0_f64;
             let mut volume: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut sumPV = sp.sumPV;
             let mut sumV = sp.sumV;
             let mut vwap = sp.vwap;
@@ -919,7 +918,6 @@ impl VwapStream {
                 vwap = sumPV / sumV;
             }
             (*outReal) = vwap;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

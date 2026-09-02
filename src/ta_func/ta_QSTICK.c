@@ -489,12 +489,6 @@ TA_LIB_API TA_RetCode TA_QSTICK_Peek( const TA_QSTICK_Stream *stream, double inO
    tempReal = sp->periodTotal;
    sp->periodTotal -= (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx] : pkVal0;
    *outReal= tempReal / (double)sp->optInTimePeriod;
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingIdx = sp->ringPos_trailingIdx + 1;
-   if( sp->ringPos_trailingIdx >= sp->ringCap_trailingIdx )
-   {
-      sp->ringPos_trailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

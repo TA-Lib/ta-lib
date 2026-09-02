@@ -710,7 +710,6 @@ impl EmaStream {
             }
             prevMA = (inReal - prevMA as f64).mul_add(sp.optInK_1, prevMA);
             (*outReal) = prevMA;
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

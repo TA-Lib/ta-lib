@@ -425,19 +425,27 @@ fn fma_calls(body: &str) -> Vec<String> {
     out
 }
 
-/// Peek fuses exactly where update does — the same sites with the same
-/// ARGUMENTS, not merely the same number of them. A count is blind to a product
+/// Peek fuses where update does — a PREFIX of update's sites, with the same
+/// ARGUMENTS in the same order, not merely the same number of them. A count is blind to a product
 /// moving across the fusion boundary, which `canonicalize_accumulator_add` can
 /// do on its own: it matches the accumulator by raw string equality, and the
 /// peek rewrite is what first changes a store's target (`buf[k]` -> `pkValN`).
 /// The peek body is compared after undoing the rewrite — buffer subscripts
 /// masked to one token, selects collapsed to the arm update would render.
 ///
-/// Measured today: 29 peek bodies fuse, 107 carry a select, 16 carry both, and
+/// Measured today: 29 peek bodies fuse, 50 carry a select, 11 carry both, and
 /// ZERO fuse over a select operand. So the argument comparison is live against
 /// a reordering, and the select-collapse half is armed for the first function
 /// that puts a buffer read inside a multiply-add — the case where the THEN-arm
 /// classification rule would otherwise bite silently.
+///
+/// A prefix and not equality because peek stops at its last output store, so
+/// the sites in the tail update runs for the NEXT bar are not there to compare
+/// (HT_PHASOR 5 of 8, MAMA 7 of 10). Nothing is given up: `stream_fma` is built
+/// ONCE per function from `func.stream_source()` and guards the emission of
+/// BOTH frames, so truncation cannot re-classify a site peek still evaluates —
+/// and a site re-fused, dropped or reordered in the MIDDLE breaks the prefix
+/// exactly as it broke equality.
 #[test]
 fn a_peek_frame_fuses_the_same_multiply_adds_as_its_update_frame() {
     let mut total_sites = 0usize;
@@ -461,7 +469,7 @@ fn a_peek_frame_fuses_the_same_multiply_adds_as_its_update_frame() {
         if !a.is_empty() {
             fusing_functions += 1;
         }
-        if a != b {
+        if b.len() > a.len() || b != a[..b.len()] {
             mismatches.push(format!(
                 "{upper}: update fuses {} site(s), peek {}\n    update: {:?}\n    peek:   {:?}",
                 a.len(),
@@ -479,7 +487,7 @@ fn a_peek_frame_fuses_the_same_multiply_adds_as_its_update_frame() {
     );
     assert!(
         mismatches.is_empty(),
-        "peek and update disagree on where a multiply-add fuses, which is a silent \
+        "peek's multiply-adds are not a leading run of update's, which is a silent \
          ~1 ULP divergence in a comparison that must be bitwise:\n{}",
         mismatches.join("\n")
     );
@@ -633,4 +641,91 @@ fn a_peek_frame_deletes_every_accumulator_store() {
         kept.len(),
         kept.join("\n")
     );
+}
+
+/// A peek frame stops at its last output store.
+///
+/// The commit tail below it exists for the NEXT bar, and a peek has none: the
+/// ring advance, the rescan-window advance and the cursor-parity flip are the
+/// three shapes it takes, and none may survive into a frame. Not only
+/// bookkeeping — the arithmetic a source runs to set up the next bar goes with
+/// them, which is where the win is (`HT_PHASOR` below).
+///
+/// Both directions, and that is the point of the step-side floors: every OTHER
+/// sweep in this file is monotone under deletion — they all get more true as
+/// the frame shrinks — so a trim that silently stopped trimming would read
+/// green on all of them and on the runtime legs too.
+#[test]
+fn a_peek_frame_stops_at_its_last_output_store() {
+    // A store, not a read: the marker also appears as the subscript of every
+    // trailing read, and on the left of a shadow select's `!=` and of the wrap
+    // guard's `>=`. So a store is `= `, a compound `?= `, or a `++`/`--` —
+    // anything whose `=` is preceded by a comparison operator is not one.
+    fn stores_to(body: &str, prefix: &str) -> bool {
+        body.lines().map(str::trim).any(|l| {
+            let Some(rest) = l.strip_prefix(prefix) else { return false };
+            if rest.contains("++") || rest.contains("--") {
+                return true;
+            }
+            rest.find('=').is_some_and(|i| {
+                !rest[i + 1..].starts_with('=')
+                    && !rest[..i].trim_end().ends_with(['!', '<', '>'])
+            })
+        })
+    }
+
+    let tail_marks = [
+        ("sp->ringPos_", 60usize),
+        ("sp->winPos_", 5),
+        ("sp->streamParity", 5),
+    ];
+    let mut in_step = [0usize; 3];
+    let mut offenders: Vec<String> = Vec::new();
+    let mut swept = 0usize;
+    let mut phasor_seen = false;
+
+    for name in indicators() {
+        let Some((func, enums)) = load(&name) else { continue };
+        let src = stream_c(&func, &enums);
+        let upper = func.name.to_uppercase();
+        let Some(peek) = body_of(&src, &format!("TA_RetCode TA_{upper}_Peek(")) else {
+            continue;
+        };
+        swept += 1;
+        for (k, (mark, _)) in tail_marks.iter().enumerate() {
+            if stores_to(&peek, mark) {
+                offenders.push(format!("{upper}: a peek frame still carries `{mark}...=`"));
+            }
+            if body_of(&src, &format!("TA_{upper}_StepImpl(")).is_some_and(|s| stores_to(&s, mark))
+            {
+                in_step[k] += 1;
+            }
+        }
+        // The concrete win, and the reason this is worth more than deleting
+        // stores: HT_PHASOR's next-bar recurrence is an `atan`, four clamps and
+        // three multiply-adds, all of it below the two output writes.
+        if upper == "HT_PHASOR" {
+            phasor_seen = true;
+            assert!(
+                !peek.contains("atan("),
+                "HT_PHASOR: the peek frame still runs the next bar's period recurrence"
+            );
+            assert!(
+                body_of(&src, "TA_HT_PHASOR_StepImpl(").is_some_and(|s| s.contains("atan(")),
+                "HT_PHASOR: the update frame lost the recurrence, so the pin above proves nothing"
+            );
+        }
+    }
+
+    assert!(offenders.is_empty(), "{}", offenders.join("\n"));
+    assert!(swept > 170, "only {swept} peek frame(s) examined");
+    assert!(phasor_seen, "HT_PHASOR was not swept, so its pin did not run");
+    for (k, (mark, floor)) in tail_marks.iter().enumerate() {
+        assert!(
+            in_step[k] >= *floor,
+            "only {} update frame(s) carry `{mark}...=`, so the absence above is not \
+             evidence of anything",
+            in_step[k]
+        );
+    }
 }

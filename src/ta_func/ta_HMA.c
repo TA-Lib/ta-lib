@@ -1776,17 +1776,6 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       fullOut = sp->periodSumFull / sp->dividerFull;
       sp->periodSumFull -= sp->periodSubFull;
       *outReal= 2.0 * tempReal - fullOut;
-      sp->cur_outReal = *outReal;
-      sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
-      if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
-      {
-         sp->ringPos_trailingIdxFull = 0;
-      }
-      sp->winPos_jFull = sp->winPos_jFull + 1;
-      if( sp->winPos_jFull >= sp->winCap_jFull )
-      {
-         sp->winPos_jFull = 0;
-      }
    }
    else
    {
@@ -1910,28 +1899,6 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
          sp->dRing_Idx = 0;
       }
       *outReal= periodSumSqrt / sp->dividerSqrt;
-      periodSumSqrt -= periodSubSqrt;
-      sp->cur_outReal = *outReal;
-      sp->ringPos_trailingIdxFull = sp->ringPos_trailingIdxFull + 1;
-      if( sp->ringPos_trailingIdxFull >= sp->ringCap_trailingIdxFull )
-      {
-         sp->ringPos_trailingIdxFull = 0;
-      }
-      sp->ringPos_trailingIdxHalf = sp->ringPos_trailingIdxHalf + 1;
-      if( sp->ringPos_trailingIdxHalf >= sp->ringCap_trailingIdxHalf )
-      {
-         sp->ringPos_trailingIdxHalf = 0;
-      }
-      sp->winPos_jFull = sp->winPos_jFull + 1;
-      if( sp->winPos_jFull >= sp->winCap_jFull )
-      {
-         sp->winPos_jFull = 0;
-      }
-      sp->winPos_jHalf = sp->winPos_jHalf + 1;
-      if( sp->winPos_jHalf >= sp->winCap_jHalf )
-      {
-         sp->winPos_jHalf = 0;
-      }
       sp->periodSubSqrt = periodSubSqrt;
       sp->periodSumSqrt = periodSumSqrt;
    }

@@ -676,8 +676,6 @@
             lowest = tmpLow;
          }
          cur_outReal = (highest + lowest) / 2.0;
-         trailingIdx += 1;
-         today += 1;
          return cur_outReal;
       }
 

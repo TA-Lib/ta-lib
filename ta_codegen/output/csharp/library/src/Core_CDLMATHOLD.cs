@@ -612,74 +612,32 @@ public partial class Core
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMATHOLD", "peek", RetCode.BadParam);
          CdlmatholdStream sp = this;
          int cur_outInteger = sp.cur_outInteger;
-         double lag1_inClose = sp.lag1_inClose;
-         double lag1_inHigh = sp.lag1_inHigh;
-         double lag1_inLow = sp.lag1_inLow;
-         double lag1_inOpen = sp.lag1_inOpen;
-         double lag2_inClose = sp.lag2_inClose;
-         double lag2_inHigh = sp.lag2_inHigh;
-         double lag2_inLow = sp.lag2_inLow;
-         double lag2_inOpen = sp.lag2_inOpen;
-         double lag3_inClose = sp.lag3_inClose;
-         double lag3_inHigh = sp.lag3_inHigh;
-         double lag3_inLow = sp.lag3_inLow;
-         double lag3_inOpen = sp.lag3_inOpen;
-         double lag4_inClose = sp.lag4_inClose;
-         double lag4_inHigh = sp.lag4_inHigh;
-         double lag4_inLow = sp.lag4_inLow;
-         double lag4_inOpen = sp.lag4_inOpen;
-         int ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-         int ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
          int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
          int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
          double BodyLong_factor = sp.cs_BodyLong_factor;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
          int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
          double BodyShort_factor = sp.cs_BodyShort_factor;
-         if( ((lag4_inClose >= lag4_inOpen) ? 1 : 0 - 1) == 1 &&                    /* white, black, 2 black or white, white */
-             ((lag3_inClose >= lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+         if( ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 1 &&      /* white, black, 2 black or white, white */
+             ((sp.lag3_inClose >= sp.lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
              ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
-             (Math.Min(lag3_inOpen, lag3_inClose) > Math.Max(lag4_inOpen, lag4_inClose)) && /* upside gap 1st to 2nd */
-             Math.Min(lag2_inOpen, lag2_inClose) < lag4_inClose &&                  /* 3rd to 4th hold within 1st: a part of the real body must be within 1st real body */
-             Math.Min(lag1_inOpen, lag1_inClose) < lag4_inClose &&
-             Math.Min(lag2_inOpen, lag2_inClose) > lag4_inClose - Math.Abs(lag4_inClose - lag4_inOpen) * sp.optInPenetration && /* reaction days penetrate first body less than optInPenetration percent */
-             Math.Min(lag1_inOpen, lag1_inClose) > lag4_inClose - Math.Abs(lag4_inClose - lag4_inOpen) * sp.optInPenetration &&
-             Math.Max(lag2_inClose, lag2_inOpen) < lag3_inOpen &&                   /* 2nd to 4th are falling */
-             Math.Max(lag1_inClose, lag1_inOpen) < Math.Max(lag2_inClose, lag2_inOpen) &&
-             inOpen > lag1_inClose &&                                               /* 5th opens above the prior close */
-             inClose > Math.Max(Math.Max(lag3_inHigh, lag2_inHigh), lag1_inHigh) && /* 5th closes above the highest high of the reaction days */
-             Math.Abs(lag4_inClose - lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyPeriodTotal[4] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(lag4_inClose - lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (lag4_inHigh - lag4_inLow) : ((BodyLong_rangeType == 2) ? ((lag4_inHigh - (((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inClose) : (lag4_inOpen))) + ((((lag4_inClose) >= (lag4_inOpen)) ? (lag4_inOpen) : (lag4_inClose)) - lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long, then 3 small */
-             Math.Abs(lag3_inClose - lag3_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[3] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag3_inClose - lag3_inOpen)) : ((BodyShort_rangeType == 1) ? (lag3_inHigh - lag3_inLow) : ((BodyShort_rangeType == 2) ? ((lag3_inHigh - (((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inClose) : (lag3_inOpen))) + ((((lag3_inClose) >= (lag3_inOpen)) ? (lag3_inOpen) : (lag3_inClose)) - lag3_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             Math.Abs(lag2_inClose - lag2_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[2] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag2_inClose - lag2_inOpen)) : ((BodyShort_rangeType == 1) ? (lag2_inHigh - lag2_inLow) : ((BodyShort_rangeType == 2) ? ((lag2_inHigh - (((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inClose) : (lag2_inOpen))) + ((((lag2_inClose) >= (lag2_inOpen)) ? (lag2_inOpen) : (lag2_inClose)) - lag2_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             Math.Abs(lag1_inClose - lag1_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[1] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(lag1_inClose - lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (lag1_inHigh - lag1_inLow) : ((BodyShort_rangeType == 2) ? ((lag1_inHigh - (((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inClose) : (lag1_inOpen))) + ((((lag1_inClose) >= (lag1_inOpen)) ? (lag1_inOpen) : (lag1_inClose)) - lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) )
+             (Math.Min(sp.lag3_inOpen, sp.lag3_inClose) > Math.Max(sp.lag4_inOpen, sp.lag4_inClose)) && /* upside gap 1st to 2nd */
+             Math.Min(sp.lag2_inOpen, sp.lag2_inClose) < sp.lag4_inClose && /* 3rd to 4th hold within 1st: a part of the real body must be within 1st real body */
+             Math.Min(sp.lag1_inOpen, sp.lag1_inClose) < sp.lag4_inClose &&
+             Math.Min(sp.lag2_inOpen, sp.lag2_inClose) > sp.lag4_inClose - Math.Abs(sp.lag4_inClose - sp.lag4_inOpen) * sp.optInPenetration && /* reaction days penetrate first body less than optInPenetration percent */
+             Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > sp.lag4_inClose - Math.Abs(sp.lag4_inClose - sp.lag4_inOpen) * sp.optInPenetration &&
+             Math.Max(sp.lag2_inClose, sp.lag2_inOpen) < sp.lag3_inOpen &&  /* 2nd to 4th are falling */
+             Math.Max(sp.lag1_inClose, sp.lag1_inOpen) < Math.Max(sp.lag2_inClose, sp.lag2_inOpen) &&
+             inOpen > sp.lag1_inClose &&                                    /* 5th opens above the prior close */
+             inClose > Math.Max(Math.Max(sp.lag3_inHigh, sp.lag2_inHigh), sp.lag1_inHigh) && /* 5th closes above the highest high of the reaction days */
+             Math.Abs(sp.lag4_inClose - sp.lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyPeriodTotal[4] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag4_inClose - sp.lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag4_inHigh - sp.lag4_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag4_inHigh - (((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inClose) : (sp.lag4_inOpen))) + ((((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inOpen) : (sp.lag4_inClose)) - sp.lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long, then 3 small */
+             Math.Abs(sp.lag3_inClose - sp.lag3_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[3] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(sp.lag3_inClose - sp.lag3_inOpen)) : ((BodyShort_rangeType == 1) ? (sp.lag3_inHigh - sp.lag3_inLow) : ((BodyShort_rangeType == 2) ? ((sp.lag3_inHigh - (((sp.lag3_inClose) >= (sp.lag3_inOpen)) ? (sp.lag3_inClose) : (sp.lag3_inOpen))) + ((((sp.lag3_inClose) >= (sp.lag3_inOpen)) ? (sp.lag3_inOpen) : (sp.lag3_inClose)) - sp.lag3_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[2] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyShort_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyShort_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) &&
+             Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal[1] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyShort_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) )
          {
             cur_outInteger = 100;
          } else {
             cur_outInteger = 0;
-         }
-         lag4_inOpen = lag3_inOpen;
-         lag3_inOpen = lag2_inOpen;
-         lag2_inOpen = lag1_inOpen;
-         lag1_inOpen = inOpen;
-         lag4_inHigh = lag3_inHigh;
-         lag3_inHigh = lag2_inHigh;
-         lag2_inHigh = lag1_inHigh;
-         lag1_inHigh = inHigh;
-         lag4_inLow = lag3_inLow;
-         lag3_inLow = lag2_inLow;
-         lag2_inLow = lag1_inLow;
-         lag1_inLow = inLow;
-         lag4_inClose = lag3_inClose;
-         lag3_inClose = lag2_inClose;
-         lag2_inClose = lag1_inClose;
-         lag1_inClose = inClose;
-         ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
-         if( ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
-            ringPos_BodyLongTrailingIdx = 0;
-         }
-         ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
-         if( ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx ) {
-            ringPos_BodyShortTrailingIdx = 0;
          }
          return cur_outInteger;
       }

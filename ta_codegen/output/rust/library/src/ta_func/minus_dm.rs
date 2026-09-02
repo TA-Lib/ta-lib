@@ -1038,7 +1038,6 @@ impl MinusDmStream {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
-                let mut cur_outReal = sp.cur_outReal;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
                 tempReal = inHigh;
@@ -1055,12 +1054,10 @@ impl MinusDmStream {
                 } else {
                     (*outReal) = 0.0;
                 }
-                cur_outReal = (*outReal);
             } else {
                 let mut tempReal: f64 = 0.0_f64;
                 let mut diffP: f64 = 0.0_f64;
                 let mut diffM: f64 = 0.0_f64;
-                let mut cur_outReal = sp.cur_outReal;
                 let mut prevHigh = sp.prevHigh;
                 let mut prevLow = sp.prevLow;
                 let mut prevMinusDM = sp.prevMinusDM;
@@ -1080,7 +1077,6 @@ impl MinusDmStream {
                     prevMinusDM = prevMinusDM - prevMinusDM / ((sp.optInTimePeriod) as f64);
                 }
                 (*outReal) = prevMinusDM;
-                cur_outReal = (*outReal);
             }
         }
         Ok(outReal)

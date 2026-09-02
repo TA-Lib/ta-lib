@@ -519,14 +519,10 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Peek( const TA_CDLTASUKIGAP_Stream *stream
 {
    struct TA_CDLTASUKIGAP_Stream scratch;
    struct TA_CDLTASUKIGAP_Stream *sp = &scratch;
-   int pkSlot0 = -1;
-   double pkVal0 = 0.0;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   pkSlot0 = sp->ringPos_NearTrailingIdx;
-   pkVal0 = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
    if( (((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inOpen < sp->lag1_inClose && inOpen > sp->lag1_inOpen && inClose < sp->lag1_inOpen && inClose > max(sp->lag2_inClose,sp->lag2_inOpen) && fabs(fabs(sp->lag1_inClose - sp->lag1_inOpen) - fabs(inClose - inOpen)) < TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose)) || (((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inOpen < sp->lag1_inOpen && inOpen > sp->lag1_inClose && inClose > sp->lag1_inOpen && inClose < min(sp->lag2_inClose,sp->lag2_inOpen) && fabs(fabs(sp->lag1_inClose - sp->lag1_inOpen) - fabs(inClose - inOpen)) < TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose)) )
    {
       /* upside gap */
@@ -547,22 +543,6 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Peek( const TA_CDLTASUKIGAP_Stream *stream
    } else 
    {
       *outInteger= 0;
-   }
-   /* add the current range and subtract the first range: this is done after the pattern recognition
-    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-    */
-   sp->NearPeriodTotal += TA_STREAM_CANDLERANGE(Near,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - (((sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 1) % sp->ringCap_NearTrailingIdx != pkSlot0) ? sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 1) % sp->ringCap_NearTrailingIdx] : pkVal0);
-   sp->cur_outInteger = *outInteger;
-   sp->lag2_inOpen = sp->lag1_inOpen;
-   sp->lag1_inOpen = inOpen;
-   sp->lag1_inHigh = inHigh;
-   sp->lag1_inLow = inLow;
-   sp->lag2_inClose = sp->lag1_inClose;
-   sp->lag1_inClose = inClose;
-   sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
-   if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
-   {
-      sp->ringPos_NearTrailingIdx = 0;
    }
    return TA_SUCCESS;
 }

@@ -419,7 +419,6 @@
          double tempReal = 0.0;
          double cur_outReal = sp.cur_outReal;
          double periodTotal = sp.periodTotal;
-         int ringPos_trailingIdx = sp.ringPos_trailingIdx;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          if( sp.ringCap_trailingIdx == 0 ) {
@@ -428,12 +427,8 @@
          }
          periodTotal += (double)inReal;
          tempReal = periodTotal;
-         periodTotal -= (double)((ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[ringPos_trailingIdx] : pkVal0);
+         periodTotal -= (double)((sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0);
          cur_outReal = tempReal / (double)sp.optInTimePeriod;
-         ringPos_trailingIdx = ringPos_trailingIdx + 1;
-         if( ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
-            ringPos_trailingIdx = 0;
-         }
          return cur_outReal;
       }
 

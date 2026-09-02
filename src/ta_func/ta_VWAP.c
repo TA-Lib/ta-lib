@@ -696,7 +696,6 @@ TA_LIB_API TA_RetCode TA_VWAP_Peek( const TA_VWAP_Stream *stream, double inHigh,
       sp->vwap = sp->sumPV / sp->sumV;
    }
    *outReal= sp->vwap;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

@@ -639,8 +639,6 @@ public partial class Core
           */
          cur_outAroonUp = sp.factor * (sp.optInTimePeriod - (today - highestIdx));
          cur_outAroonDown = sp.factor * (sp.optInTimePeriod - (today - lowestIdx));
-         trailingIdx += 1;
-         today += 1;
          return new AroonValue(cur_outAroonDown, cur_outAroonUp);
       }
 

@@ -862,98 +862,21 @@ impl CdlbreakawayStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut BodyLongPeriodTotal = sp.BodyLongPeriodTotal;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut lag2_inClose = sp.lag2_inClose;
-            let mut lag2_inHigh = sp.lag2_inHigh;
-            let mut lag2_inLow = sp.lag2_inLow;
-            let mut lag2_inOpen = sp.lag2_inOpen;
-            let mut lag3_inClose = sp.lag3_inClose;
-            let mut lag3_inHigh = sp.lag3_inHigh;
-            let mut lag3_inLow = sp.lag3_inLow;
-            let mut lag3_inOpen = sp.lag3_inOpen;
-            let mut lag4_inClose = sp.lag4_inClose;
-            let mut lag4_inHigh = sp.lag4_inHigh;
-            let mut lag4_inLow = sp.lag4_inLow;
-            let mut lag4_inOpen = sp.lag4_inOpen;
-            let mut ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             #[allow(non_snake_case)]
             let BodyLong_rangeType: i32 = self.cs_body_long.range_type as i32;
             #[allow(non_snake_case)]
             let BodyLong_avgPeriod: i32 = self.cs_body_long.avg_period;
             #[allow(non_snake_case)]
             let BodyLong_factor: f64 = self.cs_body_long.factor;
-            pkSlot0 = ringPos_BodyLongTrailingIdx as usize;
-            let mut _candlerange_5: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_5 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_5 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_5 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_5 = 0.0;
-                }
-            }
-            pkVal0 = _candlerange_5;
-            if (if lag4_inClose >= lag4_inOpen { 1 } else { 0 - 1 }) == (if lag3_inClose >= lag3_inOpen { 1 } else { 0 - 1 }) && // 1st, 2nd, 4th same color, 5th opposite
-               (if lag3_inClose >= lag3_inOpen { 1 } else { 0 - 1 }) == (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) &&
-               (if lag1_inClose >= lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) &&
-               (lag4_inClose - lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((lag4_inClose) - (lag4_inOpen)).abs(), 1 => (lag4_inHigh) - (lag4_inLow), 2 => ((lag4_inHigh) - (if (lag4_inClose) >= (lag4_inOpen) { (lag4_inClose) } else { (lag4_inOpen) })) + ((if (lag4_inClose) >= (lag4_inOpen) { (lag4_inOpen) } else { (lag4_inClose) }) - (lag4_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long
-               ((((if lag4_inClose >= lag4_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (lag3_inOpen).max(lag3_inClose) < (lag4_inOpen).min(lag4_inClose) { 1 } else { 0 }) != 0) && lag2_inHigh < lag3_inHigh && lag2_inLow < lag3_inLow && lag1_inHigh < lag2_inHigh && lag1_inLow < lag2_inLow && inClose > lag3_inOpen && inClose < lag4_inClose || (if lag4_inClose >= lag4_inOpen { 1 } else { 0 - 1 }) == 1 && ((if (lag3_inOpen).min(lag3_inClose) > (lag4_inOpen).max(lag4_inClose) { 1 } else { 0 }) != 0) && lag2_inHigh > lag3_inHigh && lag2_inLow > lag3_inLow && lag1_inHigh > lag2_inHigh && lag1_inLow > lag2_inLow && inClose < lag3_inOpen && inClose > lag4_inClose) // when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap
+            if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 }) && // 1st, 2nd, 4th same color, 5th opposite
+               (if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) &&
+               (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) &&
+               (sp.lag4_inClose - sp.lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag4_inClose) - (sp.lag4_inOpen)).abs(), 1 => (sp.lag4_inHigh) - (sp.lag4_inLow), 2 => ((sp.lag4_inHigh) - (if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inClose) } else { (sp.lag4_inOpen) })) + ((if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inOpen) } else { (sp.lag4_inClose) }) - (sp.lag4_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long
+               ((((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (sp.lag3_inOpen).max(sp.lag3_inClose) < (sp.lag4_inOpen).min(sp.lag4_inClose) { 1 } else { 0 }) != 0) && sp.lag2_inHigh < sp.lag3_inHigh && sp.lag2_inLow < sp.lag3_inLow && sp.lag1_inHigh < sp.lag2_inHigh && sp.lag1_inLow < sp.lag2_inLow && inClose > sp.lag3_inOpen && inClose < sp.lag4_inClose || (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == 1 && ((if (sp.lag3_inOpen).min(sp.lag3_inClose) > (sp.lag4_inOpen).max(sp.lag4_inClose) { 1 } else { 0 }) != 0) && sp.lag2_inHigh > sp.lag3_inHigh && sp.lag2_inLow > sp.lag3_inLow && sp.lag1_inHigh > sp.lag2_inHigh && sp.lag1_inLow > sp.lag2_inLow && inClose < sp.lag3_inOpen && inClose > sp.lag4_inClose) // when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap
             {
                 (*outInteger) = ((if inClose >= inOpen { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
                 (*outInteger) = 0;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_6: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_6 = (lag4_inClose - lag4_inOpen).abs();
-                }
-                1 => {
-                    _candlerange_6 = lag4_inHigh - lag4_inLow;
-                }
-                2 => {
-                    _candlerange_6 = (lag4_inHigh - (if lag4_inClose >= lag4_inOpen { lag4_inClose } else { lag4_inOpen })) + ((if lag4_inClose >= lag4_inOpen { lag4_inOpen } else { lag4_inClose }) - lag4_inLow);
-                }
-                _ => {
-                    _candlerange_6 = 0.0;
-                }
-            }
-            BodyLongPeriodTotal += _candlerange_6 - (if (((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx) as usize) != pkSlot0 { sp.ring_BodyLongTrailingIdx_derived[((ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx) as usize] } else { pkVal0 });
-            cur_outInteger = (*outInteger);
-            lag4_inOpen = lag3_inOpen;
-            lag3_inOpen = lag2_inOpen;
-            lag2_inOpen = lag1_inOpen;
-            lag1_inOpen = inOpen;
-            lag4_inHigh = lag3_inHigh;
-            lag3_inHigh = lag2_inHigh;
-            lag2_inHigh = lag1_inHigh;
-            lag1_inHigh = inHigh;
-            lag4_inLow = lag3_inLow;
-            lag3_inLow = lag2_inLow;
-            lag2_inLow = lag1_inLow;
-            lag1_inLow = inLow;
-            lag4_inClose = lag3_inClose;
-            lag3_inClose = lag2_inClose;
-            lag2_inClose = lag1_inClose;
-            lag1_inClose = inClose;
-            ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
-            if ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-                ringPos_BodyLongTrailingIdx = 0;
             }
         }
         Ok(outInteger)

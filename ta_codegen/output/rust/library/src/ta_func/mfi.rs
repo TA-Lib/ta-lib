@@ -947,14 +947,12 @@ impl MfiStream {
             let mut posFlow: f64 = 0.0_f64;
             let mut negFlow: f64 = 0.0_f64;
             let mut posClamped: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut mflow_Idx = sp.mflow_Idx;
             let mut negSumMF = sp.negSumMF;
             let mut nullRun = sp.nullRun;
             let mut posSumMF = sp.posSumMF;
             let mut prevValue = sp.prevValue;
-            posSumMF -= sp.cb_mflow_positive[mflow_Idx];
-            negSumMF -= sp.cb_mflow_negative[mflow_Idx];
+            posSumMF -= sp.cb_mflow_positive[sp.mflow_Idx];
+            negSumMF -= sp.cb_mflow_negative[sp.mflow_Idx];
             tempValue1 = (inHigh + inLow + inClose) / 3.0;
             tempValue2 = tempValue1 - prevValue;
             // Dead-zone scaled to the two typical prices being compared (issue #107).
@@ -980,11 +978,6 @@ impl MfiStream {
             } else {
                 (*outReal) = 100.0 * (posClamped / tempValue1);
             }
-            mflow_Idx = mflow_Idx + 1;
-            if mflow_Idx > sp.maxIdx_mflow {
-                mflow_Idx = 0;
-            }
-            cur_outReal = (*outReal);
         }
         Ok(outReal)
     }

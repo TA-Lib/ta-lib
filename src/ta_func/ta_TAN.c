@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_TAN_Peek( const TA_TAN_Stream *stream, double inReal, d
    scratch = *stream;
    (void)sp;
    *outReal= tan(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

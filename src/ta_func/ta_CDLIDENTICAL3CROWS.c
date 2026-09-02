@@ -652,25 +652,6 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Peek( const TA_CDLIDENTICAL3CROWS_St
    {
       *outInteger= 0;
    }
-   sp->cur_outInteger = *outInteger;
-   sp->lag2_inOpen = sp->lag1_inOpen;
-   sp->lag1_inOpen = inOpen;
-   sp->lag2_inHigh = sp->lag1_inHigh;
-   sp->lag1_inHigh = inHigh;
-   sp->lag2_inLow = sp->lag1_inLow;
-   sp->lag1_inLow = inLow;
-   sp->lag2_inClose = sp->lag1_inClose;
-   sp->lag1_inClose = inClose;
-   sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
-   if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
-   {
-      sp->ringPos_EqualTrailingIdx = 0;
-   }
-   sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
-   if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
-   {
-      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
-   }
    return TA_SUCCESS;
 }
 

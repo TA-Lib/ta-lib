@@ -995,8 +995,6 @@ TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, d
       sp->periodTotal2 -= tempReal;
    }
    *outReal= variance;
-   sp->i += 1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

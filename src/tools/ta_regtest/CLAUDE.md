@@ -314,10 +314,10 @@ interchangeable, and the coverage they add is very uneven:
 | `UpdateAndFill` | `Open(P)` then ONE call over the tail, every value vs batch, plus canary slack and the rejections each backend can express (aliased or overlapping output, an output shorter than the run, a negative count, a zero-bar no-op) | what every value family is blind to — whether the handle knows how many bars it has consumed |
 | **range** | the handle's `OutRange` against the batch range, at four sites: the `OpenAndFill` handle, `Open(P)` + updates, `Open(P)` + one `UpdateAndFill`, and the anchored `OpenInternal` | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
 
-Of the five value families, three delegate to the batch transcription and one is
+Of the six value families, three delegate to the batch transcription and two are
 same-tier: the prefix sweep's Update loop and the n-bar filler are the only
-things looking at the streaming step, and both can only report a difference the
-**output** shows.
+things looking at the streaming step against a batch reference, and both can
+only report a difference the **output** shows.
 
 For a candlestick the output is a 3-valued integer, so an arithmetic error in a
 `<Setting>PeriodTotal` is invisible until it crosses a decision threshold.

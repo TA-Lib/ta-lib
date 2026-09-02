@@ -1835,19 +1835,6 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Peek( const TA_HT_TRENDLINE_Stream *stream
    sp->iTrend2 = sp->iTrend1;
    sp->iTrend1 = tempReal;
    *outReal= tempReal2;
-   /* Ooof... let's do the next price bar now! */
-   sp->cur_outReal = *outReal;
-   sp->ringPos_trailingWMAIdx = sp->ringPos_trailingWMAIdx + 1;
-   if( sp->ringPos_trailingWMAIdx >= sp->ringCap_trailingWMAIdx )
-   {
-      sp->ringPos_trailingWMAIdx = 0;
-   }
-   sp->winPos_i = sp->winPos_i + 1;
-   if( sp->winPos_i >= sp->winCap_i )
-   {
-      sp->winPos_i = 0;
-   }
-   sp->streamParity = 1 - sp->streamParity;
    return TA_SUCCESS;
 }
 

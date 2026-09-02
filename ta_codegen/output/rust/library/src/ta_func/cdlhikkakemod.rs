@@ -1033,57 +1033,25 @@ impl CdlhikkakemodStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut NearPeriodTotal = sp.NearPeriodTotal;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut lag2_inClose = sp.lag2_inClose;
-            let mut lag2_inHigh = sp.lag2_inHigh;
-            let mut lag2_inLow = sp.lag2_inLow;
-            let mut lag2_inOpen = sp.lag2_inOpen;
-            let mut lag3_inHigh = sp.lag3_inHigh;
-            let mut lag3_inLow = sp.lag3_inLow;
             let mut patternCount = sp.patternCount;
             let mut patternHigh = sp.patternHigh;
             let mut patternLow = sp.patternLow;
             let mut patternResult = sp.patternResult;
-            let mut ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx;
-            let mut pkSlot0: usize = usize::MAX;
-            let mut pkVal0: f64 = 0.0_f64;
             #[allow(non_snake_case)]
             let Near_rangeType: i32 = self.cs_near.range_type as i32;
             #[allow(non_snake_case)]
             let Near_avgPeriod: i32 = self.cs_near.avg_period;
             #[allow(non_snake_case)]
             let Near_factor: f64 = self.cs_near.factor;
-            pkSlot0 = ringPos_NearTrailingIdx as usize;
-            let mut _candlerange_7: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_7 = (inClose - inOpen).abs();
-                }
-                1 => {
-                    _candlerange_7 = inHigh - inLow;
-                }
-                2 => {
-                    _candlerange_7 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-                }
-                _ => {
-                    _candlerange_7 = 0.0;
-                }
-            }
-            pkVal0 = _candlerange_7;
-            if lag2_inHigh < lag3_inHigh &&
-               lag2_inLow > lag3_inLow &&   // 2nd: lower high and higher low than 1st
-               lag1_inHigh < lag2_inHigh &&
-               lag1_inLow > lag2_inLow &&   // 3rd: lower high and higher low than 2nd
-               (inHigh < lag1_inHigh && inLow < lag1_inLow && lag2_inClose <= lag2_inLow + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || inHigh > lag1_inHigh && inLow > lag1_inLow && lag2_inClose >= lag2_inHigh - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 }))) // (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top
+            if sp.lag2_inHigh < sp.lag3_inHigh &&
+               sp.lag2_inLow > sp.lag3_inLow &&   // 2nd: lower high and higher low than 1st
+               sp.lag1_inHigh < sp.lag2_inHigh &&
+               sp.lag1_inLow > sp.lag2_inLow &&   // 3rd: lower high and higher low than 2nd
+               (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow && sp.lag2_inClose <= sp.lag2_inLow + ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow && sp.lag2_inClose >= sp.lag2_inHigh - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 }))) // (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top
             {
-                patternResult = 100 * (if inHigh < lag1_inHigh { 1 } else { 0 - 1 });
-                patternHigh = lag1_inHigh;
-                patternLow = lag1_inLow;
+                patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
+                patternHigh = sp.lag1_inHigh;
+                patternLow = sp.lag1_inLow;
                 patternCount = 4;
                 (*outInteger) = (patternResult) as i32;
             } else if patternCount > 0 &&
@@ -1093,40 +1061,6 @@ impl CdlhikkakemodStream {
                 patternCount = 0;
             } else {
                 (*outInteger) = 0;
-            }
-            let mut _candlerange_8: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_8 = (lag2_inClose - lag2_inOpen).abs();
-                }
-                1 => {
-                    _candlerange_8 = lag2_inHigh - lag2_inLow;
-                }
-                2 => {
-                    _candlerange_8 = (lag2_inHigh - (if lag2_inClose >= lag2_inOpen { lag2_inClose } else { lag2_inOpen })) + ((if lag2_inClose >= lag2_inOpen { lag2_inOpen } else { lag2_inClose }) - lag2_inLow);
-                }
-                _ => {
-                    _candlerange_8 = 0.0;
-                }
-            }
-            NearPeriodTotal += _candlerange_8 - (if (((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx) as usize) != pkSlot0 { sp.ring_NearTrailingIdx_derived[((ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx) as usize] } else { pkVal0 });
-            if patternCount > 0 {
-                patternCount -= 1;
-            }
-            cur_outInteger = (*outInteger);
-            lag2_inOpen = lag1_inOpen;
-            lag1_inOpen = inOpen;
-            lag3_inHigh = lag2_inHigh;
-            lag2_inHigh = lag1_inHigh;
-            lag1_inHigh = inHigh;
-            lag3_inLow = lag2_inLow;
-            lag2_inLow = lag1_inLow;
-            lag1_inLow = inLow;
-            lag2_inClose = lag1_inClose;
-            lag1_inClose = inClose;
-            ringPos_NearTrailingIdx = ringPos_NearTrailingIdx + 1;
-            if ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
-                ringPos_NearTrailingIdx = 0;
             }
         }
         Ok(outInteger)

@@ -127,17 +127,12 @@ RING_PUSH = re.compile(
     r"sp->ring_(\w+)_derived\[sp->ringPos_\1\]\s*=\s*TA_STREAM_CANDLERANGE\(\s*(\w+)\s*,")
 
 # `sp->TOT[k] += TA_STREAM_CANDLERANGE(Set,[sp->lagL_]inOpen,...) - sp->ring_TR_derived[slot];`
-# A Peek frame reads the same slot through a non-committing shadow instead
-# (`prune_dead_shadows`, ta_codegen): `(slot != pkSlotN) ? ring[slot] : pkValN`,
-# same slot on both sides of the `?`, so it names no bar the bare read didn't.
-_PEEK_SHADOW = (
-    r"(?:\(\((?:sp->ringPos_\w+|\([^()]*\)\s*%\s*sp->ringCap_\w+)"
-    r"\s*!=\s*pkSlot\d+\)\s*\?\s*)?")
+# Update frames only: a peek stops at its last output store and this write is
+# below it, so no peek frame carries one.
 STREAM_WRITE = re.compile(
     r"sp->(\w*PeriodTotal\d?)(?:\[(\w+)\])?\s*(?:\+=|=\s*sp->\1(?:\[(\w+)\])?\s*\+)\s*\(?\s*"
     r"TA_STREAM_CANDLERANGE\(\s*(\w+)\s*,\s*(?:sp->lag(\d+)_)?inOpen[^)]*\)"
-    r"\s*-\s*" + _PEEK_SHADOW + r"sp->ring_(\w+)_derived\[([^\]]*)\]"
-    r"(?:\s*:\s*pkVal\d+\))?")
+    r"\s*-\s*sp->ring_(\w+)_derived\[([^\]]*)\]")
 
 # The #229 folded form: BOTH terms read one derived ring -- the add
 # cursor-relative, the subtract through the runtime lag.
@@ -501,7 +496,7 @@ def main():
             or nbW["fold"] < 15):
         print("\ncheck_candle_windows: only %d batch (%d filling) / %d streaming "
               "/ %d folded write(s) parsed, far below the corpus this was written "
-              "against (831 / 372 / 100 / 23). The write patterns have stopped "
+              "against (831 / 459 / 100 / 23). The write patterns have stopped "
               "matching -- fix them rather than the floor." %
               (nbW["batch"], nbW["fill"], nbW["stream"], nbW["fold"]))
         return 1

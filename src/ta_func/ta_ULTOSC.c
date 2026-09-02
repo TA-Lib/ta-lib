@@ -1421,9 +1421,6 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Peek( const TA_ULTOSC_Stream *stream, double inH
     * array.
     */
    *outReal= 100.0 * (output / 7.0);
-   /* Increment indexes */
-   sp->cur_outReal = *outReal;
-   sp->lag1_inClose = inClose;
    return TA_SUCCESS;
 }
 

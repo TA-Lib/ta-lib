@@ -637,24 +637,17 @@ impl Rocr100Stream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
-            let mut ringPos_trailingIdx = sp.ringPos_trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             if sp.ringCap_trailingIdx == 0 {
                 pkSlot0 = 0;
                 pkVal0 = inReal;
             }
-            tempReal = (if (ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[ringPos_trailingIdx] } else { pkVal0 });
+            tempReal = (if (sp.ringPos_trailingIdx as usize) != pkSlot0 { sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] } else { pkVal0 });
             if tempReal != 0.0 {
                 (*outReal) = inReal / tempReal * 100.0;
             } else {
                 (*outReal) = 0.0;
-            }
-            cur_outReal = (*outReal);
-            ringPos_trailingIdx = ringPos_trailingIdx + 1;
-            if ringPos_trailingIdx >= sp.ringCap_trailingIdx {
-                ringPos_trailingIdx = 0;
             }
         }
         Ok(outReal)

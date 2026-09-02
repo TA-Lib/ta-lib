@@ -1054,9 +1054,7 @@ public partial class Core
          double prev_jQ_Odd = sp.prev_jQ_Odd;
          double prev_jQ_input_Even = sp.prev_jQ_input_Even;
          double prev_jQ_input_Odd = sp.prev_jQ_input_Odd;
-         int ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx;
          double smoothPeriod = sp.smoothPeriod;
-         int streamParity = sp.streamParity;
          double trailingWMAValue = sp.trailingWMAValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
@@ -1069,10 +1067,10 @@ public partial class Core
          periodWMASub += todayValue;
          periodWMASub -= trailingWMAValue;
          periodWMASum += todayValue * 4.0;
-         trailingWMAValue = (ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[ringPos_trailingWMAIdx] : pkVal0;
+         trailingWMAValue = (sp.ringPos_trailingWMAIdx != pkSlot0) ? sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] : pkVal0;
          smoothedValue = periodWMASum * 0.1;
          periodWMASum -= periodWMASub;
-         if( streamParity == 0 ) {
+         if( sp.streamParity == 0 ) {
             /* Do the Hilbert Transforms for even price bar */
             hilbertTempReal = sp.a * smoothedValue;
             detrender = 0 - sp.detrender_Even[hilbertIdx];
@@ -1189,12 +1187,6 @@ public partial class Core
          period = Math.FusedMultiplyAdd(0.2, period, 0.8 * tempReal);
          smoothPeriod = Math.FusedMultiplyAdd(0.67, smoothPeriod, 0.33 * period);
          cur_outReal = smoothPeriod;
-         /* Ooof... let's do the next price bar now! */
-         ringPos_trailingWMAIdx = ringPos_trailingWMAIdx + 1;
-         if( ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
-            ringPos_trailingWMAIdx = 0;
-         }
-         streamParity = 1 - streamParity;
          return cur_outReal;
       }
 

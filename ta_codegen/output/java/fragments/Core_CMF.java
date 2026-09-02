@@ -602,11 +602,10 @@
          double tmp = 0.0;
          double mfv = 0.0;
          double cur_outReal = sp.cur_outReal;
-         int mfv_Idx = sp.mfv_Idx;
          double sumMFV = sp.sumMFV;
          double sumVol = sp.sumVol;
-         sumMFV -= sp.cb_mfv_flow[mfv_Idx];
-         sumVol -= sp.cb_mfv_volume[mfv_Idx];
+         sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
+         sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
          high = inHigh;
          low = inLow;
          close = inClose;
@@ -622,10 +621,6 @@
             cur_outReal = sumMFV / sumVol;
          } else {
             cur_outReal = 0.0;
-         }
-         mfv_Idx = mfv_Idx + 1;
-         if( mfv_Idx > sp.maxIdx_mfv ) {
-            mfv_Idx = 0;
          }
          return cur_outReal;
       }

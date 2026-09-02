@@ -530,7 +530,6 @@ TA_LIB_API TA_RetCode TA_EMA_Peek( const TA_EMA_Stream *stream, double inReal, d
    }
    sp->prevMA = fma(inReal - sp->prevMA, sp->optInK_1, sp->prevMA);
    *outReal= sp->prevMA;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

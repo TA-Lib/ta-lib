@@ -1375,7 +1375,6 @@ TA_LIB_API TA_RetCode TA_ADX_Peek( const TA_ADX_Stream *stream, double inHigh, d
    }
    /* Output the ADX */
    *outReal= sp->prevADX;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

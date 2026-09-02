@@ -926,12 +926,6 @@ TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, d
    {
       *outReal= 100.0 * (posClamped / tempValue1);
    }
-   sp->mflow_Idx = sp->mflow_Idx + 1;
-   if( sp->mflow_Idx > sp->maxIdx_mflow )
-   {
-      sp->mflow_Idx = 0;
-   }
-   sp->cur_outReal = *outReal;
    sp->posSumMF = posSumMF;
    sp->negSumMF = negSumMF;
    return TA_SUCCESS;

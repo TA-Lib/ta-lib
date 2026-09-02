@@ -415,12 +415,6 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Peek( const TA_AVGDEV_Stream *stream, double inR
       todayDev += fabs(((((sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i) != pkSlot0) ? sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - i >= sp->winCap_i) ? sp->winPos_i + sp->winCap_i - i - sp->winCap_i : sp->winPos_i + sp->winCap_i - i] : pkVal0) - todaySum / sp->optInTimePeriod);
    }
    *outReal= todayDev / sp->optInTimePeriod;
-   sp->cur_outReal = *outReal;
-   sp->winPos_i = sp->winPos_i + 1;
-   if( sp->winPos_i >= sp->winCap_i )
-   {
-      sp->winPos_i = 0;
-   }
    return TA_SUCCESS;
 }
 

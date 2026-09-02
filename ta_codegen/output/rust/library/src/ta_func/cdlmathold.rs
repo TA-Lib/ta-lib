@@ -1210,25 +1210,6 @@ impl CdlmatholdStream {
         {
             let sp = &self.state;
             let outInteger = &mut outInteger;
-            let mut cur_outInteger = sp.cur_outInteger;
-            let mut lag1_inClose = sp.lag1_inClose;
-            let mut lag1_inHigh = sp.lag1_inHigh;
-            let mut lag1_inLow = sp.lag1_inLow;
-            let mut lag1_inOpen = sp.lag1_inOpen;
-            let mut lag2_inClose = sp.lag2_inClose;
-            let mut lag2_inHigh = sp.lag2_inHigh;
-            let mut lag2_inLow = sp.lag2_inLow;
-            let mut lag2_inOpen = sp.lag2_inOpen;
-            let mut lag3_inClose = sp.lag3_inClose;
-            let mut lag3_inHigh = sp.lag3_inHigh;
-            let mut lag3_inLow = sp.lag3_inLow;
-            let mut lag3_inOpen = sp.lag3_inOpen;
-            let mut lag4_inClose = sp.lag4_inClose;
-            let mut lag4_inHigh = sp.lag4_inHigh;
-            let mut lag4_inLow = sp.lag4_inLow;
-            let mut lag4_inOpen = sp.lag4_inOpen;
-            let mut ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx;
-            let mut ringPos_BodyShortTrailingIdx = sp.ringPos_BodyShortTrailingIdx;
             #[allow(non_snake_case)]
             let BodyLong_rangeType: i32 = self.cs_body_long.range_type as i32;
             #[allow(non_snake_case)]
@@ -1241,51 +1222,26 @@ impl CdlmatholdStream {
             let BodyShort_avgPeriod: i32 = self.cs_body_short.avg_period;
             #[allow(non_snake_case)]
             let BodyShort_factor: f64 = self.cs_body_short.factor;
-            if (if lag4_inClose >= lag4_inOpen { 1 } else { 0 - 1 }) == 1 &&        // white, black, 2 black or white, white
-               (((if lag3_inClose >= lag3_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
+            if (if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 }) == 1 &&     // white, black, 2 black or white, white
+               (((if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
                (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&
-               ((if (lag3_inOpen).min(lag3_inClose) > (lag4_inOpen).max(lag4_inClose) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
-               (lag2_inOpen).min(lag2_inClose) < lag4_inClose &&                    // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
-               (lag1_inOpen).min(lag1_inClose) < lag4_inClose &&
-               (lag2_inOpen).min(lag2_inClose) > lag4_inClose - (lag4_inClose - lag4_inOpen).abs() * sp.optInPenetration && // reaction days penetrate first body less than optInPenetration percent
-               (lag1_inOpen).min(lag1_inClose) > lag4_inClose - (lag4_inClose - lag4_inOpen).abs() * sp.optInPenetration &&
-               (lag2_inClose).max(lag2_inOpen) < lag3_inOpen &&                     // 2nd to 4th are falling
-               (lag1_inClose).max(lag1_inOpen) < (lag2_inClose).max(lag2_inOpen) &&
-               inOpen > lag1_inClose &&                                             // 5th opens above the prior close
-               inClose > ((lag3_inHigh).max(lag2_inHigh)).max(lag1_inHigh) &&       // 5th closes above the highest high of the reaction days
-               (lag4_inClose - lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((lag4_inClose) - (lag4_inOpen)).abs(), 1 => (lag4_inHigh) - (lag4_inLow), 2 => ((lag4_inHigh) - (if (lag4_inClose) >= (lag4_inOpen) { (lag4_inClose) } else { (lag4_inOpen) })) + ((if (lag4_inClose) >= (lag4_inOpen) { (lag4_inOpen) } else { (lag4_inClose) }) - (lag4_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long, then 3 small
-               (lag3_inClose - lag3_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((lag3_inClose) - (lag3_inOpen)).abs(), 1 => (lag3_inHigh) - (lag3_inLow), 2 => ((lag3_inHigh) - (if (lag3_inClose) >= (lag3_inOpen) { (lag3_inClose) } else { (lag3_inOpen) })) + ((if (lag3_inClose) >= (lag3_inOpen) { (lag3_inOpen) } else { (lag3_inClose) }) - (lag3_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (lag2_inClose - lag2_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((lag2_inClose) - (lag2_inOpen)).abs(), 1 => (lag2_inHigh) - (lag2_inLow), 2 => ((lag2_inHigh) - (if (lag2_inClose) >= (lag2_inOpen) { (lag2_inClose) } else { (lag2_inOpen) })) + ((if (lag2_inClose) >= (lag2_inOpen) { (lag2_inOpen) } else { (lag2_inClose) }) - (lag2_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               (lag1_inClose - lag1_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((lag1_inClose) - (lag1_inOpen)).abs(), 1 => (lag1_inHigh) - (lag1_inLow), 2 => ((lag1_inHigh) - (if (lag1_inClose) >= (lag1_inOpen) { (lag1_inClose) } else { (lag1_inOpen) })) + ((if (lag1_inClose) >= (lag1_inOpen) { (lag1_inOpen) } else { (lag1_inClose) }) - (lag1_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 }))
+               ((if (sp.lag3_inOpen).min(sp.lag3_inClose) > (sp.lag4_inOpen).max(sp.lag4_inClose) { 1 } else { 0 }) != 0) && // upside gap 1st to 2nd
+               (sp.lag2_inOpen).min(sp.lag2_inClose) < sp.lag4_inClose &&              // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
+               (sp.lag1_inOpen).min(sp.lag1_inClose) < sp.lag4_inClose &&
+               (sp.lag2_inOpen).min(sp.lag2_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration && // reaction days penetrate first body less than optInPenetration percent
+               (sp.lag1_inOpen).min(sp.lag1_inClose) > sp.lag4_inClose - (sp.lag4_inClose - sp.lag4_inOpen).abs() * sp.optInPenetration &&
+               (sp.lag2_inClose).max(sp.lag2_inOpen) < sp.lag3_inOpen &&               // 2nd to 4th are falling
+               (sp.lag1_inClose).max(sp.lag1_inOpen) < (sp.lag2_inClose).max(sp.lag2_inOpen) &&
+               inOpen > sp.lag1_inClose &&                                             // 5th opens above the prior close
+               inClose > ((sp.lag3_inHigh).max(sp.lag2_inHigh)).max(sp.lag1_inHigh) && // 5th closes above the highest high of the reaction days
+               (sp.lag4_inClose - sp.lag4_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyPeriodTotal[4]) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag4_inClose) - (sp.lag4_inOpen)).abs(), 1 => (sp.lag4_inHigh) - (sp.lag4_inLow), 2 => ((sp.lag4_inHigh) - (if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inClose) } else { (sp.lag4_inOpen) })) + ((if (sp.lag4_inClose) >= (sp.lag4_inOpen) { (sp.lag4_inOpen) } else { (sp.lag4_inClose) }) - (sp.lag4_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long, then 3 small
+               (sp.lag3_inClose - sp.lag3_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[3]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag3_inClose) - (sp.lag3_inOpen)).abs(), 1 => (sp.lag3_inHigh) - (sp.lag3_inLow), 2 => ((sp.lag3_inHigh) - (if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inClose) } else { (sp.lag3_inOpen) })) + ((if (sp.lag3_inClose) >= (sp.lag3_inOpen) { (sp.lag3_inOpen) } else { (sp.lag3_inClose) }) - (sp.lag3_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
+               (sp.lag2_inClose - sp.lag2_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[2]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag2_inClose) - (sp.lag2_inOpen)).abs(), 1 => (sp.lag2_inHigh) - (sp.lag2_inLow), 2 => ((sp.lag2_inHigh) - (if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inClose) } else { (sp.lag2_inOpen) })) + ((if (sp.lag2_inClose) >= (sp.lag2_inOpen) { (sp.lag2_inOpen) } else { (sp.lag2_inClose) }) - (sp.lag2_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) &&
+               (sp.lag1_inClose - sp.lag1_inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal[1]) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 }))
             {
                 (*outInteger) = 100;
             } else {
                 (*outInteger) = 0;
-            }
-            cur_outInteger = (*outInteger);
-            lag4_inOpen = lag3_inOpen;
-            lag3_inOpen = lag2_inOpen;
-            lag2_inOpen = lag1_inOpen;
-            lag1_inOpen = inOpen;
-            lag4_inHigh = lag3_inHigh;
-            lag3_inHigh = lag2_inHigh;
-            lag2_inHigh = lag1_inHigh;
-            lag1_inHigh = inHigh;
-            lag4_inLow = lag3_inLow;
-            lag3_inLow = lag2_inLow;
-            lag2_inLow = lag1_inLow;
-            lag1_inLow = inLow;
-            lag4_inClose = lag3_inClose;
-            lag3_inClose = lag2_inClose;
-            lag2_inClose = lag1_inClose;
-            lag1_inClose = inClose;
-            ringPos_BodyLongTrailingIdx = ringPos_BodyLongTrailingIdx + 1;
-            if ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
-                ringPos_BodyLongTrailingIdx = 0;
-            }
-            ringPos_BodyShortTrailingIdx = ringPos_BodyShortTrailingIdx + 1;
-            if ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
-                ringPos_BodyShortTrailingIdx = 0;
             }
         }
         Ok(outInteger)

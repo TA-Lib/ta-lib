@@ -677,7 +677,6 @@ TA_LIB_API TA_RetCode TA_EFI_Peek( const TA_EFI_Stream *stream, double inClose, 
       force = (inClose - sp->prevClose) * inVolume;
       sp->prevClose = inClose;
       *outReal= force;
-      sp->cur_outReal = *outReal;
    }
    else
    {
@@ -687,7 +686,6 @@ TA_LIB_API TA_RetCode TA_EFI_Peek( const TA_EFI_Stream *stream, double inClose, 
       sp->prevClose = inClose;
       sp->prevMA = fma(force - sp->prevMA, sp->optInK_1, sp->prevMA);
       *outReal= sp->prevMA;
-      sp->cur_outReal = *outReal;
    }
    return TA_SUCCESS;
 }

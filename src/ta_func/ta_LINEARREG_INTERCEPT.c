@@ -935,8 +935,6 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Peek( const TA_LINEARREG_INTERCEPT_
    sp->trailingValue = ((sp->trailingIdx & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->trailingIdx & sp->xMask] : pkVal0;
    sp->trailingIdx += 1;
    *outReal= (sp->SumY - m * sp->SumX) / (double)sp->optInTimePeriod;
-   sp->today += 1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

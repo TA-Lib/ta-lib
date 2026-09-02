@@ -764,9 +764,6 @@ TA_LIB_API TA_RetCode TA_AROONOSC_Peek( const TA_AROONOSC_Stream *stream, double
     *       so writing to the output is the last thing being done here.
     */
    *outReal= aroon;
-   sp->trailingIdx += 1;
-   sp->today += 1;
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 

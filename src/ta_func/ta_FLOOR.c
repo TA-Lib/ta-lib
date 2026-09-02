@@ -252,7 +252,6 @@ TA_LIB_API TA_RetCode TA_FLOOR_Peek( const TA_FLOOR_Stream *stream, double inRea
    scratch = *stream;
    (void)sp;
    *outReal= floor(inReal);
-   sp->cur_outReal = *outReal;
    return TA_SUCCESS;
 }
 
