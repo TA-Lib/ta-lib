@@ -44,8 +44,9 @@ fn load() -> Vec<FuncDef> {
 
 /// Functions that inherit an unstable period through a hard-coded inner call, and the
 /// function each one inherits from. Measured: every one of these moves at default params.
-/// KC is the only one with TWO sources (EMA for its centre line, ATR for its band); ATR is
-/// named because nothing else here does, so the pair still fails if KC loses that leg.
+/// KC is the only one with TWO sources (EMA for its centre line, ATR for its band), and it
+/// shares the ATR one with SUPERTREND -- which inherits it through `atr_lookback()` alone,
+/// with no call to `atr()` in the body at all.
 const INHERITED: &[(&str, &str)] = &[
     ("ADOSC", "EMA"),
     ("ADXR", "ADX"),
@@ -55,6 +56,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("MACDFIX", "EMA"),
     ("SMI", "EMA"),
     ("STOCHRSI", "RSI"),
+    ("SUPERTREND", "ATR"),
     ("TEMA", "EMA"),
     ("TRIX", "EMA"),
 ];

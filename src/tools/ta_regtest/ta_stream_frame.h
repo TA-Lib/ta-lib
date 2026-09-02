@@ -6485,6 +6485,48 @@ static TA_RetCode TA_SUM_SFrameClose( void *stream )
    return TA_SUM_Close( (TA_SUM_Stream *)stream );
 }
 
+static TA_RetCode TA_SUPERTREND_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_SUPERTREND_Open(
+               (TA_SUPERTREND_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               outReal[0] /* outReal */,
+               outInteger[1] /* outInteger */
+               );
+}
+static TA_RetCode TA_SUPERTREND_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   return TA_SUPERTREND_OpenAndFill(
+               (TA_SUPERTREND_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */,
+               outInteger[1] /* outInteger */
+               );
+}
+static TA_RetCode TA_SUPERTREND_SFrameClose( void *stream )
+{
+   return TA_SUPERTREND_Close( (TA_SUPERTREND_Stream *)stream );
+}
+
 static TA_RetCode TA_T3_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -7458,6 +7500,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_SUB, 0, NULL, 1, TA_VOutIsInt_SUB },
    { "SUM", TA_SUM_SFrameOpen, TA_SUM_SFrameFill, TA_SUM_SFrameClose,
      1, TA_VIn_SUM, 1, TA_VOpt_SUM, 1, TA_VOutIsInt_SUM },
+   { "SUPERTREND", TA_SUPERTREND_SFrameOpen, TA_SUPERTREND_SFrameFill, TA_SUPERTREND_SFrameClose,
+     3, TA_VIn_SUPERTREND, 2, TA_VOpt_SUPERTREND, 2, TA_VOutIsInt_SUPERTREND },
    { "T3", TA_T3_SFrameOpen, TA_T3_SFrameFill, TA_T3_SFrameClose,
      1, TA_VIn_T3, 2, TA_VOpt_T3, 1, TA_VOutIsInt_T3 },
    { "TAN", TA_TAN_SFrameOpen, TA_TAN_SFrameFill, TA_TAN_SFrameClose,
@@ -7494,6 +7538,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 177
+#define TA_STREAM_TABLE_SIZE 178
 
 #endif /* TA_STREAM_FRAME_H */

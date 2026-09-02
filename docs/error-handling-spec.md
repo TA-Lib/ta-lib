@@ -870,20 +870,38 @@ C — and C is the one language where the check is not merely expensive but not
 straightforwardly expressible. Java and Rust satisfy the stronger rule for free by
 making the state unreachable, which is not the same as enforcing it.
 
-**Outputs of different element types are not compared.** A `double` output and
-an `int` output are never checked against each other, in any backend. Three of
-the four cannot express the comparison at all — `double * == int *` is a
-constraint violation in C, `double[] == int[]` is "incomparable types" in Java,
-`*const f64 == *const i32` is a type error in Rust — and C#'s `Overlaps` is not
-defined across element types. So the rule is again set by what the weakest
-member can say, and here that is nothing.
+**Outputs of different element types: C compares them, the other three cannot.**
+A `double` output and an `int` output can only be the same buffer through a cast,
+and three of the four backends cannot express the comparison at all —
+`double[] == int[]` is "incomparable types" in Java, `*const f64 == *const i32`
+is a type error in Rust, and C#'s `Overlaps` is not defined across element types.
+In C the pair is expressible and **is** checked: the guard compares both through
+`const void *`, which is well defined and is not the `double * == int *`
+constraint violation that reading suggests. C's streaming frames have always done
+this; the batch tier joined them with `SUPERTREND` (#272).
 
-Nothing in the corpus mixes them: `ta_variant_frame` and `ta_stream_frame` carry
-one `outIsInteger` flag per **function** and assert that no function mixes, so a
-mixed-output definition fails the generator before any guard is reached. Skipping
-the pair is therefore what the emitters must do rather than a hole a caller can
-fall into — but it is what they must do, and until #262 three of them emitted a
-term that would not compile.
+**Why C is allowed to detect more here.** Two claims used to close this paragraph
+and both are retired: that nothing in the corpus mixes the two types, and that
+the frames assert nothing does. `SUPERTREND` mixes them, and the frames carry no
+per-function `outIsInteger` flag at all — `ta_variant_frame` indexes `outReal[]`
+and `outInteger[]` by the output's declaration position and has handled the mixed
+case since the SYNTH12 fixture. So skipping the pair stopped being "what the
+emitters must do" and became a hole a C caller could fall into: every *same*-typed
+pair answers `TA_BAD_PARAM`, and the one pair a caller has to cast to build
+answered `TA_SUCCESS` and wrote through both. Detecting it is the same asymmetry
+C# already carries below for a partial input↔output overlap — a superset of the
+guarantee, kept because the language can answer the question cheaply. **Callers
+must not rely on it**, for the same reason: three backends cannot say it.
+
+**Still not detected, in any backend:** two outputs of different types that
+*partially* overlap. That is rule N8, and it is not special to mixed types —
+`TA_BBANDS` with its three bands one element apart returns `TA_SUCCESS` and
+writes a wrong upper band on every bar, no cast required. B6 catches buffer
+identity; everything finer is unspecified.
+
+**Test coverage:** `checkOutputAliasRejected` (`test_abstract.c`) sweeps every
+ordered output pair of every function, cross-typed pairs included, binding both
+onto one buffer and requiring `TA_BAD_PARAM`.
 
 **C# currently detects more than this specifies.** Its generated guard is
 `if (outReal.Overlaps(inReal) && outReal != inReal)`, which rejects a partial

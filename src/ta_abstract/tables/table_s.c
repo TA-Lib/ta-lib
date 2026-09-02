@@ -882,6 +882,71 @@ DEF_FUNCTION( SUM,
              );
 /* SUM END */
 
+/* SUPERTREND BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SUPERTREND_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   10,
+   "Time period for the Average True Range",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SUPERTREND_Multiplier =
+{
+   0.0,
+   TA_REAL_MAX,
+   1,
+   1.0,
+   4.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SUPERTREND_Multiplier =
+{
+   TA_OptInput_RealRange,
+   "optInMultiplier",
+   0,
+
+   "Multiplier",
+   (const void *)&TA_DEF_SUPERTREND_Multiplier,
+   3.0,
+   "ATR multiplier for band width",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SUPERTREND_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SUPERTREND_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  &TA_DEF_UI_Output_Integer,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SUPERTREND_OptInputs[] =
+{ &TA_DEF_UI_D_SUPERTREND_TimePeriod,
+  &TA_DEF_UI_D_SUPERTREND_Multiplier,
+  NULL
+};
+
+DEF_FUNCTION( SUPERTREND,
+              TA_GroupId_OverlapStudies,
+              "SuperTrend",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+             );
+/* SUPERTREND END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -901,6 +966,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(STOCHRSI),
    ADD_TO_TABLE(SUB),
    ADD_TO_TABLE(SUM),
+   ADD_TO_TABLE(SUPERTREND),
    NULL
 };
 

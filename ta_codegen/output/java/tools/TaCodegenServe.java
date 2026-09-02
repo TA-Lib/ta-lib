@@ -149334,6 +149334,1232 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  090126 MF,CC  First version (issue #272).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#SUPERTREND} consumes before it
+        * can produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Smoothing period of the Average True Range (default
+        *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMultiplier Multiplier applied to the Average True Range to set
+        *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int SUPERTREND_Lookback( int optInTimePeriod, double optInMultiplier )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInMultiplier == REAL_DEFAULT ) {
+             optInMultiplier = 3e0;
+          } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
+             return -1;
+          }
+          /* Every output bar needs the Average True Range at the same bar, and nothing
+           * else reaches further back, so the lookback is exactly the callee's. Never
+           * restated here, which is what makes SUPERTREND inherit TA_FUNC_UNST_ATR.
+           */
+          return ATR_Lookback(optInTimePeriod) ;
+
+       }
+       RetCode SUPERTREND_Impl( int startIdx,
+                                int endIdx,
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                int optInTimePeriod,
+                                double optInMultiplier,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[],
+                                int outInteger[] )
+       {
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int isUptrend = 0;
+          double prevATR = 0;
+          double periodTotal = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          double medianPrice = 0;
+          double band = 0;
+          double basicUpper = 0;
+          double basicLower = 0;
+          double finalUpper = 0;
+          double finalLower = 0;
+          double closeToday = 0;
+          double prevClose = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInMultiplier == REAL_DEFAULT ) {
+             optInMultiplier = 3e0;
+          } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
+             return RetCode.BadParam;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = SUPERTREND_Lookback(optInTimePeriod, optInMultiplier);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          /* The Average True Range is carried inline rather than taken from a call,
+           * because the band and the ratchet advance together one bar at a time and a
+           * whole-range buffer between them would not stream.
+           *
+           * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+           * not reorder or fuse operations): True Range from high-low, then the two
+           * previous-close distances in that order; the seed summed from 0.0 over the
+           * first 'period' True Ranges and divided once; Wilder smoothing as three
+           * separate statements.
+           */
+          today = startIdx - lookbackTotal + 1;
+          periodTotal = 0.0;
+          i = optInTimePeriod;
+          while( i-- > 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInTimePeriod;
+          /* Skip the Average True Range's unstable period. Taking the count from the
+           * lookback rather than naming the setting keeps the two from disagreeing.
+           */
+          i = lookbackTotal - optInTimePeriod;
+          while( i != 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR *= optInTimePeriod - 1;
+             prevATR += greatest;
+             prevATR /= optInTimePeriod;
+             today += 1;
+             i -= 1;
+          }
+          /* The first bar has no band to ratchet against and no trend to carry, so
+           * both bands take their unclamped value and the trend is seeded long, as
+           * ta4j's SuperTrendIndicator does. The formula does not settle this and the
+           * published implementations are split on it, so the choice is a convention:
+           * it stays visible for as long as the first trend lasts, and on a series
+           * whose close never leaves the band it never washes out at all.
+           */
+          medianPrice = (inHigh[startIdx] + inLow[startIdx]) / 2.0;
+          band = optInMultiplier * prevATR;
+          finalUpper = medianPrice + band;
+          finalLower = medianPrice - band;
+          isUptrend = 1;
+          prevClose = inClose[startIdx];
+          outReal[0] = finalLower;
+          outInteger[0] = 1;
+          outIdx = 1;
+          today = startIdx + 1;
+          while( today <= endIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR *= optInTimePeriod - 1;
+             prevATR += greatest;
+             prevATR /= optInTimePeriod;
+             medianPrice = (tempHT + tempLT) / 2.0;
+             band = optInMultiplier * prevATR;
+             basicUpper = medianPrice + band;
+             basicLower = medianPrice - band;
+             /* Each band ratchets toward price and is released only by a close on its
+              * far side. Nothing keeps the two ordered -- each is released by its own
+              * condition, so the lower one can end up above the upper one -- and where
+              * that happens a flip puts the emitted band on the far side of the close.
+              * The line is therefore NOT monotone within a trend, and the flag does not
+              * always say which side of the line price is on; both read as invariants
+              * and neither is one.
+              */
+             if( basicUpper < finalUpper || prevClose > finalUpper ) {
+                finalUpper = basicUpper;
+             }
+             if( basicLower > finalLower || prevClose < finalLower ) {
+                finalLower = basicLower;
+             }
+             closeToday = inClose[today];
+             /* The trend is carried in its own variable rather than recovered by
+              * comparing the previous output against the previous bands. The two
+              * carried bands do coincide on some bars -- always on a bar with no true
+              * range, and on some of them at a multiplier of zero -- and there that
+              * comparison cannot tell them apart, so it would silently lose the
+              * hysteresis on exactly the flat input a corpus of real prices lacks.
+              */
+             if( (isUptrend) != 0 ) {
+                if( closeToday < finalLower ) {
+                   isUptrend = 0;
+                }
+             } else if( closeToday > finalUpper ) {
+                isUptrend = 1;
+             }
+             if( (isUptrend) != 0 ) {
+                outReal[outIdx] = finalLower;
+                outInteger[outIdx] = 1;
+             } else {
+                outReal[outIdx] = finalUpper;
+                outInteger[outIdx] = 0 - 1;
+             }
+             prevClose = closeToday;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode SUPERTREND_Impl( int startIdx,
+                                int endIdx,
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                int optInTimePeriod,
+                                double optInMultiplier,
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[],
+                                int outInteger[] )
+       {
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int isUptrend = 0;
+          double prevATR = 0;
+          double periodTotal = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          double medianPrice = 0;
+          double band = 0;
+          double basicUpper = 0;
+          double basicLower = 0;
+          double finalUpper = 0;
+          double finalLower = 0;
+          double closeToday = 0;
+          double prevClose = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInMultiplier == REAL_DEFAULT ) {
+             optInMultiplier = 3e0;
+          } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
+             return RetCode.BadParam;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = SUPERTREND_Lookback(optInTimePeriod, optInMultiplier);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          today = startIdx - lookbackTotal + 1;
+          periodTotal = 0.0;
+          i = optInTimePeriod;
+          while( i-- > 0 ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInTimePeriod;
+          i = lookbackTotal - optInTimePeriod;
+          while( i != 0 ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR *= optInTimePeriod - 1;
+             prevATR += greatest;
+             prevATR /= optInTimePeriod;
+             today += 1;
+             i -= 1;
+          }
+          medianPrice = ((double)inHigh[startIdx] + (double)inLow[startIdx]) / 2.0;
+          band = optInMultiplier * prevATR;
+          finalUpper = medianPrice + band;
+          finalLower = medianPrice - band;
+          isUptrend = 1;
+          prevClose = (double)inClose[startIdx];
+          outReal[0] = finalLower;
+          outInteger[0] = 1;
+          outIdx = 1;
+          today = startIdx + 1;
+          while( today <= endIdx ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR *= optInTimePeriod - 1;
+             prevATR += greatest;
+             prevATR /= optInTimePeriod;
+             medianPrice = (tempHT + tempLT) / 2.0;
+             band = optInMultiplier * prevATR;
+             basicUpper = medianPrice + band;
+             basicLower = medianPrice - band;
+             if( basicUpper < finalUpper || prevClose > finalUpper ) {
+                finalUpper = basicUpper;
+             }
+             if( basicLower > finalLower || prevClose < finalLower ) {
+                finalLower = basicLower;
+             }
+             closeToday = (double)inClose[today];
+             if( (isUptrend) != 0 ) {
+                if( closeToday < finalLower ) {
+                   isUptrend = 0;
+                }
+             } else if( closeToday > finalUpper ) {
+                isUptrend = 1;
+             }
+             if( (isUptrend) != 0 ) {
+                outReal[outIdx] = finalLower;
+                outInteger[outIdx] = 1;
+             } else {
+                outReal[outIdx] = finalUpper;
+                outInteger[outIdx] = 0 - 1;
+             }
+             prevClose = closeToday;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * An ATR-scaled trailing band that follows price on one side at a time and
+        * flips to the other side when the close breaks through it. The trend rides
+        * the lower band while it is up and the upper band while it is down, so the
+        * line is usually below price in an uptrend and above it in a downtrend, and
+        * the flip is the signal. Attributed to Olivier Seban.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * Median = (High + Low) / 2
+        * BasicUpper = Median + Multiplier * ATR(TimePeriod)
+        * BasicLower = Median - Multiplier * ATR(TimePeriod)
+        * Upper = BasicUpper, when BasicUpper < previous Upper or previous Close > previous Upper; otherwise the previous Upper
+        * Lower = BasicLower, when BasicLower > previous Lower or previous Close < previous Lower; otherwise the previous Lower
+        * SuperTrend = Lower while the trend is up, until Close < Lower flips it down
+        * SuperTrend = Upper while the trend is down, until Close > Upper flips it up
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</li>
+        * <li>The recurrence has no value before the first bar it can be computed on, so the trend is seeded up there and both bands take their unclamped value. Published implementations are split on that seed; this is ta4j's. The choice stays visible for as long as the first trend lasts, it never washes out on a series whose close never leaves the band, and it is why the same bar computed from a later start index can differ.</li>
+        * <li>The direction is reported as +1 for an uptrend and -1 for a downtrend, the sign every other signed output in this library uses for bullish. TradingView's built-in {@code ta.supertrend} returns the opposite signs for the same two states, and seeds the other way; a strategy ported from Pine has to swap them.</li>
+        * <li>The two carried bands are released by different conditions, so nothing keeps the lower one below the upper one. Where they cross, a flip leaves the line on the far side of the close, and within a single trend the line can widen away from price instead of tightening toward it. Both are ordinary consequences of the published formula, not a variation on it; they are simply not the guarantees the indicator is usually described as giving.</li>
+        * <li>A multiplier of zero is degenerate but defined: the two basic bands collapse onto the median price exactly. The carried bands do not collapse with them — each is still released by its own condition — so they coincide on some bars and differ on others, and the trend flips on most bars rather than on every one.</li>
+        * <li>The band inherits the Average True Range's warm-up, so a caller who wants it converged sets {@code TA_FUNC_UNST_ATR}, exactly as when calling that function directly.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#SUPERTREND_Lookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Smoothing period of the Average True Range (default
+        *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMultiplier Multiplier applied to the Average True Range to set
+        *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+        * @param outReal The SuperTrend line: the band the trend is currently
+        *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
+        * @param outInteger Trend direction: +1 while the trend rides the lower
+        *        band, -1 while it rides the upper one. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#ATR
+        * @see Core#MEDPRICE
+        * @see Core#SAR
+        * @see Core#SAREXT
+        * @see Core#KC
+        */
+       public OutRange SUPERTREND( int startIdx,
+                                   int endIdx,
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   int optInTimePeriod,
+                                   double optInMultiplier,
+                                   double outReal[],
+                                   int outInteger[] )
+       {
+          requireIndexRange("SUPERTREND", startIdx, endIdx);
+          int guardStart = clampedStart("SUPERTREND", startIdx, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SUPERTREND", "inHigh", inHigh, guardInLen);
+          requireLength("SUPERTREND", "inLow", inLow, guardInLen);
+          requireLength("SUPERTREND", "inClose", inClose, guardInLen);
+          requireLength("SUPERTREND", "outReal", outReal, guardOutLen);
+          requireLength("SUPERTREND", "outInteger", outInteger, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger);
+          if( retCode != RetCode.Success ) {
+             throw failure("SUPERTREND", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * An ATR-scaled trailing band that follows price on one side at a time and
+        * flips to the other side when the close breaks through it. The trend rides
+        * the lower band while it is up and the upper band while it is down, so the
+        * line is usually below price in an uptrend and above it in a downtrend, and
+        * the flip is the signal. Attributed to Olivier Seban.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * Median = (High + Low) / 2
+        * BasicUpper = Median + Multiplier * ATR(TimePeriod)
+        * BasicLower = Median - Multiplier * ATR(TimePeriod)
+        * Upper = BasicUpper, when BasicUpper < previous Upper or previous Close > previous Upper; otherwise the previous Upper
+        * Lower = BasicLower, when BasicLower > previous Lower or previous Close < previous Lower; otherwise the previous Lower
+        * SuperTrend = Lower while the trend is up, until Close < Lower flips it down
+        * SuperTrend = Upper while the trend is down, until Close > Upper flips it up
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</li>
+        * <li>The recurrence has no value before the first bar it can be computed on, so the trend is seeded up there and both bands take their unclamped value. Published implementations are split on that seed; this is ta4j's. The choice stays visible for as long as the first trend lasts, it never washes out on a series whose close never leaves the band, and it is why the same bar computed from a later start index can differ.</li>
+        * <li>The direction is reported as +1 for an uptrend and -1 for a downtrend, the sign every other signed output in this library uses for bullish. TradingView's built-in {@code ta.supertrend} returns the opposite signs for the same two states, and seeds the other way; a strategy ported from Pine has to swap them.</li>
+        * <li>The two carried bands are released by different conditions, so nothing keeps the lower one below the upper one. Where they cross, a flip leaves the line on the far side of the close, and within a single trend the line can widen away from price instead of tightening toward it. Both are ordinary consequences of the published formula, not a variation on it; they are simply not the guarantees the indicator is usually described as giving.</li>
+        * <li>A multiplier of zero is degenerate but defined: the two basic bands collapse onto the median price exactly. The carried bands do not collapse with them — each is still released by its own condition — so they coincide on some bars and differ on others, and the trend flips on most bars rather than on every one.</li>
+        * <li>The band inherits the Average True Range's warm-up, so a caller who wants it converged sets {@code TA_FUNC_UNST_ATR}, exactly as when calling that function directly.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#SUPERTREND_Lookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInTimePeriod Smoothing period of the Average True Range (default
+        *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInMultiplier Multiplier applied to the Average True Range to set
+        *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+        * @param outReal The SuperTrend line: the band the trend is currently
+        *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
+        * @param outInteger Trend direction: +1 while the trend rides the lower
+        *        band, -1 while it rides the upper one. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#ATR
+        * @see Core#MEDPRICE
+        * @see Core#SAR
+        * @see Core#SAREXT
+        * @see Core#KC
+        */
+       public OutRange SUPERTREND( int startIdx,
+                                   int endIdx,
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   int optInTimePeriod,
+                                   double optInMultiplier,
+                                   double outReal[],
+                                   int outInteger[] )
+       {
+          requireIndexRange("SUPERTREND", startIdx, endIdx);
+          int guardStart = clampedStart("SUPERTREND", startIdx, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SUPERTREND", "inHigh", inHigh, guardInLen);
+          requireLength("SUPERTREND", "inLow", inLow, guardInLen);
+          requireLength("SUPERTREND", "inClose", inClose, guardInLen);
+          requireLength("SUPERTREND", "outReal", outReal, guardOutLen);
+          requireLength("SUPERTREND", "outInteger", outInteger, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger);
+          if( retCode != RetCode.Success ) {
+             throw failure("SUPERTREND", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SUPERTREND stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#SUPERTREND} over the same series.
+        * Open with {@link Core#supertrendOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SupertrendStream {
+          Core core;
+          int optInTimePeriod;
+          double optInMultiplier;
+          int isUptrend;
+          double prevATR;
+          double finalUpper;
+          double finalLower;
+          double prevClose;
+          double lag1_inClose;
+          double cur_outReal;
+          int cur_outInteger;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          SupertrendStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#SUPERTREND} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          SupertrendStream( SupertrendStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInMultiplier = other.optInMultiplier;
+             this.isUptrend = other.isUptrend;
+             this.prevATR = other.prevATR;
+             this.finalUpper = other.finalUpper;
+             this.finalLower = other.finalLower;
+             this.prevClose = other.prevClose;
+             this.lag1_inClose = other.lag1_inClose;
+             this.cur_outReal = other.cur_outReal;
+             this.cur_outInteger = other.cur_outInteger;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value(SupertrendOut)} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public void update( double inHigh, double inLow, double inClose, SupertrendOut out ) {
+             requireArgument("SUPERTREND update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("SUPERTREND update: BadParam", RetCode.BadParam);
+             }
+             core.supertrendStepImpl(this, inHigh, inLow, inClose);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             out.real = this.cur_outReal;
+             out.integer = this.cur_outInteger;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inHigh.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outReal[], int outInteger[] ) {
+             requireArgument("SUPERTREND updateAndFill", "inHigh", inHigh);
+             requireArgument("SUPERTREND updateAndFill", "inLow", inLow);
+             requireArgument("SUPERTREND updateAndFill", "inClose", inClose);
+             requireArgument("SUPERTREND updateAndFill", "outReal", outReal);
+             requireArgument("SUPERTREND updateAndFill", "outInteger", outInteger);
+             final int barCount = inHigh.length;
+             if( inLow.length != barCount || inClose.length != barCount || outReal.length < barCount || outInteger.length < barCount || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose || (Object)outReal == (Object)outInteger )
+                throw new TaLibArgumentException("SUPERTREND updateAndFill: BadParam", RetCode.BadParam);
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   throw new TaLibArgumentException("SUPERTREND updateAndFill: BadParam", RetCode.BadParam);
+                }
+                core.supertrendStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+                outReal[i] = this.cur_outReal;
+                outInteger[i] = this.cur_outInteger;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period and {@code peek} never allocates.
+           */
+          public void peek( double inHigh, double inLow, double inClose, SupertrendOut out ) {
+             requireArgument("SUPERTREND peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw new TaLibArgumentException("SUPERTREND peek: BadParam", RetCode.BadParam);
+             SupertrendStream sp = this;
+             double val2 = 0.0;
+             double val3 = 0.0;
+             double greatest = 0.0;
+             double tempCY = 0.0;
+             double tempLT = 0.0;
+             double tempHT = 0.0;
+             double medianPrice = 0.0;
+             double band = 0.0;
+             double basicUpper = 0.0;
+             double basicLower = 0.0;
+             double closeToday = 0.0;
+             int cur_outInteger = sp.cur_outInteger;
+             double cur_outReal = sp.cur_outReal;
+             double finalLower = sp.finalLower;
+             double finalUpper = sp.finalUpper;
+             int isUptrend = sp.isUptrend;
+             double lag1_inClose = sp.lag1_inClose;
+             double prevATR = sp.prevATR;
+             double prevClose = sp.prevClose;
+             tempLT = inLow;
+             tempHT = inHigh;
+             tempCY = lag1_inClose;
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR *= sp.optInTimePeriod - 1;
+             prevATR += greatest;
+             prevATR /= sp.optInTimePeriod;
+             medianPrice = (tempHT + tempLT) / 2.0;
+             band = sp.optInMultiplier * prevATR;
+             basicUpper = medianPrice + band;
+             basicLower = medianPrice - band;
+             /* Each band ratchets toward price and is released only by a close on its
+              * far side. Nothing keeps the two ordered -- each is released by its own
+              * condition, so the lower one can end up above the upper one -- and where
+              * that happens a flip puts the emitted band on the far side of the close.
+              * The line is therefore NOT monotone within a trend, and the flag does not
+              * always say which side of the line price is on; both read as invariants
+              * and neither is one.
+              */
+             if( basicUpper < finalUpper || prevClose > finalUpper ) {
+                finalUpper = basicUpper;
+             }
+             if( basicLower > finalLower || prevClose < finalLower ) {
+                finalLower = basicLower;
+             }
+             closeToday = inClose;
+             /* The trend is carried in its own variable rather than recovered by
+              * comparing the previous output against the previous bands. The two
+              * carried bands do coincide on some bars -- always on a bar with no true
+              * range, and on some of them at a multiplier of zero -- and there that
+              * comparison cannot tell them apart, so it would silently lose the
+              * hysteresis on exactly the flat input a corpus of real prices lacks.
+              */
+             if( (isUptrend) != 0 ) {
+                if( closeToday < finalLower ) {
+                   isUptrend = 0;
+                }
+             } else if( closeToday > finalUpper ) {
+                isUptrend = 1;
+             }
+             if( (isUptrend) != 0 ) {
+                cur_outReal = finalLower;
+                cur_outInteger = 1;
+             } else {
+                cur_outReal = finalUpper;
+                cur_outInteger = 0 - 1;
+             }
+             prevClose = closeToday;
+             lag1_inClose = inClose;
+             out.real = cur_outReal;
+             out.integer = cur_outInteger;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           */
+          public void value( SupertrendOut out ) {
+             requireArgument("SUPERTREND value", "out", out);
+             out.real = this.cur_outReal;
+             out.integer = this.cur_outInteger;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SupertrendStream clone() {
+             return new SupertrendStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one SUPERTREND bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class SupertrendOut {
+          /** The SuperTrend line: the band the trend is currently riding. */
+          public double real;
+          /** Trend direction: +1 while the trend rides the lower band, -1 while it rides the upper one. */
+          public int integer;
+       }
+       void supertrendStepImpl( SupertrendStream sp, double inHigh, double inLow, double inClose )
+       {
+          double val2 = 0.0;
+          double val3 = 0.0;
+          double greatest = 0.0;
+          double tempCY = 0.0;
+          double tempLT = 0.0;
+          double tempHT = 0.0;
+          double medianPrice = 0.0;
+          double band = 0.0;
+          double basicUpper = 0.0;
+          double basicLower = 0.0;
+          double closeToday = 0.0;
+          tempLT = inLow;
+          tempHT = inHigh;
+          tempCY = sp.lag1_inClose;
+          greatest = tempHT - tempLT;
+          /* val1 */
+          val2 = Math.abs(tempCY - tempHT);
+          if( val2 > greatest ) {
+             greatest = val2;
+          }
+          val3 = Math.abs(tempCY - tempLT);
+          if( val3 > greatest ) {
+             greatest = val3;
+          }
+          sp.prevATR *= sp.optInTimePeriod - 1;
+          sp.prevATR += greatest;
+          sp.prevATR /= sp.optInTimePeriod;
+          medianPrice = (tempHT + tempLT) / 2.0;
+          band = sp.optInMultiplier * sp.prevATR;
+          basicUpper = medianPrice + band;
+          basicLower = medianPrice - band;
+          /* Each band ratchets toward price and is released only by a close on its
+           * far side. Nothing keeps the two ordered -- each is released by its own
+           * condition, so the lower one can end up above the upper one -- and where
+           * that happens a flip puts the emitted band on the far side of the close.
+           * The line is therefore NOT monotone within a trend, and the flag does not
+           * always say which side of the line price is on; both read as invariants
+           * and neither is one.
+           */
+          if( basicUpper < sp.finalUpper || sp.prevClose > sp.finalUpper ) {
+             sp.finalUpper = basicUpper;
+          }
+          if( basicLower > sp.finalLower || sp.prevClose < sp.finalLower ) {
+             sp.finalLower = basicLower;
+          }
+          closeToday = inClose;
+          /* The trend is carried in its own variable rather than recovered by
+           * comparing the previous output against the previous bands. The two
+           * carried bands do coincide on some bars -- always on a bar with no true
+           * range, and on some of them at a multiplier of zero -- and there that
+           * comparison cannot tell them apart, so it would silently lose the
+           * hysteresis on exactly the flat input a corpus of real prices lacks.
+           */
+          if( (sp.isUptrend) != 0 ) {
+             if( closeToday < sp.finalLower ) {
+                sp.isUptrend = 0;
+             }
+          } else if( closeToday > sp.finalUpper ) {
+             sp.isUptrend = 1;
+          }
+          if( (sp.isUptrend) != 0 ) {
+             sp.cur_outReal = sp.finalLower;
+             sp.cur_outInteger = 1;
+          } else {
+             sp.cur_outReal = sp.finalUpper;
+             sp.cur_outInteger = 0 - 1;
+          }
+          sp.prevClose = closeToday;
+          sp.lag1_inClose = inClose;
+       }
+       private RetCode supertrendOpenImpl( SupertrendStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outInteger[], int outStride )
+       {
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int isUptrend = 0;
+          double prevATR = 0;
+          double periodTotal = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          double medianPrice = 0;
+          double band = 0;
+          double basicUpper = 0;
+          double basicLower = 0;
+          double finalUpper = 0;
+          double finalLower = 0;
+          double closeToday = 0;
+          double prevClose = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 10;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInMultiplier == REAL_DEFAULT ) {
+             optInMultiplier = 3e0;
+          } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
+             return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = SUPERTREND_Lookback(optInTimePeriod, optInMultiplier);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.InsufficientHistory ;
+          }
+          /* The Average True Range is carried inline rather than taken from a call,
+           * because the band and the ratchet advance together one bar at a time and a
+           * whole-range buffer between them would not stream.
+           *
+           * The arithmetic order below is the bit-exactness contract with TA_ATR (do
+           * not reorder or fuse operations): True Range from high-low, then the two
+           * previous-close distances in that order; the seed summed from 0.0 over the
+           * first 'period' True Ranges and divided once; Wilder smoothing as three
+           * separate statements.
+           */
+          today = startIdx - lookbackTotal + 1;
+          periodTotal = 0.0;
+          i = optInTimePeriod;
+          while( i-- > 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInTimePeriod;
+          /* Skip the Average True Range's unstable period. Taking the count from the
+           * lookback rather than naming the setting keeps the two from disagreeing.
+           */
+          i = lookbackTotal - optInTimePeriod;
+          while( i != 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR *= optInTimePeriod - 1;
+             prevATR += greatest;
+             prevATR /= optInTimePeriod;
+             today += 1;
+             i -= 1;
+          }
+          /* The first bar has no band to ratchet against and no trend to carry, so
+           * both bands take their unclamped value and the trend is seeded long, as
+           * ta4j's SuperTrendIndicator does. The formula does not settle this and the
+           * published implementations are split on it, so the choice is a convention:
+           * it stays visible for as long as the first trend lasts, and on a series
+           * whose close never leaves the band it never washes out at all.
+           */
+          medianPrice = (inHigh[startIdx] + inLow[startIdx]) / 2.0;
+          band = optInMultiplier * prevATR;
+          finalUpper = medianPrice + band;
+          finalLower = medianPrice - band;
+          isUptrend = 1;
+          prevClose = inClose[startIdx];
+          outReal[0 * outStride] = finalLower;
+          outInteger[0 * outStride] = 1;
+          outIdx = 1;
+          today = startIdx + 1;
+          while( today <= endIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR *= optInTimePeriod - 1;
+             prevATR += greatest;
+             prevATR /= optInTimePeriod;
+             medianPrice = (tempHT + tempLT) / 2.0;
+             band = optInMultiplier * prevATR;
+             basicUpper = medianPrice + band;
+             basicLower = medianPrice - band;
+             /* Each band ratchets toward price and is released only by a close on its
+              * far side. Nothing keeps the two ordered -- each is released by its own
+              * condition, so the lower one can end up above the upper one -- and where
+              * that happens a flip puts the emitted band on the far side of the close.
+              * The line is therefore NOT monotone within a trend, and the flag does not
+              * always say which side of the line price is on; both read as invariants
+              * and neither is one.
+              */
+             if( basicUpper < finalUpper || prevClose > finalUpper ) {
+                finalUpper = basicUpper;
+             }
+             if( basicLower > finalLower || prevClose < finalLower ) {
+                finalLower = basicLower;
+             }
+             closeToday = inClose[today];
+             /* The trend is carried in its own variable rather than recovered by
+              * comparing the previous output against the previous bands. The two
+              * carried bands do coincide on some bars -- always on a bar with no true
+              * range, and on some of them at a multiplier of zero -- and there that
+              * comparison cannot tell them apart, so it would silently lose the
+              * hysteresis on exactly the flat input a corpus of real prices lacks.
+              */
+             if( (isUptrend) != 0 ) {
+                if( closeToday < finalLower ) {
+                   isUptrend = 0;
+                }
+             } else if( closeToday > finalUpper ) {
+                isUptrend = 1;
+             }
+             if( (isUptrend) != 0 ) {
+                outReal[outIdx * outStride] = finalLower;
+                outInteger[outIdx * outStride] = 1;
+             } else {
+                outReal[outIdx * outStride] = finalUpper;
+                outInteger[outIdx * outStride] = 0 - 1;
+             }
+             prevClose = closeToday;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInMultiplier = optInMultiplier;
+          sp.isUptrend = isUptrend;
+          sp.prevATR = prevATR;
+          sp.finalUpper = finalUpper;
+          sp.finalLower = finalLower;
+          sp.prevClose = prevClose;
+          sp.lag1_inClose = inClose[historyLen - 1];
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       /* supertrendOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SupertrendStream supertrendOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outInteger[] )
+       {
+          SupertrendStream sp = new SupertrendStream(this);
+          RetCode retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("SUPERTREND openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("SUPERTREND openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("SUPERTREND openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind supertrendOpen (composition seam). */
+       SupertrendStream supertrendOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier )
+       {
+          SupertrendStream sp = new SupertrendStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          int[] sink_outInteger = new int[1];
+          RetCode retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, sink_outReal, sink_outInteger, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("SUPERTREND open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("SUPERTREND open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("SUPERTREND open: " + retCode, retCode);
+       }
+       /**
+        * Open a live SUPERTREND stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#SUPERTREND} at that bar.
+        * <p>The history must hold at least {@code SUPERTREND_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public SupertrendStream supertrendOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier )
+       {
+          requireArgument("SUPERTREND open", "inHigh", inHigh);
+          requireHistory("SUPERTREND open", inHigh.length);
+          requireArgument("SUPERTREND open", "inLow", inLow);
+          requireArgument("SUPERTREND open", "inClose", inClose);
+          requireHistoryLength("SUPERTREND open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("SUPERTREND open", "inClose", inClose.length, inHigh.length);
+          return supertrendOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier);
+       }
+       /**
+        * {@link Core#supertrendOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#SUPERTREND} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SupertrendStream#outRange()}.
+        */
+       public SupertrendStream supertrendOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier, double outReal[], int outInteger[] )
+       {
+          requireArgument("SUPERTREND openAndFill", "inHigh", inHigh);
+          requireHistory("SUPERTREND openAndFill", inHigh.length);
+          requireArgument("SUPERTREND openAndFill", "inLow", inLow);
+          requireArgument("SUPERTREND openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("SUPERTREND openAndFill", inHigh.length, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
+          requireHistoryLength("SUPERTREND openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("SUPERTREND openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("SUPERTREND openAndFill", "outReal", outReal, guardOutLen);
+          requireLength("SUPERTREND openAndFill", "outInteger", outInteger, guardOutLen);
+          if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose || (Object)outReal == (Object)outInteger ) {
+             throw new TaLibArgumentException("SUPERTREND openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return supertrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  MHL      Matthew Lindblom
      *  MF       Mario Fortier
      *
@@ -164552,7 +165778,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "c1fc06b2bdeef8f6";
+    static final String SPLICED_GENCODE_DIGEST = "029961b0cfb70ca3";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -165356,6 +166582,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SUPERTREND", new AbsFunc("SUPERTREND", "Overlap Studies", "SuperTrend", 587202560,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period for the Average True Range",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInMultiplier",0,"Multiplier","ATR multiplier for band width",3.0, 0.0,3e37,1,1.0,4.0,0.5, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1), new AbsOut(1,"outInteger",1) }));
         ABSTRACT.put("T3", new AbsFunc("T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", 184549377,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInVFactor",0,"Volume Factor","Volume Factor",0.7, 0.0,1.0,2,0.01,1.0,0.05, 0,0,0,0,0, null) },
@@ -165710,6 +166940,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_STOCHRSI\"")) return handle_STOCHRSI(json);
         else if (json.contains("\"TA_SUB\"")) return handle_SUB(json);
         else if (json.contains("\"TA_SUM\"")) return handle_SUM(json);
+        else if (json.contains("\"TA_SUPERTREND\"")) return handle_SUPERTREND(json);
         else if (json.contains("\"TA_T3\"")) return handle_T3(json);
         else if (json.contains("\"TA_TAN\"")) return handle_TAN(json);
         else if (json.contains("\"TA_TANH\"")) return handle_TANH(json);
@@ -166053,6 +167284,8 @@ public class TaCodegenServe {
             sb.append("\"TA_SUB\"");
             sb.append(",");
             sb.append("\"TA_SUM\"");
+            sb.append(",");
+            sb.append("\"TA_SUPERTREND\"");
             sb.append(",");
             sb.append("\"TA_T3\"");
             sb.append(",");
@@ -190728,6 +191961,166 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_SUPERTREND(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double optInMultiplier = jsonDouble(json, "optInMultiplier");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        int[] outArr1 = new int[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.SUPERTREND(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.supertrendOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInMultiplier);
+            } else {
+                Core.SupertrendStream _wh = core.supertrendOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, optInMultiplier, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.SUPERTREND(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, optInMultiplier, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashI32(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outInteger\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
@@ -220491,6 +221884,202 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_SUPERTREND(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
+        double optInMultiplier = json.contains("\"optInMultiplier\"") ? jsonDouble(json, "optInMultiplier") : 3e0;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        int[] b1 = new int[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[2] = svK;
+            RetCode rc;
+            try { rc = c2.SUPERTREND_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.SUPERTREND_Lookback(optInTimePeriod, optInMultiplier);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.supertrendOpen(fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                int[] f1 = new int[svN];
+                java.util.Arrays.fill(f1, (int)-987654321);
+                Core.SupertrendStream _fh = c2.supertrendOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, f0, f1);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (f1[i] != b1[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (int)-987654321) fillOk = false;
+                }
+                try { c2.supertrendOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SupertrendStream st;
+                try { st = c2.supertrendOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInMultiplier); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.SupertrendOut v0 = new Core.SupertrendOut(); st.value(v0);
+                if (svXtierNe(v0.real, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (v0.integer != b1[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.SupertrendOut pk = new Core.SupertrendOut();
+                Core.SupertrendOut up = new Core.SupertrendOut();
+                Core.SupertrendOut vc = new Core.SupertrendOut();
+                for (int t = p; t < svN; t++) {
+                    if (t % 7 == 0) {
+                        st.peek(fz_h[t], fz_l[t], fz_c[t], pk);
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svBne(pk.real, up.real)) peekAll = false;
+                        if (pk.integer != up.integer) peekAll = false;
+                        st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk);
+                        st.value(vc);
+                        if (svBne(vc.real, up.real)) allOk = false;
+                        if (vc.integer != up.integer) allOk = false;
+                        if (svXtierNe(up.real, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.real)) + "\""; }
+                        if (up.integer != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.integer + "\""; }
+                    } else {
+                        st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                        if (svXtierNe(up.real, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.real)) + "\""; }
+                        if (up.integer != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.integer + "\""; }
+                    }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.SupertrendStream stu = c2.supertrendOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInMultiplier);
+                        OutRange ur0 = stu.outRange();
+                        double[] u0 = new double[svN];
+                        java.util.Arrays.fill(u0, (double)-1.2345678901234e300);
+                        int[] u1 = new int[svN];
+                        java.util.Arrays.fill(u1, (int)-987654321);
+                        double[] tail_fz_h = java.util.Arrays.copyOfRange(fz_h, p, svN);
+                        double[] tail_fz_l = java.util.Arrays.copyOfRange(fz_l, p, svN);
+                        double[] tail_fz_c = java.util.Arrays.copyOfRange(fz_c, p, svN);
+                        stu.updateAndFill(new double[0], new double[0], new double[0], u0, u1);
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, new double[0], u1); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, tail_fz_h, u1); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, u0, u1);
+                        for (int t = p; t < svN; t++) if (svXtierNe(u0[t - p], b0[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (u1[t - p] != b1[t - beg.value]) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u1[t] != (int)-987654321) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.SupertrendStream sA = c2.supertrendOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMultiplier);
+                        int mid = (p0 + svN) / 2;
+                        Core.SupertrendOut uA = new Core.SupertrendOut();
+                        Core.SupertrendOut uB = new Core.SupertrendOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        Core.SupertrendStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.real, uB.real) || svXtierNe(uA.real, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.integer != uB.integer || uA.integer != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.supertrendOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInMultiplier); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.SupertrendStream sD = c2.supertrendOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, optInMultiplier);
+                Core.SupertrendStream sE = c2.supertrendOpen(fz_h, fz_l, fz_c, 10, optInMultiplier);
+                Core.SupertrendOut vD = new Core.SupertrendOut(); sD.value(vD);
+                Core.SupertrendOut vE = new Core.SupertrendOut(); sE.value(vE);
+                if (svBne(vD.real, vE.real)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (vD.integer != vE.integer) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.SUPERTREND_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.SupertrendStream stA = c2.supertrendOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInMultiplier);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_T3(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -223477,6 +225066,7 @@ public class TaCodegenServe {
         case "TA_STOCHRSI": return sv_STOCHRSI(json);
         case "TA_SUB": return sv_SUB(json);
         case "TA_SUM": return sv_SUM(json);
+        case "TA_SUPERTREND": return sv_SUPERTREND(json);
         case "TA_T3": return sv_T3(json);
         case "TA_TAN": return sv_TAN(json);
         case "TA_TANH": return sv_TANH(json);

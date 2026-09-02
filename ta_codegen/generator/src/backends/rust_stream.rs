@@ -2777,9 +2777,10 @@ fn open_and_fill_doctest(
     let out_vars: Vec<(String, bool, bool)> = func
         .outputs
         .iter()
-        .map(|out| {
+        .zip(super::rust_doc::output_var_names(func))
+        .map(|(out, var)| {
             (
-                super::rust_doc::output_var_name(out),
+                var,
                 out_is_int(func, &out.name),
                 nullable.contains(&out.name),
             )

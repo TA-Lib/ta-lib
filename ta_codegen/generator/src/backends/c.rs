@@ -957,11 +957,16 @@ fn gen_func_inner(
         // A nullable operand is guarded non-NULL first (a dropped output aliases
         // nothing; two NULLs would otherwise compare equal and spuriously reject).
         //
-        // Cross-typed pairs are skipped, as the C# emitter has always skipped
-        // them: comparing a `double *` with an `int *` is a constraint violation
-        // (`-Wcompare-distinct-pointer-types`), and the same pair is a compile
-        // error in Java and Rust and unreachable in safe code in both. The rule
-        // is set by the weakest member that can express it — Appendix E of
+        // A CROSS-TYPED pair is compared too, through `const void *`. `double * ==
+        // int *` is the constraint violation, not the question: the cast is well
+        // defined, and this backend's own streaming frames have always used it
+        // (`TA_<N>_OpenAndFill`). Java and Rust cannot express the comparison and
+        // C#'s `Overlaps` is not defined across element types, so C detects one
+        // case they cannot — the same asymmetry C# already carries for a partial
+        // input/output overlap, and preferred over letting a caller who points a
+        // `double *` and an `int *` at one buffer get silent corruption where
+        // every same-typed pair gets `TA_BAD_PARAM`. Reachable since SUPERTREND
+        // (#272) made the corpus mix the two. Appendix E of
         // docs/error-handling-spec.md, #262.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
@@ -969,9 +974,8 @@ fn gen_func_inner(
                 for j in (i + 1)..func.outputs.len() {
                     let a = &func.outputs[i];
                     let b = &func.outputs[j];
-                    if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
-                        continue;
-                    }
+                    let cross = (a.param_type == ParamType::Integer)
+                        != (b.param_type == ParamType::Integer);
                     let mut guard = String::new();
                     if a.is_nullable() {
                         guard.push_str(&format!("{} != NULL && ", a.name));
@@ -979,7 +983,14 @@ fn gen_func_inner(
                     if b.is_nullable() {
                         guard.push_str(&format!("{} != NULL && ", b.name));
                     }
-                    pairs.push(format!("{guard}{} == {}", a.name, b.name));
+                    if cross {
+                        pairs.push(format!(
+                            "{guard}(const void *){} == (const void *){}",
+                            a.name, b.name
+                        ));
+                    } else {
+                        pairs.push(format!("{guard}{} == {}", a.name, b.name));
+                    }
                 }
             }
             // More than one pair, and a guarded term carries `&&`: parenthesise

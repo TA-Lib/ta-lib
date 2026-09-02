@@ -377,7 +377,17 @@ fn c_batch_prologue_orders_parameters_before_presence() {
 /// Reconstructed, not searched for: a transcribed body can hold an `as_ptr()`
 /// comparison of its own — BBANDS elects its scratch with one — so a substring
 /// match would find that instead and read the order backwards.
-fn rust_alias_guard(func: &ir::FuncDef) -> String {
+/// RUST cannot compare a real output with an integer one: `*const f64 ==
+/// *const i32` is a type error, so a cross-typed pair contributes no term and a
+/// function whose outputs are all cross-typed gets no guard at all. (C can and
+/// does compare them, through `const void *` — Appendix E. The rule differs per
+/// backend, so do not read this as a statement about the library.) Without the
+/// skip, reconstructing the guard reads a correctly-absent term as a missing one.
+fn same_typed_outputs(a: &ir::Output, b: &ir::Output) -> bool {
+    (a.param_type == ir::ParamType::Integer) == (b.param_type == ir::ParamType::Integer)
+}
+
+fn rust_alias_guard(func: &ir::FuncDef) -> Option<String> {
     // Both operands non-empty: two zero-length slices cannot clobber each other,
     // and every unallocated `Vec` hands out the same dangling pointer, so a bare
     // `as_ptr()` comparison rejected a call rules N1 and B5 both permit
@@ -387,14 +397,7 @@ fn rust_alias_guard(func: &ir::FuncDef) -> String {
     for i in 0..func.outputs.len() {
         for j in (i + 1)..func.outputs.len() {
             let (a, b) = (&func.outputs[i], &func.outputs[j]);
-            // Same element type only. Rust's outputs are `&mut [f64]` and
-            // `&mut [i32]`, and two slices of different types cannot alias --
-            // there is no call the guard would reject, and `as_ptr() ==` across
-            // them would not even typecheck. So the emitter pairs within a type
-            // and this has to as well: no shipped function mixes them, which is
-            // why the omission held, and SYNTH12 (f64, i32, f64) is the only
-            // thing that has ever asked.
-            if a.param_type != b.param_type {
+            if !same_typed_outputs(a, b) {
                 continue;
             }
             pairs.push(match (a.is_nullable(), b.is_nullable()) {
@@ -417,10 +420,21 @@ fn rust_alias_guard(func: &ir::FuncDef) -> String {
             });
         }
     }
-    format!(
+    if pairs.is_empty() {
+        return None;
+    }
+    Some(format!(
         "        if {} {{\n            return RetCode::BadParam;\n        }}\n",
         pairs.join(" || ")
-    )
+    ))
+}
+
+/// The term a cross-typed pair WOULD contribute if the generator stopped
+/// skipping them. Reconstructed so the "no guard here" branch below asserts an
+/// absence it can name, rather than the absence of any `as_ptr()` at all — a
+/// transcribed body may carry one of its own.
+fn rust_cross_typed_term(a: &ir::Output, b: &ir::Output) -> String {
+    format!("{0}.as_ptr() == {1}.as_ptr()", a.name, b.name)
 }
 
 /// `docs/error-handling-spec.md` 2.2: B1, B2, B3, then B5 — a buffer too short —
@@ -507,9 +521,29 @@ fn rust_batch_impl_orders_capacity_before_aliasing() {
             assert!(at < preamble, "{where_}\nB3 must precede B5");
         }
 
-        let guard_at = section
-            .find(&rust_alias_guard(&func))
-            .unwrap_or_else(|| panic!("{where_}\nthe outputs are not checked for aliasing"));
+        // A function whose outputs are ALL cross-typed gets no guard at all here:
+        // in Rust the two slice types cannot be compared, so no pair contributes
+        // a term. It is still scanned — dropping it would take its capacity
+        // asserts out of this sweep with it — and the absence of the guard is
+        // itself asserted, since emitting one would mean the generator had
+        // started comparing `*const f64` against `*const i32`.
+        let guard_at = match rust_alias_guard(&func) {
+            Some(g) => section
+                .find(&g)
+                .unwrap_or_else(|| panic!("{where_}\nthe outputs are not checked for aliasing")),
+            None => {
+                for i in 0..func.outputs.len() {
+                    for j in (i + 1)..func.outputs.len() {
+                        let term = rust_cross_typed_term(&func.outputs[i], &func.outputs[j]);
+                        assert!(
+                            !section.contains(&term),
+                            "{where_}\ncross-typed outputs are compared for aliasing ({term})"
+                        );
+                    }
+                }
+                section.len()
+            }
+        };
         // Every output's capacity is B5, so the guard has to follow ALL of the
         // asserts, not merely the first.
         for output in &func.outputs {

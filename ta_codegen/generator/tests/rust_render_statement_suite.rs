@@ -1074,7 +1074,7 @@ fn every_integer_output_carries_an_example_claim() {
     // and the three index functions -- asserted nothing about their values at all
     // (#179 E8, deferred from #136). The domain is per-function data and lives in
     // `rust_doc::integer_domain_claim`; nothing in the metadata carries it, since
-    // all 66 integer outputs declare the same `line` flag. This is the gate that a
+    // all 67 integer outputs declare the same `line` flag. This is the gate that a
     // function arriving with an integer output states its domain instead of
     // silently rejoining that set.
     let registry = make_registry();
@@ -1111,20 +1111,30 @@ fn every_integer_output_carries_an_example_claim() {
             continue;
         }
         let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-        // One claim per integer output. Both shapes -- the `all(..)` domain test and
-        // the index loop -- read the written values as `<var>[..out_range.count]`,
-        // and nothing else in the example does.
-        let claims = out.matches("[..out_range.count]").count();
+        // One claim per integer output, counted BY THAT OUTPUT'S OWN example
+        // variable. Counting bare `[..out_range.count]` instead let a mixed
+        // real+integer function satisfy the floor with the real output's
+        // finiteness assert alone -- SUPERTREND passed this gate with no integer
+        // claim at all, which is the whole condition it exists to catch.
+        let claims: usize = func
+            .outputs
+            .iter()
+            .zip(backends::rust_doc::output_var_names(&func))
+            .filter(|(o, _)| o.param_type == ir::ParamType::Integer)
+            .map(|(_, var)| {
+                usize::from(out.contains(&format!("{var}[..out_range.count]")))
+            })
+            .sum();
         assert!(
             claims >= ints,
-            "{name}: {ints} integer output(s) but {claims} example claim(s) -- add the \
+            "{name}: {ints} integer output(s) but {claims} example claim(s) naming them -- add the \
              output's domain to rust_doc::integer_domain_claim"
         );
         checked += 1;
     }
     assert_eq!(
-        checked, 65,
-        "expected the 65 integer-output functions, swept {checked}"
+        checked, 66,
+        "expected the 66 integer-output functions, swept {checked}"
     );
 }
 

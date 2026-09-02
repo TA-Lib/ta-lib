@@ -158,6 +158,7 @@ STOCHF              Stochastic Fast
 STOCHRSI            Stochastic Relative Strength Index
 SUB                 Vector Arithmetic Subtraction
 SUM                 Summation
+SUPERTREND          SuperTrend
 T3                  Triple Exponential Moving Average (T3)
 TAN                 Vector Trigonometric Tan
 TANH                Vector Trigonometric Tanh

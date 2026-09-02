@@ -280,6 +280,7 @@ public final class Functions {
       put(m, f_STOCHRSI());
       put(m, f_SUB());
       put(m, f_SUM());
+      put(m, f_SUPERTREND());
       put(m, f_T3());
       put(m, f_TAN());
       put(m, f_TANH());
@@ -2936,6 +2937,30 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_SUPERTREND() {
+      return new FunctionInfo(
+         "SUPERTREND", "Overlap Studies", "SuperTrend", 0x23000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period for the Average True Range", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInMultiplier", 0x00000000,
+               "Multiplier", "ATR multiplier for band width", 3.0,
+               0.0, 3e37, 1, 1.0, 4.0, 0.5,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001),
+            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
          ));
    }
 
